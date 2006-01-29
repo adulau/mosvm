@@ -1557,36 +1557,22 @@ MQO_BEGIN_PRIM( "pause", pause )
 MQO_END_PRIM( pause )
 
 MQO_BEGIN_PRIM( "suspend", suspend )
-    OPT_PROCESS_ARG( process );
     NO_MORE_ARGS( );
-
-    if( ! has_process )process = MQO_PP;
-    
-    if( process == MQO_PP ){
-        mqo_pop_ds();
-        if( has_process )mqo_pop_ds();
-
-        mqo_push_ds( mqo_vf_false() ); 
-        mqo_return();
-
-        MQO_SUSPEND();
-    }else{
-        process->status = mqo_ps_suspended;
-        mqo_unsched_process( process );
-    }
-    
+    mqo_pop_ds();
+    MQO_SUSPEND();
 MQO_END_PRIM( suspend )
 
 MQO_BEGIN_PRIM( "resume", resume )
     REQ_PROCESS_ARG( process );
+    OPT_VALUE_ARG( value );
     NO_MORE_ARGS( );
     
-    if( process->status == mqo_ps_halted ){
-        mqo_errf( mqo_es_vm, "s", "halted processes cannot be resumed" );
-    }else if( process == MQO_PP ){
-        //TODO: We might want to raise a warning, here.    
+    if( process->status != mqo_ps_suspended ){
+        mqo_errf( mqo_es_vm, "sx", "only suspended processes may be resumed" ,
+                                    v_process );
     }else{
         process->status = mqo_ps_paused;
+        process->state->sv->data[ process->state->si++ ] = value;
         mqo_resched_process( process );
     }
     

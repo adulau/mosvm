@@ -1,3 +1,10 @@
+- 1/28/2006, Resume Transfers to Suspend
+  * Altered the suspend primitive to not place a return value on the stack
+    prior to suspending the process.
+  * Altered the suspend primitive to only suspend the active process.
+  * Altered the resume primitive to place a supplied value on the stack of the
+    resumed process.
+
 - 1/27/2006, Process Scheduler, Suspend / Resume / Stop / Spawn.
   * Altered mqo_process to contain a status symbol, which will contain one of
     the following -- suspended, running, paused, halted.

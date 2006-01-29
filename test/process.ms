@@ -45,17 +45,6 @@
 
 (set! *wall* #f)
 
-(s: (suspend t-foo)
-    (pause))
-(t: (not *wall*))
-
-(s: (process-status t-foo))
-(t: 'suspended)
-
-(s: (resume t-foo)
-    (pause))
-(t: (eq? *wall* 'foo))
-
 (s: (process-status t-foo))
 (t: 'paused)
 
@@ -67,4 +56,20 @@
 
 (s: (process-status t-foo))
 (t: 'halted)
+
+(define (tagger2)
+  (until #f (set! *wall* (suspend))))
+
+(set! *wall* #f)
+(define t-tag (spawn tagger2))
+
+(pause)
+
+(s: (resume t-tag 'alpha))
+(pause)
+(t: (eq? *wall* 'alpha))
+
+(s: (resume t-tag 'beta))
+(pause)
+(t: (eq? *wall* 'beta))
 
