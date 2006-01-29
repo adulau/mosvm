@@ -1,0 +1,2 @@
+(show nonexistent-global)
+(newline)

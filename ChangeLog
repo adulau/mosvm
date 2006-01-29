@@ -1,0 +1,612 @@
+- 1/27/2006, Process Scheduler, Suspend / Resume / Stop / Spawn.
+  * Altered mqo_process to contain a status symbol, which will contain one of
+    the following -- suspended, running, paused, halted.
+  * Altered mqo_process to contain references to a next and a prev process.
+  * Altered mqo_continue to cycle between paused processes.
+  * Added the mqo_spawn function.
+  * Altered mqo_execute to use mqo_spawn, then repeatedly mqo_continue until
+    there are no more processes.
+  * Altered all users of MQO_XP to correctly use MQO_NEXT_INSTR, MQO_NEXT_PROC
+    or MQO_NEXT_LIFE to signal why a non-local exit was required.
+  * Added show_process to show.c
+  * Added the spawn primitive, which creates a new process that will execute
+    the supplied thunk.
+  * Added the pause primitive, which marks the active process as paused,
+    permitting the virtual machine to proceed to the next paused process.
+  * Added the halt primitive, which marks the specified process as halted. If
+    no process is specified, it will halt the active process.
+  * Added the suspend primitive, which marks the specified process as 
+    suspended.  If no process is specified, it will suspend the active process
+    and permit the virtual machine to cycle to the next process.
+  * Added the resume primitive, which marks a suspended process as merely
+    paused, then pauses the active process.
+  * Added the process-status primitive, which identifies the current state 
+    of the specified process.
+  * Added the active-process primitive, which returns the active process.
+  * Added the halt primitive which puts the process in halted state.  Halted
+    processes cannot be resumed
+  * Modified mqo_err to stop the specified process if the error is not
+    handled.
+  * Added load-ms.
+  * Added load, which brokers against load-ms and load-mo, based on the
+    file extension.
+  * Altered run.scm to run any files that do not end in .mo as source files,
+    with automatic compilation and optimization.
+
+
+- 1/26/2006, Added string primitives for log parsing.
+  * Added split-lines primitive to core.
+  * Added string-starts-with primitive to core.
+  * Added string-ends-with primitive to core.
+  * Extended make-tc to accept an optional seed list.
+  * Added *line-sep* global to os.
+
+- 1/26/2006, Preparations for phase alpha
+  * Moved all stack push/pop/etc operations to use mqo_stack_xxx calls.
+  * Modified mqo_il_traceback to work forwards from the base of the call and
+    data stacks, instead of downwards, and cleanly handle unintelligible
+    calls.
+  * Cross-compiled on Darwin/PPC.
+  * Cross-compiled on Linux/x86.
+  * Added tavl.c and tavl.h, derived from Bert C. Hughes' public domain TAVL
+    library.
+  * Added mqo_compare and mqo_string_compare for use by tavl.
+  * Replaced the use of a pair for the symbol lexicon with a tree.
+  * Added mqo_show_tree to show.c
+  * Added mqo_show_tree to mqo_show
+  * Added dump-lexicon primitive to core for testing purposes.
+  * Added set type to memory.h
+  * Added dict type to memory.h
+  * Added set, set?, set-add!, set-remove! set-member? and set->list primitives
+    to core.
+  * Added dict, dict?, dict-set!, dict-ref, dict-remove!, dict-keys, 
+    dict-values, dict-set? and dict->list primitives to core.
+  * Relicensed all code -- granted copyright to Ephemeral Security, assigned 
+    LGPL terms.
+  * Added mosvm/glue.c, a C implementation of glue, and removed glue.scm; this
+    should make it possible to glue an executable on platforms without guile.
+  * Added the memmem function, with functionality similar to strstr, but
+    without the dependency on null termination.
+  * Added the string-split* primitive to core.
+  * Added the *path-sep* global value to os; will contain "/" on POSIX hosts,
+    and "\" on win32 hosts. ( And, some day, ":" on all three VMS hosts. )
+  * Added the string-join primitive to core.
+  * Edited load-mo to use split-string and path-sep to enable importing on
+    win32.
+  * Added the string-find primitive to core.
+  * Added the string-split primitive to core.
+  * Rewrote the implementation of append!.
+  * Compile now recognizes null lists and renders them as a constant: e.g.
+    (show ()) does not raise an error, it just displays ().
+  * Added the export procedure to core and modified import to rely on export
+    to register modules as loaded, and their origin.
+  * Altered lib/run to start a REPL if no arguments are supplied.
+  * Altered Makefile to produce a mosvm executable that is capable of playing
+    repl, or supporting mosc, without the need for external files.
+
+- 1/24/2006, Mosc written in dual scheme / mosvm.
+  * Added read-all method for queues.
+  * Revised mosc to work under scheme and mosvm.
+  * Revised push / pop / peek / read operations to use the standard 
+    vector accessors for debugging purposes.
+  * Revised MQO_END_PRIM to use mqo_return instead of smoking crack.
+  * Added the lib/optimize module, with a simple tail call optimizer.
+  * Extended parse.c to understand #t and #f.
+  * Added open-stdin primitive
+  * Added open-stdout primitive
+  * Added open-stderr primitive
+  * Fixed bugs with the use of guards, and il-traceback.
+  * Added examples/repl.scm, an example of making a repl.
+  * Fixed bugs blocking the compilation of quasiquote forms under mosvm.
+  * Fixed scope bug where the bodies of inner defines were unable to refer to
+    themselves.
+  * Replaced tail-recursion abuses from make-inventory and program-values
+    in lib/scheme.
+  * Fixed bug with parsing escaped strings in parse.c
+  * Patched Makefile to turn of SSP stack protection on OpenBSD -- incompatible
+    with libgc.
+  * Added a signal handler for SIGINT that will automatically supply a 
+    stack dump prior to termination.
+  * Replaced excessive use of recursion in assemble, compile, and freeze with
+    while loops.
+  * Simplified eradication of comments and extra whitespace in parse.c
+  * Fixed bug where escaped text in parsed strings would cause the string to
+    lose length.
+
+- 1/21/2006, Freeze written in dual scheme / mosvm.
+  * Added error trap to detect 0 divisors in m_div
+  * Added abs primitive to core.
+  * Added quotient primitive to core.
+  * Added remainder primitive to core.
+  * Added tc-clear! primitive to core.
+  * Added optimization to string-append for the single item special case.
+  * Modified assemble to report unresolved address references.
+  * Fixed bug with case forms missing a final "next" branch.
+  * Added write-quad procedure to fakevm.
+  * Fixed bug where string-append could result in a string data not having
+    a null placed after the end of the string.
+  * Fixed bug with cons*
+  * Added write-quad method to core for file ports and string ports.
+  * Added file-write-quad primitive to os.
+  * Modified lib/freeze.ms to use write-byte / write-word / write-quad
+  * Added freeze test suite.
+  * Added string-output-port and string-input-ports to core.
+  * Extended string-append to accept bytes as possible values.
+
+- 1/21/2006, Compile written in dual scheme / mosvm.
+  * Moved symbol-starts-with to lib/lib, added alternate mosvm version due
+    to mosvm's lack of support for the character data type.
+  * Added test/compile.ms, a unit test for the compiler.
+  * null? now accepts any value, not just pairs.
+  * Fixed inconsistencies in the return value of unless and while special
+    forms.
+  * Fixed error where and forms would not correctly return the final truth or
+    false.
+  * Added symbol->string primitive.
+  * Explained to subtract that 1 - 2 is not True.  (WTF?)
+  * Added string-ref primitive.
+  * Added test/compile test suite.
+
+- 1/20/2006, Assemble written in dual scheme / mosvm.
+  * Added mqo_program_ref function.
+  * Added REQ_PROGRAM_ARG macro.
+  * Added OPT_PROGRAM_ARG macro.
+  * Added fold procedure.
+  * Added program? primitive.
+  * Added program-length primitive.
+  * Added make-program primitive.
+  * Added set-program-code-at! primitive.
+  * Added set-program-word1-at! primitive.
+  * Added set-program-value-at! primitive.
+  * Added set-program-word2-at! primitive.
+  * Added set-program-symbol-at! primitive.
+  * Added program-code-at primitive.
+  * Added program-word1-at primitive.
+  * Added program-value-at primitive.
+  * Added program-word2-at primitive.
+  * Added program-symbol-at primitive.
+  * Renamed erroneously named define-record form to define-record-type.
+  * Fixed incorrect modifier creation semantics for define-class / d/rt.
+  * Added filter procedure.
+  * Mapped filter! to filter.
+
+- 1/20/2006, Glue written in dual scheme / mosvm.
+  * Moved script loader from core.ms to bin/run.ms
+  * Added the last-item primitive.
+  * Added the reverse primitive.
+  * Added the reverse! primitive.
+  * Rewrote glue.ms to work under both scheme and mosvm.
+  * Added the mosvm? global to lib/core.ms and lib/fakevm.ms.
+  * Added the file-write-byte primitive.
+  * Added the file-write-word primitive.
+  * Added the write-byte procedure to fakevm and core.
+  * Added the write-word procedure to fakevm and core.
+  * Fixed a bug with compiling cond forms without an else branch.
+  * Ensured that subsequent calls to mqo_execute will reset the return stack.
+  * Cleaned up mqo_exec and mqo_execute; they will accept any function type,
+    and they will correctly ensure that the non-local exit point buffer, MQO_XP
+    will not be overwritten.
+  * Added the -s flag, which will cause mosvm to show the return value
+    from the last program executed.
+  * Added a new function for checked conversion from values to specific types
+  * Added MQO_DEFN_REQ macros to memory.
+  * Modified REQ_X_ARG macros to use mqo_req_x.
+
+- 1/17/2006, Load now uses the file port abstraction.
+  * Added the string->exprs function.
+  * Added the read-all procedure.
+  * Added a specialized read-all for file ports.
+  * Added the tc-next! primitive.
+  * Added the tc-empty? primitive.
+  * Moved all .scm files to .ms
+  * Added the file-read-all primitive.
+  * Moved thaw-file from primitive to procedure.
+
+- 1/16/2006, Addition of R5RS procedures required for lib/lib.scm
+  * Added the exit primitive.
+  * Added the string->symbol primitive.
+  * Added the number->string primitive.
+  * Added the +, -, * and / primitives.
+  * Added the list-ref primitive.
+  * Added the find-tail, find, and list-index procedures.
+  * Added the s:, r: and t: special forms to lib/compile.scm
+  * Added the any procedure.
+  * Added the last-pair primitive.
+  * Added the not primitive.
+  * Added the integer? primitive.
+  * Added the symbol? primitive.
+  * Added the list? primitive.
+  * Added the mqo_equal function to mosvm/memory.c
+  * Added the mqo_equals function to mosvm/memory.c
+  * Added the mqo_equalv function to mosvm/memory.c
+  * Added the mqo_equalp function to mosvm/memory.c
+  * Added the mqo_eqv function to mosvm/memory.c
+  * Added the mqo_eqvs function to mosvm/memory.c
+  * Added the mqo_eqvv function to mosvm/memory.c
+  * Added the mqo_eqvp function to mosvm/memory.c
+  * Added the equal? primitive.
+  * Added the eqv? primitive.
+  * Altered the string=? primitive to use mqo_eqvs
+  * Added the mqo_last_pair function to mosvm/memory.c
+  * Added the tc primitive type as a derivative of pair.
+  * Added the last_pair primitive.
+  * Added show_tc to show.
+  * Added the make-tc primitive.
+  * Added the tc-append! primitive.
+  * Added the tc-prepend! primitive.
+  * Added the tc->list primitive.
+  * Added the tc-splice! primitive.
+  * Added the tc? primitive.
+  * Added support for quasiquote forms to lib/compile.scm
+  * Added support for metasymbols in quasiquotes. (%symbol -> %temp-symbol)
+  * Added the caddr primitive.
+  * Added the cadr primitive.
+  * Altered mqo_show_cstring to use fputs, instead of printf to ensure
+    escapes are printed, and prevent format attacks.
+  * Replaced uses of printf for constant strings to mqo_show_cstring in
+    show.c
+
+- 1/16/2006, Introduction of the port abstraction.
+  * Added the port variant type.
+  * Added the input-port variant type.
+  * Added the output-port variant type.
+  * Added the cons* primitive.
+  * Altered types to contain an optional "info" list.
+  * Added the open-output-file procedure.
+  * Added the open-input-file procedure.
+  * Added the read procedure.
+  * Added the write procedure.
+  * Added the eof-object? procedure.
+  * Added the port? procedure.
+
+- 1/16/2006, Introduction of define-class and integration with define-record.
+  * Replaced compile-define-class with a syntax rule
+  * Replaced compile-define-record with a sytnax rule
+  * Added the make-class procedure to lib/core.ms
+  * Added the class-fields procedure to lib/core.ms
+  * Added the make-class-constructor procedure to lib/core.ms
+  * Added the make-class-accessor procedure to lib/core.ms
+  * Added the make-class-modifier procedure to lib/core.ms
+  * Fixed apply.
+  * Moved special form compile rules to a table similar to the syntax table
+    to ensure expand knows what forms NOT to expand.
+  * Added make-tc to lib/core.ms
+  * Added tc-append! to lib/core.ms
+  * Added tc-prepend! to lib/core.ms
+  * Added tc->list to lib/core.ms
+  * Added for-each to lib/core.ms
+  * Added map to lib/core.ms
+  * Added make-vector primitive to mosvm/prims/core.c
+  * Added string-length primitive to mosvm/prims/core.c
+  * Added string=? primitive to mosvm/prims/core.c
+  * Added <, >, =, <=, >= and != primitives to mosvm/prims/core.c
+
+- 1/15/2006, Introduction of Procedural Macros
+  * Added support to lib/compile.scm for inner-defines extending their
+    lexical context.
+  * Added the syntax field to context records in lib/compile.scm.
+  * Added the add-context-syntax procedure to lib/compile.scm.
+  * Added the find-context-rule procedure to lib/compile.scm.
+  * Added the expand procedure to lib/compile.scm.
+  * Modified compile-expr to automatically use expand.
+  * Added the *mosvm-syntax* global which contains the standard 
+    syntactic rules.
+  * Added the make-top-context procedure which is used by compile 
+    to create a top-level context for a program.
+  * Added the mos special form to asm.
+  * Replaced compile-when with syntax.
+  * Added the compile-begin rule.
+  * Replaced compile-unless with syntax.
+  * Replaced compile-while with syntax.
+  * Replaced compile-until with syntax.
+  * Replaced compile-or with syntax.
+  * Replaced compile-and with syntax.
+  * Replaced compile-cond with syntax.
+  * Replaced compile-case with syntax.
+  * Replaced compile-guard with syntax.
+  * Replaced compile-q with syntax.
+
+- 1/14/2006, Added void primitive type, expansion of define-record to classes.
+  * Added the atom primitive type.
+  * Derived the void primitive type from atom.
+  * Altered the vm to default all global values to void.
+  * Altered the vm to signal an error when a ldg discovers a void.
+  * Altered define-record to use define-class, which permits inheritance.
+  * Added the type-info primitive to extract the info field from type objects.
+  * Extended the make-type primitive to assign overflow arguments to the 
+    info field.
+
+- 1/14/2006, Improved call protocol and traceback
+  * Overhauled mqo_jump, mqo_call, mqo_tail_call and mqo_return
+  * Fixed edge cases involving il_tracebacks.
+  * Altered primitive argument macros to bind arguments in order, support
+    mixing optional and required arguments and binding rest arguments
+    correctly.
+  * Added the info field to the type primitive type to store additional 
+    information about the type.
+
+- 1/14/2006, Introduction of Low Level File I/O
+  * Fixed a bug freezing negative values.
+  * Added the file primitive type. 
+  * Added the file? primitive.
+  * Added the file-read primitive.
+  * Added the file-open primitive.
+  * Added the file-write primitive.
+  * Added the file-close primitive.
+  * Added the file-path primitive.
+  * Added the file-fd primitive.
+  * Added the file-skip primitive.
+  * Added the file-seek primitive.
+  * Added the file-pos primitive.
+
+- 1/10/2006, Introduction of Multimethod Dispatch
+  * Altered lib/compile.scm to recognize method definitions in defines and
+    generate generics and methods on demand.
+  * Added the multimethod type.
+  * Added the (make-multimethod <signature> <pass> <fail>) primitive.
+  * Added (refuse-method . args), a craven refuser.
+  * Removed all use of record and recordtype in the VM in favor of tagged
+    values.
+  * Added the vector-ref primitive.
+  * Added the vector-set! primitive.
+  * Added the vector? primitive.
+  * Added the vector-length primitive.
+  * Rewrote the record? and <record> definitions in lib/core.ms using tags.
+
+- 1/10/2006, Introduction of Tagged Values
+  * Added the mqo_type type.
+  * Added the MQO_DECL_TYPE macro.
+  * Added MQO_DECL_TYPE to MQO_BEGIN_TYPE.
+  * Altered MQO_PTR_INLINES To MQO_TYPE_INLINES
+  * Added the MQO_BIND_TYPE macro.
+  * Added mqo_init_memory_subsystem
+  * Altered main to load mqo_init_memory_subsystem
+  * Replaced all use of t_xxx with mqo_xxx_type
+  * Added the mqo_boolean type.
+  * Added the mqo_make_type function.
+  * Altered mqo_value to be pair of type pointer and integer/pointer data.
+  * Added the new make-type primitive.
+  * Added the new tag primitive.
+  * Added the new type primitive.
+  * Added the new repr primitive.
+  * Added the new isa? primitive.
+  * Added mqo_type mqo_direct_type( mqo_value value )
+  * Altered REQ_VALUE_ARG to check for indirect descended types.
+  * Fixed an edge case where case-else may leak a slot on the data stack.
+
+- 1/7/2006, Added the ability to glue modules to a binary.
+  * Fixed a wretched typo in the BSD license boilerplate.
+  * Added the glue script to bin.
+  * Added a make rule to fuse mosvm/lib/core.ms to the default interpreter.
+  * Added mqo_thaw_frag to mosvm/thaw.c
+  * Added mqo_thaw_tail to mosvm/thaw.c
+  * Revised main in mosvm/main.c to execute each program fused to the 
+    executable file.
+  * Added until and while macros to lib/run-guile.scm
+
+- 1/6/2006, Added the requirements for import / reload procedure
+  * Altered mqo_make_error to initialize the mqo_vmstate members.
+  * Altered mqo_make_vmstate to leave all members initialized to null values.
+  * Added the mqo_process type to mosvm/memory.c and mosvm/mosvm/memory.h
+  * Added the mqo_make_process function to mosvm/memory.c and 
+    mosvm/mosvm/memory.h
+  * Added the mqo_use_process function to mosvm/exec.c and mosvm/mosvm/exec.h
+  * Altered mqo_exec to automatically create a process when one is not in 
+    use.
+  * Split mqo_exec into mqo_execute and mqo_exec.
+  * Added the ability to mqo_call programs.
+  * Added the ability to mqo_return from programs.
+  * Altered lib/compile.scm to place USEA 0 x at the start of a program,
+    and bound supplied arguments to the *args* symbol.
+  * Altered lib/compile.scm to use RETN instead of STOP to end a program.
+  * Added the thaw-file primitive to mosvm/prims/core.c
+  * Added MQO_AALLOC to mosvm/mosvm/memory.h -- which should be used when
+    an allocated data structure completely lacks interior pointers.
+  * Added mqo_make_string, and altered mqo_string_fm to use it.
+  * Added the string-append primitive to mosvm/prims/core.c
+  * Added the assq primitive to mosvm/prims/core.c
+  * Added the getcwd primitive to mosvm/prims/core.c
+  * Added the import procedure to mosvm/lib/core.ms
+  * Added the reload procedure to mosvm/lib/core.ms
+
+- 1/5/2006, Added functionality required for implementing for-each
+  * Added the while special form to lib/compile.scm
+  * Added the until special form to lib/compile.scm
+  * Added the ERR_IF_NULL macro to mosvm/mosvm/prim.h
+  * Added the apply primitive to mosvm/prims/core.c
+  * Added the map-car primitive to mosvm/prims/core.c
+  * Added the map-cdr primitive to mosvm/prims/core.c
+  * Added the memq primitive to mosvm/prims/core.c
+  * Added x y . z formals support to lib/compile.scm
+  * Fixed error with return stack not properly reducing after an apply.
+  * Streamlined show_pair
+
+- 1/5/2006, Added define-record special form to compile.scm
+  * Added the record-type type to mosvm/memory.c
+  * Added the record type to mosvm/mosvm/memory.h
+  * Added make-record to mosvm/memory.c
+  * Added make-record-type to mosvm/memory.c
+  * Added the REQ_RECORD_TYPE_ARG macro to mosvm/mosvm/prim.h
+  * Added the REQ_RECORD_ARG macro to mosvm/mosvm/prim.h
+  * Added the OPT_RECORD_TYPE_ARG macro to mosvm/mosvm/prim.h
+  * Added the OPT_RECORD_ARG macro to mosvm/mosvm/prim.h
+  * Added the record-type-length primitive to mosvm/prims/core.c
+  * Added the record-type-name primitive to mosvm/prims/core.c
+  * Added the record-type primitive to mosvm/prims/core.c
+  * Added the record-get primitive to mosvm/prims/core.c
+  * Added the record-set primitive to mosvm/prims/core.c
+  * Added the make-record-type primitive to mosvm/prims/core.c
+  * Added the make-record primitive to mosvm/prims/core.c
+  * Added the record? primitive to mosvm/prims/core.c
+  * Added the record-type? primitive to mosvm/prims/core.c
+  * Added the define-record special form to compile.scm
+  * Added show-record-type to mosvm/show.c
+  * Added show-record to mosvm/show.c
+  * Added show-record-type to mosvm/mosvm/show.h
+  * Added show-record to mosvm/mosvm/show.h
+  * Added the ability to show records and record types to the show primitive.
+  * USEN now reports mis-applications clearly.
+  * Added the REQ_VALUE_TYPE macro to mosvm/mosvm/prim.h
+
+- 1/5/2006, Added special forms employed by compile.scm to compile.scm
+  * Removed the use of named lets from lib/compile.scm
+  * Removed the use of named lets from lib/assembler.scm
+  * Removed the use of named lets from lib/freeze.scm
+  * Fixed a bug with the use of JMP / JF / JT where MQO_PRIM_NEXT 
+    was erroneously invoked.
+  * Removed the use of named lets from lib/lib.scm
+  * Added support for or forms to lib/compile.scm
+  * Added support for and forms to lib/compile.scm
+  * Added the copy operator to lib/lib.scm
+  * Added the jt operator to lib/lib.scm
+  * Added the copy operator to mosvm/exec.c
+  * Added the jt operator to mosvm/exec.c
+  * Added the copy operator to mosvm/prims/vm.c
+  * Added the jt operator to mosvm/prims/vm.c
+  * Added the copy operator to mosvm/exec.h
+  * Added the jt operator to mosvm/exec.h
+  * Added the asm special form to lib/compile.scm for debugging purposes.
+  * Added support for cond forms to lib/compile.scm
+  * Added the eq? primitive to mosvm/prims/core.c
+  * Added support for case forms to lib/compile.scm
+
+- 1/2/2006, Integration of Boehm-Demers-Weiser GC
+  * Updated MQO_ALLOC to employ the BDW conservative garbage collector.
+  * Fixed an error with the internment of symbols related to misreported
+    string lengths.
+  * Added bin/mosvm script that will automatically build mosvm, compile a
+    script, then apply mosvm against the compiled script.
+
+- 1/2/2006, Reorganization of File Layout
+  * mosvm moved to mosvm/mosvm
+  * mosc.scm moved to bin
+  * assemble.scm, compile.scm, freeze.scm, fakevm.scm, lib.scm, 
+    run-mzscheme.scm, run-guile.scm moved to lib.
+  * Makefile split into mosvm/Makefile, which builds mosvm, and Makefile
+    which directs mosvm/Makefile, compiles tests, determines system information
+  * Added rule to root Makefile for running mosvm programs.
+  * Added script to bin directory for building mosvm, compiling a given program
+    and executing the result.
+  * exec.c, main.c, memory.c, show.c, thaw.c moved to mosvm.
+  * prims moved to mosvm
+  * Tagged all source files with BSD/NA license.
+
+- 1/2/2006, Refit of Primitive Argument Macros to use Error System.
+  * Primitive argument macros now signal errors using mqo_errf instead of
+    dumping core with an assertion.
+  * Primitive option macros now indicate absence using has_##nm; e.g. has_arg1
+  * Added mqo_es_args for argument error keys. (bad-args)
+
+- 1/1/2006, Introduction of Call Value Tracebacks
+  * Calls now push the number of arguments passed on the return stack.
+  * Returns now clear the number of arguments passed from the return stack.
+  * Closures now have a name field; when the closure is created, this field
+    is #f.
+  * When a closure is bound globally that has a false name field, the
+    name field is updated to the global name. 
+  * The internal traceback function can now display arguments to closures in
+    the return stack, and their names if they are available.
+
+- 12/30/2005, Introduction of the PROGRAM and INSTRUCTION object types
+  * Added the Instruction object type which encodes a single MOSVM instruction
+    as a record of fixed length.
+  * Added the Procedure object type which encodes a sequence of MOSVM
+    Instruction records.
+  * Replaced mqo_op_names and mqo_op_prims with mqo_op_table, which also
+    specifies what operands a given instruction operator employs.
+  * Added instruction to show for use by il-traceback.
+  * Added program to show for use by main.
+  * Added the fakevm.scm file; a library of functions that can simulate mosvm
+    features sufficiently to bootstrap the compilation of a mosvm compiler.
+  * Rewrote assemble.scm to use the new program and instruction types. 
+  * Modified bin/run-mzscheme.scm to load fakevm.scm
+  * Modified bin/run-guile.scm to load fakevm.scm
+  * Revised mosvm/memory.h macros to auto generate fv / vf / is inlines.
+  * Replaced MQO_IX with MQO_IP, a reference to the current instruction.
+  * Altered exec.c to use the new instruction and program types.
+  * Altered main.c to use the new program type.
+  * Modified primitives in prim/vm.c to use the new mqo_instruction type for
+    their inline arguments.
+  * Modified thaw.c to decode the program type.
+  * Modified freeze.scm to encode the program type.
+  * Added mqo_errf, a printf-like error facility for primitives and functions.
+  * Expanded il_traceback to give a stack dump and a rudimentary call trace.
+
+- 12/27/2005, Introduction of VMSTATE and IL-Traceback
+  * Added the new vmstate object type to encapsulate vm information contained
+    by continuations and errors.
+  * Added the il-traceback primitive for displaying a low level dump of the
+    virtual machine state.
+  * Added a test for compiling the guard special form.
+  * Re-sync'd ChangeLog with darcs changes.
+  * Updated Makefile to employ gnu99 for building the virtual machine.
+  * Restricted the info field of the error type to pairs.
+  * Added the MQO_FOREACH macro for iterating over a list.
+  * Added the newline primitive.
+
+- 12/23/2005, Introduction of the Error / Guard System.
+  * Added the error primitive
+  * Added the error object type.
+  * Added the RAG opcode.
+  * Added the GAR opcode.
+  * Added the MQO_ERROR macro for signalling errors.
+  * Added the MQO_EXIT macro for long jumping back to the top level interpreter 
+    loop.
+  * Added the MQO_GP register to contain a stack of active guard objects.
+  * Renamed the error_handler object type to guard.
+  * Added the REST_ARGS macro for use by primitives.
+  * Added the OPT_INTEGER_ARG macro for use by primitives.
+  * Added the mqo_show_error function, and added the ability for the show 
+    primitive to show errors.
+  * Added the guard special form.
+  * Added test cases for compilation of the guard special form.
+  * Altered compile.scm to compile the guard special form.
+  * Added the show primitive.  (A bastardized display, with optional item 
+    ellision. )
+  * Added the examples/g2.ms example, which demonstrates the use of a guard.
+  * Added the errorq, error-key, error-info primitives.
+
+- 12/18/2005, Reduction of Opcodes to Unbound Primitives
+  * mqo_exec now uses continuation passing style.
+  * All opcodes are now implemented as unbound mqo primitives, and the
+    toplevel interpreter loop has been amended to permit primitives to affect
+    instruction flow.
+  * Fixed error merging symbols.
+  * Ensured that END_PRIM moves to the next primitive.
+  * Added the REQ_VALUE_ARG macro for use by primitives.
+  * Renamed NO_ARGS to NO_MORE_ARGS.
+  * Added the MQO_NO_RESULT macro for signalling that a primitive has an 
+    unspecified result.
+  * Added the pair?, null?, cons, car, cdr, set-car!, set-cdr! and length
+    primitives.
+
+- 12/17/2005, Implementation of Let Compression
+  * Altered compiler and virtual machine to employ "let compression"; at the
+    beginning of a function's evaluation, it allocates memory for all variables
+    bound within its lexical scope.
+  * Altered compilation of let to expand the allocation of variables, and
+    assign values to those variables.
+  * Altered compilation of let in the top level to implicitly create a new
+    lambda and apply the supplied values against it, similar to a conventional
+    Scheme implementation of let.
+  * Expanded the SPOT Test system, added the ability to conditionally disable
+    spot tests.
+  * Added tests for the context registry employed by the compiler.
+
+- 12/9/2005, Vectorization of MOSVM IL
+  * The MOSVM compiler now generates a vector for each program, instead of a
+  list.  This vector is used by the MOSVM interpreter, gaining
+  a considerable performance increase over the traditional SECD use of
+  lists.
+  * Added closure type to memory.
+  * Added primitive type to memory.
+  * Moved all operations that are not required to construct a function
+    call to primitives.
+  * Made VM registers global so primitives can modify them.
+  * Made the data and return stack into a vector for speed purposes.
+  * Made the environment a list of vectors.
+  * Expanded CALL to accept either a primitive or a closure.
+  * Expanded USEA and USEN to pre-allocate a context for all internal
+    bound variables.
+  * Added JF and JMP opcodes.
+

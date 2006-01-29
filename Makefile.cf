@@ -1,0 +1,72 @@
+ifndef MQO_CFG_LOADED
+
+MQO_CFG_LOADED=1
+
+CFLAGS+=-std=gnu99
+BUILD=$(ROOT)/build
+
+OS=$(shell uname)
+
+DO_CC=gcc
+ifdef USE_MZSCHEME
+DO_SCHEME=mzscheme -M errortrace -f $(ROOT)/lib/run-mzscheme.scm -C
+endif
+
+ifdef USE_GUILE
+DO_SCHEME=guile --debug -l $(ROOT)/lib/run-guile.scm -e guile-main -s 
+endif
+
+ifndef DO_SCHEME
+DO_SCHEME=@echo You need a scheme interpreter for 
+endif
+
+ifeq ($(OS),MINGW32_NT-5.1)
+OS=MinGW
+endif
+
+ifeq ($(OS),CYGWIN_NT-5.1)
+OS=Cygwin
+endif
+
+ifeq ($(OS),Linux)
+# Tested on Debian.
+LIBGC=/usr/lib/libgc.a
+CPPFLAGS += -I/usr/include/gc -D_GNU_SOURCE
+CFLAGS += -pthread
+endif
+
+ifeq ($(OS),MinGW)
+CPPFLAGS += -I/mingw/include -DGC_WIN32_THREADS=1
+
+LIBGC=/mingw/lib/libgc.a 
+EXE=.exe
+endif
+
+ifeq ($(OS),Cygwin)
+CFLAGS += -mno-cygwin
+CPPFLAGS += -I/usr/local/include
+LIBGC=/usr/local/lib/libgc.a
+EXE=.exe
+endif
+
+ifeq ($(OS),OpenBSD)
+CFLAGS += -fno-stack-protector
+LIBGC=/usr/local/lib/libgc.a
+endif
+
+ifeq ($(OS),Darwin)
+CPPFLAGS += -I/opt/local/include -DNO_PARALLEL_GC
+LIBGC=/opt/local/lib/libgc.a
+endif
+
+ifdef COMPACT
+CFLAGS+=-Os -DNDEBUG
+else
+CFLAGS+=-g 
+endif
+
+MOSVM=$(BUILD)/bin/mosvm$(EXE)
+MOSVM_STUB=$(BUILD)/bin/mosvm-stub$(EXE)
+GLUE=$(BUILD)/bin/glue$(EXE)
+
+endif
