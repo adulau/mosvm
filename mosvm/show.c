@@ -228,8 +228,8 @@ void _mqo_show_instruction( mqo_instruction i, mqo_word* ct ){
 void mqo_show_instruction( mqo_instruction i, mqo_word ct ){
     _mqo_show_instruction( i, ct ? &ct : (mqo_word*)NULL );
 }
-void mqo_show_file( mqo_file f ){
-    mqo_show_cstring( f->closed ? "<closed file " : "<open file " );
+void mqo_show_descr( mqo_descr f ){
+    mqo_show_cstring( f->closed ? "<closed descr " : "<open descr " );
     mqo_show_string( f->path );
     mqo_show_cstring( ">" );
 }
@@ -299,8 +299,8 @@ void _mqo_show( mqo_value v, mqo_word* ct ){
         _mqo_show_program( mqo_program_fv( v ), ct );
     }else if( mqo_is_closure( v ) ){
         mqo_show_closure( mqo_closure_fv( v ) );
-    }else if( mqo_is_file( v ) ){
-        mqo_show_file( mqo_file_fv( v ) );
+    }else if( mqo_is_descr( v ) ){
+        mqo_show_descr( mqo_descr_fv( v ) );
     }else if( mqo_is_instruction( v ) ){
         _mqo_show_instruction( mqo_instruction_fv( v ), ct );
     }else if( mqo_is_type( v ) ){

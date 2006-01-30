@@ -77,7 +77,7 @@
 #define REQ_VMSTATE_ARG( nm )   REQ_TYPED_ARG( nm, vmstate );
 #define REQ_STRING_ARG( nm )    REQ_TYPED_ARG( nm, string );
 #define REQ_SYMBOL_ARG( nm )    REQ_TYPED_ARG( nm, symbol );
-#define REQ_FILE_ARG( nm )      REQ_TYPED_ARG( nm, file );
+#define REQ_DESCR_ARG( nm )     REQ_TYPED_ARG( nm, descr );
 #define REQ_LIST_ARG( nm )      REQ_TYPED_ARG( nm, list );
     
 #define REST_ARGS( nm )         mqo_pair nm = mqo_rest( ct - ai, 1 ); \
@@ -123,7 +123,7 @@
 #define OPT_VMSTATE_ARG( nm ) OPT_TYPED_ARG( nm, vmstate, NULL );
 #define OPT_STRING_ARG( nm )  OPT_TYPED_ARG( nm, string, NULL );
 #define OPT_SYMBOL_ARG( nm )  OPT_TYPED_ARG( nm, symbol, NULL );
-#define OPT_FILE_ARG( nm )    OPT_TYPED_ARG( nm, file, NULL );
+#define OPT_DESCR_ARG( nm )   OPT_TYPED_ARG( nm, descr, NULL );
 #define OPT_LIST_ARG( nm )    OPT_TYPED_ARG( nm, list, NULL );
 
 #define NO_MORE_ARGS( ) \

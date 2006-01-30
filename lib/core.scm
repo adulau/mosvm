@@ -183,44 +183,44 @@
   ((output-port-write-fn output-port) output-port data))
 
 (define-class <file-output-port> <output-port>
-              (make-file-output-port close-fn write-fn file)
+              (make-file-output-port close-fn write-fn descr)
               file-output-port?
-              (file file-port-file))
+              (descr file-port-descr))
 
 ;;; Stripped in functionality, but R5RS compliant.
 (define (open-output-file path)
   (let ((f (file-open path "wc")))
-    (file-seek f 0)
-    (make-file-output-port (lambda (port) (file-close f))
-                           (lambda (port data) (file-write f data)) 
+    (seek-file f 0)
+    (make-file-output-port (lambda (port) (close-descr f))
+                           (lambda (port data) (write-descr f data)) 
                            f)))
 
 (define (write-byte byte (<file-output-port> port))
-  (file-write-byte (file-port-file port) byte))
+  (write-descr-byte (file-port-descr port) byte))
 
 (define (write-word word (<file-output-port> port))
-  (file-write-word (file-port-file port) word))
+  (write-descr-word (file-port-descr port) word))
 
 (define (write-quad quad (<file-output-port> port))
-  (file-write-quad (file-port-file port) quad))
+  (write-descr-quad (file-port-descr port) quad))
 
 (define-class <file-input-port> <input-port>
-              (make-file-input-port close-fn read-fn file)
+              (make-file-input-port close-fn read-fn descr)
               file-input-port?
-              (file file-port-file))
+              (descr file-port-descr))
 
 ;;; Similar to an R5RS file, but returns raw strings.
 (define (open-input-file path)
   (let ((f (file-open path "r")))
     (make-file-input-port 
-      (lambda (port) (file-close f))
+      (lambda (port) (close-descr f))
       (lambda (port) 
-        (let ((data (file-read f 16384)))
+        (let ((data (read-descr f 16384)))
           (if (= 0 (string-length data)) <eof> data))) 
       f)))
 
 (define (read-all (<file-input-port> input-port))
-  (file-read-all (file-port-file input-port)))
+  (read-descr-all (file-port-descr input-port)))
 
 ;;; Redundant, but R5RS specified
 (define (close-output-port (<output-port> port))

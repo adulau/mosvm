@@ -1,3 +1,23 @@
+- ?/??/????, Introduction of TCP primitives and Alarms.
+  * Moved resume functionality out of mqo_prim_resume to mqo_resume in exec.c
+    for use by alarm.c
+  * Moved mqo_set_key and mqo_dict_key out of prims/core.c to memory.c for use
+    by other mosvm functions.
+  * Renamed file prims, changing all mentions of 'file' to descr with the
+    exception of file-open, file-seek, file-pos, file-reset.  Also made these
+    identifiers more conversational -- verb-type-modifier, e.g. 
+    write-descr-quad and read-descr-all
+  * Added the globals primitive to core, which returns a set containing all
+    of the symbols currently assigned a global value.
+  + t Added alarm.c, which implements a table of processes suspended as they
+    wait to read or write to a specified descriptor.
+  + t Added net.c, which provides the ability to resolve ipv4 addresses, connect
+    to TCP services, and serve TCP connections.
+  + t Added a call to continue to mqo_process_alarms, to be used at the end of
+    a sweep through active processes.
+  + t Added prims/net.c to provide net.c functionality to MOSVM applications.
+  + Added primitives to prims/os.c to support alarms.
+
 - 1/28/2006, Resume Transfers to Suspend
   * Altered the suspend primitive to not place a return value on the stack
     prior to suspending the process.

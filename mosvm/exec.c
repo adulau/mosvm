@@ -125,6 +125,7 @@ void mqo_continue( ){
                 }
                 flag = 0;
             }
+            mqo_process_alarms( );
         }
     }else{
         MQO_CONTINUE( );
@@ -548,7 +549,6 @@ void mqo_init_exec_subsystem( ){
     mqo_tadpole->inst[1].code = 0; //STOP
     mqo_tadpole->inst[1].prim = mqo_op_table[ 0 ].prim;
 }
-
 void mqo_use_process( mqo_process p ){
     mqo_vmstate s;
 
@@ -575,4 +575,9 @@ void mqo_use_process( mqo_process p ){
     MQO_RI = s->ri;
     MQO_EP = s->ep;
     MQO_GP = s->gp;
+}
+void mqo_resume( mqo_process process, mqo_value value ){
+    process->status = mqo_ps_paused;
+    process->state->sv->data[ process->state->si++ ] = value;
+    mqo_resched_process( process );
 }

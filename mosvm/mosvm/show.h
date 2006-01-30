@@ -43,7 +43,7 @@ void mqo_show_closure( mqo_closure s );
 void mqo_show_symbol( mqo_symbol s );
 void mqo_show_integer( mqo_integer i );
 void mqo_show_string( mqo_string a );
-void mqo_show_file( mqo_file a );
+void mqo_show_descr( mqo_descr a );
 void mqo_show_tree( mqo_tree a, mqo_word ct );
 void mqo_space( );
 void mqo_newline( );

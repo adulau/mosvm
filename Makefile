@@ -33,7 +33,7 @@ test-%: test/%.mo $(MOSVM) $(MODS)
 
 # And the other for producing MO from MS.
 # MS files are MOSVM source files that are only valid in MOSVM.
-%.mo: %.ms $(MOSVM) $(SEED)
+%.mo: %.ms $(MOSVM) $(SEED) bin/mosc.mo
 	$(MOSVM) bin/mosc.mo $< $@
 
 $(MOSVM_STUB): mosvm/*.[ch] mosvm/mosvm/*.[ch] mosvm/prims/*.[ch]

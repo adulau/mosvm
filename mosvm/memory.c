@@ -206,19 +206,19 @@ mqo_multimethod mqo_make_multimethod(
     mt->next = next;
     return mt;
 }
-void mqo_file_finalizer( void* ptr, void* cd ){
+void mqo_descr_finalizer( void* ptr, void* cd ){
     if( mqo_trace_vm ){
-        printf( "Finalizing file descriptor " );
-        mqo_show_file( (mqo_file)ptr );
+        printf( "Finalizing descriptor " );
+        mqo_show_descr( (mqo_descr)ptr );
         printf( "..\n" );
     }
-    if( ! ((mqo_file)ptr)->closed )close( ((mqo_file)ptr)->fd );
+    if( ! ((mqo_descr)ptr)->closed )close( ((mqo_descr)ptr)->fd );
 }
-mqo_file mqo_make_file( mqo_string path, int fd ){
-    mqo_file f = MQO_ALLOC( mqo_file, 0 );
+mqo_descr mqo_make_descr( mqo_string path, int fd ){
+    mqo_descr f = MQO_ALLOC( mqo_descr, 0 );
     f->path = path;
     f->fd = fd;
-    GC_register_finalizer( f, mqo_file_finalizer, NULL, NULL, NULL );
+    GC_register_finalizer( f, mqo_descr_finalizer, NULL, NULL, NULL );
     return f;
 }
 
@@ -256,7 +256,7 @@ MQO_DEFN_TYPE( process );
 MQO_DEFN_TYPE( integer );
 MQO_DEFN_TYPE( boolean );
 MQO_DEFN_TYPE( multimethod );
-MQO_DEFN_TYPE( file );
+MQO_DEFN_TYPE( descr );
 MQO_DEFN_TYPE( tc );
 MQO_DEFN_TYPE( set );
 MQO_DEFN_TYPE( dict );
@@ -420,6 +420,11 @@ mqo_pair mqo_req_list( mqo_value v, const char* s ){
     mqo_errf( mqo_es_args, "ss", "expected non-empty list for", s ); 
 }
 
+mqo_value mqo_set_key( mqo_value item ){ return item; }
+mqo_value mqo_dict_key( mqo_value item ){ 
+    return mqo_car( mqo_pair_fv( item ) ); 
+}
+
 void mqo_init_memory_subsystem( ){
     mqo_symbol sym;
     
@@ -441,7 +446,7 @@ void mqo_init_memory_subsystem( ){
     MQO_BIND_TYPE( integer, NULL, NULL );
     MQO_BIND_TYPE( boolean, NULL, NULL );
     MQO_BIND_TYPE( multimethod, NULL, NULL );
-    MQO_BIND_TYPE( file, NULL, NULL );
+    MQO_BIND_TYPE( descr, NULL, NULL );
     MQO_BIND_TYPE( tree, NULL, NULL );
     
     MQO_BIND_TYPE( atom, NULL, NULL );

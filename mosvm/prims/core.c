@@ -1155,11 +1155,18 @@ MQO_BEGIN_PRIM( "dump-lexicon", dump_lexicon )
     MQO_NO_RESULT( );
 MQO_END_PRIM( dump_lexicon )
 
-//TODO: Move to memory.h
-mqo_value mqo_set_key( mqo_value item ){ return item; }
-mqo_value mqo_dict_key( mqo_value item ){ 
-    return mqo_car( mqo_pair_fv( item ) ); 
-}
+MQO_BEGIN_PRIM( "globals", globals )
+    NO_MORE_ARGS( );
+    mqo_set globals = mqo_make_tree( mqo_set_key );
+    mqo_node node = mqo_first_node( mqo_lexicon );
+    while( node = mqo_next_node( node ) ){
+        mqo_symbol key = mqo_symbol_fv( node->data );
+        if( ! mqo_is_void( key->value ) ){
+            mqo_tree_insert( globals, node->data );
+        }
+    }
+    MQO_RESULT( mqo_vf_set( globals ) );
+MQO_END_PRIM( globals );
 
 MQO_BEGIN_PRIM( "set", set )
     mqo_set set = mqo_make_tree( mqo_set_key );
@@ -1571,9 +1578,7 @@ MQO_BEGIN_PRIM( "resume", resume )
         mqo_errf( mqo_es_vm, "sx", "only suspended processes may be resumed" ,
                                     v_process );
     }else{
-        process->status = mqo_ps_paused;
-        process->state->sv->data[ process->state->si++ ] = value;
-        mqo_resched_process( process );
+        mqo_resume( process, value );
     }
     
     MQO_NO_RESULT( );
@@ -1765,6 +1770,8 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( process_status );
     MQO_BIND_PRIM( active_process );
     MQO_BIND_PRIM( processq );
+
+    MQO_BIND_PRIM( globals );
 
     mqo_symbol_fs( "atom" )->value = mqo_make_atom( );
 }

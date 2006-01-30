@@ -181,6 +181,8 @@ void mqo_resched_process( mqo_process process );
 void mqo_unsched_process( mqo_process process );
 // Ensures the supplied process is not scheduled for execution.
 
+void mqo_resume( mqo_process process, mqo_value value );
+
 extern mqo_boolean mqo_trace_vm;
 #endif
 

@@ -223,11 +223,11 @@ MQO_DECL_TYPE( tc );
 typedef mqo_pair mqo_tc;
 MQO_TYPE_INLINES( tc );
 
-MQO_BEGIN_TYPE( file )
+MQO_BEGIN_TYPE( descr )
     int closed:1;
     int fd;
     mqo_string path;
-MQO_END_TYPE( file )
+MQO_END_TYPE( descr )
 
 typedef mqo_value (*mqo_key_fn) (mqo_value);
 
@@ -301,7 +301,7 @@ mqo_guard mqo_make_guard( mqo_value fn, mqo_integer ri, mqo_integer si, mqo_prog
 mqo_closure mqo_make_closure( mqo_program cp, mqo_instruction ip, mqo_pair ep );
 mqo_vector mqo_make_vector( mqo_integer length );
 mqo_program mqo_make_program( mqo_integer length );
-mqo_file mqo_make_file( mqo_string path, int fd );
+mqo_descr mqo_make_descr( mqo_string path, int fd );
 
 static inline mqo_integer mqo_vector_length( mqo_vector v ){ 
     return v->length; 
@@ -400,4 +400,8 @@ mqo_pair mqo_last_pair( mqo_pair p );
 mqo_list mqo_req_list( mqo_value v, const char* s );
 
 mqo_instruction mqo_program_ref( mqo_program p, mqo_integer i );
+
+mqo_value mqo_set_key( mqo_value item );
+mqo_value mqo_dict_key( mqo_value item ); 
+
 #endif

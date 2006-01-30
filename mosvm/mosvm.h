@@ -23,11 +23,15 @@
 #include "mosvm/show.h"
 #include "mosvm/thaw.h"
 #include "mosvm/tavl.h"
+#include "mosvm/net.h"
+#include "mosvm/alarm.h"
 
 extern mqo_integer mqo_argc;
 extern mqo_pair mqo_argv;
 
 void mqo_bind_core_prims( );
 void mqo_bind_os_prims( );
+void mqo_bind_progn_prims( );
+void mqo_bind_net_prims( );
 
 #endif

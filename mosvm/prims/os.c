@@ -109,57 +109,57 @@ MQO_BEGIN_PRIM( "file-open", file_open )
     if( fd == -1 ){
         mqo_errf( mqo_es_fs, "sxx", strerror( errno ), v_path, v_flags );
     }else{
-        MQO_RESULT( mqo_vf_file( mqo_make_file( path, fd ) ) );
+        MQO_RESULT( mqo_vf_descr( mqo_make_descr( path, fd ) ) );
     }
     MQO_RESULT( mqo_vf_true( ) );
 MQO_END_PRIM( file_open )
 
 MQO_BEGIN_PRIM( "open-stdin", open_stdin )
     NO_MORE_ARGS( );
-    MQO_RESULT( mqo_vf_file( mqo_make_file( mqo_string_fs( "<stdin>" ), STDIN_FILENO ) ) );
+    MQO_RESULT( mqo_vf_descr( mqo_make_descr( mqo_string_fs( "<stdin>" ), STDIN_FILENO ) ) );
 MQO_END_PRIM( open_stdin )
 
 MQO_BEGIN_PRIM( "open-stdout", open_stdout )
     NO_MORE_ARGS( );
-    MQO_RESULT( mqo_vf_file( mqo_make_file( mqo_string_fs( "<stdout>" ), STDOUT_FILENO ) ) );
+    MQO_RESULT( mqo_vf_descr( mqo_make_descr( mqo_string_fs( "<stdout>" ), STDOUT_FILENO ) ) );
 MQO_END_PRIM( open_stdout )
 
 MQO_BEGIN_PRIM( "open-stderr", open_stderr )
     NO_MORE_ARGS( );
-    MQO_RESULT( mqo_vf_file( mqo_make_file( mqo_string_fs( "<stderr>" ), STDERR_FILENO ) ) );
+    MQO_RESULT( mqo_vf_descr( mqo_make_descr( mqo_string_fs( "<stderr>" ), STDERR_FILENO ) ) );
 MQO_END_PRIM( open_stderr )
 
-MQO_BEGIN_PRIM( "file-path", file_path )
-    REQ_FILE_ARG( file );
+MQO_BEGIN_PRIM( "descr-path", descr_path )
+    REQ_DESCR_ARG( descr );
     NO_MORE_ARGS( )
 
-    MQO_RESULT( mqo_vf_string( file->path ) );
-MQO_END_PRIM( file_path )
+    MQO_RESULT( mqo_vf_string( descr->path ) );
+MQO_END_PRIM( descr_path )
 
-MQO_BEGIN_PRIM( "file-fd", file_fd )
-    REQ_FILE_ARG( file );
+MQO_BEGIN_PRIM( "descr-fd", descr_fd )
+    REQ_DESCR_ARG( descr );
     NO_MORE_ARGS( )
 
-    MQO_RESULT( mqo_vf_integer( file->fd ) );
-MQO_END_PRIM( file_fd )
+    MQO_RESULT( mqo_vf_integer( descr->fd ) );
+MQO_END_PRIM( descr_fd )
 
-MQO_BEGIN_PRIM( "file?", fileq )
+MQO_BEGIN_PRIM( "descr?", descrq )
     REQ_VALUE_ARG( value );
     NO_MORE_ARGS( )
 
-    MQO_RESULT( mqo_vf_boolean( mqo_is_file( value ) ) );
-MQO_END_PRIM( fileq )
+    MQO_RESULT( mqo_vf_boolean( mqo_is_descr( value ) ) );
+MQO_END_PRIM( descrq )
 
-MQO_BEGIN_PRIM( "file-read", file_read )
-    REQ_FILE_ARG( file );
+MQO_BEGIN_PRIM( "read-descr", read_descr )
+    REQ_DESCR_ARG( descr );
     REQ_INTEGER_ARG( count );
     NO_MORE_ARGS( )
 
     mqo_string data = mqo_make_string( count );
-    count = read( file->fd, data->data, count );
+    count = read( descr->fd, data->data, count );
     
     if( count == -1 ){
-        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_file );
+        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
         GC_free( data );
         MQO_NO_RESULT( );
     }else{
@@ -168,21 +168,21 @@ MQO_BEGIN_PRIM( "file-read", file_read )
         data->length = count;
         MQO_RESULT( mqo_vf_string( data ) );
     }
-MQO_END_PRIM( file_read )
+MQO_END_PRIM( read_descr )
 
-MQO_BEGIN_PRIM( "file-read-all", file_read_all )
-    REQ_FILE_ARG( file );
+MQO_BEGIN_PRIM( "read-descr-all", read_descr_all )
+    REQ_DESCR_ARG( descr );
     NO_MORE_ARGS( )
     
-    mqo_integer ofs = lseek( file->fd, 0, SEEK_CUR );
-    mqo_integer len = lseek( file->fd, 0, SEEK_END ) - ofs;
-    lseek( file->fd, ofs, SEEK_SET );
+    mqo_integer ofs = lseek( descr->fd, 0, SEEK_CUR );
+    mqo_integer len = lseek( descr->fd, 0, SEEK_END ) - ofs;
+    lseek( descr->fd, ofs, SEEK_SET );
     
     mqo_string data = mqo_make_string( len );
-    len = read( file->fd, data->data, len );
+    len = read( descr->fd, data->data, len );
     
     if( len == -1 ){
-        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_file );
+        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
         GC_free( data );
         MQO_NO_RESULT( );
     }else{
@@ -190,131 +190,131 @@ MQO_BEGIN_PRIM( "file-read-all", file_read_all )
         data->length = len;
         MQO_RESULT( mqo_vf_string( data ) );
     }
-MQO_END_PRIM( file_read_all )
+MQO_END_PRIM( read_descr_all )
 
-MQO_BEGIN_PRIM( "file-close", file_close )
-    REQ_FILE_ARG( file );
+MQO_BEGIN_PRIM( "close-descr", close_descr )
+    REQ_DESCR_ARG( descr );
     NO_MORE_ARGS( );
     
-    if( close( file->fd ) == -1 );
-    file->closed = 1;
+    if( close( descr->fd ) == -1 );
+    descr->closed = 1;
 
     MQO_NO_RESULT( );
-MQO_END_PRIM( file_close )
+MQO_END_PRIM( close_descr )
 
-MQO_BEGIN_PRIM( "file-write", file_write )
-    REQ_FILE_ARG( file );
+MQO_BEGIN_PRIM( "write-descr", write_descr )
+    REQ_DESCR_ARG( descr );
     REQ_STRING_ARG( data );
     NO_MORE_ARGS( )
     
     ssize_t result = write( 
-        file->fd, mqo_sf_string( data ), mqo_string_length( data )
+        descr->fd, mqo_sf_string( data ), mqo_string_length( data )
     );
 
     if( result == -1 ){
-        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_file );
+        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
     };
     
     //TODO: Process failed writes.
 
     MQO_NO_RESULT( )
-MQO_END_PRIM( file_write )
+MQO_END_PRIM( write_descr )
 
-MQO_BEGIN_PRIM( "file-write-byte", file_write_byte )
-    REQ_FILE_ARG( file );
+MQO_BEGIN_PRIM( "write-descr-byte", write_descr_byte )
+    REQ_DESCR_ARG( descr );
     REQ_INTEGER_ARG( byte );
     NO_MORE_ARGS( )
     
     mqo_byte data = byte;
-    ssize_t result = write( file->fd, &data, 1 ); 
+    ssize_t result = write( descr->fd, &data, 1 ); 
 
     if( result == -1 ){
-        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_file );
+        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
     };
     
     //TODO: Process failed writes.
 
     MQO_NO_RESULT( )
-MQO_END_PRIM( file_write_byte )
+MQO_END_PRIM( write_descr_byte )
 
-MQO_BEGIN_PRIM( "file-write-word", file_write_word )
-    REQ_FILE_ARG( file );
+MQO_BEGIN_PRIM( "write-descr-word", write_descr_word )
+    REQ_DESCR_ARG( descr );
     REQ_INTEGER_ARG( word );
     NO_MORE_ARGS( )
     
     mqo_word data = htons( word );
-    ssize_t result = write( file->fd, &data, 2 ); 
+    ssize_t result = write( descr->fd, &data, 2 ); 
 
     if( result == -1 ){
-        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_file );
+        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
     };
     
     //TODO: Process failed writes.
 
     MQO_NO_RESULT( )
-MQO_END_PRIM( file_write_word )
+MQO_END_PRIM( write_descr_word )
 
-MQO_BEGIN_PRIM( "file-write-quad", file_write_quad )
-    REQ_FILE_ARG( file );
+MQO_BEGIN_PRIM( "write-descr-quad", write_descr_quad )
+    REQ_DESCR_ARG( descr );
     REQ_INTEGER_ARG( quad );
     NO_MORE_ARGS( )
     
     mqo_long data = htonl( quad );
-    ssize_t result = write( file->fd, &data, 4 ); 
+    ssize_t result = write( descr->fd, &data, 4 ); 
 
     if( result == -1 ){
-        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_file );
+        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
     };
     
     //TODO: Process failed writes.
 
     MQO_NO_RESULT( )
-MQO_END_PRIM( file_write_quad )
+MQO_END_PRIM( write_descr_quad )
 
-MQO_BEGIN_PRIM( "file-skip", file_skip )
-    REQ_FILE_ARG( file );
+MQO_BEGIN_PRIM( "skip-file", skip_file )
+    REQ_DESCR_ARG( descr );
     REQ_INTEGER_ARG( offset );
     NO_MORE_ARGS( );
 
-    offset = lseek( file->fd, offset, SEEK_CUR );
+    offset = lseek( descr->fd, offset, SEEK_CUR );
 
     if( offset == -1 ){
-        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_file );
+        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
     }
 
     MQO_RESULT( mqo_vf_integer( offset ) );
-MQO_END_PRIM( file_skip )
+MQO_END_PRIM( skip_file )
 
-MQO_BEGIN_PRIM( "file-pos", file_pos )
-    REQ_FILE_ARG( file );
+MQO_BEGIN_PRIM( "pos-file", pos_file )
+    REQ_DESCR_ARG( descr );
     NO_MORE_ARGS( );
 
-    mqo_integer offset = lseek( file->fd, 0, SEEK_CUR );
+    mqo_integer offset = lseek( descr->fd, 0, SEEK_CUR );
 
     if( offset == -1 ){
-        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_file );
+        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
     }
 
     MQO_RESULT( mqo_vf_integer( offset ) );
-MQO_END_PRIM( file_pos )
+MQO_END_PRIM( pos_file )
 
-MQO_BEGIN_PRIM( "file-seek", file_seek )
-    REQ_FILE_ARG( file );
+MQO_BEGIN_PRIM( "seek-file", seek_file )
+    REQ_DESCR_ARG( descr );
     REQ_INTEGER_ARG( offset );
     NO_MORE_ARGS( );
     
     if( offset < 0 ){
-        offset = lseek( file->fd, offset + 1, SEEK_END );
+        offset = lseek( descr->fd, offset + 1, SEEK_END );
     }else{
-        offset = lseek( file->fd, offset, SEEK_SET );
+        offset = lseek( descr->fd, offset, SEEK_SET );
     };
 
     if( offset == -1 ){
-        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_file );
+        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
     };
 
     MQO_RESULT( mqo_vf_integer( offset ) );
-MQO_END_PRIM( file_seek )
+MQO_END_PRIM( seek_file )
 
 void mqo_bind_os_prims( ){
     mqo_es_fs = mqo_symbol_fs( "fs" );
@@ -330,21 +330,23 @@ void mqo_bind_os_prims( ){
         mqo_vf_string( mqo_string_fs( "\n" ) );
 #endif
     MQO_BIND_PRIM( file_open );
-    MQO_BIND_PRIM( file_close );
-    MQO_BIND_PRIM( fileq );
-    MQO_BIND_PRIM( file_path );
-    MQO_BIND_PRIM( file_fd );
-    MQO_BIND_PRIM( file_read );
-    MQO_BIND_PRIM( file_read_all );
-    MQO_BIND_PRIM( file_write );
-    MQO_BIND_PRIM( file_write_byte );
-    MQO_BIND_PRIM( file_write_word );
-    MQO_BIND_PRIM( file_write_quad );
-    MQO_BIND_PRIM( file_skip );
-    MQO_BIND_PRIM( file_seek );
-    MQO_BIND_PRIM( file_pos );
+    MQO_BIND_PRIM( close_descr );
+    MQO_BIND_PRIM( descrq );
+    MQO_BIND_PRIM( descr_path );
+    MQO_BIND_PRIM( descr_fd );
+    MQO_BIND_PRIM( read_descr );
+    MQO_BIND_PRIM( read_descr_all );
+    MQO_BIND_PRIM( write_descr );
+    MQO_BIND_PRIM( write_descr_byte );
+    MQO_BIND_PRIM( write_descr_word );
+    MQO_BIND_PRIM( write_descr_quad );
+    MQO_BIND_PRIM( skip_file );
+    MQO_BIND_PRIM( seek_file );
+    MQO_BIND_PRIM( pos_file );
     MQO_BIND_PRIM( open_stdin );
     MQO_BIND_PRIM( open_stdout );
     MQO_BIND_PRIM( open_stderr );
+    //TODO: Add is-file-descr?, is-input-descr?, is-output-descr? and 
+    //      is-tcp-descr? prims.
 }
 
