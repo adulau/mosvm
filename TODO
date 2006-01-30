@@ -1,4 +1,19 @@
-+ Add the Alarm API.
++ Add the Alarm API/2
+  (timed-alarm time process) -> alarm
+    Resumes the specified process some time after timeout 
+    milliseconds with 'time
+
+  (alarm-time alarm)
+    Returns the time scheduled for a timed alarm.
+
+  (define (recv (<connection> conn))
+    (define why (wait (connection-read-alarm conn)
+                      (connection-timeout alarm conn)))
+    (cond
+      (read-alarm? why) (read-descr (connection-descr conn))
+      (timeout-alarm? why) <timeout>))
+
++ Add the Alarm API/1
   (read-alarm descr process) -> alarm
     Resumes the specified process when the supplied descr
     is ready for a read, or closed, with 'read 
@@ -6,10 +21,6 @@
   (write-alarm descr process) -> alarm
     Resumes the specified process when the supplied descr
     is ready for a write, or closed, with 'write
-
-  (timed-alarm time process) -> alarm
-    Resumes the specified process some time after timeout 
-    milliseconds with 'time
 
   (enable-alarm alarm) -> alarm
     Reactivates the supplied task entry.
@@ -37,36 +48,21 @@
   (alarm-descr alarm)
     Returns the file descriptor associated with a read or write alarm.
 
-  (alarm-time alarm)
-    Returns the time scheduled for a timed alarm.
-
-  (suspend . alarms)
+  (wait . alarms)
     Suspends the process until one of the alarms specified is signalled.
 
-    (define (recv (<connection> conn))
-      (case (suspend (connection-read-alarm conn)
-                     (connection-timeout-alarm conn))
-        ((read) (read-descr (connection-descr conn)))
-        ((timeout) <timeout>)))
-    
     Either requires a soft implementation, or processes must be marked with the
     alarms they are waiting on.
     
-  Each alarm table is indexed by the FD / time of next exit.
-
-  MQO_BEGIN_TYPE( alarm )
-    mqo_byte    task_type;
-    union {
-        mqo_descr   descr;
-        mqo_integer time;
-    };
-    mqo_process process;
-  MQO_END_TYPE( alarm )
-
   Tasks will not resume processes that are not suspended.
   
   ??? Multiple processes suspended on the same fd??
       Last one wins.
+
+  (define (recv (<connection> conn) timeout)
+    ; Timeout isn't supported in Alarm/1
+    (wait (connection-read-alarm conn))
+    (descr-read (connection-descr conn)))
 
 + Rename file type to descr type.
   (define (recv (<connection> conn) timeout)

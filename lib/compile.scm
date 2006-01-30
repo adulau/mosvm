@@ -535,7 +535,7 @@
                     (signature formal-signature)
                     (slots formal-slots))
 
-(define (method-formals? formals) (pair? (formal-signature formals)))
+(define (method-formals? formals) (formal-signature formals))
 
 (define (parse-signature args)
   (if (any pair? (unkink args))

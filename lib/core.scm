@@ -75,10 +75,13 @@
   (define done #f)
   (define found #f)
   (until done
-         (cond ((memq '() lists) (set! done #t))
-               ((apply fn lists) (set! found #t)
-                                 (set! done #t))
-               (else (set! lists (map-cdr lists)))))
+         (cond ((memq '() lists) 
+                (set! done #t))
+               ((apply fn (map-car lists)) 
+                (set! found #t)
+                (set! done #t))
+               (else 
+                 (set! lists (map-cdr lists)))))
   found)
 
 ;;; Underpinnings of the define-class method of constructing new

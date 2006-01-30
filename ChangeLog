@@ -9,6 +9,9 @@
     write-descr-quad and read-descr-all
   * Added the globals primitive to core, which returns a set containing all
     of the symbols currently assigned a global value.
+  * Fixed any, which was not correctly using the items of the supplied lists.
+  * Fixed a bug that would cause all functions created with define forms
+    to be regarded as multimethods, and not simple closures.
   + t Added alarm.c, which implements a table of processes suspended as they
     wait to read or write to a specified descriptor.
   + t Added net.c, which provides the ability to resolve ipv4 addresses, connect
