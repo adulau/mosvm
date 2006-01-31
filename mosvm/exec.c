@@ -20,6 +20,8 @@
 #include <stdio.h>
 #include <setjmp.h>
 #include <stdarg.h>
+#include <string.h>
+#include <errno.h>
 
 mqo_boolean mqo_trace_vm = 0;
 mqo_symbol mqo_es_vm = NULL;
@@ -589,4 +591,14 @@ void mqo_resume( mqo_process process, mqo_value value ){
         process->state->sv->data[ process->state->si++ ] = value;
     }
     mqo_resched_process( process );
+}
+void mqo_report_os_error( ){
+    mqo_errf( mqo_es_vm, "s", strerror( errno ) );
+}
+int mqo_os_error( int code ){
+    if( code == -1 ){
+        mqo_report_os_error( );
+    }else{
+        return code;
+    }
 }

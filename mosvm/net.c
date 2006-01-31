@@ -32,7 +32,7 @@
 mqo_integer mqo_resolve( mqo_string name ){
     struct hostent *entry = gethostbyname( mqo_sf_string( name ) );
     if( !entry ){ 
-        //TODO: Signal an error.
+        mqo_report_os_error( );
     //TODO }else if( entry->h_addrtype != ... ){
         //TODO: Signal an error.
     }else if( entry->h_length != 4 ){
@@ -66,14 +66,9 @@ mqo_descr mqo_serve_tcp( mqo_integer port ){
     addr.sin_addr.s_addr = htonl( INADDR_ANY );
     addr.sin_port = htons( port );
 
-    //TODO: Watch for errno.
-    int server_fd = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
-   
-    //TODO: Watch for errno.
-    bind( server_fd, (struct sockaddr*)&addr, sizeof( addr ) );
-    
-    //TODO: Watch for errno.
-    listen( server_fd, 5 ); 
+    int server_fd = mqo_os_error( socket( AF_INET, SOCK_STREAM, IPPROTO_TCP ) );
+    mqo_os_error( bind( server_fd, (struct sockaddr*)&addr, sizeof( addr ) ) );
+    mqo_os_error( listen( server_fd, 5 ) ); 
     
     //TODO: Create a server name.
     mqo_string server_name = mqo_string_fs( "tcp-server" );
@@ -85,8 +80,7 @@ mqo_descr mqo_accept( mqo_descr server ){
 
     int server_fd = server->fd;
     
-    //TODO: Watch for errno.
-    int conn_fd = accept( server->fd, (struct sockaddr*)&addr, &addr_sz );
+    int conn_fd = mqo_os_error( accept( server->fd, (struct sockaddr*)&addr, &addr_sz ) );
     
     mqo_string client_name = mqo_string_fs( "tcp-server-conn" );
     return mqo_make_descr( client_name, conn_fd );

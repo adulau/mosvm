@@ -184,5 +184,8 @@ void mqo_unsched_process( mqo_process process );
 void mqo_resume( mqo_process process, mqo_value value );
 
 extern mqo_boolean mqo_trace_vm;
+
+void mqo_report_os_error( );
+int mqo_os_error( int code );
 #endif
 

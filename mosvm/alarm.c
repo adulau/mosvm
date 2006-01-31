@@ -14,7 +14,6 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
 
-//TODO: Insulator for WIN32
 #include <string.h>
 
 #if defined(_WIN32)||defined(__CYGWIN__)
@@ -108,7 +107,8 @@ int mqo_process_alarms( ){
     if( maxfd == -1 ) return 0;
 
     //TODO: We should watch for an error, here.
-    select( maxfd + 1, &reads, &writes, &errors, timeout );
+    maxfd = mqo_os_error( select( maxfd + 1, &reads, &writes, &errors, timeout ) ); 
+    if( ! maxfd )return 1;
 
     node = mqo_first_node( mqo_read_alarms );
     while( node = mqo_next_node( node ) ){
