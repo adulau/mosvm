@@ -1,3 +1,14 @@
++ Add the buffer type.
+  (make-buffer initial-size)
+  (buffer-size)
+  (buffer-append! buffer . items)
+    items may be bytes, buffers or strings.
+  (buffer->string buffer)
+
++ Fix Show.
+  Strings should be wrapped with "..."
+  Any use of show that relied on this, mqo_il_traceback, should be fixed.
+
 + Add the Alarm API/2
   (timed-alarm time process) -> alarm
     Resumes the specified process some time after timeout 
@@ -19,99 +30,6 @@
 
   (timed-alarm? value)
     Returns true if the supplied value is a timed-alarm.
-
-+ Add the Alarm API/1
-  (read-alarm descr process) -> alarm
-    Resumes the specified process when the supplied descr
-    is ready for a read, or closed, with 'read 
-
-  (write-alarm descr process) -> alarm
-    Resumes the specified process when the supplied descr
-    is ready for a write, or closed, with 'write
-
-  (enable-alarm alarm) -> alarm
-    Reactivates the supplied task entry.
-
-  (disable-alarm alarm) -> alarm
-    Deactivates the supplied schedule entry, unless it has already been
-    completed.
-
-  (alarm? value)
-    Returns true if the supplied value is an alarm.
-
-  (write-alarm? value)
-    Returns true if the supplied value is a write-alarm.
-
-  (read-alarm? value)
-    Returns true if the supplied value is a read-alarm.
-
-  (alarm-descr alarm)
-    Returns the file descriptor associated with a read or write alarm.
-
-  (wait . alarms)
-    Suspends the process until one of the alarms specified is signalled.
-
-    Either requires a soft implementation, or processes must be marked with the
-    alarms they are waiting on.
-    
-  Tasks will not resume processes that are not suspended.
-  
-  ??? Multiple processes suspended on the same fd??
-      Last one wins.
-
-  (define (recv (<connection> conn) timeout)
-    ; Timeout isn't supported in Alarm/1
-    (wait (connection-read-alarm conn))
-    (descr-read (connection-descr conn)))
-
-+ Rename file type to descr type.
-  (define (recv (<connection> conn) timeout)
-    (define to (connection-timeout conn))
-    (when to (enable-task to))
-    (define tr (connection-reader conn))
-    (enable-task tr)
-    (case (suspend)
-     ((time) <timeout>)
-     ((read) (read-descr (connection-descr conn)))
-     (else (error 'recv "unrecognized resume of process waiting on packet"))))
-                
-+ Drop buffer field from read-descr and write-descr.
-
-+ Add the network client layer.
-  (make-tcp-client address port) -> conn
-  (make-tcp-server address port) -> conn
-  (tcp-accept server) -> conn
-  (tcp-send conn) -> data
-  (tcp-recv conn) -> data
-  (tcp-close conn | server) -> data
-  (tcp-conn? conn)
-  (tcp-server? server)
- 
-  tcp-recv and tcp-accept will suspend the process instead of blocking 
-  when tcp-continue detects that there are no active processes, it will kick
-  off a poll of all netwait processes.
- 
-  tcp-recv -> tcp-wait-recv -> tcp-recv-now
-  tcp-accept -> tcp-wait-accept -> tcp-accept-now
-  
-  tcp-wait-recv
-    (suspend-on-fd (conn-fd conn))
-  
-  fd-to-process 
-
-  At the end of each spin through the processes:
-      Iterate over entries in the Timer table, activating all entries
-      that should be triggered.
-      
-      If are any pending processes:
-          select timeout will be 0
-      Otherwise, if there are no processes waiting on I/O or Timer:
-      Otherwise, the timeout will be equal to the time until the first
-      entry in the timer table is ready.
-
-      
-      Take the lowest timeout from the timer table.. (TAVL 4tw)
-      If the timeout has been exceeded, resume that proces
 
 + Add the with special form.
   (with ((...))
