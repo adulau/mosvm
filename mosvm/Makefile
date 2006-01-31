@@ -1,7 +1,7 @@
 ROOT=..
 include $(ROOT)/Makefile.cf
 
-OBJECTS=memory.o exec.o main.o show.o thaw.o parse.o tavl.o alarm.o net.o prims/core.o prims/vm.o prims/os.o prims/progn.o prims/net.o
+OBJECTS=memory.o exec.o main.o show.o thaw.o parse.o tavl.o alarm.o net.o prims/core.o prims/vm.o prims/os.o prims/progn.o prims/net.o prims/alarm.o
 
 build: $(MOSVM_STUB) $(GLUE)
 

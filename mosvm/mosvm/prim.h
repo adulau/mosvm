@@ -79,6 +79,7 @@
 #define REQ_SYMBOL_ARG( nm )    REQ_TYPED_ARG( nm, symbol );
 #define REQ_DESCR_ARG( nm )     REQ_TYPED_ARG( nm, descr );
 #define REQ_LIST_ARG( nm )      REQ_TYPED_ARG( nm, list );
+#define REQ_ALARM_ARG( nm )     REQ_TYPED_ARG( nm, alarm );
     
 #define REST_ARGS( nm )         mqo_pair nm = mqo_rest( ct - ai, 1 ); \
                                 ai = ct; \
@@ -125,6 +126,7 @@
 #define OPT_SYMBOL_ARG( nm )  OPT_TYPED_ARG( nm, symbol, NULL );
 #define OPT_DESCR_ARG( nm )   OPT_TYPED_ARG( nm, descr, NULL );
 #define OPT_LIST_ARG( nm )    OPT_TYPED_ARG( nm, list, NULL );
+#define OPT_ALARM_ARG( nm )   OPT_TYPED_ARG( nm, alarm, NULL );
 
 #define NO_MORE_ARGS( ) \
     if( ai < ct ){ \

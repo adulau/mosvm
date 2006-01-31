@@ -13,6 +13,13 @@
       (read-alarm? why) (read-descr (connection-descr conn))
       (timeout-alarm? why) <timeout>))
 
+  (alarm-pending? value)
+    Returns true if the supplied value is an alarm that has not been
+    completed.
+
+  (timed-alarm? value)
+    Returns true if the supplied value is a timed-alarm.
+
 + Add the Alarm API/1
   (read-alarm descr process) -> alarm
     Resumes the specified process when the supplied descr
@@ -32,18 +39,11 @@
   (alarm? value)
     Returns true if the supplied value is an alarm.
 
-  (alarm-pending? value)
-    Returns true if the supplied value is an alarm that has not been
-    completed.
-
   (write-alarm? value)
     Returns true if the supplied value is a write-alarm.
 
   (read-alarm? value)
     Returns true if the supplied value is a read-alarm.
-
-  (timed-alarm? value)
-    Returns true if the supplied value is a timed-alarm.
 
   (alarm-descr alarm)
     Returns the file descriptor associated with a read or write alarm.

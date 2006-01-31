@@ -12,13 +12,13 @@
   * Fixed any, which was not correctly using the items of the supplied lists.
   * Fixed a bug that would cause all functions created with define forms
     to be regarded as multimethods, and not simple closures.
+  * Added net.c, which provides the ability to resolve ipv4 addresses, connect
+    to TCP services, and serve TCP connections.
   + t Added alarm.c, which implements a table of processes suspended as they
     wait to read or write to a specified descriptor.
-  + t Added net.c, which provides the ability to resolve ipv4 addresses, connect
-    to TCP services, and serve TCP connections.
   + t Added a call to continue to mqo_process_alarms, to be used at the end of
     a sweep through active processes.
-  + t Added prims/net.c to provide net.c functionality to MOSVM applications.
+  * Added prims/net.c to provide net.c functionality to MOSVM applications.
   + Added primitives to prims/os.c to support alarms.
 
 - 1/28/2006, Resume Transfers to Suspend

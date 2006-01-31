@@ -44,6 +44,7 @@ void mqo_init_mosvm(){
     mqo_bind_os_prims( );
     mqo_bind_net_prims( );
     mqo_bind_progn_prims( );
+    mqo_bind_alarm_prims( );
 }
 
 void mqo_handle_sigint( int sig ){
