@@ -17,36 +17,36 @@
 #include "../mosvm.h"
 #include "../mosvm/prim.h"
 
-MQO_BEGIN_PRIM( read_alarm, "read-alarm" )
+MQO_BEGIN_PRIM( "read-alarm" , read_alarm)
     REQ_DESCR_ARG( descr );
     OPT_PROCESS_ARG( process );
     NO_MORE_ARGS( );
     if( ! has_process )process = MQO_PP;
-    MQO_RESULT( mqo_vf_alarm( mqo_read_alarm( process, descr ) ) );
+    MQO_RESULT( mqo_vf_alarm( mqo_make_read_alarm( process, descr ) ) );
 MQO_END_PRIM( read_alarm )
 
-MQO_BEGIN_PRIM( write_alarm, "write-alarm" )
+MQO_BEGIN_PRIM( "write-alarm" , write_alarm)
     REQ_DESCR_ARG( descr );
     OPT_PROCESS_ARG( process );
     NO_MORE_ARGS( );
     if( ! has_process )process = MQO_PP;
-    MQO_RESULT( mqo_vf_alarm( mqo_write_alarm( process, descr ) ) );
+    MQO_RESULT( mqo_vf_alarm( mqo_make_write_alarm( process, descr ) ) );
 MQO_END_PRIM( write_alarm )
 
-MQO_BEGIN_PRIM( alarmq, "alarm?" )
+MQO_BEGIN_PRIM( "alarm?" , alarmq)
     REQ_VALUE_ARG( value );
     NO_MORE_ARGS( );
     MQO_RESULT( mqo_vf_boolean( mqo_is_alarm( value ) ) );
 MQO_END_PRIM( alarmq )
 
-MQO_BEGIN_PRIM( read_alarmq, "read-alarm?" )
+MQO_BEGIN_PRIM( "read-alarm?" , read_alarmq)
     REQ_VALUE_ARG( value );
     NO_MORE_ARGS( );
     MQO_RESULT( mqo_vf_boolean( mqo_is_alarm( value ) && 
                                 mqo_alarm_fv( value )->type == mqo_as_read ) );
 MQO_END_PRIM( read_alarmq )
 
-MQO_BEGIN_PRIM( write_alarmq, "write-alarm?" )
+MQO_BEGIN_PRIM( "write-alarm?" , write_alarmq)
     REQ_VALUE_ARG( value );
     NO_MORE_ARGS( );
     MQO_RESULT( mqo_vf_boolean( mqo_is_alarm( value ) && 
@@ -54,20 +54,20 @@ MQO_BEGIN_PRIM( write_alarmq, "write-alarm?" )
                                     mqo_as_write ) );
 MQO_END_PRIM( write_alarmq )
 
-MQO_BEGIN_PRIM( alarm_descr, "alarm-descr" )
+MQO_BEGIN_PRIM( "alarm-descr" , alarm_descr)
     REQ_ALARM_ARG( alarm );
     NO_MORE_ARGS( );
     MQO_RESULT( mqo_vf_descr( alarm->descr ) );
 MQO_END_PRIM( alarm_descr )
 
-MQO_BEGIN_PRIM( enable_alarm, "enable-alarm" )
+MQO_BEGIN_PRIM( "enable-alarm" , enable_alarm)
     REQ_ALARM_ARG( alarm );
     NO_MORE_ARGS( );
     mqo_enable_alarm( alarm );
     MQO_NO_RESULT( );
 MQO_END_PRIM( enable_alarm )
 
-MQO_BEGIN_PRIM( disable_alarm, "disable-alarm" )
+MQO_BEGIN_PRIM( "disable-alarm" , disable_alarm)
     REQ_ALARM_ARG( alarm );
     NO_MORE_ARGS( );
     mqo_disable_alarm( alarm );

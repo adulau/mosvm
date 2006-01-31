@@ -1,4 +1,4 @@
-- ?/??/????, Introduction of TCP primitives and Alarms.
+- 1/30/2006, Introduction of TCP primitives and Alarms.
   * Moved resume functionality out of mqo_prim_resume to mqo_resume in exec.c
     for use by alarm.c
   * Moved mqo_set_key and mqo_dict_key out of prims/core.c to memory.c for use
@@ -14,12 +14,15 @@
     to be regarded as multimethods, and not simple closures.
   * Added net.c, which provides the ability to resolve ipv4 addresses, connect
     to TCP services, and serve TCP connections.
-  + t Added alarm.c, which implements a table of processes suspended as they
+  * Added alarm.c, which implements a table of processes suspended as they
     wait to read or write to a specified descriptor.
-  + t Added a call to continue to mqo_process_alarms, to be used at the end of
+  * Added a call to continue to mqo_process_alarms, to be used at the end of
     a sweep through active processes.
   * Added prims/net.c to provide net.c functionality to MOSVM applications.
-  + Added primitives to prims/os.c to support alarms.
+  * Added prims/alarm.c to support alarms.
+  * Replaced open-stdin and open-stdout with global *stdin* and *stdout*
+  * Removed useless count argument from read-descr and write-descr -- it is
+    always better to use the OS's buffer recommendations.
 
 - 1/28/2006, Resume Transfers to Suspend
   * Altered the suspend primitive to not place a return value on the stack

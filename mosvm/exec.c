@@ -116,16 +116,18 @@ void mqo_continue( ){
             case MQO_NEXT_PROC:
                 if( MQO_PP->next ){
                     mqo_use_process( MQO_PP->next );
-                }else if( mqo_first_process ){
-                    mqo_use_process( mqo_first_process );
                 }else{
-                    MQO_PP = NULL;
-                    MQO_XP = NULL; 
-                    return;
+                    flag = mqo_process_alarms( );
+                    if( mqo_first_process ){
+                        mqo_use_process( mqo_first_process );
+                    }else if( ! flag ){
+                        MQO_PP = NULL;
+                        MQO_XP = NULL; 
+                        return;
+                    }
                 }
                 flag = 0;
             }
-            mqo_process_alarms( );
         }
     }else{
         MQO_CONTINUE( );
@@ -577,7 +579,14 @@ void mqo_use_process( mqo_process p ){
     MQO_GP = s->gp;
 }
 void mqo_resume( mqo_process process, mqo_value value ){
-    process->status = mqo_ps_paused;
-    process->state->sv->data[ process->state->si++ ] = value;
+    if( MQO_PP == process ){
+        if( MQO_PP->status != mqo_ps_running ){
+            MQO_PP->status = mqo_ps_paused;
+        };
+        mqo_push_ds( value );
+    }else{
+        process->status = mqo_ps_paused;
+        process->state->sv->data[ process->state->si++ ] = value;
+    }
     mqo_resched_process( process );
 }

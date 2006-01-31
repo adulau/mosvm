@@ -218,7 +218,7 @@
     (make-file-input-port 
       (lambda (port) (close-descr f))
       (lambda (port) 
-        (let ((data (read-descr f 16384)))
+        (let ((data (read-descr f)))
           (if (= 0 (string-length data)) <eof> data))) 
       f)))
 
@@ -356,6 +356,16 @@
                  (dict-set! *imports* key (if (eq? key *last-imported-key*)
                                             *last-imported-path*
                                             #t)))))
+
+(define (wait . alarms)
+  (define done #f)
+  (define what #f)
+  (for-each enable-alarm alarms)
+  (until done
+    (set! what (suspend))
+    (when (memq what alarms) (set! done #t)))
+  (for-each disable-alarm alarms)
+  what)
 
 (export "lib/core")
 

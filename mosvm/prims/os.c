@@ -114,21 +114,6 @@ MQO_BEGIN_PRIM( "file-open", file_open )
     MQO_RESULT( mqo_vf_true( ) );
 MQO_END_PRIM( file_open )
 
-MQO_BEGIN_PRIM( "open-stdin", open_stdin )
-    NO_MORE_ARGS( );
-    MQO_RESULT( mqo_vf_descr( mqo_make_descr( mqo_string_fs( "<stdin>" ), STDIN_FILENO ) ) );
-MQO_END_PRIM( open_stdin )
-
-MQO_BEGIN_PRIM( "open-stdout", open_stdout )
-    NO_MORE_ARGS( );
-    MQO_RESULT( mqo_vf_descr( mqo_make_descr( mqo_string_fs( "<stdout>" ), STDOUT_FILENO ) ) );
-MQO_END_PRIM( open_stdout )
-
-MQO_BEGIN_PRIM( "open-stderr", open_stderr )
-    NO_MORE_ARGS( );
-    MQO_RESULT( mqo_vf_descr( mqo_make_descr( mqo_string_fs( "<stderr>" ), STDERR_FILENO ) ) );
-MQO_END_PRIM( open_stderr )
-
 MQO_BEGIN_PRIM( "descr-path", descr_path )
     REQ_DESCR_ARG( descr );
     NO_MORE_ARGS( )
@@ -151,22 +136,17 @@ MQO_BEGIN_PRIM( "descr?", descrq )
 MQO_END_PRIM( descrq )
 
 MQO_BEGIN_PRIM( "read-descr", read_descr )
+    static char buffer[ BUFSIZ ];
     REQ_DESCR_ARG( descr );
-    REQ_INTEGER_ARG( count );
     NO_MORE_ARGS( )
 
-    mqo_string data = mqo_make_string( count );
-    count = read( descr->fd, data->data, count );
+    mqo_integer count = read( descr->fd, buffer, BUFSIZ );
     
     if( count == -1 ){
         mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
-        GC_free( data );
         MQO_NO_RESULT( );
     }else{
-        data = GC_realloc( data, sizeof( struct mqo_string_data ) + count + 1 );
-        data->data[count] = 0;
-        data->length = count;
-        MQO_RESULT( mqo_vf_string( data ) );
+        MQO_RESULT( mqo_vf_string( mqo_string_fm( buffer, count ) ) );
     }
 MQO_END_PRIM( read_descr )
 
@@ -202,6 +182,12 @@ MQO_BEGIN_PRIM( "close-descr", close_descr )
     MQO_NO_RESULT( );
 MQO_END_PRIM( close_descr )
 
+MQO_BEGIN_PRIM( "descr-closed?", descr_closedq )
+    REQ_DESCR_ARG( descr );
+    NO_MORE_ARGS( );
+    MQO_RESULT( mqo_vf_boolean( descr->closed ) ); 
+MQO_END_PRIM( descr_closedq )
+
 MQO_BEGIN_PRIM( "write-descr", write_descr )
     REQ_DESCR_ARG( descr );
     REQ_STRING_ARG( data );
@@ -214,8 +200,6 @@ MQO_BEGIN_PRIM( "write-descr", write_descr )
     if( result == -1 ){
         mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
     };
-    
-    //TODO: Process failed writes.
 
     MQO_NO_RESULT( )
 MQO_END_PRIM( write_descr )
@@ -231,8 +215,6 @@ MQO_BEGIN_PRIM( "write-descr-byte", write_descr_byte )
     if( result == -1 ){
         mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
     };
-    
-    //TODO: Process failed writes.
 
     MQO_NO_RESULT( )
 MQO_END_PRIM( write_descr_byte )
@@ -248,8 +230,6 @@ MQO_BEGIN_PRIM( "write-descr-word", write_descr_word )
     if( result == -1 ){
         mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
     };
-    
-    //TODO: Process failed writes.
 
     MQO_NO_RESULT( )
 MQO_END_PRIM( write_descr_word )
@@ -265,8 +245,6 @@ MQO_BEGIN_PRIM( "write-descr-quad", write_descr_quad )
     if( result == -1 ){
         mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
     };
-    
-    //TODO: Process failed writes.
 
     MQO_NO_RESULT( )
 MQO_END_PRIM( write_descr_quad )
@@ -318,6 +296,7 @@ MQO_END_PRIM( seek_file )
 
 void mqo_bind_os_prims( ){
     mqo_es_fs = mqo_symbol_fs( "fs" );
+
 #if defined(_WIN32)||defined(__CYGWIN__)
     mqo_symbol_fs( "*path-sep*" )->value = 
         mqo_vf_string( mqo_string_fs( "\\" ) );
@@ -329,8 +308,19 @@ void mqo_bind_os_prims( ){
     mqo_symbol_fs( "*line-sep*" )->value = 
         mqo_vf_string( mqo_string_fs( "\n" ) );
 #endif
+    mqo_symbol_fs( "*stdin*" )->value =
+        mqo_vf_descr( 
+          mqo_make_descr( mqo_string_fs( "<stdin>" ), STDIN_FILENO ) );
+    mqo_symbol_fs( "*stdout*" )->value =
+        mqo_vf_descr( 
+            mqo_make_descr( mqo_string_fs( "<stdout>" ), STDIN_FILENO ) );
+    mqo_symbol_fs( "*stderr*" )->value =
+        mqo_vf_descr( 
+            mqo_make_descr( mqo_string_fs( "<stderr>" ), STDERR_FILENO ) );
+
     MQO_BIND_PRIM( file_open );
     MQO_BIND_PRIM( close_descr );
+    MQO_BIND_PRIM( descr_closedq );
     MQO_BIND_PRIM( descrq );
     MQO_BIND_PRIM( descr_path );
     MQO_BIND_PRIM( descr_fd );
@@ -343,9 +333,6 @@ void mqo_bind_os_prims( ){
     MQO_BIND_PRIM( skip_file );
     MQO_BIND_PRIM( seek_file );
     MQO_BIND_PRIM( pos_file );
-    MQO_BIND_PRIM( open_stdin );
-    MQO_BIND_PRIM( open_stdout );
-    MQO_BIND_PRIM( open_stderr );
     //TODO: Add is-file-descr?, is-input-descr?, is-output-descr? and 
     //      is-tcp-descr? prims.
 }
