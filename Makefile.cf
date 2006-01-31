@@ -46,6 +46,7 @@ ifeq ($(OS),Cygwin)
 CFLAGS += -mno-cygwin
 CPPFLAGS += -I/usr/local/include
 LIBGC=/usr/local/lib/libgc.a
+LIBS += -lwsock32
 EXE=.exe
 endif
 

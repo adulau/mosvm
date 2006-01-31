@@ -38,30 +38,7 @@ typedef int mqo_boolean;
 #endif
 
 #if defined( _WIN32  )||defined( __CYGWIN__ )
-#undef ntohs
-#undef htons
-#undef ntohl
-#undef htonl
-
-#define htons ntohs
-#define ntohs __ntohs
-#define htonl ntohl
-#define ntohl __ntohl
-
-static inline unsigned long __ntohl (unsigned long x){
-    __asm__ ("xchgb %b0, %h0\n\t"   /* swap lower bytes  */
-	     "rorl  $16, %0\n\t"    /* swap words        */
-	     "xchgb %b0, %h0"       /* swap higher bytes */
-	    : "=q" (x) : "0" (x));
-    return (x);
-}
-
-static inline unsigned short __ntohs (unsigned short x){
-	__asm__ ("xchgb %b0, %h0"       /* swap bytes */
-		: "=q" (x) : "0" (x));
-	return (x);
-}
-
+#include <winsock2.h>
 #endif
 
 #endif

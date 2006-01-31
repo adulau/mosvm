@@ -198,7 +198,7 @@ MQO_BEGIN_PRIM( "write-descr", write_descr )
     );
 
     if( result == -1 ){
-        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
+        mqo_errf( mqo_es_fs, "sxi", strerror( errno ), v_descr, descr->fd );
     };
 
     MQO_NO_RESULT( )
@@ -313,7 +313,7 @@ void mqo_bind_os_prims( ){
           mqo_make_descr( mqo_string_fs( "<stdin>" ), STDIN_FILENO ) );
     mqo_symbol_fs( "*stdout*" )->value =
         mqo_vf_descr( 
-            mqo_make_descr( mqo_string_fs( "<stdout>" ), STDIN_FILENO ) );
+            mqo_make_descr( mqo_string_fs( "<stdout>" ), STDOUT_FILENO ) );
     mqo_symbol_fs( "*stderr*" )->value =
         mqo_vf_descr( 
             mqo_make_descr( mqo_string_fs( "<stderr>" ), STDERR_FILENO ) );
