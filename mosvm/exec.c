@@ -123,7 +123,6 @@ void mqo_continue( ){
                     if( mqo_first_process ){
                         mqo_use_process( mqo_first_process );
                     }else{
-                        printf( "Terminating, since there are no processes post-dispatch.\n" );
                         MQO_PP = NULL;
                         MQO_XP = NULL; 
                         return;
@@ -582,9 +581,6 @@ void mqo_use_process( mqo_process p ){
     MQO_GP = s->gp;
 }
 void mqo_resume( mqo_process process, mqo_value value ){
-    printf( "Resuming process %x with: ", process );
-    mqo_show( value, 5 );
-    mqo_newline( );
     if( MQO_PP == process ){
         if( MQO_PP->status != mqo_ps_running ){
             MQO_PP->status = mqo_ps_paused;

@@ -119,19 +119,6 @@ void mqo_attempt_read( mqo_descr descr ){
     mqo_integer rs;
     mqo_type type;
     
-    printf( "Attempting read of " );
-    mqo_show_descr( descr );
-    mqo_show_cstring( " / " );
-    if( descr->type == MQO_CONSOLE ){
-        printf( "console...\n" );
-    }else if( descr->type == MQO_LISTENER ){
-        printf( "listener...\n" );
-    }else if( descr->type == MQO_SOCKET ){
-        printf( "socket...\n" );
-    }else{
-        printf( "wtf...\n" );
-    };
-
     if( descr->type == MQO_LISTENER ){
         struct sockaddr_storage addr;
         socklen_t len = sizeof( addr );
@@ -151,7 +138,6 @@ void mqo_attempt_read( mqo_descr descr ){
         };
         if( rs == -1 ){
             if( errno == EWOULDBLOCK ){
-                printf( "Failed, would block.\n" );
                 return;
             }else{
                 mqo_report_os_error( );
@@ -242,24 +228,12 @@ int mqo_dispatch_monitors_once( ){
     return 0;
 }
 int mqo_dispatch_monitors( ){
-    printf( "Beginning dispatch of: " );
-    mqo_show_tree( mqo_monitors, 16 );
-    mqo_newline( );
     for(;;){
         int all_quiet = mqo_dispatch_monitors_once( );
         if( mqo_first_process ){
-            printf( "Concluding dispatch of: " );
-            mqo_show_tree( mqo_monitors, 16 );
-            printf( ", because a process is waiting." );
-            mqo_newline( );
             return 1;
         }else if( all_quiet ){
-            printf( "Concluding dispatch of: " );
-            mqo_show_tree( mqo_monitors, 16 );
-            printf( ", because nothing is monitored, and no processes are waiting.\n" );
             return 0;
-        }else{
-            printf( "Repeating dispatch, because there are monitors that have not concluded.\n" );
         }
     }
 }
