@@ -28,6 +28,7 @@
 
 #define MQO_TYPE_INLINES( tn ) \
     mqo_##tn mqo_req_##tn( mqo_value v, const char* f ); \
+    mqo_##tn mqo_req_sub_##tn( mqo_value v, const char* f ); \
     static inline mqo_##tn mqo_##tn##_fv( mqo_value v ){ \
         assert( mqo_value_type( v ) == mqo_##tn##_type ); \
         return (mqo_##tn)v.data; \
@@ -62,6 +63,14 @@
         }else{ \
             mqo_errf( mqo_es_args, "sssx", \
                                    "expected " #tn " for", f, "got", v ); \
+        } \
+    } \
+    mqo_##tn mqo_req_sub_##tn( mqo_value v, const char* f ){ \
+        if( mqo_direct_type( v ) == mqo_##tn##_type ){ \
+            return (mqo_##tn)(v.data); \
+        }else{ \
+            mqo_errf( mqo_es_args, "sssx", \
+                                   "expected subtype of " #tn " for", f, "got", v ); \
         } \
     } \
     struct mqo_type_data mqo_##tn##_type_data = { NULL, NULL, NULL, NULL }; \
@@ -223,11 +232,36 @@ MQO_DECL_TYPE( tc );
 typedef mqo_pair mqo_tc;
 MQO_TYPE_INLINES( tc );
 
+#define MQO_CONSOLE 0
+#define MQO_LISTENER 1
+#define MQO_SOCKET 2
+#define MQO_FILE 3
+
 MQO_BEGIN_TYPE( descr )
-    int closed:1;
-    int fd;
-    mqo_string path;
+    unsigned int type:2;
+    unsigned int closed:1;
+
+    mqo_string name;
+    mqo_integer fd;
+    mqo_process monitor;
+    mqo_value result;
 MQO_END_TYPE( descr )
+
+MQO_DECL_TYPE( socket );
+typedef mqo_descr mqo_socket;
+MQO_TYPE_INLINES( socket );
+
+MQO_DECL_TYPE( listener );
+typedef mqo_descr mqo_listener;
+MQO_TYPE_INLINES( listener );
+
+MQO_DECL_TYPE( console );
+typedef mqo_descr mqo_console;
+MQO_TYPE_INLINES( console );
+
+MQO_DECL_TYPE( file );
+typedef mqo_descr mqo_file;
+MQO_TYPE_INLINES( file );
 
 typedef mqo_value (*mqo_key_fn) (mqo_value);
 
@@ -301,7 +335,11 @@ mqo_guard mqo_make_guard( mqo_value fn, mqo_integer ri, mqo_integer si, mqo_prog
 mqo_closure mqo_make_closure( mqo_program cp, mqo_instruction ip, mqo_pair ep );
 mqo_vector mqo_make_vector( mqo_integer length );
 mqo_program mqo_make_program( mqo_integer length );
-mqo_descr mqo_make_descr( mqo_string path, int fd );
+mqo_descr mqo_make_descr( mqo_string path, int fd, mqo_byte type );
+mqo_socket mqo_make_socket( mqo_string path, int fd );
+mqo_file mqo_make_file( mqo_string path, int fd );
+mqo_listener mqo_make_listener( mqo_string path, int fd );
+mqo_console mqo_make_console( mqo_string path );
 
 static inline mqo_integer mqo_vector_length( mqo_vector v ){ 
     return v->length; 

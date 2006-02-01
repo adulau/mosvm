@@ -20,9 +20,8 @@
               (descr connection-descr))
 
 (define (read (<connection> connection))
-  (define descr (connection-descr connection))
-  (define alarm (read-alarm descr))
-  (wait alarm)
+  (define descr (connection-descr descr))
+  (wait descr)
   (define data (read-descr descr))
   (if (= (string-length data) 0) <eof> data))
 
@@ -39,17 +38,12 @@
   (define descr (connect-tcp host port))
   (make-connection descr))
 
-(define (accept-tcp-connection descr)
-  (define alarm (read-alarm connection))
-  (wait alarm)
-  (make-connection (accept descr)))
-
 (define (spawn-tcp-server port fn)
   (define descr (serve-tcp port))
   (spawn (lambda ()
-            (define alarm (read-alarm descr))
+            (monitor descr)
             (until (descr-closed? descr)
-              (wait alarm)
+              (until (eq? (suspend) descr))
               (show "Got new connection, spawning.")
               (newline)
               (spawn (lambda () (fn (make-connection (accept descr)))))

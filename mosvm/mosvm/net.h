@@ -19,9 +19,17 @@
 
 #include "memory.h"
 
+void mqo_monitor( mqo_value target, mqo_process process );
+void mqo_unmonitor( mqo_value target, mqo_process process );
 mqo_integer mqo_resolve( mqo_string name );
 mqo_descr mqo_connect_tcp( mqo_integer addr, mqo_integer port );
 mqo_descr mqo_serve_tcp( mqo_integer port );
 mqo_descr mqo_accept( mqo_descr server );
+
+extern mqo_console mqo_the_console;
+extern mqo_tree mqo_monitors;
+
+int mqo_dispatch_monitors( );
+void mqo_init_net_subsystem( );
 
 #endif

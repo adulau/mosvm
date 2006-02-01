@@ -214,12 +214,25 @@ void mqo_descr_finalizer( void* ptr, void* cd ){
     }
     if( ! ((mqo_descr)ptr)->closed )close( ((mqo_descr)ptr)->fd );
 }
-mqo_descr mqo_make_descr( mqo_string path, int fd ){
+mqo_descr mqo_make_descr( mqo_string path, int fd, mqo_byte type ){
     mqo_descr f = MQO_ALLOC( mqo_descr, 0 );
-    f->path = path;
+    f->name = path;
     f->fd = fd;
+    f->result = mqo_make_void( );
     GC_register_finalizer( f, mqo_descr_finalizer, NULL, NULL, NULL );
     return f;
+}
+mqo_file mqo_make_file( mqo_string path, int fd ){
+    return mqo_make_descr( path, fd, MQO_FILE );
+}
+mqo_socket mqo_make_socket( mqo_string path, int fd ){
+    return mqo_make_descr( path, fd, MQO_SOCKET );
+}
+mqo_listener mqo_make_listener( mqo_string path, int fd ){
+    return mqo_make_descr( path, fd, MQO_LISTENER );
+}
+mqo_console mqo_make_console( mqo_string path ){
+    return mqo_make_descr( path, 0, MQO_CONSOLE );
 }
 
 mqo_tc mqo_make_tc( ){
@@ -260,9 +273,14 @@ MQO_DEFN_TYPE( descr );
 MQO_DEFN_TYPE( tc );
 MQO_DEFN_TYPE( set );
 MQO_DEFN_TYPE( dict );
+MQO_DEFN_TYPE( file );
+MQO_DEFN_TYPE( socket );
+MQO_DEFN_TYPE( console );
+MQO_DEFN_TYPE( listener);
 
 struct mqo_type_data mqo_atom_type_data = { NULL, NULL, NULL, NULL }; 
 mqo_type mqo_atom_type = &mqo_atom_type_data; 
+
 struct mqo_type_data mqo_void_type_data = { NULL, NULL, NULL, NULL }; 
 mqo_type mqo_void_type = &mqo_void_type_data; 
 
@@ -450,9 +468,14 @@ void mqo_init_memory_subsystem( ){
     MQO_BIND_TYPE( tree, NULL, NULL );
     
     MQO_BIND_TYPE( atom, NULL, NULL );
-    MQO_BIND_TYPE( void, NULL, mqo_atom_type );
+    MQO_BIND_TYPE( void, mqo_atom_type, mqo_atom_type );
 
     MQO_BIND_TYPE( tc, NULL, NULL );
     MQO_BIND_TYPE( set, NULL, NULL );                            
     MQO_BIND_TYPE( dict, NULL, NULL );                            
+
+    MQO_BIND_TYPE( file, mqo_descr_type, mqo_descr_type );
+    MQO_BIND_TYPE( socket, mqo_descr_type, mqo_descr_type );
+    MQO_BIND_TYPE( console, mqo_descr_type, mqo_descr_type );
+    MQO_BIND_TYPE( listener, mqo_descr_type, mqo_descr_type );
 }

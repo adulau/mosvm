@@ -20,27 +20,25 @@
 (import "lib/compile")
 
 (define (repl)
-  (define more (read-alarm *stdin*))
   (define data #f)
   (define done #f)
 
   (until done
-    (newline)
-    (write-descr *stdout* ">> ")
-    (wait more)
-    (guard il-traceback
-      (set! data (read-descr *stdin*))
-      (if (> (string-length data) 0)
-        (begin
-          (set! data (string->exprs data))
-          (set! data (compile data))
-          (set! data (optimize data))
-          (set! data (assemble data))
-          (set! data (data))
-          (write-descr *stdout* ":: ") 
-          (show data))
-        (begin
-          (show "Bye!")
-          (newline)
-          (set! done #t))))))
+    (newline)    
+    (write-descr *console* ">> ")
+    (wait *console*)
+    (set! data (read-descr *console*))
+    (if (> (string-length data) 0)
+      (guard il-traceback
+        (set! data (string->exprs data))
+        (set! data (compile data))
+        (set! data (optimize data))
+        (set! data (assemble data))
+        (set! data (data))
+        (write-descr *console* ":: ") 
+        (show data))
+      (begin
+        (show "Bye!")
+        (newline)
+        (set! done #t)))))
 

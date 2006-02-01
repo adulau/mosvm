@@ -40,25 +40,17 @@ MQO_BEGIN_PRIM( "connect-tcp", connect_tcp )
                   "expected a string or integer for addr", addr );
     }
     
-    MQO_RESULT( mqo_vf_descr( mqo_connect_tcp( addr, port ) ) );
+    MQO_RESULT( mqo_vf_socket( mqo_connect_tcp( addr, port ) ) );
 MQO_END_PRIM( connect_tcp )
 
 MQO_BEGIN_PRIM( "serve-tcp", serve_tcp )
     REQ_INTEGER_ARG( port );
     NO_MORE_ARGS( );
     
-    MQO_RESULT( mqo_vf_descr( mqo_serve_tcp( port ) ) );
+    MQO_RESULT( mqo_vf_listener( mqo_serve_tcp( port ) ) );
 MQO_END_PRIM( serve_tcp )
 
-MQO_BEGIN_PRIM( "accept", accept )
-    REQ_DESCR_ARG( server );
-    NO_MORE_ARGS( );
-
-    MQO_RESULT( mqo_vf_descr( mqo_accept( server ) ) );
-MQO_END_PRIM( accept )
-
 void mqo_bind_net_prims( ){
-    MQO_BIND_PRIM( accept );
     MQO_BIND_PRIM( serve_tcp );
     MQO_BIND_PRIM( connect_tcp );
     MQO_BIND_PRIM( resolve );

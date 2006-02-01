@@ -1,3 +1,23 @@
+- ?/??/????, Refit of Alarms to make Monitors
+  * Removed read-alarm, write-alarm and the alarm type from mosvm.
+  * Added the monitor primitive to os.c.
+  * Added the unmonitor primitive to os.c
+  * Added the monitor field to descr.
+  * Added a result and monitor field to descr.
+  * Added four specialized types of descr; console, file, socket and listener.
+  * Altered primitives in os.c to specify which type of descr they act on.
+  * Added the REQ_ANY_DESCR_ARG macro to mosvm/prim.h
+  * Removed alarm.c in favor of dispatch.c
+  * Added dispatch.c, which employs select to determine if any sockets might
+    be ready to read, then attempts to read to ensure that they are -- a 
+    necessary precaution against select implementations that guess.  (Looking
+    at you, Windows.)
+  * Altered read-descr to use the result buffer on non-file descriptors.
+  * Altered write-descr to use stdout when given the console.
+  * Removed *stdin*, *stdout* and *stderr* in favor of *console*
+  * Altered connect-tcp to create a non-blocking socket.
+  * Altered serve-tcp to create a non-blocking server socket.
+
 - 1/30/2006, Introduction of TCP primitives and Alarms.
   * Moved resume functionality out of mqo_prim_resume to mqo_resume in exec.c
     for use by alarm.c

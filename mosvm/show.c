@@ -230,7 +230,7 @@ void mqo_show_instruction( mqo_instruction i, mqo_word ct ){
 }
 void mqo_show_descr( mqo_descr f ){
     mqo_show_cstring( f->closed ? "<closed descr " : "<open descr " );
-    mqo_show_string( f->path );
+    mqo_show_string( f->name );
     mqo_show_cstring( ">" );
 }
 void _mqo_show_program( mqo_program p, mqo_word* ct ){
@@ -267,7 +267,7 @@ void mqo_show_process( mqo_process p ){
     mqo_show_cstring( "<" );
     mqo_show_symbol( p->status );
     mqo_show_cstring( " process " );
-    mqo_show_integer( p );
+    mqo_show_integer( (mqo_integer)p );
     mqo_show_cstring( ">" );
 }
 void _mqo_show( mqo_value v, mqo_word* ct ){

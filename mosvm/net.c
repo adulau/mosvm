@@ -16,6 +16,8 @@
 
 #include "mosvm.h"
 
+#include <string.h>
+
 #if defined(_WIN32)||defined(__CYGWIN__)
 #include <sys/time.h>
 #include <winsock2.h>
@@ -27,8 +29,18 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
+#include <fcntl.h>
 #endif
 
+void mqo_unblock_socket( mqo_integer s ){
+#if defined( _WIN32 )||defined( __CYGWIN__ )
+    mqo_long unblocking = 1;
+    mqo_os_error( ioctlsocket( s, FIONBIO, &unblocking ) );
+#else
+    mqo_os_error( fcntl( s, F_SETFL, O_NONBLOCK ) );
+#endif
+}
 mqo_integer mqo_resolve( mqo_string name ){
     struct hostent *entry = gethostbyname( mqo_sf_string( name ) );
     if( !entry ){ 
@@ -43,7 +55,7 @@ mqo_integer mqo_resolve( mqo_string name ){
         return ntohl( *(mqo_integer*)(entry->h_addr) );
     }
 }
-mqo_descr mqo_connect_tcp( mqo_integer address, mqo_integer port ){
+mqo_socket mqo_connect_tcp( mqo_integer address, mqo_integer port ){
     static struct sockaddr_in addr;
 
     memset( &addr, 0, sizeof( addr ) );
@@ -54,11 +66,11 @@ mqo_descr mqo_connect_tcp( mqo_integer address, mqo_integer port ){
     int client_fd = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
 
     connect( client_fd, (struct sockaddr*)&addr, sizeof( addr ) );
-
+    mqo_unblock_socket( client_fd );
     mqo_string client_name = mqo_string_fs( "tcp-client-conn" );
-    return mqo_make_descr( client_name, client_fd );
+    return mqo_make_socket( client_name, client_fd );
 }
-mqo_descr mqo_serve_tcp( mqo_integer port ){
+mqo_listener mqo_serve_tcp( mqo_integer port ){
     static struct sockaddr_in addr;
 
     memset( &addr, 0, sizeof( addr ) );
@@ -69,19 +81,180 @@ mqo_descr mqo_serve_tcp( mqo_integer port ){
     int server_fd = mqo_os_error( socket( AF_INET, SOCK_STREAM, IPPROTO_TCP ) );
     mqo_os_error( bind( server_fd, (struct sockaddr*)&addr, sizeof( addr ) ) );
     mqo_os_error( listen( server_fd, 5 ) ); 
-    
-    //TODO: Create a server name.
-    mqo_string server_name = mqo_string_fs( "tcp-server" );
-    return mqo_make_descr( server_name, server_fd );
-}
-mqo_descr mqo_accept( mqo_descr server ){
-    static struct sockaddr_in addr;
-    int addr_sz = sizeof( addr );
+    mqo_unblock_socket( server_fd );    
 
-    int server_fd = server->fd;
-    
-    int conn_fd = mqo_os_error( accept( server->fd, (struct sockaddr*)&addr, &addr_sz ) );
-    
-    mqo_string client_name = mqo_string_fs( "tcp-server-conn" );
-    return mqo_make_descr( client_name, conn_fd );
+    //TODO: Create a server name.
+
+    mqo_string server_name = mqo_string_fs( "tcp-server" );
+    return mqo_make_listener( server_name, server_fd );
 }
+
+mqo_tree mqo_monitors;
+
+void mqo_monitor( mqo_value target, mqo_process process ){
+    assert( mqo_direct_type( target ) == mqo_descr_type );
+    mqo_descr descr = (mqo_descr)target.data;
+
+    if( descr->monitor &&( process != descr->monitor )){
+        mqo_errf( mqo_es_vm, "sx", "object already has a monitor", target );
+    }
+
+    descr->monitor = process; 
+    mqo_tree_insert( mqo_monitors, target);
+}
+void mqo_unmonitor( mqo_value target, mqo_process process ){
+    assert( mqo_direct_type( target ) == mqo_descr_type );
+    mqo_descr descr = (mqo_descr)target.data;
+
+    if( descr->monitor != process ){
+        mqo_errf( mqo_es_vm, "sx", "process is not monitoring object", target );
+    }
+    descr->monitor = NULL; 
+    mqo_tree_remove( mqo_monitors, target );
+}
+void mqo_attempt_read( mqo_descr descr ){
+    static char buffer[ BUFSIZ ];
+    
+    mqo_value result;
+    mqo_integer rs;
+    mqo_type type;
+    
+    printf( "Attempting read of " );
+    if( descr->type == MQO_CONSOLE ){
+        printf( "console...\n" );
+    }else if( descr->type == MQO_LISTENER ){
+        printf( "listener...\n" );
+    }else if( descr->type == MQO_SOCKET ){
+        printf( "socket...\n" );
+    }else{
+        printf( "wtf...\n" );
+    };
+
+    if( descr->type == MQO_LISTENER ){
+        struct sockaddr_storage addr;
+        socklen_t len = sizeof( addr );
+        rs = accept( descr->fd, (struct sockaddr*)&addr, &len);
+        type = mqo_listener_type;
+        if( rs == -1 && errno == EWOULDBLOCK )return;
+        mqo_unblock_socket( rs );
+        mqo_string name = mqo_string_fs( "tcp-incoming" );
+        result = mqo_vf_socket( mqo_make_socket( name, rs ) );
+    }else{
+        if( descr->type == MQO_SOCKET ){
+            rs = recv( descr->fd, buffer, BUFSIZ, 0 );
+            type = mqo_socket_type;
+        }else{
+            rs = read( descr->fd, buffer, BUFSIZ );
+            type = mqo_console_type;
+        }
+        if( rs == -1 && errno == EWOULDBLOCK ){
+            printf( "Failed, would block.\n" );
+            return;
+        }
+        result = mqo_vf_string( mqo_string_fm( buffer, rs ) );
+    }
+
+    descr->result = result;
+    result = mqo_make_value( type, (mqo_integer)descr );
+    if( descr->monitor ){
+        mqo_resume( descr->monitor, result );
+#if defined( _WIN32)||defined(__CYGWIN__)
+        if( descr->type != MQO_CONSOLE )
+#endif
+            mqo_tree_remove( mqo_monitors, result );
+    };
+}
+
+int mqo_dispatch_monitors_once( ){
+    // Returns nonzero if there are no monitors.
+
+    //TODO: Currently, we rely on a blocking connect to guard against
+    //      premature writing.  Ideally, we would actually monitor sockets
+    //      that have not completed connection for WRITE.
+
+    struct timeval *timeout;
+    struct fd_set reads, errors;
+    mqo_descr descr;
+    mqo_node node;
+    int fd, maxfd;
+
+    if( mqo_first_process ){
+        struct timeval timeout_data = { 0, 0 };
+        timeout = &timeout_data;
+    }else{
+        //TODO: This should be modified by the window of the next timed
+        //      alarm.
+        timeout = NULL;
+    }
+    
+    FD_ZERO( &reads );
+    FD_ZERO( &errors );
+    maxfd = -1;
+
+    node = mqo_first_node( mqo_monitors );
+    while( node = mqo_next_node( node ) ){
+        descr = (mqo_descr)(node->data.data);
+#if defined( _WIN32)||defined(__CYGWIN__)
+        if( descr->type == MQO_CONSOLE )continue;
+#endif
+        fd = descr->fd;
+        if( fd > maxfd ) maxfd = fd;
+        FD_SET( fd, &reads );
+        FD_SET( fd, &errors );
+    }
+
+#if defined( _WIN32)||defined(__CYGWIN__)
+    if( mqo_the_console->monitor && mqo_is_void( mqo_the_console->result ) ){
+        mqo_attempt_read( (mqo_descr)mqo_the_console );
+    }else 
+#endif
+    if( maxfd == -1 ){ return 1; }
+
+    maxfd = mqo_os_error(select( maxfd + 1, &reads, NULL, &errors, timeout )); 
+    if( ! maxfd )return 0;
+
+    node = mqo_first_node( mqo_monitors );
+
+    while( node = mqo_next_node( node ) ){
+        if( FD_ISSET( fd, &reads ) || FD_ISSET( fd, &errors ) ){ 
+            mqo_attempt_read( (mqo_descr)(node->data.data) );
+        }
+    }
+
+    return 0;
+}
+int mqo_dispatch_monitors( ){
+    printf( "Beginning dispatch of: " );
+    mqo_show_tree( mqo_monitors, 16 );
+    mqo_newline( );
+    for(;;){
+        int all_quiet = mqo_dispatch_monitors_once( );
+        if( mqo_first_process ){
+            printf( "Concluding dispatch of: " );
+            mqo_show_tree( mqo_monitors, 16 );
+            printf( ", because a process is waiting." );
+            mqo_newline( );
+            return 1;
+        }else if( all_quiet ){
+            printf( "Concluding dispatch of: " );
+            mqo_show_tree( mqo_monitors, 16 );
+            printf( ", because nothing is monitored, and no processes are waiting.\n" );
+            return 0;
+        }else{
+            printf( "Repeating dispatch, because there are monitors that have not concluded.\n" );
+        }
+    }
+}
+
+mqo_console mqo_the_console;
+
+void mqo_init_net_subsystem( ){
+#ifdef _WIN32
+    WSADATA wsa;
+    WSAStartup( 2, &wsa );
+    // mqo_unblock_socket( STDIN_FILENO );
+#endif
+    mqo_monitors = mqo_make_tree( mqo_set_key );
+    mqo_the_console = mqo_make_console( mqo_string_fs( "console" ) );
+}
+

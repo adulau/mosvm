@@ -56,12 +56,23 @@
 #define REQ_VALUE_TYPE( nm, tp ) \
     mqo_##tp nm = mqo_req_##tp( v_##nm, #nm );
 
+#define REQ_VALUE_SUBTYPE( nm, tp ) \
+    mqo_##tp nm = mqo_req_sub_##tp( v_##nm, #nm );
+
 #define REQ_TYPED_ARG( nm, tp ) \
     if( ai >= ct ){ \
         mqo_errf( mqo_es_args, "s", "missing " #tp " argument " #nm ); \
     }; \
     mqo_value v_##nm = mqo_vector_get( MQO_SV, MQO_SI + ai - ct - 1 ); \
     REQ_VALUE_TYPE( nm, tp ) \
+    ai ++;
+
+#define REQ_SUBTYPED_ARG( nm, tp ) \
+    if( ai >= ct ){ \
+        mqo_errf( mqo_es_args, "s", "missing " #tp " argument " #nm ); \
+    }; \
+    mqo_value v_##nm = mqo_vector_get( MQO_SV, MQO_SI + ai - ct - 1 ); \
+    REQ_VALUE_SUBTYPE( nm, tp ) \
     ai ++;
 
 #define REQ_TYPE_ARG( nm )      REQ_TYPED_ARG( nm, type );
@@ -78,6 +89,8 @@
 #define REQ_STRING_ARG( nm )    REQ_TYPED_ARG( nm, string );
 #define REQ_SYMBOL_ARG( nm )    REQ_TYPED_ARG( nm, symbol );
 #define REQ_DESCR_ARG( nm )     REQ_TYPED_ARG( nm, descr );
+#define REQ_ANY_DESCR_ARG( nm ) REQ_SUBTYPED_ARG( nm, descr );
+#define REQ_FILE_ARG( nm )      REQ_TYPED_ARG( nm, file );
 #define REQ_LIST_ARG( nm )      REQ_TYPED_ARG( nm, list );
 #define REQ_ALARM_ARG( nm )     REQ_TYPED_ARG( nm, alarm );
     

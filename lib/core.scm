@@ -199,13 +199,13 @@
                            f)))
 
 (define (write-byte byte (<file-output-port> port))
-  (write-descr-byte (file-port-descr port) byte))
+  (write-file-byte (file-port-descr port) byte))
 
 (define (write-word word (<file-output-port> port))
-  (write-descr-word (file-port-descr port) word))
+  (write-file-word (file-port-descr port) word))
 
 (define (write-quad quad (<file-output-port> port))
-  (write-descr-quad (file-port-descr port) quad))
+  (write-file-quad (file-port-descr port) quad))
 
 (define-class <file-input-port> <input-port>
               (make-file-input-port close-fn read-fn descr)
@@ -223,7 +223,7 @@
       f)))
 
 (define (read-all (<file-input-port> input-port))
-  (read-descr-all (file-port-descr input-port)))
+  (read-file-all (file-port-descr input-port)))
 
 ;;; Redundant, but R5RS specified
 (define (close-output-port (<output-port> port))
@@ -360,11 +360,12 @@
 (define (wait . alarms)
   (define done #f)
   (define what #f)
-  (for-each enable-alarm alarms)
+  (for-each monitor alarms)
   (until done
     (set! what (suspend))
-    (when (memq what alarms) (set! done #t)))
-  (for-each disable-alarm alarms)
+    (when (memq what alarms) 
+      (set! done #t)))
+  ;(for-each unmonitor alarms)
   what)
 
 (export "lib/core")

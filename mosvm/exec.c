@@ -119,10 +119,10 @@ void mqo_continue( ){
                 if( MQO_PP->next ){
                     mqo_use_process( MQO_PP->next );
                 }else{
-                    flag = mqo_process_alarms( );
+                    mqo_dispatch_monitors( );
                     if( mqo_first_process ){
                         mqo_use_process( mqo_first_process );
-                    }else if( ! flag ){
+                    }else{
                         MQO_PP = NULL;
                         MQO_XP = NULL; 
                         return;
@@ -581,6 +581,9 @@ void mqo_use_process( mqo_process p ){
     MQO_GP = s->gp;
 }
 void mqo_resume( mqo_process process, mqo_value value ){
+    printf( "Resuming process %x with: ", process );
+    mqo_show( value, 5 );
+    mqo_newline( );
     if( MQO_PP == process ){
         if( MQO_PP->status != mqo_ps_running ){
             MQO_PP->status = mqo_ps_paused;
