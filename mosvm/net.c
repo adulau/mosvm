@@ -178,6 +178,10 @@ int mqo_dispatch_monitors_once( ){
     mqo_node node;
     int fd, maxfd;
 
+    FD_ZERO( &reads );
+    FD_ZERO( &errors );
+    maxfd = -1;
+
     if( mqo_first_process ){
         struct timeval timeout_data = { 0, 0 };
         timeout = &timeout_data;
@@ -187,16 +191,15 @@ int mqo_dispatch_monitors_once( ){
         timeout = NULL;
     }
     
-    FD_ZERO( &reads );
-    FD_ZERO( &errors );
-    maxfd = -1;
-
     node = mqo_first_node( mqo_monitors );
     while( node = mqo_next_node( node ) ){
         descr = (mqo_descr)(node->data.data);
 #if defined( _WIN32)||defined(__CYGWIN__)
         if( descr->type == MQO_CONSOLE )continue;
 #endif
+        if( descr->monitor->status != mqo_ps_suspended )continue;
+        if( descr->closed )continue;
+
         fd = descr->fd;
         if( fd > maxfd ) maxfd = fd;
         FD_SET( fd, &reads );
@@ -206,9 +209,10 @@ int mqo_dispatch_monitors_once( ){
 #if defined( _WIN32)||defined(__CYGWIN__)
     if( mqo_the_console->monitor && mqo_is_void( mqo_the_console->result ) ){
         mqo_attempt_read( (mqo_descr)mqo_the_console );
-    }else 
-#endif
+    }else if( maxfd == -1 ){ return 1; };
+#else
     if( maxfd == -1 ){ return 1; }
+#endif
 
     maxfd = mqo_os_error(select( maxfd + 1, &reads, NULL, &errors, timeout )); 
     if( ! maxfd )return 0;
@@ -216,8 +220,16 @@ int mqo_dispatch_monitors_once( ){
     node = mqo_first_node( mqo_monitors );
 
     while( node = mqo_next_node( node ) ){
+        descr = (mqo_descr)(node->data.data);
+#if defined( _WIN32)||defined(__CYGWIN__)
+        if( descr->type == MQO_CONSOLE )continue;
+#endif
+        if( descr->monitor->status != mqo_ps_suspended )continue;
+        if( descr->closed )continue;
+
+        fd = descr->fd;
         if( FD_ISSET( fd, &reads ) || FD_ISSET( fd, &errors ) ){ 
-            mqo_attempt_read( (mqo_descr)(node->data.data) );
+            mqo_attempt_read( descr );
         }
     }
 

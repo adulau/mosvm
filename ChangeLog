@@ -1,3 +1,9 @@
+- ?/??/????, Simplification of Continue
+  + mqo_cycle_process added, which cycles the current process out of operation,
+    advances the registers to the next process, then does a nonlocal exit.
+  + mqo_cycle_process performs montior dispatch when it hits the end of the
+    schedule.
+
 - ?/??/????, Refit of Alarms to make Monitors
   * Removed read-alarm, write-alarm and the alarm type from mosvm.
   * Added the monitor primitive to os.c.

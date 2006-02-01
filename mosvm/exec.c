@@ -123,6 +123,7 @@ void mqo_continue( ){
                     if( mqo_first_process ){
                         mqo_use_process( mqo_first_process );
                     }else{
+                        printf( "Terminating, since there are no processes post-dispatch.\n" );
                         MQO_PP = NULL;
                         MQO_XP = NULL; 
                         return;
