@@ -20,7 +20,7 @@
               (descr connection-descr))
 
 (define (read (<connection> connection))
-  (define descr (connection-descr descr))
+  (define descr (connection-descr connection))
   (wait descr)
   (define data (read-descr descr))
   (if (= (string-length data) 0) <eof> data))
@@ -46,7 +46,7 @@
               (until (eq? (suspend) descr))
               (show "Got new connection, spawning.")
               (newline)
-              (spawn (lambda () (fn (make-connection (accept descr)))))
+              (spawn (lambda () (fn (make-connection (read-descr descr)))))
               (pause)))))
 
 ;; (define (echo port)

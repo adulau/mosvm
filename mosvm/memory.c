@@ -219,6 +219,7 @@ mqo_descr mqo_make_descr( mqo_string path, int fd, mqo_byte type ){
     f->name = path;
     f->fd = fd;
     f->result = mqo_make_void( );
+    f->type = type;
     GC_register_finalizer( f, mqo_descr_finalizer, NULL, NULL, NULL );
     return f;
 }

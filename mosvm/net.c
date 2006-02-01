@@ -120,6 +120,8 @@ void mqo_attempt_read( mqo_descr descr ){
     mqo_type type;
     
     printf( "Attempting read of " );
+    mqo_show_descr( descr );
+    mqo_show_cstring( " / " );
     if( descr->type == MQO_CONSOLE ){
         printf( "console...\n" );
     }else if( descr->type == MQO_LISTENER ){
@@ -146,10 +148,14 @@ void mqo_attempt_read( mqo_descr descr ){
         }else{
             rs = read( descr->fd, buffer, BUFSIZ );
             type = mqo_console_type;
-        }
-        if( rs == -1 && errno == EWOULDBLOCK ){
-            printf( "Failed, would block.\n" );
-            return;
+        };
+        if( rs == -1 ){
+            if( errno == EWOULDBLOCK ){
+                printf( "Failed, would block.\n" );
+                return;
+            }else{
+                mqo_report_os_error( );
+            }
         }
         result = mqo_vf_string( mqo_string_fm( buffer, rs ) );
     }
