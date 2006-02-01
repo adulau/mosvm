@@ -36,10 +36,21 @@
 #endif
 
 
+void mqo_report_net_error( ){
+#if defined(_WIN32)||defined(__CYGWIN__)
+    mqo_errf( mqo_es_vm, "s", strerror( errno ) );
+#else
+    mqo_errf( mqo_es_vm, "s", strerror( WSAGetLastError() ) );
+#endif
+}
+mqo_integer mqo_net_error( mqo_integer k ){
+    if( k == -1 )mqo_report_net_error( );
+    return k;
+}
 void mqo_unblock_socket( mqo_integer s ){
 #if defined( _WIN32 )||defined( __CYGWIN__ )
     unsigned long unblocking = 1;
-    mqo_os_error( ioctlsocket( s, FIONBIO, &unblocking ) );
+    mqo_net_error( ioctlsocket( s, FIONBIO, &unblocking ) );
 #else
     mqo_os_error( fcntl( s, F_SETFL, O_NONBLOCK ) );
 #endif
@@ -47,7 +58,7 @@ void mqo_unblock_socket( mqo_integer s ){
 mqo_integer mqo_resolve( mqo_string name ){
     struct hostent *entry = gethostbyname( mqo_sf_string( name ) );
     if( !entry ){ 
-        mqo_report_os_error( );
+        mqo_report_net_error( );
     //TODO }else if( entry->h_addrtype != ... ){
         //TODO: Signal an error.
     }else if( entry->h_length != 4 ){
@@ -81,9 +92,9 @@ mqo_listener mqo_serve_tcp( mqo_integer port ){
     addr.sin_addr.s_addr = htonl( INADDR_ANY );
     addr.sin_port = htons( port );
 
-    int server_fd = mqo_os_error( socket( AF_INET, SOCK_STREAM, IPPROTO_TCP ) );
-    mqo_os_error( bind( server_fd, (struct sockaddr*)&addr, sizeof( addr ) ) );
-    mqo_os_error( listen( server_fd, 5 ) ); 
+    int server_fd = mqo_net_error( socket( AF_INET, SOCK_STREAM, IPPROTO_TCP ) );
+    mqo_net_error( bind( server_fd, (struct sockaddr*)&addr, sizeof( addr ) ) );
+    mqo_net_error( listen( server_fd, 5 ) ); 
     mqo_unblock_socket( server_fd );    
 
     //TODO: Create a server name.
@@ -143,7 +154,7 @@ void mqo_attempt_read( mqo_descr descr ){
             if( errno == MQO_EWOULDBLOCK ){
                 return;
             }else{
-                mqo_report_os_error( );
+                mqo_report_net_error( );
             }
         }
         result = mqo_vf_string( mqo_string_fm( buffer, rs ) );
@@ -209,8 +220,8 @@ int mqo_dispatch_monitors_once( ){
     if( maxfd == -1 ){ return 1; }
 #endif
 
-    maxfd = mqo_os_error(select( maxfd + 1, &reads, NULL, &errors, timeout )); 
-    if( ! maxfd )return 0;
+    maxfd = select( maxfd + 1, &reads, NULL, &errors, timeout ); 
+    if( maxfd <= 0 )return 0;
 
     node = mqo_first_node( mqo_monitors );
 
