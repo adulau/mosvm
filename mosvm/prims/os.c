@@ -1,18 +1,18 @@
 /* Copyright (C) 2006, Ephemeral Security, LLC 
-* 
-* This library is free software; you can redistribute it and/or modify it  
-* under the terms of the GNU Lesser General Public License, version 2.1
-* as published by the Free Software Foundation.
-* 
-* This library is distributed in the hope that it will be useful, but WITHOUT 
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License 
-* for more details. 
-* 
-* You should have received a copy of the GNU Lesser General Public License 
-* along with this library; if not, write to the Free Software Foundation, 
-* Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
-*/ 
+ * 
+ * This library is free software; you can redistribute it and/or modify it  
+ * under the terms of the GNU Lesser General Public License, version 2.1
+ * as published by the Free Software Foundation.
+ * 
+ * This library is distributed in the hope that it will be useful, but WITHOUT 
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License 
+ * for more details. 
+ * 
+ * You should have received a copy of the GNU Lesser General Public License 
+ * along with this library; if not, write to the Free Software Foundation, 
+ * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
+ */ 
 
 #include "../mosvm.h"
 #include "../mosvm/prim.h"
@@ -234,10 +234,19 @@ MQO_BEGIN_PRIM( "write-descr", write_descr )
     REQ_STRING_ARG( data );
     NO_MORE_ARGS( )
     
-    ssize_t result = write( 
-        descr->fd, mqo_sf_string( data ), mqo_string_length( data )
-    );
+    ssize_t result;
+    const char* dataptr = mqo_sf_string( data );
+    mqo_integer datalen = mqo_string_length( data );
 
+    if( descr->type == MQO_CONSOLE ){
+        result = write( STDOUT_FILENO, dataptr, datalen );
+    }else if( descr->type == MQO_SOCKET ){
+        result = send( descr->fd, dataptr, datalen, 0 );
+    }else if( descr->type == MQO_LISTENER ){
+        mqo_errf( mqo_es_vm, "s", "cannot write to listener descriptors" );
+    }else{
+        result = write( descr->fd, dataptr, datalen );
+    } 
     if( result == -1 ){
         mqo_errf( mqo_es_fs, "sxi", strerror( errno ), v_descr, descr->fd );
     };

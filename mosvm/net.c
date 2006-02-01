@@ -21,6 +21,7 @@
 #if defined(_WIN32)||defined(__CYGWIN__)
 #include <sys/time.h>
 #include <winsock2.h>
+#define MQO_EWOULDBLOCK WSAEWOULDBLOCK
 #else
 #include <netinet/in.h>
 #include <sys/time.h>
@@ -31,11 +32,13 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#define MQO_EWOULDBLOCK EWOULDBLOCK
 #endif
+
 
 void mqo_unblock_socket( mqo_integer s ){
 #if defined( _WIN32 )||defined( __CYGWIN__ )
-    mqo_long unblocking = 1;
+    unsigned long unblocking = 1;
     mqo_os_error( ioctlsocket( s, FIONBIO, &unblocking ) );
 #else
     mqo_os_error( fcntl( s, F_SETFL, O_NONBLOCK ) );
@@ -121,10 +124,10 @@ void mqo_attempt_read( mqo_descr descr ){
     
     if( descr->type == MQO_LISTENER ){
         struct sockaddr_storage addr;
-        socklen_t len = sizeof( addr );
+        mqo_integer len = sizeof( addr );
         rs = accept( descr->fd, (struct sockaddr*)&addr, &len);
         type = mqo_listener_type;
-        if( rs == -1 && errno == EWOULDBLOCK )return;
+        if( rs == -1 && errno == MQO_EWOULDBLOCK )return;
         mqo_unblock_socket( rs );
         mqo_string name = mqo_string_fs( "tcp-incoming" );
         result = mqo_vf_socket( mqo_make_socket( name, rs ) );
@@ -137,7 +140,7 @@ void mqo_attempt_read( mqo_descr descr ){
             type = mqo_console_type;
         };
         if( rs == -1 ){
-            if( errno == EWOULDBLOCK ){
+            if( errno == MQO_EWOULDBLOCK ){
                 return;
             }else{
                 mqo_report_os_error( );
