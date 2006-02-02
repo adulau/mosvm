@@ -19,7 +19,7 @@ MODS=$(SEED) lib/test.mo lib/conn.mo
 # A list of unit test targets. All unit tests are to be compiled by MOSVM.
 TESTS=test-core test-quasi test-parse test-assemble test-compile test-freeze test-process
 
-all: $(MOSVM) $(MODS) 
+all: $(MOSVM) $(MODS) bin/mosc.mo
 
 test: $(TESTS)
 
