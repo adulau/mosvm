@@ -168,8 +168,8 @@ void mqo_poll_descr( mqo_descr descr ){
             }
         }else if( rs == 0 ){
             // POSIX specifies that a terminal read or recv has size 0.
-            result = mqo_vf_false( );
             mqo_close( descr );
+            return;
         }else{
             result = mqo_vf_string( mqo_string_fm( buffer, rs ) );
         }
@@ -208,14 +208,18 @@ int mqo_dispatch_monitors_once( ){
     descr = mqo_first_listening;
     while( descr ){
         next = descr->next;
+#ifdef _WIN32
         if( descr->type == MQO_CONSOLE ){
             mqo_poll_descr( descr );   
         }else{
+#endif
             fd = descr->fd;
             if( fd > maxfd ) maxfd = fd;
             FD_SET( fd, &reads );
             FD_SET( fd, &errors );
+#ifdef _WIN32
         }
+#endif
         descr = next;
     }
     
@@ -225,12 +229,16 @@ int mqo_dispatch_monitors_once( ){
         descr = mqo_first_listening;
         while( descr ){
             next = descr->next;
+#ifdef _WIN32
             if( descr->type != MQO_CONSOLE ){
+#endif
                 fd = descr->fd;
                 if( FD_ISSET( fd, &reads ) || FD_ISSET( fd, &errors ) ){ 
                     mqo_poll_descr( descr );
                 }
+#ifdef _WIN32
             }
+#endif
             descr = next;
         }
     }
@@ -264,7 +272,8 @@ void mqo_init_net_subsystem( ){
 #ifdef _WIN32
     WSADATA wsa;
     WSAStartup( 2, &wsa );
-    // mqo_unblock_socket( STDIN_FILENO );
+#else
+    mqo_unblock_socket( STDIN_FILENO );
 #endif
     mqo_the_console = mqo_make_console( mqo_string_fs( "console" ) );
 }
