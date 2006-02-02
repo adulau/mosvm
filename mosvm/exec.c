@@ -24,6 +24,7 @@
 #include <errno.h>
 
 mqo_boolean mqo_trace_vm = 0;
+mqo_symbol mqo_es_os = NULL;
 mqo_symbol mqo_es_vm = NULL;
 mqo_symbol mqo_es_args = NULL;
 mqo_symbol mqo_ps_suspended = NULL;
@@ -533,6 +534,7 @@ done:
     mqo_err( key, head );
 }
 void mqo_init_exec_subsystem( ){
+    mqo_es_os = mqo_symbol_fs( "os" );
     mqo_es_vm = mqo_symbol_fs( "vm" );
     mqo_es_args = mqo_symbol_fs( "bad-args" );
     mqo_ps_suspended = mqo_symbol_fs( "suspended" );
@@ -593,7 +595,7 @@ void mqo_resume( mqo_process process, mqo_value value ){
     mqo_resched_process( process );
 }
 void mqo_report_os_error( ){
-    mqo_errf( mqo_es_vm, "s", strerror( errno ) );
+    mqo_errf( mqo_es_os, "s", strerror( errno ) );
 }
 int mqo_os_error( int code ){
     if( code == -1 ){

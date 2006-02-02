@@ -192,7 +192,7 @@
 
 ;;; Stripped in functionality, but R5RS compliant.
 (define (open-output-file path)
-  (let ((f (file-open path "wc")))
+  (let ((f (open-file path "wc")))
     (seek-file f 0)
     (make-file-output-port (lambda (port) (close-descr f))
                            (lambda (port data) (write-descr f data)) 
@@ -214,7 +214,7 @@
 
 ;;; Similar to an R5RS file, but returns raw strings.
 (define (open-input-file path)
-  (let ((f (file-open path "r")))
+  (let ((f (open-file path "r")))
     (make-file-input-port 
       (lambda (port) (close-descr f))
       (lambda (port) 

@@ -19,7 +19,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/param.h>
-#include <errno.h>
 #include <fcntl.h>
 
 #if defined(_WIN32)||defined(__CYGWIN__)
@@ -65,7 +64,7 @@ MQO_BEGIN_PRIM( "unmonitor", unmonitor )
     MQO_NO_RESULT( );
 MQO_END_PRIM( unmonitor )
 
-MQO_BEGIN_PRIM( "file-open", file_open )
+MQO_BEGIN_PRIM( "open-file", open_file )
     REQ_STRING_ARG( path );
     REQ_STRING_ARG( flags );
     OPT_INTEGER_ARG( mode );
@@ -139,14 +138,8 @@ MQO_BEGIN_PRIM( "file-open", file_open )
             );    
         }
     }
-    int fd = open( mqo_sf_string( path ), flag, mode );
-    if( fd == -1 ){
-        mqo_errf( mqo_es_fs, "sxx", strerror( errno ), v_path, v_flags );
-    }else{
-        MQO_RESULT( mqo_vf_file( mqo_make_file( path, fd ) ) );
-    }
-    MQO_RESULT( mqo_vf_true( ) );
-MQO_END_PRIM( file_open )
+    MQO_RESULT( mqo_vf_file( mqo_make_file( path, mqo_os_error( open( mqo_sf_string( path ), flag, mode ) ) ) ) );
+MQO_END_PRIM( open_file )
 
 MQO_BEGIN_PRIM( "descr?", descrq )
     REQ_VALUE_ARG( value );
@@ -164,14 +157,9 @@ MQO_BEGIN_PRIM( "read-descr", read_descr )
 
     if( descr->type == MQO_FILE ){
         static char buffer[ BUFSIZ ];
-        mqo_integer count = read( descr->fd, buffer, BUFSIZ );
+        mqo_integer count = mqo_os_error( read( descr->fd, buffer, BUFSIZ ) );
     
-        if( count == -1 ){
-            mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
-            MQO_NO_RESULT( );
-        }else{
-            MQO_RESULT( mqo_vf_string( mqo_string_fm( buffer, count ) ) );
-        }
+        MQO_RESULT( mqo_vf_string( mqo_string_fm( buffer, count ) ) );
     }else if( mqo_is_void( descr->result ) ){
         MQO_RESULT( mqo_vf_false( ) );
     }else{
@@ -192,30 +180,24 @@ MQO_BEGIN_PRIM( "read-file-all", read_file_all )
     REQ_FILE_ARG( descr );
     NO_MORE_ARGS( )
     
-    mqo_integer ofs = lseek( descr->fd, 0, SEEK_CUR );
-    mqo_integer len = lseek( descr->fd, 0, SEEK_END ) - ofs;
-    lseek( descr->fd, ofs, SEEK_SET );
+    mqo_integer ofs = mqo_os_error( lseek( descr->fd, 0, SEEK_CUR ) );
+    mqo_integer len = mqo_os_error( lseek( descr->fd, 0, SEEK_END ) - ofs );
+    mqo_os_error( lseek( descr->fd, ofs, SEEK_SET ) );
     
     mqo_string data = mqo_make_string( len );
-    len = read( descr->fd, data->data, len );
+    len = mqo_os_error( read( descr->fd, data->data, len ) );
     
-    if( len == -1 ){
-        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
-        GC_free( data );
-        MQO_NO_RESULT( );
-    }else{
-        data->data[len] = 0;
-        data->length = len;
-        MQO_RESULT( mqo_vf_string( data ) );
-    }
+    data->data[len] = 0;
+    data->length = len;
+    MQO_RESULT( mqo_vf_string( data ) );
 MQO_END_PRIM( read_file_all )
 
 MQO_BEGIN_PRIM( "close-descr", close_descr )
     REQ_ANY_DESCR_ARG( descr );
     NO_MORE_ARGS( );
-    
-    if( close( descr->fd ) == -1 );
+   
     descr->closed = 1;
+    mqo_os_error( close( descr->fd ) );
 
     //TODO: We should notify a monitoring object of the closure.
     mqo_tree_remove( mqo_monitors, v_descr );
@@ -247,9 +229,8 @@ MQO_BEGIN_PRIM( "write-descr", write_descr )
     }else{
         result = write( descr->fd, dataptr, datalen );
     } 
-    if( result == -1 ){
-        mqo_errf( mqo_es_fs, "sxi", strerror( errno ), v_descr, descr->fd );
-    };
+
+    mqo_os_error( result );
 
     MQO_NO_RESULT( )
 MQO_END_PRIM( write_descr )
@@ -260,11 +241,7 @@ MQO_BEGIN_PRIM( "write-file-byte", write_file_byte )
     NO_MORE_ARGS( )
     
     mqo_byte data = byte;
-    ssize_t result = write( descr->fd, &data, 1 ); 
-
-    if( result == -1 ){
-        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
-    };
+    mqo_os_error( write( descr->fd, &data, 1 ) );  
 
     MQO_NO_RESULT( )
 MQO_END_PRIM( write_file_byte )
@@ -275,11 +252,7 @@ MQO_BEGIN_PRIM( "write-file-word", write_file_word )
     NO_MORE_ARGS( )
     
     mqo_word data = htons( word );
-    ssize_t result = write( descr->fd, &data, 2 ); 
-
-    if( result == -1 ){
-        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
-    };
+    mqo_os_error( write( descr->fd, &data, 2 ) );  
 
     MQO_NO_RESULT( )
 MQO_END_PRIM( write_file_word )
@@ -290,11 +263,7 @@ MQO_BEGIN_PRIM( "write-file-quad", write_file_quad )
     NO_MORE_ARGS( )
     
     mqo_long data = htonl( quad );
-    ssize_t result = write( descr->fd, &data, 4 ); 
-
-    if( result == -1 ){
-        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
-    };
+    mqo_os_error( write( descr->fd, &data, 4 ) );  
 
     MQO_NO_RESULT( )
 MQO_END_PRIM( write_file_quad )
@@ -304,11 +273,7 @@ MQO_BEGIN_PRIM( "skip-file", skip_file )
     REQ_INTEGER_ARG( offset );
     NO_MORE_ARGS( );
 
-    offset = lseek( descr->fd, offset, SEEK_CUR );
-
-    if( offset == -1 ){
-        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
-    }
+    offset = mqo_os_error( lseek( descr->fd, offset, SEEK_CUR ) );
 
     MQO_RESULT( mqo_vf_integer( offset ) );
 MQO_END_PRIM( skip_file )
@@ -317,11 +282,7 @@ MQO_BEGIN_PRIM( "pos-file", pos_file )
     REQ_FILE_ARG( descr );
     NO_MORE_ARGS( );
 
-    mqo_integer offset = lseek( descr->fd, 0, SEEK_CUR );
-
-    if( offset == -1 ){
-        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
-    }
+    mqo_integer offset = mqo_os_error( lseek( descr->fd, 0, SEEK_CUR ) );
 
     MQO_RESULT( mqo_vf_integer( offset ) );
 MQO_END_PRIM( pos_file )
@@ -337,9 +298,7 @@ MQO_BEGIN_PRIM( "seek-file", seek_file )
         offset = lseek( descr->fd, offset, SEEK_SET );
     };
 
-    if( offset == -1 ){
-        mqo_errf( mqo_es_fs, "sx", strerror( errno ), v_descr );
-    };
+    mqo_os_error( offset );
 
     MQO_RESULT( mqo_vf_integer( offset ) );
 MQO_END_PRIM( seek_file )
@@ -360,7 +319,7 @@ void mqo_bind_os_prims( ){
 #endif
     mqo_symbol_fs( "*console*" )->value = mqo_vf_console( mqo_the_console );
 
-    MQO_BIND_PRIM( file_open );
+    MQO_BIND_PRIM( open_file );
     MQO_BIND_PRIM( close_descr );
     MQO_BIND_PRIM( descr_closedq );
     MQO_BIND_PRIM( descrq );
