@@ -357,16 +357,5 @@
                                             *last-imported-path*
                                             #t)))))
 
-(define (wait . alarms)
-  (define done #f)
-  (define what #f)
-  (for-each monitor alarms)
-  (until done
-    (set! what (suspend))
-    (when (memq what alarms) 
-      (set! done #t)))
-  ;(for-each unmonitor alarms)
-  what)
-
 (export "lib/core")
 

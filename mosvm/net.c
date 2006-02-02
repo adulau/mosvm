@@ -244,6 +244,12 @@ void mqo_close( mqo_descr descr ){
     
     if( descr->type == MQO_CONSOLE )return;
     descr->closed = 1;
+#ifdef _WIN32
+    if( descr->type != MQO_FILE ){
+        mqo_net_error( closesocket( descr->fd ) );
+        return;
+    }
+#endif    
     mqo_os_error( close( descr->fd ) );
 }
 
