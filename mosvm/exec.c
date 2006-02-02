@@ -120,11 +120,11 @@ void mqo_continue( ){
                 if( MQO_PP->next ){
                     mqo_use_process( MQO_PP->next );
                 }else{
+                    mqo_use_process( NULL );
                     mqo_dispatch_monitors( );
                     if( mqo_first_process ){
                         mqo_use_process( mqo_first_process );
                     }else{
-                        MQO_PP = NULL;
                         MQO_XP = NULL; 
                         return;
                     }
@@ -569,30 +569,35 @@ void mqo_use_process( mqo_process p ){
         s->ep = MQO_EP;
         s->gp = MQO_GP;
     };
-
-    s = p->state;
-
+    
     MQO_PP = p;
-    MQO_CP = s->cp;
-    MQO_IP = s->ip;
-    MQO_SV = s->sv;
-    MQO_SI = s->si;
-    MQO_RV = s->rv;
-    MQO_RI = s->ri;
-    MQO_EP = s->ep;
-    MQO_GP = s->gp;
+
+    if( p ){
+        s = p->state;
+
+        MQO_CP = s->cp;
+        MQO_IP = s->ip;
+        MQO_SV = s->sv;
+        MQO_SI = s->si;
+        MQO_RV = s->rv;
+        MQO_RI = s->ri;
+        MQO_EP = s->ep;
+        MQO_GP = s->gp;
+    };
 }
 void mqo_resume( mqo_process process, mqo_value value ){
-    if( MQO_PP == process ){
-        if( MQO_PP->status != mqo_ps_running ){
-            MQO_PP->status = mqo_ps_paused;
-        };
-        mqo_push_ds( value );
-    }else{
+    printf( "Resumed process %x status was: ", process );
+    mqo_show_symbol( process->status );
+    mqo_newline( );
+    printf( "Current process is %x\n", MQO_PP );
+    if( process->status == mqo_ps_suspended ){
         process->status = mqo_ps_paused;
-        process->state->sv->data[ process->state->si++ ] = value;
+        mqo_vector_put( process->state->sv,
+                        process->state->si++,
+                        value );
+        mqo_resched_process( process );
     }
-    mqo_resched_process( process );
+    printf( "First process is now: %x\n", mqo_first_process );
 }
 void mqo_report_os_error( ){
     mqo_errf( mqo_es_os, "s", strerror( errno ) );

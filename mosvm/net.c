@@ -36,6 +36,30 @@
 #endif
 
 
+void mqo_start_listening( mqo_descr descr ){
+    printf( "Starting listening: ");
+    mqo_show_descr( descr );
+    printf( "\n" );
+    if( mqo_first_listening )mqo_first_listening->prev = descr;
+    descr->prev = NULL;
+    descr->next = mqo_first_listening;
+    mqo_first_listening = descr;
+}
+void mqo_stop_listening( mqo_descr descr ){
+    printf( "Stopped listening: ");
+    mqo_show_descr( descr );
+    printf( "\n" );
+    if( descr->prev ){
+        descr->prev->next = descr->next;
+    }else{
+        mqo_first_listening = descr->next;
+    }
+
+    if( descr->next )descr->next->prev = descr->prev;
+    descr->next = descr->prev = NULL;
+    descr->monitor = NULL;
+}
+
 void mqo_report_net_error( ){
 #if defined(_WIN32)||defined(__CYGWIN__)
     mqo_errf( mqo_es_os, "s", strerror( WSAGetLastError() ) );
@@ -103,30 +127,13 @@ mqo_listener mqo_serve_tcp( mqo_integer port ){
     return mqo_make_listener( server_name, server_fd );
 }
 
-mqo_tree mqo_monitors;
+mqo_descr mqo_first_listening = NULL;
 
-void mqo_monitor( mqo_value target, mqo_process process ){
-    assert( mqo_direct_type( target ) == mqo_descr_type );
-    mqo_descr descr = (mqo_descr)target.data;
+void mqo_poll_descr( mqo_descr descr ){
+    printf( "Polling " );
+    mqo_show_descr( descr );
+    printf( "...\n" );
 
-    if( descr->monitor &&( process != descr->monitor )){
-        mqo_errf( mqo_es_vm, "sx", "object already has a monitor", target );
-    }
-
-    descr->monitor = process; 
-    mqo_tree_insert( mqo_monitors, target);
-}
-void mqo_unmonitor( mqo_value target, mqo_process process ){
-    assert( mqo_direct_type( target ) == mqo_descr_type );
-    mqo_descr descr = (mqo_descr)target.data;
-
-    if( descr->monitor != process ){
-        mqo_errf( mqo_es_vm, "sx", "process is not monitoring object", target );
-    }
-    descr->monitor = NULL; 
-    mqo_tree_remove( mqo_monitors, target );
-}
-void mqo_attempt_read( mqo_descr descr ){
     static char buffer[ BUFSIZ ];
     
     mqo_value result;
@@ -150,38 +157,39 @@ void mqo_attempt_read( mqo_descr descr ){
             rs = read( descr->fd, buffer, BUFSIZ );
             type = mqo_console_type;
         };
+
+        printf( "Read %i bytes.\n", rs );
+
         if( rs == -1 ){
             if( errno == MQO_EWOULDBLOCK ){
                 return;
             }else{
                 mqo_report_net_error( );
             }
+        }else if( rs == 0 ){
+            // POSIX specifies that a terminal read or recv has size 0.
+            result = mqo_vf_false( );
+            mqo_close( descr );
+        }else{
+            result = mqo_vf_string( mqo_string_fm( buffer, rs ) );
         }
-        result = mqo_vf_string( mqo_string_fm( buffer, rs ) );
     }
-
-    descr->result = result;
-    result = mqo_make_value( type, (mqo_integer)descr );
-    if( descr->monitor ){
-        mqo_resume( descr->monitor, result );
-#if defined( _WIN32)||defined(__CYGWIN__)
-        if( descr->type != MQO_CONSOLE )
-#endif
-            mqo_tree_remove( mqo_monitors, result );
-    };
+ 
+    printf( "Resuming process %x with result ", descr->monitor );
+    mqo_show( result, 5 );
+    mqo_newline();
+    mqo_resume( descr->monitor, result );
+    mqo_stop_listening( descr );
 }
 
 int mqo_dispatch_monitors_once( ){
-    // Returns nonzero if there are no monitors.
-
     //TODO: Currently, we rely on a blocking connect to guard against
     //      premature writing.  Ideally, we would actually monitor sockets
     //      that have not completed connection for WRITE.
 
     struct timeval *timeout;
     struct fd_set reads, errors;
-    mqo_descr descr;
-    mqo_node node;
+    mqo_descr descr, next;
     int fd, maxfd;
 
     FD_ZERO( &reads );
@@ -196,60 +204,58 @@ int mqo_dispatch_monitors_once( ){
         //      alarm.
         timeout = NULL;
     }
-    
-    node = mqo_first_node( mqo_monitors );
-    while( node = mqo_next_node( node ) ){
-        descr = (mqo_descr)(node->data.data);
-#if defined( _WIN32)||defined(__CYGWIN__)
-        if( descr->type == MQO_CONSOLE )continue;
-#endif
-        if( descr->monitor->status != mqo_ps_suspended )continue;
-        if( descr->closed )continue;
-
-        fd = descr->fd;
-        if( fd > maxfd ) maxfd = fd;
-        FD_SET( fd, &reads );
-        FD_SET( fd, &errors );
+   
+    descr = mqo_first_listening;
+    while( descr ){
+        next = descr->next;
+        if( descr->type == MQO_CONSOLE ){
+            mqo_poll_descr( descr );   
+        }else{
+            fd = descr->fd;
+            if( fd > maxfd ) maxfd = fd;
+            FD_SET( fd, &reads );
+            FD_SET( fd, &errors );
+        }
+        descr = next;
     }
+    
+    if( maxfd >= 0 ){
+        maxfd = select( maxfd + 1, &reads, NULL, &errors, timeout ); 
 
-#if defined( _WIN32)||defined(__CYGWIN__)
-    if( mqo_the_console->monitor && mqo_is_void( mqo_the_console->result ) ){
-        mqo_attempt_read( (mqo_descr)mqo_the_console );
-    }else if( maxfd == -1 ){ return 1; };
-#else
-    if( maxfd == -1 ){ return 1; }
-#endif
-
-    maxfd = select( maxfd + 1, &reads, NULL, &errors, timeout ); 
-    if( maxfd <= 0 )return 0;
-
-    node = mqo_first_node( mqo_monitors );
-
-    while( node = mqo_next_node( node ) ){
-        descr = (mqo_descr)(node->data.data);
-#if defined( _WIN32)||defined(__CYGWIN__)
-        if( descr->type == MQO_CONSOLE )continue;
-#endif
-        if( descr->monitor->status != mqo_ps_suspended )continue;
-        if( descr->closed )continue;
-
-        fd = descr->fd;
-        if( FD_ISSET( fd, &reads ) || FD_ISSET( fd, &errors ) ){ 
-            mqo_attempt_read( descr );
+        descr = mqo_first_listening;
+        while( descr ){
+            next = descr->next;
+            if( descr->type != MQO_CONSOLE ){
+                fd = descr->fd;
+                if( FD_ISSET( fd, &reads ) || FD_ISSET( fd, &errors ) ){ 
+                    mqo_poll_descr( descr );
+                }
+            }
+            descr = next;
         }
     }
-
-    return 0;
 }
 int mqo_dispatch_monitors( ){
-    for(;;){
-        int all_quiet = mqo_dispatch_monitors_once( );
-        if( mqo_first_process ){
-            return 1;
-        }else if( all_quiet ){
-            return 0;
-        }
+    while( mqo_first_listening ){
+        mqo_dispatch_monitors_once( );
+        if( mqo_first_process )return 1;
     }
+    return 0;
+}
+
+void mqo_close( mqo_descr descr ){
+    mqo_show_cstring( "Closing " );
+    mqo_show_descr( descr );
+    mqo_show_cstring( "...\n" );
+    if( descr->closed )return;
+   
+    mqo_stop_listening( descr );
+    
+    if( descr->type == MQO_CONSOLE )return;
+    descr->closed = 1;
+    mqo_os_error( close( descr->fd ) );
+    
+    if( descr->monitor )mqo_resume( descr->monitor, mqo_vf_false() );
 }
 
 mqo_console mqo_the_console;
@@ -260,7 +266,6 @@ void mqo_init_net_subsystem( ){
     WSAStartup( 2, &wsa );
     // mqo_unblock_socket( STDIN_FILENO );
 #endif
-    mqo_monitors = mqo_make_tree( mqo_set_key );
     mqo_the_console = mqo_make_console( mqo_string_fs( "console" ) );
 }
 

@@ -24,6 +24,36 @@ mqo_tree mqo_lexicon = NULL;
 // When new symbols are created from strings, a search is made of the lexicon
 // for an equivalent string.
 
+mqo_boolean mqo_is_descr( mqo_value value ){
+    mqo_type type = mqo_value_type( value );
+    if( type == mqo_file_type )return 1;
+    if( type == mqo_socket_type )return 1;
+    if( type == mqo_listener_type )return 1;
+    if( type == mqo_console_type )return 1;
+    return( type == mqo_descr_type );
+}
+mqo_descr mqo_descr_fv( mqo_value value ){
+#ifdef NDEBUG
+    mqo_type type = mqo_value_type( descr );
+    if( type == mqo_file_type )return descr;
+    if( type == mqo_socket_type )return descr;
+    if( type == mqo_listener_type )return descr;
+    if( type == mqo_console_type )return descr;
+    assert( type == mqo_descr_type );
+#endif
+    return (mqo_descr)(value.data);
+}
+mqo_value mqo_vf_descr( mqo_descr descr ){
+    mqo_type type;
+    switch( descr->type ){
+    case MQO_CONSOLE: type = mqo_console_type; break;
+    case MQO_SOCKET:  type = mqo_socket_type; break;
+    case MQO_LISTENER: type = mqo_listener_type; break;
+    case MQO_FILE: type = mqo_file_type; break;
+    default: type = mqo_descr_type; break;
+    }
+    return mqo_make_value( type, (mqo_integer)descr );
+}
 mqo_pair mqo_cons( mqo_value car, mqo_value cdr ){
     mqo_pair c = MQO_ALLOC( mqo_pair, 0 );
     mqo_set_car( c, car );
@@ -218,8 +248,8 @@ mqo_descr mqo_make_descr( mqo_string path, int fd, mqo_byte type ){
     mqo_descr f = MQO_ALLOC( mqo_descr, 0 );
     f->name = path;
     f->fd = fd;
-    f->result = mqo_make_void( );
     f->type = type;
+    f->monitor = NULL;
     GC_register_finalizer( f, mqo_descr_finalizer, NULL, NULL, NULL );
     return f;
 }

@@ -20,10 +20,8 @@
               (descr connection-descr))
 
 (define (read (<connection> connection))
-  (define descr (connection-descr connection))
-  (wait descr)
-  (define data (read-descr descr))
-  (if (= (string-length data) 0) <eof> data))
+  (or (read-descr (connection-descr connection))
+      <eof>))
 
 (define (write (<string> data) (<connection> connection))
   (write-descr (connection-descr connection) data))
@@ -35,19 +33,16 @@
   (descr-closed? (connection-descr connection)))
 
 (define (open-tcp-connection host port)
-  (define descr (connect-tcp host port))
-  (make-connection descr))
+  (make-connection (connect-tcp host port)))
 
 (define (spawn-tcp-server port fn)
-  (define descr (serve-tcp port))
+  (define server (serve-tcp port))
   (spawn (lambda ()
-            (monitor descr)
-            (until (descr-closed? descr)
-              (until (eq? (suspend) descr))
+            (until (descr-closed? server)
+              (define conn (read-descr server))
               (show "Got new connection, spawning.")
               (newline)
-              (spawn (lambda () (fn (make-connection (read-descr descr)))))
-              (pause)))))
+              (spawn (lambda () (fn (make-connection conn))))))))
 
 ;; (define (echo port)
 ;;    (define done #f)

@@ -26,43 +26,11 @@
     // from some nasty inline assembler elsewhere.
 #else
 #include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #endif
 
 mqo_symbol mqo_es_fs;
-
-MQO_BEGIN_PRIM( "monitor", monitor )
-    REQ_VALUE_ARG( value );
-    NO_MORE_ARGS( );
-    
-    if( mqo_is_console( value ) ){
-        mqo_monitor( value, MQO_PP );
-    }else if( mqo_is_socket( value ) ){
-        mqo_monitor( value, MQO_PP );
-    }else if( mqo_is_listener( value ) ){
-        mqo_monitor( value, MQO_PP );
-    }else{
-        mqo_errf( mqo_es_vm, "sx", "only sockets, listeners and the console may be monitored", value );
-    }
-
-    MQO_NO_RESULT( );
-MQO_END_PRIM( monitor )
-
-MQO_BEGIN_PRIM( "unmonitor", unmonitor )
-    REQ_VALUE_ARG( value );
-    NO_MORE_ARGS( );
-    
-    if( mqo_is_console( value ) ){
-        mqo_unmonitor( value, MQO_PP );
-    }else if( mqo_is_socket( value ) ){
-        mqo_unmonitor( value, MQO_PP );
-    }else if( mqo_is_listener( value ) ){
-        mqo_unmonitor( value, MQO_PP );
-    }else{
-        mqo_errf( mqo_es_vm, "sx", "only sockets, listeners and the console may be monitored", value );
-    }
-
-    MQO_NO_RESULT( );
-MQO_END_PRIM( unmonitor )
 
 MQO_BEGIN_PRIM( "open-file", open_file )
     REQ_STRING_ARG( path );
@@ -149,30 +117,29 @@ MQO_BEGIN_PRIM( "descr?", descrq )
 MQO_END_PRIM( descrq )
 
 MQO_BEGIN_PRIM( "read-descr", read_descr )
-    //TODO: This is really nasty, and needs to be split into
-    //      read-file, read-socket, and read-console.
+    REQ_DESCR_ARG( descr );
+    NO_MORE_ARGS( );
 
-    REQ_ANY_DESCR_ARG( descr );
-    NO_MORE_ARGS( )
-
-    if( descr->type == MQO_FILE ){
+    if( descr->closed ){
+        printf( "Read-Descr: Closed.\n" );
+        MQO_RESULT( mqo_vf_false() );
+    }else if( descr->type == MQO_FILE ){
+        printf( "Read-Descr: File.\n" );
         static char buffer[ BUFSIZ ];
         mqo_integer count = mqo_os_error( read( descr->fd, buffer, BUFSIZ ) );
     
         MQO_RESULT( mqo_vf_string( mqo_string_fm( buffer, count ) ) );
-    }else if( mqo_is_void( descr->result ) ){
-        MQO_RESULT( mqo_vf_false( ) );
     }else{
-#if defined(_WIN32)||defined(__CYGWIN__)
-        if( descr->type != MQO_CONSOLE ){
-            mqo_tree_insert( mqo_monitors, v_descr );
+        printf( "Read-Descr: Blocking for a response.\n" );
+        if( descr->monitor ){
+            mqo_errf( mqo_es_vm, "s", 
+                      "another object is waiting on descriptor" );
+        }else{
+            descr->monitor = MQO_PP; 
+            mqo_start_listening( descr );
+            mqo_drop_ds( 2 );
+            MQO_SUSPEND( );
         }
-#else
-        mqo_tree_insert( mqo_monitors, v_descr );
-#endif
-        mqo_value result = descr->result;
-        descr->result = mqo_make_void( );
-        MQO_RESULT( result );
     }
 MQO_END_PRIM( read_descr )
 
@@ -195,13 +162,8 @@ MQO_END_PRIM( read_file_all )
 MQO_BEGIN_PRIM( "close-descr", close_descr )
     REQ_ANY_DESCR_ARG( descr );
     NO_MORE_ARGS( );
-   
-    descr->closed = 1;
-    mqo_os_error( close( descr->fd ) );
-
-    //TODO: We should notify a monitoring object of the closure.
-    mqo_tree_remove( mqo_monitors, v_descr );
-
+    
+    mqo_close( descr );
     MQO_NO_RESULT( );
 MQO_END_PRIM( close_descr )
 
@@ -332,7 +294,8 @@ void mqo_bind_os_prims( ){
     MQO_BIND_PRIM( skip_file );
     MQO_BIND_PRIM( seek_file );
     MQO_BIND_PRIM( pos_file );
-    MQO_BIND_PRIM( monitor );
-    MQO_BIND_PRIM( unmonitor );
+
+    //TODO: Halt needs to know if a process is monitoring a port, so it can
+    //      clear that.
 }
 

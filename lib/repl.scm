@@ -24,9 +24,8 @@
   (define done #f)
 
   (until done
-    (newline)    
+    (newline) 
     (write-descr *console* ">> ")
-    (wait *console*)
     (set! data (read-descr *console*))
     (if (> (string-length data) 0)
       (guard il-traceback

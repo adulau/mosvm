@@ -26,7 +26,6 @@
     (if (eof-object? data)
       (close port)
       (write data port)))
-  (close port)
   (show "EKO: BYE")
   (newline))
 
