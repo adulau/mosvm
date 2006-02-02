@@ -37,18 +37,12 @@
 
 
 void mqo_start_listening( mqo_descr descr ){
-    printf( "Starting listening: ");
-    mqo_show_descr( descr );
-    printf( "\n" );
     if( mqo_first_listening )mqo_first_listening->prev = descr;
     descr->prev = NULL;
     descr->next = mqo_first_listening;
     mqo_first_listening = descr;
 }
 void mqo_stop_listening( mqo_descr descr ){
-    printf( "Stopped listening: ");
-    mqo_show_descr( descr );
-    printf( "\n" );
     if( descr->prev ){
         descr->prev->next = descr->next;
     }else{
@@ -130,10 +124,6 @@ mqo_listener mqo_serve_tcp( mqo_integer port ){
 mqo_descr mqo_first_listening = NULL;
 
 void mqo_poll_descr( mqo_descr descr ){
-    printf( "Polling " );
-    mqo_show_descr( descr );
-    printf( "...\n" );
-
     static char buffer[ BUFSIZ ];
     
     mqo_value result;
@@ -158,8 +148,6 @@ void mqo_poll_descr( mqo_descr descr ){
             type = mqo_console_type;
         };
 
-        printf( "Read %i bytes.\n", rs );
-
         if( rs == -1 ){
             if( errno == MQO_EWOULDBLOCK ){
                 return;
@@ -175,9 +163,6 @@ void mqo_poll_descr( mqo_descr descr ){
         }
     }
  
-    printf( "Resuming process %x with result ", descr->monitor );
-    mqo_show( result, 5 );
-    mqo_newline();
     mqo_resume( descr->monitor, result );
     mqo_stop_listening( descr );
 }
@@ -252,18 +237,14 @@ int mqo_dispatch_monitors( ){
 }
 
 void mqo_close( mqo_descr descr ){
-    mqo_show_cstring( "Closing " );
-    mqo_show_descr( descr );
-    mqo_show_cstring( "...\n" );
     if( descr->closed )return;
-   
+
+    if( descr->monitor )mqo_resume( descr->monitor, mqo_vf_false() );
     mqo_stop_listening( descr );
     
     if( descr->type == MQO_CONSOLE )return;
     descr->closed = 1;
     mqo_os_error( close( descr->fd ) );
-    
-    if( descr->monitor )mqo_resume( descr->monitor, mqo_vf_false() );
 }
 
 mqo_console mqo_the_console;

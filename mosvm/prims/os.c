@@ -121,16 +121,13 @@ MQO_BEGIN_PRIM( "read-descr", read_descr )
     NO_MORE_ARGS( );
 
     if( descr->closed ){
-        printf( "Read-Descr: Closed.\n" );
         MQO_RESULT( mqo_vf_false() );
     }else if( descr->type == MQO_FILE ){
-        printf( "Read-Descr: File.\n" );
         static char buffer[ BUFSIZ ];
         mqo_integer count = mqo_os_error( read( descr->fd, buffer, BUFSIZ ) );
     
         MQO_RESULT( mqo_vf_string( mqo_string_fm( buffer, count ) ) );
     }else{
-        printf( "Read-Descr: Blocking for a response.\n" );
         if( descr->monitor ){
             mqo_errf( mqo_es_vm, "s", 
                       "another object is waiting on descriptor" );

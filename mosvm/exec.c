@@ -586,10 +586,6 @@ void mqo_use_process( mqo_process p ){
     };
 }
 void mqo_resume( mqo_process process, mqo_value value ){
-    printf( "Resumed process %x status was: ", process );
-    mqo_show_symbol( process->status );
-    mqo_newline( );
-    printf( "Current process is %x\n", MQO_PP );
     if( process->status == mqo_ps_suspended ){
         process->status = mqo_ps_paused;
         mqo_vector_put( process->state->sv,
@@ -597,7 +593,6 @@ void mqo_resume( mqo_process process, mqo_value value ){
                         value );
         mqo_resched_process( process );
     }
-    printf( "First process is now: %x\n", mqo_first_process );
 }
 void mqo_report_os_error( ){
     mqo_errf( mqo_es_os, "s", strerror( errno ) );
