@@ -38,9 +38,9 @@
 
 void mqo_report_net_error( ){
 #if defined(_WIN32)||defined(__CYGWIN__)
-    mqo_errf( mqo_es_vm, "s", strerror( errno ) );
-#else
     mqo_errf( mqo_es_vm, "s", strerror( WSAGetLastError() ) );
+#else
+    mqo_errf( mqo_es_vm, "s", strerror( errno ) );
 #endif
 }
 mqo_integer mqo_net_error( mqo_integer k ){
@@ -135,7 +135,7 @@ void mqo_attempt_read( mqo_descr descr ){
     
     if( descr->type == MQO_LISTENER ){
         struct sockaddr_storage addr;
-        mqo_integer len = sizeof( addr );
+        unsigned long len = sizeof( addr );
         rs = accept( descr->fd, (struct sockaddr*)&addr, &len);
         type = mqo_listener_type;
         if( rs == -1 && errno == MQO_EWOULDBLOCK )return;
