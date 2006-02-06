@@ -76,12 +76,15 @@
     struct mqo_type_data mqo_##tn##_type_data = { NULL, NULL, NULL, NULL }; \
     mqo_type mqo_##tn##_type = &mqo_##tn##_type_data; 
 
-#define MQO_BIND_TYPE( tn, di, sp ) \
-    mqo_##tn##_type_data.direct = di; \
-    mqo_##tn##_type_data.super = sp; \
-    mqo_##tn##_type_data.name = mqo_symbol_fs(  #tn ); \
+#define MQO_BIND_TYPE( tn, di ) \
+    mqo_##tn##_type_data.mt_show = (mqo_show_mt)mqo_show_##tn; \
+    mqo_##tn##_type_data.direct = mqo_##di##_type; \
+    mqo_##tn##_type_data.super = mqo_##di##_type; \
+    mqo_##tn##_type_data.name = mqo_symbol_fs( #tn ); \
     mqo_symbol_fs( "<" #tn ">" )->value = mqo_vf_type( mqo_##tn##_type );
-    
+
+#define mqo_NULL_type NULL
+
 #define MQO_ALLOC( tn, ext ) ((tn)GC_malloc(sizeof( struct tn##_data ) + ext ))
 // GC_malloc_atomic does not appear to work on OpenBSD, and is disabled.
 // #define MQO_AALLOC( tn, ext ) ((tn)GC_malloc_atomic(sizeof( struct tn##_data ) + ext ))
@@ -108,11 +111,14 @@ struct mqo_pair_data{
 };
 MQO_DECL_TYPE( pair );
 
+typedef void (*mqo_show_mt) (void*, mqo_word*);
+
 struct mqo_type_data {
     mqo_type   direct;
     mqo_symbol name;
     mqo_type   super;
     mqo_pair   info;
+    mqo_show_mt mt_show;
 };
 
 MQO_DECL_TYPE( type );
@@ -377,7 +383,9 @@ static inline void mqo_set_cdr( mqo_pair p, mqo_value v ){
     p->cdr = v; 
 }
 
-mqo_type mqo_make_type( mqo_type direct, mqo_symbol name, mqo_type super, mqo_pair info );
+mqo_type mqo_make_type( mqo_symbol name, mqo_type super, 
+                        mqo_show_mt mt_show,
+                        mqo_pair info );
 mqo_error mqo_make_error( mqo_symbol key, mqo_pair info );
 mqo_process mqo_make_process( );
 mqo_string mqo_make_string( mqo_integer length );

@@ -48,12 +48,12 @@ void mqo_init_mosvm(){
 
 void mqo_handle_sigint( int sig ){
     mqo_newline( );
-    mqo_show_cstring( "Interrupted by user." );
+    mqo_write( "Interrupted by user." );
     mqo_newline( );
-    mqo_show_cstring( "DS: ");
+    mqo_write( "DS: ");
     mqo_dump_stack( MQO_SV, MQO_SI );
     mqo_newline( );
-    mqo_show_cstring( "RS: ");
+    mqo_write( "RS: ");
     mqo_dump_stack( MQO_RV, MQO_RI );
     mqo_newline( );
     exit(1);
@@ -123,7 +123,7 @@ int main( int argc, const char *argv[] ){
 
 
     if( mqo_show_final ){
-        mqo_show( r, 32 );
+        mqo_word ct = 32; mqo_show( r, &ct );
         mqo_newline();
     } 
     

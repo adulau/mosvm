@@ -33,4 +33,10 @@ extern mqo_descr mqo_first_listening;
 int mqo_dispatch_monitors( );
 void mqo_init_net_subsystem( );
 
+void mqo_show_descr( mqo_descr d, mqo_word *ct );
+#define mqo_show_listener mqo_show_descr
+#define mqo_show_console mqo_show_descr
+#define mqo_show_file mqo_show_descr
+#define mqo_show_socket mqo_show_descr
+
 #endif

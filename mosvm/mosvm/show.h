@@ -19,34 +19,27 @@
 
 #include "memory.h"
 
-void mqo_show_cstring( const char* st );
-void mqo_show( mqo_value v, mqo_word ct );
-// Displays the supplied value.  If ct is nonzero, it is employed to prevent excessive display by refusing to display
-// contained values beyond the specified value.
-//
-// Note that self-referential values with a nonzero ct can result in an infinite loop, or stack overflow.  High counts may
-// also result in overflows.
-
-void mqo_show_pair( mqo_pair p, mqo_word ct );
-// As above.
-
-void mqo_show_error( mqo_error, mqo_word ct  );
-// As above
-
-void mqo_show_vector( mqo_vector, mqo_word ct  );
-// As above
-
-void mqo_show_instruction( mqo_instruction i, mqo_word ct );
-void mqo_show_program( mqo_program s, mqo_word ct );
-void mqo_show_closure( mqo_closure s );
-
-void mqo_show_symbol( mqo_symbol s );
-void mqo_show_integer( mqo_integer i );
-void mqo_show_string( mqo_string a );
-void mqo_show_descr( mqo_descr a );
-void mqo_show_tree( mqo_tree a, mqo_word ct );
+void mqo_write( const char* st );
+void mqo_writestr( mqo_string st );
+void mqo_writech( mqo_byte ch );
+void mqo_writeint( mqo_integer i );
+void mqo_writesym( mqo_symbol sy );
 void mqo_space( );
 void mqo_newline( );
+
+void mqo_show( mqo_value v, mqo_word* ct );
+// Displays the supplied value.  If ct is nonnull, it is employed to prevent
+// excessive display by refusing to display contained values beyond the 
+// specified value.
+//
+// Note that self-referential values with a nonnull ct can result in an
+// infinite loop, or stack overflow.  High counts may also result in 
+// overflows.
+
+void mqo_write_address( mqo_integer c );
+void mqo_show_unknown( mqo_type t, mqo_integer d );
+#define mqo_show_atom NULL
+#define mqo_show_void NULL
 
 #endif
 

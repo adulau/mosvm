@@ -115,5 +115,10 @@ mqo_node mqo_prev_node(mqo_node p);
             Returns predecessor of "p", or NULL if no predecessor.
             */
 
+void mqo_show_tree_contents( mqo_tree tree, mqo_word* ct );
+void mqo_show_tree( mqo_tree tree, mqo_word* ct );
+void mqo_show_set( mqo_tree tree, mqo_word* ct );
+void mqo_show_dict( mqo_tree tree, mqo_word* ct );
+
 #endif
 

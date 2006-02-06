@@ -16,305 +16,91 @@
 
 #include "mosvm.h"
 #include <stdio.h>
+#include <unistd.h>
 
-void _mqo_show( mqo_value v, mqo_word* ct );
+void mqo_show( mqo_value v, mqo_word* ct );
 
-void mqo_show_cstring( const char* st ){
-    fputs( st, stdout );
+void mqo_write( const char* st ){
+    write( STDOUT_FILENO, st, strlen( st ) );
+    //----
+    // printf( "%s", st ); 
+    //----
+    // mqo_os_error( fputs( st, stdout ) );
+    // mqo_os_error( fflush( stdout ) ); 
+                         //For fuck's sake..  On some platforms putchar( '\n' )
+                         //does not flush the buffer, despite ANSI C's
+                         //requirement that stdout be line buffered.
+                         //
+                         //Less crack, people..
 }
-
-void mqo_newline( ){
-    putchar( '\n' );
+void mqo_writech( mqo_byte ch ){
+    write( STDOUT_FILENO, &ch, 1 );
+    // mqo_os_error( fputc( ch, stdout ) );
+    // mqo_os_error( fflush( stdout ) ); 
 }
-
-void mqo_space( ){
-    putchar( ' ' );
-}
-
-void mqo_show_integer( mqo_integer i ){
-    //TODO: Replace.
-    printf( "%i", i );
+void mqo_writeint( mqo_integer number ){
+    static char buf[256];
+    buf[255] = 0;
+    int i = 255;
+    
+    do{
+        buf[ --i ] = '0' + number % 10;
+    }while( number /= 10 );
+   
+    write( STDOUT_FILENO, buf + i, 255 - i ); 
 };
-
-void _mqo_show_vector( mqo_vector v, mqo_word* ct ){
-    mqo_integer ln = mqo_vector_length( v );
-    mqo_integer ix = 0;
-
-    printf( "#%i(", ln );
+void mqo_writehex( mqo_long number ){
+    static char buf[256];
+    buf[255] = 0;
+    int i = 255;
     
-    for( ix = 0; ix < ln; ix ++ ){
-        if( ct ){
-	    if( ! *ct ){
-	        mqo_show_cstring( " ..." ); 
-                goto done;
-	    }
-	
-            (*ct)--;
-        }
-
-        mqo_show_cstring( " " );
-        _mqo_show( mqo_vector_get( v, ix), ct );
-    }
-    
-done:
-    mqo_show_cstring( " )" );
-} 
-
-void _mqo_show_tree( mqo_tree t, mqo_word* ct ){
-    mqo_node n = mqo_first_node( t );
-    int f = 0;
-
-    mqo_show_cstring( "{" );
-    for(;;){
-        n = mqo_next_node( n );
-        if( !n ) goto done;
-        
-        if( f ){
-            mqo_show_cstring( ", " );
+    do{
+        int digit = number % 16;
+        if( digit > 9 ){
+            buf[ -- i ] = 'A' + digit - 10;
         }else{
-            f = 1;
-            mqo_show_cstring( " " );
+            buf[ --i ] = '0' + digit;
         }
-
-        if( ct ){
-            if( ! *ct ){
-                mqo_show_cstring( "..." );
-                goto done;
-            }
-
-            (*ct)--;
-        }
-
-        _mqo_show( n->data, ct );
-    }
-done:
-    mqo_show_cstring( " }" );
+    }while( number /= 16 );
+   
+    write( STDOUT_FILENO, buf + i, 255 - i ); 
+};
+void mqo_writestr( mqo_string s ){
+    if( s )mqo_write( s->data );
 }
-
-void mqo_show_tree( mqo_tree t, mqo_word ct ){
-    _mqo_show_tree( t, ct ? &ct : NULL );
+void mqo_writesym( mqo_symbol s ){
+    if( s )mqo_writestr( s->string );
 }
-
-#define _mqo_show_dict _mqo_show_tree
-#define _mqo_show_set  _mqo_show_tree    
-
-void mqo_show_addr( mqo_integer a ){
-    printf( "%x", a );
-}
-
-void mqo_show_closure( mqo_closure c ){
-    mqo_show_cstring( "<func " );
-    if( c->name ){
-        mqo_show_symbol( c->name );
-        mqo_show_cstring( "/" );
-    };
-    mqo_show_addr( (mqo_integer)c );
-    mqo_show_cstring( ">" );
-}
-
-void mqo_show_prim( mqo_prim p ){
-    mqo_show_cstring( "<prim " );
-    mqo_show_string( p->name );
-    mqo_show_cstring( ">" );
-}
-
-void _mqo_show_pair_contents( mqo_pair p, mqo_word* ct ){
-    int show_item( mqo_value v ){
-        if( ct ){
-            if( ! *ct ){
-                mqo_show_cstring( "..." );
-                p = NULL;
-                return 1;
-            }
-
-            (*ct)--;
-        }
-        
-        _mqo_show( v, ct );	
-        return 0;
-    }
-
-    while( p ){
-        mqo_value car = mqo_car( p );
-        mqo_value cdr = mqo_cdr( p );
-        if( show_item( car ) )return;
-
-        if( mqo_is_pair( cdr ) ){
-            p = mqo_pair_fv( cdr );
-            if( p )mqo_space( );
-        }else{
-            mqo_show_cstring( " . " );
-            if( show_item( cdr ) )return; 
-            p = NULL;
-        };
-    }
-}
-void _mqo_show_pair( mqo_pair p, mqo_word* ct ){
-    mqo_show_cstring( "(" );
-    _mqo_show_pair_contents( p, ct );
-    mqo_show_cstring( ")" );
-}
-void _mqo_show_tc( mqo_tc t, mqo_word* ct ){
-    mqo_show_cstring( "<tc>" );
-    return;
-    if(mqo_is_empty( mqo_car( t ) )){
-        mqo_show_cstring("(tc)");
+void mqo_write_address( mqo_integer i ){
+    //TODO: Replace.
+    if( i ){
+        mqo_writehex( (mqo_long)i );
     }else{
-        mqo_show_cstring( "(tc " );
-        if( ct && (! *ct ) ){
-            mqo_show_cstring( "..." );
-        }else{
-            _mqo_show_pair_contents( mqo_pair_fv( mqo_car( t ) ), ct );
-        }
-        mqo_show_cstring( ")" );
+        mqo_write( "null" );
     }
 }
-void mqo_show_vector( mqo_vector p, mqo_word ct ){
-    _mqo_show_vector( p, ct ? &ct : (mqo_word*)NULL );
+void mqo_newline( ){
+    mqo_writech( '\n' );
 }
-void mqo_show_pair( mqo_pair p, mqo_word ct ){
-    _mqo_show_pair( p, ct ? &ct : (mqo_word*)NULL );
+void mqo_space( ){
+    mqo_writech( ' ' );
 }
-void mqo_show_string( mqo_string a ){
-    mqo_show_cstring( (char*)a->data );    
+void mqo_show_unknown( mqo_type type, mqo_integer data ){
+    mqo_writech( '[' );
+    mqo_writesym( type->name );
+    mqo_space( );
+    mqo_write_address( data );
+    mqo_writech( ']' );
 }
-void mqo_show_symbol( mqo_symbol s ){
-    (!s) ? printf( "<<NULL>>" ) : mqo_show_string( s->string );
-}
-void mqo_show_boolean( int b ){
-    mqo_show_cstring( b ? "#t" : "#f" );
-}
-void _mqo_show_error( mqo_error e, mqo_word* ct ){
-    mqo_show_cstring( "<error " );
-    mqo_show_symbol( e->key );
-    MQO_FOREACH( e->info, pair ){
-        if( ct ){
-            if( *ct ){ (*ct)--; }else{
-                mqo_show_cstring( "..." );
-                goto done;
-            }
-        }
-        mqo_space( );
-        _mqo_show( mqo_car( pair ), ct );
+void mqo_show( mqo_value v, mqo_word* ct ){
+    mqo_type t = mqo_value_type( v );
+    if( t->mt_show ){ 
+        t->mt_show( (void*)v.data, ct ); 
+    }else if( mqo_isa_atom( v ) ){
+        mqo_write( "[" );
+        mqo_writesym( mqo_value_type( v )->name );
+        mqo_write( "]" );
+    }else{ 
+        mqo_show_unknown( t, v.data );
     }
-done:
-    mqo_show_cstring( ">" );
-}
-void mqo_show_error( mqo_error e, mqo_word ct ){
-    _mqo_show_error( e, ct ? &ct : (mqo_word*)NULL );
-}
-void _mqo_show_instruction( mqo_instruction i, mqo_word* ct ){
-    struct mqo_op_row* op = mqo_op_table + i->code;
-
-    mqo_show_cstring( "(" );
-    mqo_show_cstring( op->name );
-
-    if( op->use_sy ){
-        mqo_space( );
-        mqo_show_symbol( i->sy );
-    }else if( op->use_va ){
-        mqo_space( );
-        _mqo_show( i->va, ct );
-    }else if( op->use_w1 ){
-        mqo_space( );
-        mqo_show_integer( i->w.a );
-        if( op->use_w2 ){
-            mqo_space( );
-            mqo_show_integer( i->w.b );
-        }
-    }
-    mqo_show_cstring( ")" );
-}
-void mqo_show_instruction( mqo_instruction i, mqo_word ct ){
-    _mqo_show_instruction( i, ct ? &ct : (mqo_word*)NULL );
-}
-void mqo_show_descr( mqo_descr f ){
-    mqo_show_cstring( f->closed ? "<closed descr " : "<open descr " );
-    mqo_show_string( f->name );
-    mqo_show_cstring( ">" );
-}
-void _mqo_show_program( mqo_program p, mqo_word* ct ){
-	mqo_show_cstring( "<program ...>" ); return;
-    mqo_show_cstring( "<program" );
-    for( mqo_integer i = 0; i < p->length; i ++ ){
-        mqo_space( );
-        if( ct ){
-            if( ! *ct ){
-                mqo_show_cstring( "..." );
-                goto done;
-            }
-            (*ct)--;
-        }
-        mqo_show_instruction( p->inst + i, 3 );
-    }
-done:
-    mqo_show_cstring( ">" );
-}
-void mqo_show_program( mqo_program p, mqo_word ct ){
-    _mqo_show_program( p, &ct );
-}
-void mqo_show_atom( mqo_value v ){
-    mqo_show_cstring( "<<" );
-    mqo_show_symbol( mqo_value_type( v )->name );
-    mqo_show_cstring( ">>" );
-}
-void mqo_show_type( mqo_type type ){
-    mqo_show_cstring( "<" );
-    mqo_show_symbol( type->name );
-    mqo_show_cstring( ">" );
-}
-void mqo_show_process( mqo_process p ){
-    mqo_show_cstring( "<" );
-    mqo_show_symbol( p->status );
-    mqo_show_cstring( " process " );
-    mqo_show_integer( (mqo_integer)p );
-    mqo_show_cstring( ">" );
-}
-void _mqo_show( mqo_value v, mqo_word* ct ){
-    if( mqo_is_string( v ) ){
-        mqo_show_string( mqo_string_fv( v ) );
-    }else if( mqo_is_symbol( v ) ){
-        mqo_show_symbol( mqo_symbol_fv( v ) );
-    }else if( mqo_is_prim( v ) ){
-        mqo_show_prim( mqo_prim_fv( v ) );
-    }else if( mqo_is_integer( v ) ){
-        mqo_show_integer( mqo_integer_fv( v ) );
-    }else if( mqo_is_pair( v ) ){
-        _mqo_show_pair( mqo_pair_fv( v ), ct );
-    }else if( mqo_is_tc( v ) ){
-        _mqo_show_tc( mqo_tc_fv( v ), ct );
-    }else if( mqo_is_error( v ) ){
-        _mqo_show_error( mqo_error_fv( v ), ct );
-    }else if( mqo_is_vector( v ) ){
-        _mqo_show_vector( mqo_vector_fv( v ), ct );
-    }else if( mqo_is_tree( v ) ){
-        _mqo_show_tree( mqo_tree_fv( v ), ct );
-    }else if( mqo_is_dict( v ) ){
-        _mqo_show_dict( mqo_dict_fv( v ), ct );
-    }else if( mqo_is_set( v ) ){
-        _mqo_show_set( mqo_set_fv( v ), ct );
-    }else if( mqo_is_boolean( v ) ){
-        mqo_show_boolean( mqo_boolean_fv( v ) );
-    }else if( mqo_is_program( v ) ){
-        _mqo_show_program( mqo_program_fv( v ), ct );
-    }else if( mqo_is_closure( v ) ){
-        mqo_show_closure( mqo_closure_fv( v ) );
-    }else if( mqo_is_descr( v ) ){
-        mqo_show_descr( mqo_descr_fv( v ) );
-    }else if( mqo_is_instruction( v ) ){
-        _mqo_show_instruction( mqo_instruction_fv( v ), ct );
-    }else if( mqo_is_type( v ) ){
-        mqo_show_type( mqo_type_fv( v ) );
-    }else if( mqo_is_process( v ) ){
-        mqo_show_process( mqo_process_fv( v ) );
-    }else if( mqo_isa( v, mqo_atom_type ) ){
-        mqo_show_atom( v );
-    }else{
-        mqo_show_cstring( "[a " );
-        mqo_show_symbol( mqo_value_type( v )->name );
-        mqo_show_cstring( "]" );
-    };
-}
-void mqo_show( mqo_value v, mqo_word ct ){
-    _mqo_show( v, ct ? &ct : (mqo_word*)NULL );
 }

@@ -188,5 +188,12 @@ extern mqo_boolean mqo_trace_vm;
 
 void mqo_report_os_error( );
 int mqo_os_error( int code );
+
+void mqo_show_closure( mqo_closure c, mqo_word* ct );
+void mqo_show_prim( mqo_prim p, mqo_word* ct );
+void mqo_show_process( mqo_process p, mqo_word* ct );
+#define mqo_show_vmstate NULL;
+#define mqo_show_multimethod NULL;
+
 #endif
 

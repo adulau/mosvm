@@ -23,8 +23,13 @@
 #include "mosvm/show.h"
 #include "mosvm/thaw.h"
 #include "mosvm/tavl.h"
-#include "mosvm/net.h"
+#include "mosvm/os.h"
 #include "mosvm/alarm.h"
+#include "mosvm/string.h"
+#include "mosvm/list.h"
+#include "mosvm/error.h"
+#include "mosvm/vector.h"
+#include "mosvm/program.h"
 
 extern mqo_integer mqo_argc;
 extern mqo_pair mqo_argv;

@@ -44,6 +44,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "mosvm/tavl.h"
+#include "mosvm/show.h"
 
 #define RIGHT   -1
 #define LEFT    +1
@@ -656,4 +657,50 @@ int mqo_alter_node(mqo_tree tree, mqo_node p, mqo_value item){
 
     return TAVL_OK;
 }
+
+
+void mqo_show_tree_contents( mqo_tree t, mqo_word* ct ){
+    mqo_node n = mqo_first_node( t );
+    int f = 0;
+
+    while( n = mqo_next_node( n ) ){
+        mqo_space();
+
+        if( ct ){
+            if( ! *ct ){
+                mqo_write( "..." );
+                return;
+            }
+
+            (*ct)--;
+        }
+
+        mqo_show( n->data, ct );
+    }
+}
+
+void mqo_show_dict( mqo_dict t, mqo_word* ct ){
+    if( ! t )mqo_show_unknown( mqo_dict_type, 0 );
+
+    mqo_write( "[dict" );
+    mqo_show_tree_contents( t, ct );
+    mqo_write( "]" );
+}
+
+void mqo_show_set( mqo_set t, mqo_word* ct ){
+    if( ! t )mqo_show_unknown( mqo_set_type, 0 );
+
+    mqo_write( "[set" );
+    mqo_show_tree_contents( t, ct );
+    mqo_write( "]" );
+}
+void mqo_show_tree( mqo_tree t, mqo_word* ct ){
+    if( ! t )mqo_show_unknown( mqo_tree_type, 0 );
+
+    mqo_write( "[tree" );
+    mqo_show_tree_contents( t, ct );
+    mqo_write( "]" );
+}
+mqo_value mqo_set_key( mqo_value item ){ return item; }
+mqo_value mqo_dict_key( mqo_value item ){ return mqo_car( mqo_pair_fv( item ) ); }
 

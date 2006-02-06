@@ -1,8 +1,20 @@
+- ?/??/????, Phase Three of the Module System
+  + When compiling a module, the export
+
 - ?/??/????, Simplification of Continue
   + mqo_cycle_process added, which cycles the current process out of operation,
     advances the registers to the next process, then does a nonlocal exit.
   + mqo_cycle_process performs montior dispatch when it hits the end of the
     schedule.
+  + mqo_process contains a field, monitoring, indicating if a process is
+    blocked monitoring a descriptor.
+  + mqo_halt will clear the monitor of a process.
+  + the suspend primitive will report an error if it attempts to suspend
+    a process that is monitoring.
+  + mqo_show semantics will now resemble Scheme write semantics.
+  + mqo_show_string will show an escaped version of the string.
+  + A port-less write in MOSVM will now write the string to the console.
+  + A port-less read in MOSVM will now read a string from the console.
 
 - ?/??/????, Refit of Alarms to make Monitors
   * Removed read-alarm, write-alarm and the alarm type from mosvm.

@@ -132,7 +132,7 @@ void mqo_poll_descr( mqo_descr descr ){
     
     if( descr->type == MQO_LISTENER ){
         struct sockaddr_storage addr;
-        unsigned long len = sizeof( addr );
+        mqo_long len = sizeof( addr );
         rs = accept( descr->fd, (struct sockaddr*)&addr, &len);
         type = mqo_listener_type;
         if( rs == -1 && errno == MQO_EWOULDBLOCK )return;
@@ -255,13 +255,99 @@ void mqo_close( mqo_descr descr ){
 
 mqo_console mqo_the_console;
 
+void mqo_show_descr( mqo_descr f, mqo_word* ct ){
+    mqo_write( f->closed ? "[closed " : "[" );
+    switch( f->type ){
+    case MQO_CONSOLE:
+        mqo_write( "console" );
+    case MQO_SOCKET:
+        mqo_write( "socket" );
+        //TODO: Add the address information.
+    case MQO_LISTENER:
+        mqo_write( "listener" );
+        //TODO: Add the listening port.
+    case MQO_FILE:
+        mqo_write( "file " );
+    default:
+        if( f->name ){
+            mqo_writestr( f->name );
+        }else{
+            mqo_write( "descr" );
+        }
+    }
+    mqo_show_string( f->name, NULL );
+    mqo_write( "]" );
+}
 void mqo_init_net_subsystem( ){
 #ifdef _WIN32
     WSADATA wsa;
     WSAStartup( 2, &wsa );
 #else
-    mqo_unblock_socket( STDIN_FILENO );
+    // Commented out, because BSDs will make STDOUT nonblocking if you make
+    // STDIN nonblocking.  This totally fucks with many I/O operations.
+    //
+    // If it turns out that this breaks other UNIXen, which is possible since
+    // select on a blocking socket is sort of an edge case, we should unblock
+    // then reblock during our poll loop.
+    //
+    // Ain't C fun, kids?
+    //
+    // mqo_unblock_socket( STDIN_FILENO );
 #endif
     mqo_the_console = mqo_make_console( mqo_string_fs( "console" ) );
 }
 
+mqo_boolean mqo_is_descr( mqo_value value ){
+    mqo_type type = mqo_value_type( value );
+    if( type == mqo_file_type )return 1;
+    if( type == mqo_socket_type )return 1;
+    if( type == mqo_listener_type )return 1;
+    if( type == mqo_console_type )return 1;
+    return( type == mqo_descr_type );
+}
+mqo_descr mqo_descr_fv( mqo_value value ){
+#ifdef NDEBUG
+    mqo_type type = mqo_value_type( descr );
+    if( type == mqo_file_type )return descr;
+    if( type == mqo_socket_type )return descr;
+    if( type == mqo_listener_type )return descr;
+    if( type == mqo_console_type )return descr;
+    assert( type == mqo_descr_type );
+#endif
+    return (mqo_descr)(value.data);
+}
+mqo_value mqo_vf_descr( mqo_descr descr ){
+    mqo_type type;
+    switch( descr->type ){
+    case MQO_CONSOLE: type = mqo_console_type; break;
+    case MQO_SOCKET:  type = mqo_socket_type; break;
+    case MQO_LISTENER: type = mqo_listener_type; break;
+    case MQO_FILE: type = mqo_file_type; break;
+    default: type = mqo_descr_type; break;
+    }
+    return mqo_make_value( type, (mqo_integer)descr );
+}
+void mqo_descr_finalizer( void* ptr, void* cd ){
+    if( ! ((mqo_descr)ptr)->closed )close( ((mqo_descr)ptr)->fd );
+}
+mqo_descr mqo_make_descr( mqo_string path, int fd, mqo_byte type ){
+    mqo_descr f = MQO_ALLOC( mqo_descr, 0 );
+    f->name = path;
+    f->fd = fd;
+    f->type = type;
+    f->monitor = NULL;
+    GC_register_finalizer( f, mqo_descr_finalizer, NULL, NULL, NULL );
+    return f;
+}
+mqo_file mqo_make_file( mqo_string path, int fd ){
+    return mqo_make_descr( path, fd, MQO_FILE );
+}
+mqo_socket mqo_make_socket( mqo_string path, int fd ){
+    return mqo_make_descr( path, fd, MQO_SOCKET );
+}
+mqo_listener mqo_make_listener( mqo_string path, int fd ){
+    return mqo_make_descr( path, fd, MQO_LISTENER );
+}
+mqo_console mqo_make_console( mqo_string path ){
+    return mqo_make_descr( path, 0, MQO_CONSOLE );
+}

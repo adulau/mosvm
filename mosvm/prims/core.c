@@ -628,10 +628,10 @@ MQO_END_PRIM( error )
 
 MQO_BEGIN_PRIM( "show", show )
     REQ_VALUE_ARG( val );
-    OPT_INTEGER_ARG( itm );
+    OPT_INTEGER_ARG( count );
     NO_MORE_ARGS( );
-  
-    mqo_show( val, itm );
+    
+    mqo_word ict = count; mqo_show( val, has_count ? &ict : NULL );
 
     MQO_NO_RESULT( );
 MQO_END_PRIM( show )
@@ -896,9 +896,9 @@ MQO_BEGIN_PRIM( "make-type", make_type )
     MQO_RESULT( 
         mqo_vf_type( 
             mqo_make_type( 
-                super->direct ? super->direct : super, 
                 name, 
                 super,
+                NULL,
                 info
             )
         )

@@ -75,22 +75,22 @@ mqo_process MQO_PP; // The current process -- whose state is not current.
 jmp_buf*    MQO_XP;
 
 void mqo_dump_stack( mqo_vector sv, mqo_integer si ){
-    printf( "%4i", si );
-    printf( "[" );
+    // printf( "%4i", si );
+    mqo_write( "[" );
     for( int i = 0; i < si; i ++ ){
         mqo_value v = mqo_vector_get( sv, i );
         mqo_space( );
         if( mqo_is_instruction( v ) ){
-            mqo_show_cstring( "ip:" );
-            printf( "%x", v.data );
+            mqo_write( "ip:" );
+            mqo_write_address( v.data );
         }else if( mqo_is_program( v ) ){
-            mqo_show_cstring( "pp:" );
-            printf( "%x", v.data );
+            mqo_write( "pp:" );
+            mqo_write_address( v.data );
         }else{
-            mqo_show( v, 3 );
+            mqo_word ct = 3; mqo_show( v, &ct );
         }
     }
-    printf( " ]" );
+    mqo_write( " ]" );
 }
 void mqo_continue( ){
     if(! MQO_XP ){
@@ -105,12 +105,12 @@ void mqo_continue( ){
                 MQO_PP->status = mqo_ps_running;
                 while( MQO_IP ){
                     if( mqo_trace_vm ){
-                        mqo_show_integer( MQO_RI );
-                        mqo_show_cstring( " : " );
+                        // mqo_writeint( MQO_RI );
+                        // mqo_write( " : " );
                         mqo_dump_stack( MQO_SV, MQO_SI );
-                        mqo_show_cstring( " -- " );
-                        mqo_show_instruction( MQO_IP, 3 );
-                        mqo_show_cstring( "\n" );
+                        mqo_write( " -- " );
+                        mqo_word ct = 3; mqo_show_instruction( MQO_IP, &ct );
+                        mqo_write( "\n" );
                     };
                     MQO_IP->prim->fn();
                 }
@@ -247,9 +247,9 @@ void mqo_jump( mqo_value fn ){
 
 again:
 /*    if( mqo_trace_vm ){
-        mqo_show_cstring( "JUMP" );
+        mqo_write( "JUMP" );
         mqo_dump_stack( MQO_RV, MQO_RI );
-        mqo_show_cstring( " -- " );
+        mqo_write( " -- " );
         mqo_show( fn, 3 );
         mqo_newline();
     };
@@ -304,7 +304,7 @@ void mqo_call( mqo_value fn ){
 
 void mqo_return( ){
     /*if( mqo_trace_vm ){
-        mqo_show_cstring( "RETN" );
+        mqo_write( "RETN" );
         mqo_dump_stack( MQO_RV, MQO_RI );
         mqo_newline();
     };
@@ -382,72 +382,69 @@ void mqo_il_traceback( mqo_error error ){
         }
     }
     void show_call( ){
-        mqo_show_cstring( "(" );
+        mqo_write( "(" );
 
         if( mqo_is_closure( fn ) ){
             mqo_closure c = mqo_closure_fv( fn );
             
             if( c->name ){
-                mqo_show_symbol( c->name );
+                mqo_writesym( c->name );
             }else{
-                mqo_show_closure( c );
+                mqo_show_closure( c, NULL );
             }
             
             load_env_frame( );
         }else if( mqo_is_program( fn ) ){
-            mqo_show_cstring( "<program>" );
+            mqo_write( "<program>" );
             load_env_frame( );
         }else if( mqo_is_prim( fn ) ){
-            mqo_show_string( mqo_prim_fv( fn )->name );
+            mqo_writestr( mqo_prim_fv( fn )->name );
             if( tc ){
                 //TODO: Signal an error if this is not the first show_call.
-                mqo_show_cstring( "...)" );
+                mqo_write( "...)" );
                 return;
             }else{
                 load_stack_frame( );
             }
         }else{
-            mqo_show( fn, 5 );
+            mqo_word ct = 5; mqo_show( fn, &ct );
         };
     
         for( ai = 0; ai < ct; ai ++ ){
             mqo_space();
             if( ai == 5 ){ 
-                mqo_show_cstring ( "..." ); 
+                mqo_write ( "..." ); 
                 break; 
             }
-            mqo_show( af[ ai ], 5 );
+            mqo_word ct = 5; mqo_show( af[ ai ], &ct );
         }
         
-        mqo_show_cstring( ")" );
+        mqo_write( ")" );
     }   
     
     // Display the Key and Info
     mqo_newline( );
-    mqo_show_cstring( "Error: " );
-    mqo_show_symbol( error->key );
+    mqo_write( "Error: " );
+    mqo_writesym( error->key );
     if( error->info ){
-    mqo_show_cstring( ":" );
-        MQO_FOREACH( error->info, pair ){
-            mqo_space( );
-            mqo_show( mqo_car( pair ), 16 );
-        }
+        mqo_write( ":" );
+        mqo_word ct = 16; mqo_show_pair_contents( error->info, &ct );
     }
     mqo_newline( );
 
     // Display the stacks.
-    mqo_show_cstring( "DS: " );
+    mqo_write( "DS: " );
     mqo_dump_stack( sv, si );
-    mqo_show_cstring( "\nRS: " );
+    mqo_write( "\nRS: " );
     mqo_dump_stack( rv, ri );
-    mqo_show_cstring( "\n" );
+    mqo_write( "\n" );
 
     // Display the Traceback
-    mqo_show_cstring( "Trace: " );
+    mqo_write( "Trace: " );
 
     while( ri > 1 ){ //Note, there's always one base RI from the executing
                      //program.
-        if( tc > 0 ) mqo_show_cstring( "       " );
+        if( tc > 0 ) mqo_write( "       " );
       
         if( ri < 5 ){
             //TODO: Signal an error.
@@ -603,4 +600,67 @@ int mqo_os_error( int code ){
     }else{
         return code;
     }
+}
+void mqo_show_closure( mqo_closure c, mqo_word* ct ){
+    if( ! c )mqo_show_unknown( mqo_closure_type, 0 );
+
+    mqo_write( "[closure " );
+    if( c->name ){
+        mqo_writesym( c->name );
+        mqo_write( "/" );
+    };
+    mqo_write_address( (mqo_integer)c );
+    mqo_write( "]" );
+}
+void mqo_show_prim( mqo_prim p, mqo_word* ct ){
+    if( ! p )mqo_show_unknown( mqo_prim_type, 0 );
+
+    mqo_write( "[prim " );
+    mqo_writestr( p->name );
+    mqo_write( "]" );
+}
+void mqo_show_process( mqo_process p, mqo_word* ct ){
+    mqo_writech( '[' );
+    mqo_writesym( p->status );
+    mqo_write( " process " );
+    mqo_writeint( (mqo_integer)p );
+    mqo_writech( ']' );
+}
+mqo_closure mqo_make_closure( mqo_program cp, mqo_instruction ip, mqo_pair ep ){
+    mqo_closure c = MQO_ALLOC( mqo_closure, 0 );
+    
+    c->cp = cp;
+    c->ip = ip;
+    c->ep = ep;
+
+    return c;
+}
+mqo_vmstate mqo_make_vmstate( ){
+    mqo_vmstate e = MQO_ALLOC( mqo_vmstate, 0 );
+
+    return e;
+}
+mqo_prim mqo_make_prim( const char *name, mqo_prim_fn fn ){
+    mqo_prim p = MQO_ALLOC( mqo_prim, 0 );
+    p->name = mqo_string_fs( name );
+    p->fn = fn;
+    return p;
+}
+mqo_process mqo_make_process( ){
+    mqo_process p = MQO_ALLOC( mqo_process, 0 );
+    mqo_vmstate s = mqo_make_vmstate( );
+    p->status = mqo_ps_suspended;
+    p->state = s;
+    s->rv = mqo_make_vector( MQO_STACK_SZ );
+    s->sv = mqo_make_vector( MQO_STACK_SZ );
+    return p;
+}
+mqo_multimethod mqo_make_multimethod( 
+   mqo_value signature, mqo_value func, mqo_value next
+){
+    mqo_multimethod mt = MQO_ALLOC( mqo_multimethod, 0 );
+    mt->signature = signature;
+    mt->func = func;
+    mt->next = next;
+    return mt;
 }
