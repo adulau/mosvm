@@ -51,7 +51,7 @@ mqo_guard mqo_make_guard(
     return e;
 }
 void mqo_show_error( mqo_error e, mqo_word* ct ){
-    if( ! e )mqo_show_unknown( mqo_error_type, 0 );
+    if( ! e ){ mqo_show_unknown( mqo_error_type, 0 ); return; }
     mqo_write( "[error " );
     mqo_writesym( e->key );
     mqo_show_pair_contents( e->info, ct );

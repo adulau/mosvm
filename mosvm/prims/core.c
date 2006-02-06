@@ -213,10 +213,13 @@ MQO_BEGIN_PRIM( "number->string", number_to_string )
     static char buf[256];
     buf[255] = 0;
     int i = 255;
+    int neg = number < 0;
 
     do{
         buf[ --i ] = '0' + number % 10;
     }while( number /= 10 );
+
+    if( neg )buf[ -- i ] = '-';
 
     MQO_RESULT( mqo_vf_string( mqo_string_fm( buf + i, 255 - i ) ) );
 MQO_END_PRIM( number_to_string );
@@ -1159,7 +1162,7 @@ MQO_BEGIN_PRIM( "globals", globals )
     NO_MORE_ARGS( );
     mqo_set globals = mqo_make_tree( mqo_set_key );
     mqo_node node = mqo_first_node( mqo_lexicon );
-    while( node = mqo_next_node( node ) ){
+    while( node &&( node = mqo_next_node( node ) )){
         mqo_symbol key = mqo_symbol_fv( node->data );
         if( ! mqo_is_void( key->value ) ){
             mqo_tree_insert( globals, node->data );
@@ -1213,11 +1216,9 @@ MQO_BEGIN_PRIM( "set->list", set_to_list )
 
     mqo_tc tc = mqo_make_tc( );
     mqo_node node = mqo_first_node( set );
-    node = mqo_next_node( node );
     
-    while( node ){
+    while( node &&( node = mqo_next_node( node ) )){
         mqo_tc_append( tc, node->data );
-        node = mqo_next_node( node );    
     }
     
     MQO_RESULT( mqo_car( tc ) );
@@ -1254,11 +1255,9 @@ MQO_BEGIN_PRIM( "dict->list", dict_to_list )
 
     mqo_tc tc = mqo_make_tc( );
     mqo_node node = mqo_first_node( dict );
-    node = mqo_next_node( node );
     
-    while( node ){
+    while( node &&( node = mqo_next_node( node ) )){
         mqo_tc_append( tc, node->data );
-        node = mqo_next_node( node );    
     }
     
     MQO_RESULT( mqo_car( tc ) );
@@ -1270,11 +1269,9 @@ MQO_BEGIN_PRIM( "dict-keys", dict_keys )
 
     mqo_tc tc = mqo_make_tc( );
     mqo_node node = mqo_first_node( dict );
-    node = mqo_next_node( node );
     
-    while( node ){
+    while( node &&( node = mqo_next_node( node ) )){
         mqo_tc_append( tc, mqo_car( mqo_pair_fv( node->data ) ) );
-        node = mqo_next_node( node );    
     }
     
     MQO_RESULT( mqo_car( tc ) );
@@ -1286,11 +1283,9 @@ MQO_BEGIN_PRIM( "dict-values", dict_values )
 
     mqo_tc tc = mqo_make_tc( );
     mqo_node node = mqo_first_node( dict );
-    node = mqo_next_node( node );
     
-    while( node ){
+    while( node &&( node = mqo_next_node( node ) )){
         mqo_tc_append( tc, mqo_cdr( mqo_pair_fv( node->data ) ) );
-        node = mqo_next_node( node );    
     }
     
     MQO_RESULT( mqo_car( tc ) );

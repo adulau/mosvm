@@ -662,8 +662,8 @@ int mqo_alter_node(mqo_tree tree, mqo_node p, mqo_value item){
 void mqo_show_tree_contents( mqo_tree t, mqo_word* ct ){
     mqo_node n = mqo_first_node( t );
     int f = 0;
-
-    while( n = mqo_next_node( n ) ){
+    
+    while( n &&( n = mqo_next_node( n ) ) ){
         mqo_space();
 
         if( ct ){
@@ -680,7 +680,7 @@ void mqo_show_tree_contents( mqo_tree t, mqo_word* ct ){
 }
 
 void mqo_show_dict( mqo_dict t, mqo_word* ct ){
-    if( ! t )mqo_show_unknown( mqo_dict_type, 0 );
+    if( ! t )return mqo_show_unknown( mqo_dict_type, 0 );
 
     mqo_write( "[dict" );
     mqo_show_tree_contents( t, ct );

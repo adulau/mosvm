@@ -17,7 +17,7 @@
 #include "mosvm.h"
 
 void mqo_show_vector( mqo_vector v, mqo_word* ct ){
-    if( ! v )mqo_show_unknown( mqo_vector_type, 0 );
+    if( ! v )return mqo_show_unknown( mqo_vector_type, 0 );
 
     mqo_integer ln = mqo_vector_length( v );
     mqo_integer ix = 0;

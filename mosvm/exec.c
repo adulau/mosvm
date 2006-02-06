@@ -602,7 +602,7 @@ int mqo_os_error( int code ){
     }
 }
 void mqo_show_closure( mqo_closure c, mqo_word* ct ){
-    if( ! c )mqo_show_unknown( mqo_closure_type, 0 );
+    if( ! c )return mqo_show_unknown( mqo_closure_type, 0 );
 
     mqo_write( "[closure " );
     if( c->name ){

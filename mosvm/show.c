@@ -42,11 +42,14 @@ void mqo_writeint( mqo_integer number ){
     static char buf[256];
     buf[255] = 0;
     int i = 255;
-    
+    int neg = number < 0;
+
     do{
         buf[ --i ] = '0' + number % 10;
     }while( number /= 10 );
    
+    if( neg )buf[ -- i ] = '-';
+
     write( STDOUT_FILENO, buf + i, 255 - i ); 
 };
 void mqo_writehex( mqo_long number ){

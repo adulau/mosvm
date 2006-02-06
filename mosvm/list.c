@@ -48,14 +48,12 @@ void mqo_show_pair_contents( mqo_pair p, mqo_word* ct ){
     }
 }
 void mqo_show_pair( mqo_pair p, mqo_word* ct ){
-    if( ! p )mqo_show_unknown( mqo_pair_type, 0 );
-
     mqo_write( "(" );
     mqo_show_pair_contents( p, ct );
     mqo_write( ")" );
 }
 void mqo_show_tc( mqo_tc t, mqo_word* ct ){
-    if( ! t )mqo_show_unknown( mqo_tc_type, 0 );
+    if( ! t )return mqo_show_unknown( mqo_tc_type, 0 );
 
     if(mqo_is_empty( mqo_car( t ) )){
         mqo_write("[tc]");

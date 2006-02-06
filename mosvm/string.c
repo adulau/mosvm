@@ -77,6 +77,14 @@ mqo_integer mqo_string_compare( mqo_string a, mqo_string b ){
     //      to degenerating into memcmp, but there's a point
     //      where performance optimizations must give way.
 
+
+    mqo_integer al = mqo_string_length( a );
+    mqo_integer bl = mqo_string_length( b );
+    if( al == bl )return memcmp( mqo_sf_string( a ), 
+                                 mqo_sf_string( b ),
+                                 al );
+    return al - bl;
+/*    
     mqo_integer al = mqo_string_length( a );
     mqo_integer bl = mqo_string_length( b );
     mqo_integer d = memcmp( mqo_sf_string( a ), 
@@ -84,6 +92,7 @@ mqo_integer mqo_string_compare( mqo_string a, mqo_string b ){
                             al < bl ? al : bl );
 
     return d ? d : ( al - bl );
+*/
 }
 
 mqo_boolean mqo_eqvs( mqo_string a, mqo_string b ){
