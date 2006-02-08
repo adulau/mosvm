@@ -17,8 +17,17 @@
 #include "mosvm.h"
 
 void mqo_show_string( mqo_string a, mqo_word* ct ){
-    //TODO: Escape!
-    mqo_writestr( a );    
+    //TODO: Escape.
+    mqo_integer ln = mqo_string_length( a );
+    if( ct ){
+        if( *ct <( ln / 8 ) ){
+            ln = ( *ct ) * 8;
+            *ct = 0;
+        }else{
+            *ct -= ln / 8;
+        }
+    }
+    mqo_writemem( a->data, ln );
 }
 void mqo_show_symbol( mqo_symbol s, mqo_word* ct ){
     mqo_writesym( s );

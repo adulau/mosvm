@@ -16,7 +16,23 @@
   + A port-less write in MOSVM will now write the string to the console.
   + A port-less read in MOSVM will now read a string from the console.
 
-- ?/??/????, Refit of Alarms to make Monitors
+- 2/08/2006, Replacement of TAVL with TREAP
+  * Replaced tavl.c with tree.c -- using a faster, simpler tree implementation
+    based on treaps.
+  * Fixed a bug involving errors in mqo_compare due to implicit sign conversion
+    issues when subtracting pointers.
+  * All internal show functions how require a count pointer.
+  * Show now employs a pointer in the type object to determine how to display
+    a value.
+  * Show has been refitted for consistency.
+  * Massive rearrangement of functions into individual files, out of memory.c,
+    exec.c and show.c.
+  * Renamed net.c to the more precise os.c.
+  * Fixed a bug involving issues on BSDs with changing stdin to nonblocking 
+    causing stdout to become nonblocking as well.
+  * Added mosc.mo to the distribution.
+
+- 2/02/2006, Refit of Alarms to make Monitors
   * Removed read-alarm, write-alarm and the alarm type from mosvm.
   * Added the monitor primitive to os.c.
   * Added the unmonitor primitive to os.c
@@ -103,7 +119,6 @@
     file extension.
   * Altered run.scm to run any files that do not end in .mo as source files,
     with automatic compilation and optimization.
-
 
 - 1/26/2006, Added string primitives for log parsing.
   * Added split-lines primitive to core.

@@ -84,7 +84,28 @@
   (define index (vector-ref inv 1))
   (define items (vector-ref inv 2))
   (define root  (vector-ref inv 3))
-  
+ 
+  (when #f
+  (when *mosvm?* 
+    (show "Encoding ")
+    (show inv)
+    (show "...")
+    (newline))
+
+  (when *mosvm?*
+     (dump-dict index))
+
+  (when *mosvm?*
+     (show "Count is ")
+     (show count)
+     (newline)
+     (show "Root is ")
+     (show root)
+     (newline)
+     (show "Root Offset is ")
+     (show (dict-ref index root))
+     (newline)))
+
   (write-word count port) ; Record count
   (write-word (dict-ref index root) port) ; The Root offset.
    

@@ -20,18 +20,11 @@
 
 void mqo_show( mqo_value v, mqo_word* ct );
 
+void mqo_writemem( const void* mem, mqo_integer len ){
+    write( STDOUT_FILENO, mem, len );
+}
 void mqo_write( const char* st ){
-    write( STDOUT_FILENO, st, strlen( st ) );
-    //----
-    // printf( "%s", st ); 
-    //----
-    // mqo_os_error( fputs( st, stdout ) );
-    // mqo_os_error( fflush( stdout ) ); 
-                         //For fuck's sake..  On some platforms putchar( '\n' )
-                         //does not flush the buffer, despite ANSI C's
-                         //requirement that stdout be line buffered.
-                         //
-                         //Less crack, people..
+    mqo_writemem( st, strlen( st ) );
 }
 void mqo_writech( mqo_byte ch ){
     write( STDOUT_FILENO, &ch, 1 );
@@ -41,8 +34,13 @@ void mqo_writech( mqo_byte ch ){
 void mqo_writeint( mqo_integer number ){
     static char buf[256];
     buf[255] = 0;
-    int i = 255;
-    int neg = number < 0;
+    int neg, i = 255;
+
+    if( number < 0 ){
+        neg = 1; number = -number;
+    }else{
+        neg = 0;
+    }
 
     do{
         buf[ --i ] = '0' + number % 10;

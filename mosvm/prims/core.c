@@ -1319,8 +1319,9 @@ MQO_BEGIN_PRIM( "dict-set!", dict_setd )
     REQ_VALUE_ARG( key );
     REQ_VALUE_ARG( value );
     NO_MORE_ARGS( );
-
+    
     mqo_tree_insert( dict, mqo_vf_pair( mqo_cons( key, value ) ) );
+
     MQO_NO_RESULT();
 MQO_END_PRIM( dict_setd )
 
@@ -1329,7 +1330,7 @@ MQO_BEGIN_PRIM( "dict-ref", dict_ref )
     REQ_VALUE_ARG( key );
     OPT_VALUE_ARG( alternate );
     NO_MORE_ARGS( );
-    
+   
     mqo_node node = mqo_tree_lookup( dict, key );
     
     if( node ){

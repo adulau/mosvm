@@ -57,15 +57,18 @@ mqo_boolean mqo_isa( mqo_value v, mqo_type t ){
 }
 
 mqo_integer mqo_compare( mqo_value a, mqo_value b ){
-    mqo_integer d = (mqo_integer)( a.type - b.type );
-    if( d )return d;
-    if( a.data == b.data )return 0;
-
-    if( mqo_direct_type( a ) == mqo_string_type ){
-        return mqo_string_compare( mqo_string_fv( a ),
-                                   mqo_string_fv( b ) );
+    if( a.type > b.type ){
+        return +1;
+    }else if( a.type < b.type ){
+        return -1;
     }else{
-        return a.data - b.data;
+        if( a.data == b.data )return 0;
+        if( mqo_direct_type( a ) == mqo_string_type ){
+            return mqo_string_compare( mqo_string_fv( a ),
+                    mqo_string_fv( b ) );
+        }else{
+            return a.data > b.data ? +1 : -1;
+        }
     }
 }
 mqo_boolean mqo_eqv( mqo_value a, mqo_value b ){

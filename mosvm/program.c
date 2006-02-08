@@ -43,10 +43,6 @@ void mqo_show_instruction( mqo_instruction i, mqo_word* ct ){
     mqo_write( " )" );
 }
 
-void mqo_show_program( mqo_program p, mqo_word* ct ){
-    mqo_write( "[program ...]" ); return;
-}
-
 void mqo_dump_program( mqo_program p ){
     for( mqo_integer i = 0; i < p->length; i ++ ){
         mqo_word ct = 5; mqo_show_instruction( p->inst + i, &ct );

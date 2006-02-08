@@ -20,6 +20,7 @@
 #include "memory.h"
 
 void mqo_write( const char* st );
+void mqo_writemem( const void* mem, mqo_integer len );
 void mqo_writestr( mqo_string st );
 void mqo_writech( mqo_byte ch );
 void mqo_writeint( mqo_integer i );
