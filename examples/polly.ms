@@ -17,8 +17,6 @@
 
 (define (polly-session)
   (write "Polly wants a cracker!\n")
-  (show (current-input-port))
-  (show (current-output-port))
   (close))
 
 (define (polly portno)

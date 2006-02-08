@@ -13,6 +13,8 @@
   + When compiling a module, the export
   + Added the eval procedure to core.
   + Added define-macro
+  + Added super-type primitive.
+  + Added base-type primitive.
 
 - 2/08/2006, Queues Suspend and Resume on Empty
   * Extended the queue read method to suspend the reading process if the queue

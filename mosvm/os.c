@@ -43,15 +43,17 @@ void mqo_start_listening( mqo_descr descr ){
     mqo_first_listening = descr;
 }
 void mqo_stop_listening( mqo_descr descr ){
-    if( descr->prev ){
-        descr->prev->next = descr->next;
-    }else{
-        mqo_first_listening = descr->next;
-    }
+    if( descr->monitor ){
+        if( descr->prev ){
+            descr->prev->next = descr->next;
+        }else{
+            mqo_first_listening = descr->next;
+        }
 
-    if( descr->next )descr->next->prev = descr->prev;
-    descr->next = descr->prev = NULL;
-    descr->monitor = NULL;
+        if( descr->next )descr->next->prev = descr->prev;
+        descr->next = descr->prev = NULL;
+        descr->monitor = NULL;
+    };
 }
 
 void mqo_report_net_error( ){
@@ -189,7 +191,7 @@ int mqo_dispatch_monitors_once( ){
         //      alarm.
         timeout = NULL;
     }
-   
+    
     descr = mqo_first_listening;
     while( descr ){
         next = descr->next;
@@ -238,9 +240,8 @@ int mqo_dispatch_monitors( ){
 
 void mqo_close( mqo_descr descr ){
     if( descr->closed )return;
-
+    
     if( descr->monitor )mqo_resume( descr->monitor, mqo_vf_false() );
-    mqo_stop_listening( descr );
     
     if( descr->type == MQO_CONSOLE )return;
     descr->closed = 1;
