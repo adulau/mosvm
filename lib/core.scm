@@ -366,9 +366,9 @@
   ((assemble (optimize (compile data)))))
 
 (define (load path)
-  (cond ((string-ends-with path ".mo") (load-mo path))
-        ((string-ends-with path ".ms") (load-ms path))
-        ((string-ends-with path ".scm") (load-ms path))
+  (cond ((string-ends-with? path ".mo") (load-mo path))
+        ((string-ends-with? path ".ms") (load-ms path))
+        ((string-ends-with? path ".scm") (load-ms path))
         (else (error 'load "load only handles scm, ms and mo files" path))))
 
 (let ((*basedir* (getcwd))

@@ -25,6 +25,7 @@
     input port.
   * il_traceback will display the first string in the error without escapes,
     and all subsequent values using show.
+  * Added support for arithmetic comparisons with 1 or more arguments.
 
 - 2/08/2006, Clarification of Show and Write
   * Updated fakevm and mosc with hacks for Scheme environments to work around

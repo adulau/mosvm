@@ -558,38 +558,63 @@ MQO_BEGIN_PRIM( "=", m_eq )
 MQO_END_PRIM( m_eq )
 
 MQO_BEGIN_PRIM( "<", m_lt )
-    REQ_INTEGER_ARG( left );
-    REQ_INTEGER_ARG( right );
-    NO_MORE_ARGS( );
-    MQO_RESULT( mqo_vf_boolean( left < right ) );
+    REQ_INTEGER_ARG( v0 );
+    
+    while( ai < ct ){
+        REQ_INTEGER_ARG( vN );
+        if(!( v0 < vN )){ MQO_RESULT( mqo_vf_false( ) ); };
+        v0 = vN;
+    };
+
+    MQO_RESULT( mqo_vf_true( ) );
 MQO_END_PRIM( m_lt )
 
 MQO_BEGIN_PRIM( ">", m_gt )
-    REQ_INTEGER_ARG( left );
-    REQ_INTEGER_ARG( right );
-    NO_MORE_ARGS( );
-    MQO_RESULT( mqo_vf_boolean( left > right ) );
+    REQ_INTEGER_ARG( v0 );
+    
+    while( ai < ct ){
+        REQ_INTEGER_ARG( vN );
+        if(!( v0 > vN )){ MQO_RESULT( mqo_vf_false( ) ); };
+        v0 = vN;
+    };
+
+    MQO_RESULT( mqo_vf_true( ) );
 MQO_END_PRIM( m_gt )
 
 MQO_BEGIN_PRIM( "<=", m_lte )
-    REQ_INTEGER_ARG( left );
-    REQ_INTEGER_ARG( right );
-    NO_MORE_ARGS( );
-    MQO_RESULT( mqo_vf_boolean( left <= right ) );
+    REQ_INTEGER_ARG( v0 );
+    
+    while( ai < ct ){
+        REQ_INTEGER_ARG( vN );
+        if(!( v0 <= vN )){ MQO_RESULT( mqo_vf_false( ) ); };
+        v0 = vN;
+    };
+
+    MQO_RESULT( mqo_vf_true( ) );
 MQO_END_PRIM( m_lt )
 
 MQO_BEGIN_PRIM( ">=", m_gte )
-    REQ_INTEGER_ARG( left );
-    REQ_INTEGER_ARG( right );
-    NO_MORE_ARGS( );
-    MQO_RESULT( mqo_vf_boolean( left >= right ) );
+    REQ_INTEGER_ARG( v0 );
+    
+    while( ai < ct ){
+        REQ_INTEGER_ARG( vN );
+        if(!( v0 >= vN )){ MQO_RESULT( mqo_vf_false( ) ); };
+        v0 = vN;
+    };
+
+    MQO_RESULT( mqo_vf_true( ) );
 MQO_END_PRIM( m_gte )
 
 MQO_BEGIN_PRIM( "!=", m_ne )
-    REQ_INTEGER_ARG( left );
-    REQ_INTEGER_ARG( right );
-    NO_MORE_ARGS( );
-    MQO_RESULT( mqo_vf_boolean( left != right ) );
+    REQ_INTEGER_ARG( v0 );
+    
+    while( ai < ct ){
+        REQ_INTEGER_ARG( vN );
+        if(!( v0 != vN )){ MQO_RESULT( mqo_vf_false( ) ); };
+        v0 = vN;
+    };
+
+    MQO_RESULT( mqo_vf_true( ) );
 MQO_END_PRIM( m_ne )
 
 MQO_BEGIN_PRIM( "string=?", string_eqq )
@@ -1377,7 +1402,7 @@ MQO_BEGIN_PRIM( "string-find", string_find )
     }
 MQO_END_PRIM( string_find )
 
-MQO_BEGIN_PRIM( "string-begins-with", string_begins_with )
+MQO_BEGIN_PRIM( "string-begins-with?", string_begins_with )
     REQ_STRING_ARG( string );
     REQ_STRING_ARG( item );
     
@@ -1394,7 +1419,7 @@ MQO_BEGIN_PRIM( "string-begins-with", string_begins_with )
     }
 MQO_END_PRIM( string_begins_with )
 
-MQO_BEGIN_PRIM( "string-ends-with", string_ends_with )
+MQO_BEGIN_PRIM( "string-ends-with?", string_ends_with )
     REQ_STRING_ARG( string );
     REQ_STRING_ARG( item );
     
@@ -1459,16 +1484,15 @@ MQO_BEGIN_PRIM( "string-split", string_split )
         mqo_integer pl = pp - sp;
         item = mqo_string_fm( sp, pl );
         string = mqo_string_fm( pp + il, sl - il - pl );
+        MQO_RESULT( 
+                mqo_vf_pair( mqo_cons( mqo_vf_string( item ),
+                             mqo_vf_pair( 
+                                 mqo_cons( mqo_vf_string( string ),
+                                           mqo_vf_empty( ) ) ) ) ) );
     }else{
-        item = string;
-        string = mqo_make_string( 0 );
+        MQO_RESULT( mqo_vf_pair( mqo_cons( mqo_vf_string( string ),
+                                           mqo_vf_empty( ) ) ) );
     }
-
-    MQO_RESULT( 
-        mqo_vf_pair( mqo_cons( mqo_vf_string( item ),
-                               mqo_vf_pair( 
-                                   mqo_cons( mqo_vf_string( string ),
-                                             mqo_vf_empty( ) ) ) ) ) );
 MQO_END_PRIM( string_split )
 
 MQO_BEGIN_PRIM( "string-split*", string_splitm )

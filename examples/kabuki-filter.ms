@@ -15,16 +15,16 @@
     (next)    
     (cond
       ;;; All IC lines must be kept, and start with " --"
-      ((string-begins-with line " --") 
+      ((string-begins-with? line " --") 
        (keep))
 
       ;;; All OOC lines must be dropped, and start with " ::"
-      ((string-begins-with line " ::") 
+      ((string-begins-with? line " ::") 
        (drop))
 
       ;;; All remaining lines must be Systems which start with
       ;;; **, or are command feedback.
-      ((not (string-begins-with line " **")) 
+      ((not (string-begins-with? line " **")) 
        (drop))
 
       ;;; All system arrival commands should be kept.
