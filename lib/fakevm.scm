@@ -19,7 +19,7 @@
 
 (define *mosvm?* #f)
 
-(define (show x . v) (display x))
+(define (show x . v) (write x))
 
 (define (main . args) 
   (if (> *spot-ect* 0)

@@ -18,6 +18,7 @@
 
 void mqo_show_string( mqo_string a, mqo_word* ct ){
     //TODO: Escape.
+    mqo_writech( '"' );
     mqo_integer ln = mqo_string_length( a );
     if( ct ){
         if( *ct <( ln / 8 ) ){
@@ -28,6 +29,7 @@ void mqo_show_string( mqo_string a, mqo_word* ct ){
         }
     }
     mqo_writemem( a->data, ln );
+    mqo_writech( '"' );
 }
 void mqo_show_symbol( mqo_symbol s, mqo_word* ct ){
     mqo_writesym( s );

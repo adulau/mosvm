@@ -25,8 +25,8 @@
 
   (until done
     (newline) 
-    (write-descr *console* ">> ")
-    (set! data (read-descr *console*))
+    (write ">> ")
+    (set! data (read))
     (if (> (string-length data) 0)
       (guard il-traceback
         (set! data (string->exprs data))
@@ -34,10 +34,9 @@
         (set! data (optimize data))
         (set! data (assemble data))
         (set! data (data))
-        (write-descr *console* ":: ") 
+        (write ":: ") 
         (show data))
       (begin
-        (show "Bye!")
-        (newline)
+        (write "Bye!\n")
         (set! done #t)))))
 

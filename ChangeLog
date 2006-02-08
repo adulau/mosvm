@@ -12,9 +12,21 @@
   + the suspend primitive will report an error if it attempts to suspend
     a process that is monitoring.
   + mqo_show semantics will now resemble Scheme write semantics.
-  + mqo_show_string will show an escaped version of the string.
   + A port-less write in MOSVM will now write the string to the console.
   + A port-less read in MOSVM will now read a string from the console.
+
+- ?/??/????, Clarification of Show and Write
+  * read without a port will now read a string from the console.
+  * write without a port will now display a string to the console. 
+  * Updated fakevm and mosc with hacks for Scheme environments to work around
+    the differences in write, and the lack of display.
+  * the suspend and pause primitives now properly clear their call frames off
+    the return stack.
+  * the read primitive now properly clears its call frame off the return stack
+    if it blocks to monitor.
+  + t newline now moved to the core module, and supports an optional port
+    argument.
+  + mqo_show_string will show an escaped version of the string.
 
 - 2/08/2006, Replacement of TAVL with TREAP
   * Replaced tavl.c with tree.c -- using a faster, simpler tree implementation

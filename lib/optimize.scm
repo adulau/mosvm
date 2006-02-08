@@ -16,7 +16,9 @@
 
 (export "lib/optimize")
 
-(define (optimize assembly)
+(define (optimize assembly) assembly)
+
+(define (ooptimize assembly)
   (define pending (make-tc))
   (define completed (make-tc))
   (define result (make-tc))

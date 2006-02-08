@@ -639,14 +639,6 @@ MQO_BEGIN_PRIM( "show", show )
     MQO_NO_RESULT( );
 MQO_END_PRIM( show )
 
-MQO_BEGIN_PRIM( "newline", newline )
-    NO_MORE_ARGS( );
-  
-    mqo_newline( );
-
-    MQO_NO_RESULT( );
-MQO_END_PRIM( newline )
-
 MQO_BEGIN_PRIM( "error?", errorq )
     REQ_VALUE_ARG( val );
     NO_MORE_ARGS( );
@@ -1577,6 +1569,7 @@ MQO_END_PRIM( pause )
 MQO_BEGIN_PRIM( "suspend", suspend )
     NO_MORE_ARGS( );
     mqo_pop_ds();
+    mqo_return();
     MQO_SUSPEND();
 MQO_END_PRIM( suspend )
 
@@ -1651,7 +1644,6 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( vector_ref );
     MQO_BIND_PRIM( vector_length );
     MQO_BIND_PRIM( vectorq );
-    MQO_BIND_PRIM( newline );
     MQO_BIND_PRIM( eq );
     MQO_BIND_PRIM( apply );
     MQO_BIND_PRIM( memq );

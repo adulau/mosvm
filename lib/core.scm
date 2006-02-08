@@ -153,6 +153,7 @@
               (read-fn input-port-read-fn))
 
 ;;; Conflicts with R5RS. 
+(define (read) (read-descr *console*))
 (define (read (<input-port> input-port))
   ((input-port-read-fn input-port) input-port))
 
@@ -182,6 +183,7 @@
               (write-fn output-port-write-fn))
 
 ;;; Conflicts with R5RS. 
+(define (write data) (write-descr *console* data))
 (define (write data (<output-port> output-port)) 
   ((output-port-write-fn output-port) output-port data))
 
@@ -356,6 +358,9 @@
                  (dict-set! *imports* key (if (eq? key *last-imported-key*)
                                             *last-imported-path*
                                             #t)))))
+
+(define (newline) (write *line-sep*))
+(define (newline (<port> port) (write *linesep* port)))
 
 (export "lib/core")
 

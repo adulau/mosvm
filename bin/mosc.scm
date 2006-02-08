@@ -30,10 +30,12 @@
   (set! *mosc-phase* pn)
   (set! *mosc-data* (pf *mosc-data*)))
 
+(define print (if *mosvm?* write display))
+  
 (define (main src-file dst-file)
-  (show "Compiling ")
+  (print "Compiling ")
   (show src-file)
-  (show " to ")
+  (print " to ")
   (show dst-file)
   (newline)
 
@@ -43,28 +45,10 @@
         (read-all (open-lisp-input-file src-file))
         (read-all (open-input-file src-file))))
 
-  (show "LOADED.")
-  (newline)
-
   (phase "compile" compile)
-
-  (show "COMPILED.")
-  (newline)
-
   (phase "optimize" optimize)
-
-  (show "OPTIMIZED.")
-  (newline)
-
   (phase "assemble" assemble)
-
-  (show "ASSEMBLED.")
-  (newline)
-
   (phase "freeze" freeze)
-
-  (show "FROZEN.")
-  (newline)
 
   (set! *mosc-phase* "save")
   (write-data *mosc-data* (open-output-file dst-file))

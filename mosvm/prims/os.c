@@ -135,6 +135,7 @@ MQO_BEGIN_PRIM( "read-descr", read_descr )
             descr->monitor = MQO_PP; 
             mqo_start_listening( descr );
             mqo_drop_ds( 2 );
+            mqo_return( );
             MQO_SUSPEND( );
         }
     }

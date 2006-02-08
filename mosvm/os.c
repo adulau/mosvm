@@ -260,11 +260,14 @@ void mqo_show_descr( mqo_descr f, mqo_word* ct ){
     switch( f->type ){
     case MQO_CONSOLE:
         mqo_write( "console" );
+        break;
     case MQO_SOCKET:
         mqo_write( "socket" );
+        break;
         //TODO: Add the address information.
     case MQO_LISTENER:
         mqo_write( "listener" );
+        break;
         //TODO: Add the listening port.
     case MQO_FILE:
         mqo_write( "file " );
@@ -275,7 +278,6 @@ void mqo_show_descr( mqo_descr f, mqo_word* ct ){
             mqo_write( "descr" );
         }
     }
-    mqo_show_string( f->name, NULL );
     mqo_write( "]" );
 }
 void mqo_init_net_subsystem( ){
