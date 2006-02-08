@@ -53,6 +53,7 @@ mqo_symbol mqo_symbol_fm( const void* s, mqo_integer sl ){
         GC_free( str );
         return mqo_symbol_fv( node->data ); 
     }else{
+    
         sym = MQO_ALLOC( mqo_symbol, 0 );
         sym->string = str;
         sym->value = mqo_make_void();

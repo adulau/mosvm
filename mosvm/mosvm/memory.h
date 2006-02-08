@@ -322,16 +322,14 @@ mqo_file mqo_req_sub_file( mqo_value v, const char* w );
 typedef mqo_value (*mqo_key_fn) (mqo_value);
 
 MQO_BEGIN_TYPE( node )
+    mqo_long weight;
     mqo_value data;
-    struct mqo_node_data *Lptr, *Rptr;
-    signed char bf;            /* assumes values -2..+2 */
-    char Lbit;                 /* 0 or 1 */
-    char Rbit;                 /* 0 or 1 */
+    mqo_node left, right;
 MQO_END_TYPE( node )
 
 MQO_BEGIN_TYPE( tree )
-    mqo_node head;
-    mqo_key_fn key_of;
+    mqo_node root;
+    mqo_key_fn key_fn;
 MQO_END_TYPE( tree )
 
 MQO_DECL_TYPE( set )

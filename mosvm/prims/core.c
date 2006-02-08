@@ -1158,11 +1158,17 @@ MQO_BEGIN_PRIM( "dump-lexicon", dump_lexicon )
     MQO_NO_RESULT( );
 MQO_END_PRIM( dump_lexicon )
 
+MQO_BEGIN_PRIM( "dump-set", dump_set )
+    REQ_SET_ARG( set );
+    NO_MORE_ARGS( );
+    mqo_dump_tree( set );
+    MQO_NO_RESULT( );
+MQO_END_PRIM( dump_lexicon )
+
 MQO_BEGIN_PRIM( "globals", globals )
     NO_MORE_ARGS( );
     mqo_set globals = mqo_make_tree( mqo_set_key );
-    mqo_node node = mqo_first_node( mqo_lexicon );
-    while( node &&( node = mqo_next_node( node ) )){
+    MQO_ITER_TREE( mqo_lexicon, node ){
         mqo_symbol key = mqo_symbol_fv( node->data );
         if( ! mqo_is_void( key->value ) ){
             mqo_tree_insert( globals, node->data );
@@ -1215,9 +1221,8 @@ MQO_BEGIN_PRIM( "set->list", set_to_list )
     NO_MORE_ARGS( );
 
     mqo_tc tc = mqo_make_tc( );
-    mqo_node node = mqo_first_node( set );
     
-    while( node &&( node = mqo_next_node( node ) )){
+    MQO_ITER_TREE( set, node ){
         mqo_tc_append( tc, node->data );
     }
     
@@ -1254,9 +1259,7 @@ MQO_BEGIN_PRIM( "dict->list", dict_to_list )
     NO_MORE_ARGS( );
 
     mqo_tc tc = mqo_make_tc( );
-    mqo_node node = mqo_first_node( dict );
-    
-    while( node &&( node = mqo_next_node( node ) )){
+    MQO_ITER_TREE( dict, node ){
         mqo_tc_append( tc, node->data );
     }
     
@@ -1268,9 +1271,8 @@ MQO_BEGIN_PRIM( "dict-keys", dict_keys )
     NO_MORE_ARGS( );
 
     mqo_tc tc = mqo_make_tc( );
-    mqo_node node = mqo_first_node( dict );
-    
-    while( node &&( node = mqo_next_node( node ) )){
+
+    MQO_ITER_TREE( dict, node ){
         mqo_tc_append( tc, mqo_car( mqo_pair_fv( node->data ) ) );
     }
     
@@ -1282,9 +1284,8 @@ MQO_BEGIN_PRIM( "dict-values", dict_values )
     NO_MORE_ARGS( );
 
     mqo_tc tc = mqo_make_tc( );
-    mqo_node node = mqo_first_node( dict );
     
-    while( node &&( node = mqo_next_node( node ) )){
+    MQO_ITER_TREE( dict, node ){
         mqo_tc_append( tc, mqo_cdr( mqo_pair_fv( node->data ) ) );
     }
     
@@ -1730,6 +1731,7 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( string_to_exprs );
 
     MQO_BIND_PRIM( dump_lexicon );
+    MQO_BIND_PRIM( dump_set );
     
     MQO_BIND_PRIM( set );
     MQO_BIND_PRIM( setq );

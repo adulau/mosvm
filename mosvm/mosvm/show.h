@@ -23,6 +23,7 @@ void mqo_write( const char* st );
 void mqo_writestr( mqo_string st );
 void mqo_writech( mqo_byte ch );
 void mqo_writeint( mqo_integer i );
+void mqo_writehex( mqo_long number );
 void mqo_writesym( mqo_symbol sy );
 void mqo_space( );
 void mqo_newline( );

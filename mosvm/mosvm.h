@@ -22,7 +22,7 @@
 #include "mosvm/parse.h"
 #include "mosvm/show.h"
 #include "mosvm/thaw.h"
-#include "mosvm/tavl.h"
+#include "mosvm/tree.h"
 #include "mosvm/os.h"
 #include "mosvm/alarm.h"
 #include "mosvm/string.h"
