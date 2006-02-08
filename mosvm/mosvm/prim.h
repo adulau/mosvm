@@ -143,8 +143,7 @@
 
 #define NO_MORE_ARGS( ) \
     if( ai < ct ){ \
-        mqo_errf( mqo_es_args, "sx", "expected no more arguments", \
-            mqo_rest( ct, 1 ) ); \
+        mqo_errf( mqo_es_args, "sx", "too many arguments", mqo_vector_get( MQO_SV, MQO_SI + ai - ct - 1 ) ); \
     }; 
 
 static inline mqo_value mqo_peek_ds( ){

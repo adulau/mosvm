@@ -130,7 +130,11 @@ MQO_BEGIN_PRIM( "list-ref", list_ref )
     REQ_INTEGER_ARG( index );
     NO_MORE_ARGS( );
 
-    MQO_RESULT( mqo_car( mqo_list_ref( list, index ) ) );
+    while( list && index > 0 ){
+        index --; list = mqo_req_pair( mqo_cdr( list ), "list" );
+    }
+    if( list == NULL )mqo_errf( mqo_es_vm, "sx", "search passed past the end of the supplied list", v_list );
+    MQO_RESULT( mqo_car( list ) );
 MQO_END_PRIM( list_ref )
 
 MQO_BEGIN_PRIM( "abs", m_abs )

@@ -24,6 +24,9 @@
     the return stack.
   * the read primitive now properly clears its call frame off the return stack
     if it blocks to monitor.
+  * NO_MORE_ARGS no longer crashes the virtual machine when the user supplies
+    too many arguments to a primitive.
+  * mqo_list_ref now signals an error when index is greater than length.
   + t newline now moved to the core module, and supports an optional port
     argument.
   + mqo_show_string will show an escaped version of the string.

@@ -360,7 +360,7 @@
                                             #t)))))
 
 (define (newline) (write *line-sep*))
-(define (newline (<port> port) (write *linesep* port)))
+(define (newline (<port> port)) (write *line-sep* port))
 
 (export "lib/core")
 
