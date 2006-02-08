@@ -143,6 +143,12 @@
               port?
               (close-fn port-close-fn))
 
+(define (closed?) (closed? (current-input-port)))
+
+(define (close)
+  (close (current-input-port))
+  (close (current-output-port)))
+
 (define (close (<port> port))
   ((port-close-fn port) port))
 
@@ -156,6 +162,7 @@
                    (lambda (p) (or (read-descr *console*)
                                    *eof*))))
 
+(define (closed? (<input-port> port)) #f)
 (define (read) (read (current-input-port)))
 (define (read (<input-port> input-port))
   ((input-port-read-fn input-port) input-port))
@@ -185,6 +192,7 @@
               output-port?
               (write-fn output-port-write-fn))
 
+(define (closed? (<input-port> port)) #f)
 (define *console-output-port* 
   (make-output-port ignore-method
                    (lambda (p d) (write-descr *console* d))))
@@ -232,6 +240,12 @@
 
 (define (read-all (<file-input-port> input-port))
   (read-file-all (file-port-descr input-port)))
+
+(define (closed? (<file-input-port> port))
+  (descr-closed? (file-port-descr port)))
+
+(define (closed? (<file-output-port> port))
+  (descr-closed? (file-port-descr port)))
 
 ;;; Redundant, but R5RS specified
 (define (close-output-port (<output-port> port))

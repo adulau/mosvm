@@ -21,7 +21,7 @@
 
 (define (read (<connection> connection))
   (or (read-descr (connection-descr connection))
-      <eof>))
+      *eof*))
 
 (define (write (<string> data) (<connection> connection))
   (write-descr (connection-descr connection) data))
@@ -40,17 +40,10 @@
   (spawn (lambda ()
             (until (descr-closed? server)
               (define conn (read-descr server))
-              (show "Got new connection, spawning.")
-              (newline)
-              (spawn (lambda () (fn (make-connection conn))))))))
-
-;; (define (echo port)
-;;    (define done #f)
-;;    (until done 
-;;      (define data (read port))
-;;      (if (eof-object? data) 
-;;         (set! done #t)
-;;         (write data port))))
-;; (serve 9191 echo)
+              (define port (make-connection conn))
+              ;; Born just a little too slooooooooow!
+              (with-input-port port
+                (with-output-port port
+                  (spawn fn)))))))
 
 

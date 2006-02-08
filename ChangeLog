@@ -19,6 +19,7 @@
     output port.
   + Added a write method for writing to a process -- using its assigned
     input port.
+  + Added the eval procedure to core.
 
 - ?/??/????, Clarification of Show and Write
   * Updated fakevm and mosc with hacks for Scheme environments to work around
@@ -57,9 +58,13 @@
     a port.
   * Modified the write procedure to use current-output-port in the absence of
     a port.
-  + Altered lib/conn to use the with-input-port and with-output-port forms.
-  + newline now moved to the core module, and supports an optional port
+  * newline now moved to the core module, and supports an optional port
     argument; if one is omitted, the current-output-port will be used.
+  * Altered lib/conn to use the with-input-port and with-output-port forms.
+  * Altered closed? to accept a no-argument case that would default to 
+    checking process-input.
+  * Altered close to accept a no-argument case that would default to close
+    process-input.
 
 - 2/08/2006, Replacement of TAVL with TREAP
   * Replaced tavl.c with tree.c -- using a faster, simpler tree implementation
