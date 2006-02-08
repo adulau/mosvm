@@ -284,7 +284,7 @@ again:
 		mqo_pop_rs();
 		mqo_pop_rs();
 		mqo_pop_rs();
-        mqo_errf( mqo_es_vm, "sx", "mosvm does not know how to execute", fn );
+        mqo_errf( mqo_es_vm, "sx", "could not execute value", fn );
     };
 }
 
@@ -426,10 +426,17 @@ void mqo_il_traceback( mqo_error error ){
     mqo_newline( );
     mqo_write( "Error: " );
     mqo_writesym( error->key );
-    if( error->info ){
-        mqo_write( ":" );
-        mqo_word ct = 16; mqo_show_pair_contents( error->info, &ct );
-    }
+    mqo_pair info = error->info;
+    if( info ){
+        mqo_value text = mqo_car( info );
+        if( mqo_is_string( text ) ){
+            mqo_write( ": " );
+            info = mqo_pair_fv( mqo_cdr( info ) );
+            mqo_writestr( mqo_string_fv( text ) );
+            mqo_write( " " );
+        };
+        mqo_word ct = 16; mqo_show_pair_contents( info, &ct );
+    };
     mqo_newline( );
 
     // Display the stacks.

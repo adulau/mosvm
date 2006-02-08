@@ -37,7 +37,7 @@ MQO_BEGIN_PRIM( "set-program-code-at!", set_program_code_at )
 	NO_MORE_ARGS( )
 	
 	if( index >= program->length ){
-		mqo_errf( mqo_es_args, "si", "index must be less than program length",
+		mqo_errf( mqo_es_args, "si", "index exceeds program length",
 							   index );
 	};
 	if( code >= 20 ){
@@ -57,7 +57,7 @@ MQO_BEGIN_PRIM( "program-code-at", program_code_at )
 	NO_MORE_ARGS( )
 	
 	if( index >= program->length ){
-		mqo_errf( mqo_es_args, "si", "index must be less than program length",
+		mqo_errf( mqo_es_args, "si", "index exceeds program length",
 							   index );
 	};
 
@@ -71,7 +71,7 @@ MQO_BEGIN_PRIM( "set-program-word1-at!", set_program_word1_at )
 	NO_MORE_ARGS( )
 	
 	if( index >= program->length ){
-		mqo_errf( mqo_es_args, "si", "index must be less than program length",
+		mqo_errf( mqo_es_args, "si", "index exceeds program length",
 							   index );
 	};
 
@@ -86,7 +86,7 @@ MQO_BEGIN_PRIM( "program-word1-at", program_word1_at )
 	NO_MORE_ARGS( )
 	
 	if( index >= program->length ){
-		mqo_errf( mqo_es_args, "si", "index must be less than program length",
+		mqo_errf( mqo_es_args, "si", "index exceeds program length",
 							   index );
 	};
 
@@ -100,7 +100,7 @@ MQO_BEGIN_PRIM( "set-program-word2-at!", set_program_word2_at )
 	NO_MORE_ARGS( )
 	
 	if( index >= program->length ){
-		mqo_errf( mqo_es_args, "si", "index must be less than program length",
+		mqo_errf( mqo_es_args, "si", "index exceeds program length",
 							   index );
 	};
 
@@ -115,7 +115,7 @@ MQO_BEGIN_PRIM( "program-word2-at", program_word2_at )
 	NO_MORE_ARGS( )
 	
 	if( index >= program->length ){
-		mqo_errf( mqo_es_args, "si", "index must be less than program length",
+		mqo_errf( mqo_es_args, "si", "index exceeds program length",
 							   index );
 	};
 
@@ -129,7 +129,7 @@ MQO_BEGIN_PRIM( "set-program-value-at!", set_program_value_at )
 	NO_MORE_ARGS( )
 	
 	if( index >= program->length ){
-		mqo_errf( mqo_es_args, "si", "index must be less than program length",
+		mqo_errf( mqo_es_args, "si", "index exceeds program length",
 							   index );
 	};
 
@@ -144,7 +144,7 @@ MQO_BEGIN_PRIM( "program-value-at", program_value_at )
 	NO_MORE_ARGS( )
 	
 	if( index >= program->length ){
-		mqo_errf( mqo_es_args, "si", "index must be less than program length",
+		mqo_errf( mqo_es_args, "si", "index exceeds program length",
 							   index );
 	};
 
@@ -158,7 +158,7 @@ MQO_BEGIN_PRIM( "set-program-symbol-at!", set_program_symbol_at )
 	NO_MORE_ARGS( )
 	
 	if( index >= program->length ){
-		mqo_errf( mqo_es_args, "si", "index must be less than program length",
+		mqo_errf( mqo_es_args, "si", "index exceeds program length",
 							   index );
 	};
 
@@ -173,7 +173,7 @@ MQO_BEGIN_PRIM( "program-symbol-at", program_symbol_at )
 	NO_MORE_ARGS( )
 	
 	if( index >= program->length ){
-		mqo_errf( mqo_es_args, "si", "index must be less than program length",
+		mqo_errf( mqo_es_args, "si", "index exceesd program length",
 							   index );
 	};
 

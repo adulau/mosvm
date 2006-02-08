@@ -101,7 +101,7 @@ MQO_BEGIN_PRIM( "open-file", open_file )
             break;
         default:
             mqo_errf( 
-                mqo_es_vm, "sx", "Unrecognized flag encountered in flags.", 
+                mqo_es_vm, "sx", "unrecognized flag encountered in flags", 
                 v_flags
             );    
         }

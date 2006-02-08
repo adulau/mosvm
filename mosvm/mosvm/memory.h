@@ -61,16 +61,16 @@
         if( mqo_is_##tn( v ) ){ \
             return mqo_##tn##_fv( v ); \
         }else{ \
-            mqo_errf( mqo_es_args, "sssx", \
-                                   "expected " #tn " for", f, "got", v ); \
+            mqo_errf( mqo_es_args, "sx", \
+                                   "expected " #tn, v ); \
         } \
     } \
     mqo_##tn mqo_req_sub_##tn( mqo_value v, const char* f ){ \
         if( mqo_direct_type( v ) == mqo_##tn##_type ){ \
             return (mqo_##tn)(v.data); \
         }else{ \
-            mqo_errf( mqo_es_args, "sssx", \
-                                   "expected subtype of " #tn " for", f, "got", v ); \
+            mqo_errf( mqo_es_args, "sx", \
+                                   "expected subtype of " #tn, v ); \
         } \
     } \
     struct mqo_type_data mqo_##tn##_type_data = { NULL, NULL, NULL, NULL }; \

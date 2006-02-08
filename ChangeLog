@@ -1,6 +1,3 @@
-- ?/??/????, Phase Three of the Module System
-  + When compiling a module, the export
-
 - ?/??/????, Simplification of Continue
   + mqo_cycle_process added, which cycles the current process out of operation,
     advances the registers to the next process, then does a nonlocal exit.
@@ -11,17 +8,25 @@
   + mqo_halt will clear the monitor of a process.
   + the suspend primitive will report an error if it attempts to suspend
     a process that is monitoring.
-  + Extended the queue read method to suspend the reading process if the queue
-    is empty.
-  + Extended the queue write method to resume a blocked reading process if
-    necessary.
-  + Added a read method for reading from a process -- using its assigned
-    output port.
-  + Added a write method for writing to a process -- using its assigned
-    input port.
-  + Added the eval procedure to core.
 
-- ?/??/????, Clarification of Show and Write
+- ?/??/????, Phase Three of the Module System
+  + When compiling a module, the export
+  + Added the eval procedure to core.
+  + Added define-macro
+
+- 2/08/2006, Queues Suspend and Resume on Empty
+  * Extended the queue read method to suspend the reading process if the queue
+    is empty.
+  * Extended the queue write method to resume a blocked reading process if
+    necessary.
+  * Added a read method for reading from a process -- using its assigned
+    output port.
+  * Added a write method for writing to a process -- using its assigned
+    input port.
+  * il_traceback will display the first string in the error without escapes,
+    and all subsequent values using show.
+
+- 2/08/2006, Clarification of Show and Write
   * Updated fakevm and mosc with hacks for Scheme environments to work around
     the differences in write, and the lack of display.
   * the suspend and pause primitives now properly clear their call frames off

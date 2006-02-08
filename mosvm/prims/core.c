@@ -133,7 +133,7 @@ MQO_BEGIN_PRIM( "list-ref", list_ref )
     while( list && index > 0 ){
         index --; list = mqo_req_pair( mqo_cdr( list ), "list" );
     }
-    if( list == NULL )mqo_errf( mqo_es_vm, "sx", "search passed past the end of the supplied list", v_list );
+    if( list == NULL )mqo_errf( mqo_es_vm, "sx", "index past end of list", v_list );
     MQO_RESULT( mqo_car( list ) );
 MQO_END_PRIM( list_ref )
 
@@ -332,20 +332,20 @@ void mqo_prim_apply( ){
     if( ct < 2 ){
         mqo_errf( mqo_es_vm, "s",
             "apply requires at least two arguments, a function and a"
-            " list of arguments." 
+            " list of arguments" 
         );
     }
     mqo_value v_tail = mqo_vector_get( MQO_SV, MQO_SI - 2 );
     if(! mqo_is_pair( v_tail ) ){
         mqo_errf( mqo_es_vm, "sx",
-            "the last argument to apply must be a list.", v_tail
+            "the last argument to apply must be a list", v_tail
         );
     };
     mqo_pair tail = mqo_pair_fv( v_tail );
     mqo_value fn = mqo_vector_get( MQO_SV, MQO_SI - ct - 1 );
     if(!( mqo_is_function( fn )|| mqo_is_program( fn ) )){
         mqo_errf( mqo_es_vm, "sx",
-            "the first argument to apply must be a function.", fn
+            "the first argument to apply must be a function", fn
         );
     }
 
@@ -504,9 +504,7 @@ MQO_BEGIN_PRIM( "vector-ref", vector_ref )
     }else{
         mqo_errf( 
             mqo_es_vm,
-            "sisi", 
-            "index ", index, "greater than vector length", 
-            mqo_vector_length( vector ) 
+            "si", "index exceeds vector length", mqo_vector_length( vector ) 
         );
         MQO_NO_RESULT( );
     }
@@ -522,8 +520,7 @@ MQO_BEGIN_PRIM( "vector-set!", vector_set )
     }else{
         mqo_errf( 
             mqo_es_vm,
-            "sisi", 
-            "index ", index, "greater than vector length", 
+            "si", "index exceeds vector length", 
             mqo_vector_length( vector ) 
         );
     };
@@ -547,7 +544,7 @@ MQO_BEGIN_PRIM( "string-ref", string_ref )
     REQ_INTEGER_ARG( index );
     NO_MORE_ARGS( );
     if( index >= mqo_string_length( string ) ){
-        mqo_errf( mqo_es_args, "si", "index greater than string length", 
+        mqo_errf( mqo_es_args, "si", "index exceeds string length", 
                                index );
     }
     MQO_RESULT( mqo_vf_integer( string->data[index] ) );
@@ -808,7 +805,7 @@ MQO_BEGIN_PRIM( "string-append", string_append )
         }else if( mqo_is_integer( v ) ){
             ln += 1;
         }else{
-            mqo_errf( mqo_es_vm, "sx", "expected a string, got:", v );
+            mqo_errf( mqo_es_vm, "sx", "expected string", v );
             MQO_NO_RESULT( );
         };
     }
@@ -958,15 +955,15 @@ MQO_BEGIN_PRIM( "make-multimethod", make_multimethod )
     NO_MORE_ARGS( );
 
     if((! mqo_is_true( sig ))&&(! mqo_is_pair( sig ) )){
-        mqo_errf( mqo_es_vm, "sx", "expected list or #t, not", sig );
+        mqo_errf( mqo_es_vm, "sx", "expected list or #t", sig );
     }
 
     if(! mqo_is_function( fail ) ){
-        mqo_errf( mqo_es_vm, "sx", "expected function for fail, not", fail );
+        mqo_errf( mqo_es_vm, "sx", "expected function for fail", fail );
     }
 
     if(! mqo_is_function( pass ) ){
-        mqo_errf( mqo_es_vm, "sx", "expected function for pass, not", pass );
+        mqo_errf( mqo_es_vm, "sx", "expected function for pass", pass );
     }
 
     MQO_RESULT( 
@@ -1520,7 +1517,7 @@ MQO_BEGIN_PRIM( "string-join", string_join )
                 ln += seplen;
             }
         }else{
-            mqo_errf( mqo_es_vm, "sx", "expected a string, got:", v );
+            mqo_errf( mqo_es_vm, "sx", "expected a string", v );
             MQO_NO_RESULT( );
         };
     }

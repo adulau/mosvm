@@ -37,10 +37,11 @@
   (let ((lines (cons (cons "s:  " *spot-s*) 
                       lines)))
     (for-each (lambda (line) 
-                (show "    ")
+                (write "    ")
+                (write (car line))
                 (for-each (lambda (phrase)
                             (show phrase))
-                          line)
+                          (cdr line))
                 (newline))
               lines)))
 
@@ -57,10 +58,6 @@
     (if (not (equal? x *spot-v*))
       (spot-error (cons "r:  " expr)
                   (list "sv: " *spot-v*)
-                  ;(cons "sv: " (if (pair? *spot-v*) (list (length *spot-v*)
-                  ;                                        "/"
-                  ;                                        *spot-v*)
-                  ;                                  (list *spot-v*)))
                   (list "rv: " x)))))
 
 (define (do-t expr fn)
@@ -71,11 +68,11 @@
 (define (spot-report)
   (if (> *spot-ect* 0)
     (begin
-      (show "Test cases failed:")
+      (write "Test cases failed:")
       (show *spot-ect*)
       (newline))
     (begin
-      (show "All tests passed.")
+      (write "All tests passed.")
       (newline))))
 
 (define (main . ignored)

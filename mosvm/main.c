@@ -116,7 +116,7 @@ int main( int argc, const char *argv[] ){
         }else{
             mqo_errf( 
                 mqo_es_vm, "sx",
-                "Frozen attachment is not a program or procedure.",
+                "frozen attachment is not a program or procedure",
                 v );
         };
     }

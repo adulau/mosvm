@@ -90,9 +90,8 @@ void mqo_prim_usea_op( ){
         mqo_push_int_rs( ct );
 
         mqo_errf( 
-            mqo_es_vm, "sissi", 
-            "expected at least ", a, ( a == 1 ) ? "argument" : "arguments", 
-            "but got", ct 
+            mqo_es_vm, "si", 
+            "insufficient arguments to program or closure", ct
         );
     }
 
@@ -136,8 +135,7 @@ void mqo_prim_usen_op( ){
 
         mqo_errf( 
             mqo_es_vm, "sissi", 
-            "expected", a, ( a == 1 ) ? "argument" : "arguments", 
-            "but got", ct 
+            "insufficient arguments to program or closure", ct 
         );
     }
 

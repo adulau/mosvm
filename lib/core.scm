@@ -292,26 +292,39 @@
 
 ;;; The queue is both an input, and an output, backed by a tconc.
 (define-class <queue> <port>
-              (make-queue close-fn read-fn write-fn tc)
+              (make-queue tc ps)
               queue?
-              (close-fn port-close-fn)
-              (read-fn input-port-read-fn)
-              (write-fn output-port-write-fn)
-              (tc queue-tc))
+              (tc queue-tc)
+              (ps queue-ps set-queue-ps!))
 
 (define (input-port? (<queue> queue)) #t)
-
 (define (output-port? (<queue> queue)) #t)
-
-(define (open-queue data) 
+(define (open-queue . data) 
   (define tc (make-tc))
-  (if data (tc-splice! tc data))
-  (make-queue ignore-method
-              (lambda (port) (if (tc-empty? tc)
-                               *eof*
-                               (tc-next! tc)))
-              (lambda (port data) (tc-append! tc data))
-              tc))
+  (unless (null? data)
+    (tc-splice! tc (car data)))
+  (make-queue tc #f))
+
+(define (read (<queue> queue))
+  (define tc (queue-tc queue))
+  (if (tc-empty? tc)
+    (begin
+      (when (queue-ps queue)
+        (error 'queue "A process is already waiting on this queue" queue))
+      (set-queue-ps! queue (active-process))
+      (suspend))
+    (tc-next! tc)))
+
+(define (write data (<queue> queue))
+  (define tc (queue-tc queue))
+  (define ps (queue-ps queue))
+  (if (and (tc-empty? tc) ps)
+    (begin (resume ps data)
+           (set-queue-ps! queue #f))
+    (tc-append! tc data)))
+
+(define (empty? (<queue> queue))
+  (tc-empty? (queue-tc queue)))
 
 (define (read-all (<queue> queue))
   (define tc (queue-tc queue))
@@ -387,6 +400,12 @@
 
 (define (current-output-port)
   (or (process-output) *console-output-port*))
+
+(define (write data (<process> process))
+  (write data (process-input process)))
+
+(define (read (<process> process))
+  (read (process-output process)))
 
 (export "lib/core")
 
