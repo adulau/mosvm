@@ -1163,7 +1163,21 @@ MQO_BEGIN_PRIM( "dump-set", dump_set )
     NO_MORE_ARGS( );
     mqo_dump_tree( set );
     MQO_NO_RESULT( );
-MQO_END_PRIM( dump_lexicon )
+MQO_END_PRIM( dump_set )
+
+MQO_BEGIN_PRIM( "dump-dict", dump_dict )
+    REQ_DICT_ARG( dict );
+    NO_MORE_ARGS( );
+    mqo_dump_tree( dict );
+    MQO_NO_RESULT( );
+MQO_END_PRIM( dump_dict )
+
+MQO_BEGIN_PRIM( "dump-program", dump_program )
+    REQ_PROGRAM_ARG( program );
+    NO_MORE_ARGS( );
+    mqo_dump_program( program );
+    MQO_NO_RESULT( );
+MQO_END_PRIM( dump_program )
 
 MQO_BEGIN_PRIM( "globals", globals )
     NO_MORE_ARGS( );
@@ -1732,6 +1746,8 @@ void mqo_bind_core_prims( ){
 
     MQO_BIND_PRIM( dump_lexicon );
     MQO_BIND_PRIM( dump_set );
+    MQO_BIND_PRIM( dump_dict );
+    MQO_BIND_PRIM( dump_program );
     
     MQO_BIND_PRIM( set );
     MQO_BIND_PRIM( setq );

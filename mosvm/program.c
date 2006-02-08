@@ -45,20 +45,13 @@ void mqo_show_instruction( mqo_instruction i, mqo_word* ct ){
 
 void mqo_show_program( mqo_program p, mqo_word* ct ){
     mqo_write( "[program ...]" ); return;
-    mqo_write( "[program" );
+}
+
+void mqo_dump_program( mqo_program p ){
     for( mqo_integer i = 0; i < p->length; i ++ ){
-        mqo_space( );
-        if( ct ){
-            if( ! *ct ){
-                mqo_write( "..." );
-                goto done;
-            }
-            (*ct)--;
-        }
-        mqo_word ct = 3; mqo_show_instruction( p->inst + i, &ct );
+        mqo_word ct = 5; mqo_show_instruction( p->inst + i, &ct );
+        mqo_newline( );
     }
-done:
-    mqo_write( "]" );
 }
 mqo_program mqo_make_program( mqo_integer length ){
     size_t tail = sizeof( struct mqo_instruction_data ) * length;
