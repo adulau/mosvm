@@ -97,7 +97,7 @@ mqo_tree mqo_make_tree( mqo_key_fn key_fn ){
 mqo_node mqo_make_node( mqo_value data ){
     //TODO: we need to ensure that our random function was initialized.
     mqo_node node = MQO_ALLOC( mqo_node, 0 );
-    node->weight = random();
+    node->weight = rand();
     node->data = data;
     return node;
 }
