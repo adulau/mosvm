@@ -310,11 +310,12 @@ mqo_boolean mqo_is_descr( mqo_value value ){
 mqo_descr mqo_descr_fv( mqo_value value ){
 #ifndef NDEBUG
     mqo_type type = mqo_value_type( value );
-    if( type == mqo_file_type )return descr;
-    if( type == mqo_socket_type )return descr;
-    if( type == mqo_listener_type )return descr;
-    if( type == mqo_console_type )return descr;
-    assert( type == mqo_descr_type );
+    assert( ( type == mqo_file_type )
+            || ( type == mqo_socket_type )
+            || ( type == mqo_listener_type )
+            || ( type == mqo_console_type )
+            || ( type == mqo_descr_type ) 
+    );
 #endif
     return (mqo_descr)(value.data);
 }

@@ -27,6 +27,20 @@
                     (rules context-rules set-context-rules!))
 (define *mosvm-syntax*
   (list 
+    (cons 'with-input-port
+          (lambda (port . rest)
+            `(let ((%old-input (current-input-port)))
+               (set-process-input! ,port)
+               (define %result ,@rest)
+               (set-process-input! %old-input)
+               %result)))
+    (cons 'with-output-port
+          (lambda (port . rest)
+            `(let ((%old-output (current-output-port)))
+               (set-process-output! ,port)
+               (define %result ,@rest)
+               (set-process-output! %old-output)
+               %result)))
     (cons 's:
           (lambda (stmt . rest)
             `(if *spot-test?*

@@ -11,6 +11,14 @@
   + mqo_halt will clear the monitor of a process.
   + the suspend primitive will report an error if it attempts to suspend
     a process that is monitoring.
+  + Extended the queue read method to suspend the reading process if the queue
+    is empty.
+  + Extended the queue write method to resume a blocked reading process if
+    necessary.
+  + Added a read method for reading from a process -- using its assigned
+    output port.
+  + Added a write method for writing to a process -- using its assigned
+    input port.
 
 - ?/??/????, Clarification of Show and Write
   * Updated fakevm and mosc with hacks for Scheme environments to work around
@@ -35,30 +43,20 @@
     process.
   * Altered the spawn primitive to initialize a new process's input and output
     to that of its parent.
-  + Added the *console-output-port* global, which is an output-port that writes
+  * Added the *console-output-port* global, which is an output-port that writes
     to the console descriptor.
-  + Added the *console-input-port* global, which is an input-port that reads 
+  * Added the *console-input-port* global, which is an input-port that reads 
     from the console descriptor.
-  + Added the current-input-port procedure to lib/core, which returns the
+  * Added the current-input-port procedure to lib/core, which returns the
     active process's input or *console-output-port*
-  + Added the current-output-port procedure to lib/core, which returns the
+  * Added the current-output-port procedure to lib/core, which returns the
     active process's output or *console-input-port*
-  + Altered lib/core.scm to initialize the importing process's input-port and
-    output-port to the console-port singleton.
-  + Added the with-input-port special form to lib/compile.
-  + Added the with-output-port special form to lib/compile.
-  + Modified the read procedure to use current-input-port in the absence of
+  * Added the with-input-port special form to lib/compile.
+  * Added the with-output-port special form to lib/compile.
+  * Modified the read procedure to use current-input-port in the absence of
     a port.
-  + Modified the write procedure to use current-output-port in the absence of
+  * Modified the write procedure to use current-output-port in the absence of
     a port.
-  + Added a read method for reading from a process -- using its assigned
-    output port.
-  + Added a write method for writing to a process -- using its assigned
-    input port.
-  + Extended the queue read method to suspend the reading process if the queue
-    is empty.
-  + Extended the queue write method to resume a blocked reading process if
-    necessary.
   + Altered lib/conn to use the with-input-port and with-output-port forms.
   + newline now moved to the core module, and supports an optional port
     argument; if one is omitted, the current-output-port will be used.

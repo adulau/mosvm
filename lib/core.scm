@@ -134,16 +134,15 @@
               (make-record)
               record?)
               
-;;; R5RS Specifies a magical "end of file" object returned by ports.
-(define <eof> (tag (make-type 'eof <atom>) atom))
-(define (eof-object? value) (eq? <eof> value))
+;;; Specifies a magical "end of file" object returned by ports.
+(define *eof* (tag (make-type 'eof <atom>) atom))
+(define (eof-object? value) (eq? *eof* value))
 
 (define-class <port> <object>
               (make-port close-fn)
               port?
               (close-fn port-close-fn))
 
-;;; Specified by R5RS.
 (define (close (<port> port))
   ((port-close-fn port) port))
 
@@ -152,8 +151,12 @@
               input-port?
               (read-fn input-port-read-fn))
 
-;;; Conflicts with R5RS. 
-(define (read) (read-descr *console*))
+(define *console-input-port* 
+  (make-input-port ignore-method
+                   (lambda (p) (or (read-descr *console*)
+                                   *eof*))))
+
+(define (read) (read (current-input-port)))
 (define (read (<input-port> input-port))
   ((input-port-read-fn input-port) input-port))
 
@@ -182,8 +185,11 @@
               output-port?
               (write-fn output-port-write-fn))
 
-;;; Conflicts with R5RS. 
-(define (write data) (write-descr *console* data))
+(define *console-output-port* 
+  (make-output-port ignore-method
+                   (lambda (p d) (write-descr *console* d))))
+
+(define (write data) (write data (current-output-port)))
 (define (write data (<output-port> output-port)) 
   ((output-port-write-fn output-port) output-port data))
 
@@ -221,7 +227,7 @@
       (lambda (port) (close-descr f))
       (lambda (port) 
         (let ((data (read-descr f)))
-          (if (= 0 (string-length data)) <eof> data))) 
+          (if (= 0 (string-length data)) *eof* data))) 
       f)))
 
 (define (read-all (<file-input-port> input-port))
@@ -288,7 +294,7 @@
   (if data (tc-splice! tc data))
   (make-queue ignore-method
               (lambda (port) (if (tc-empty? tc)
-                               <eof>
+                               *eof*
                                (tc-next! tc)))
               (lambda (port data) (tc-append! tc data))
               tc))
@@ -361,6 +367,12 @@
 
 (define (newline) (write *line-sep*))
 (define (newline (<port> port)) (write *line-sep* port))
+
+(define (current-input-port)
+  (or (process-input) *console-input-port*))
+
+(define (current-output-port)
+  (or (process-output) *console-output-port*))
 
 (export "lib/core")
 
