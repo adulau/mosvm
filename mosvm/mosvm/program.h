@@ -23,5 +23,6 @@ void mqo_show_instruction( mqo_instruction i, mqo_word* ct );
 #define mqo_show_program NULL
 mqo_program mqo_make_program( mqo_integer length );
 mqo_instruction mqo_program_ref( mqo_program program, mqo_integer index );
+void mqo_dump_program( mqo_program program );
 
 #endif

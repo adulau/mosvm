@@ -11,25 +11,57 @@
   + mqo_halt will clear the monitor of a process.
   + the suspend primitive will report an error if it attempts to suspend
     a process that is monitoring.
-  + mqo_show semantics will now resemble Scheme write semantics.
-  + A port-less write in MOSVM will now write the string to the console.
-  + A port-less read in MOSVM will now read a string from the console.
 
 - ?/??/????, Clarification of Show and Write
-  * read without a port will now read a string from the console.
-  * write without a port will now display a string to the console. 
   * Updated fakevm and mosc with hacks for Scheme environments to work around
     the differences in write, and the lack of display.
   * the suspend and pause primitives now properly clear their call frames off
     the return stack.
-  * the read primitive now properly clears its call frame off the return stack
-    if it blocks to monitor.
+  * the read-desr primitive now properly clears its call frame off the return 
+    stack if it blocks to monitor.
   * NO_MORE_ARGS no longer crashes the virtual machine when the user supplies
     too many arguments to a primitive.
   * mqo_list_ref now signals an error when index is greater than length.
-  + t newline now moved to the core module, and supports an optional port
-    argument.
-  + mqo_show_string will show an escaped version of the string.
+  * mqo_show_string now wraps the supplied string in quotes.
+  * Modified the process type to maintain fields for current-input-port and
+    current-output-port.
+  * Added the set-process-input! primitive to assign an input value to a 
+    process.  This is used to specify input-ports on a per-process basis.
+  * Added the set-process-output! primitive to assign an output value to a 
+    process.  This is used to specify output-ports on a per-process basis.
+  * Added the process-input primitive to retrieve the input value of a
+    process.
+  * Added the process-output primitive to retrieve the output value of a
+    process.
+  * Altered the spawn primitive to initialize a new process's input and output
+    to that of its parent.
+  + Added the *console-output-port* global, which is an output-port that writes
+    to the console descriptor.
+  + Added the *console-input-port* global, which is an input-port that reads 
+    from the console descriptor.
+  + Added the current-input-port procedure to lib/core, which returns the
+    active process's input or *console-output-port*
+  + Added the current-output-port procedure to lib/core, which returns the
+    active process's output or *console-input-port*
+  + Altered lib/core.scm to initialize the importing process's input-port and
+    output-port to the console-port singleton.
+  + Added the with-input-port special form to lib/compile.
+  + Added the with-output-port special form to lib/compile.
+  + Modified the read procedure to use current-input-port in the absence of
+    a port.
+  + Modified the write procedure to use current-output-port in the absence of
+    a port.
+  + Added a read method for reading from a process -- using its assigned
+    output port.
+  + Added a write method for writing to a process -- using its assigned
+    input port.
+  + Extended the queue read method to suspend the reading process if the queue
+    is empty.
+  + Extended the queue write method to resume a blocked reading process if
+    necessary.
+  + Altered lib/conn to use the with-input-port and with-output-port forms.
+  + newline now moved to the core module, and supports an optional port
+    argument; if one is omitted, the current-output-port will be used.
 
 - 2/08/2006, Replacement of TAVL with TREAP
   * Replaced tavl.c with tree.c -- using a faster, simpler tree implementation

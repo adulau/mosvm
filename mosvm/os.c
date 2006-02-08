@@ -308,8 +308,8 @@ mqo_boolean mqo_is_descr( mqo_value value ){
     return( type == mqo_descr_type );
 }
 mqo_descr mqo_descr_fv( mqo_value value ){
-#ifdef NDEBUG
-    mqo_type type = mqo_value_type( descr );
+#ifndef NDEBUG
+    mqo_type type = mqo_value_type( value );
     if( type == mqo_file_type )return descr;
     if( type == mqo_socket_type )return descr;
     if( type == mqo_listener_type )return descr;

@@ -44,6 +44,8 @@ mqo_node mqo_tree_lookup(mqo_tree tree, mqo_value key);
 mqo_tree_iter mqo_iter_tree(mqo_tree tree);
 mqo_node mqo_next_node(mqo_tree_iter *iter);
 
+void mqo_dump_tree( mqo_tree tree );
+
 void mqo_show_tree_contents( mqo_tree tree, mqo_word* ct );
 void mqo_show_tree( mqo_tree tree, mqo_word* ct );
 void mqo_show_set( mqo_tree tree, mqo_word* ct );

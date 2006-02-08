@@ -1,18 +1,18 @@
 /* Copyright (C) 2006, Ephemeral Security, LLC 
-* 
-* This library is free software; you can redistribute it and/or modify it  
-* under the terms of the GNU Lesser General Public License, version 2.1
-* as published by the Free Software Foundation.
-* 
-* This library is distributed in the hope that it will be useful, but WITHOUT 
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License 
-* for more details. 
-* 
-* You should have received a copy of the GNU Lesser General Public License 
-* along with this library; if not, write to the Free Software Foundation, 
-* Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
-*/ 
+ * 
+ * This library is free software; you can redistribute it and/or modify it  
+ * under the terms of the GNU Lesser General Public License, version 2.1
+ * as published by the Free Software Foundation.
+ * 
+ * This library is distributed in the hope that it will be useful, but WITHOUT 
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License 
+ * for more details. 
+ * 
+ * You should have received a copy of the GNU Lesser General Public License 
+ * along with this library; if not, write to the Free Software Foundation, 
+ * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
+ */ 
 
 #include "../mosvm.h"
 #include "../mosvm/prim.h"
@@ -1552,6 +1552,8 @@ MQO_BEGIN_PRIM( "spawn", spawn )
     
     //TODO: req function, here.
     mqo_process ps = mqo_spawn( fn );
+    ps->input = MQO_PP->input;
+    ps->output = MQO_PP->output;
 
     MQO_RESULT( mqo_vf_process( ps ) );
 MQO_END_PRIM( spawn )
@@ -1624,6 +1626,48 @@ MQO_BEGIN_PRIM( "process?", processq )
     NO_MORE_ARGS( );
     MQO_RESULT( mqo_vf_boolean( mqo_is_process( value )  ) );
 MQO_END_PRIM( processq )
+
+MQO_BEGIN_PRIM( "process-input", process_input )
+    OPT_PROCESS_ARG( process )
+    NO_MORE_ARGS( );
+    if( ! has_process ) process = MQO_PP;
+    MQO_RESULT( process->input );
+MQO_END_PRIM( process_input )
+
+MQO_BEGIN_PRIM( "set-process-input!", set_process_input )
+    REQ_VALUE_ARG( input );
+    OPT_VALUE_ARG( process );
+    NO_MORE_ARGS( );
+
+    if( has_process ){
+        mqo_req_process( input, "process" )->input = process;
+    }else{
+        MQO_PP->input = input;
+    }
+    
+    MQO_NO_RESULT( );
+MQO_END_PRIM( set_process_input )
+
+MQO_BEGIN_PRIM( "process-output", process_output )
+    OPT_PROCESS_ARG( process )
+    NO_MORE_ARGS( );
+    if( ! has_process ) process = MQO_PP;
+    MQO_RESULT( process->output );
+MQO_END_PRIM( process_output )
+
+MQO_BEGIN_PRIM( "set-process-output!", set_process_output )
+    REQ_VALUE_ARG( output );
+    OPT_VALUE_ARG( process );
+    NO_MORE_ARGS( );
+
+    if( has_process ){
+        mqo_req_process( output, "process" )->output = process;
+    }else{
+        MQO_PP->output = output;
+    }
+    
+    MQO_NO_RESULT( );
+MQO_END_PRIM( set_process_output )
 
 void mqo_bind_core_prims( ){
     // R5RS Standards
@@ -1780,6 +1824,10 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( process_status );
     MQO_BIND_PRIM( active_process );
     MQO_BIND_PRIM( processq );
+    MQO_BIND_PRIM( process_input );
+    MQO_BIND_PRIM( set_process_input );
+    MQO_BIND_PRIM( process_output );
+    MQO_BIND_PRIM( set_process_output );
 
     MQO_BIND_PRIM( globals );
 

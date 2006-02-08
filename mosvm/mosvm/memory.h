@@ -217,6 +217,7 @@ MQO_BEGIN_TYPE( process )
     mqo_process prev, next;
     mqo_symbol status;
     mqo_vmstate state;
+    mqo_value input, output;
 MQO_END_TYPE( process )
 
 MQO_BEGIN_TYPE( error )
