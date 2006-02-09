@@ -240,8 +240,12 @@ int mqo_dispatch_monitors( ){
 
 void mqo_close( mqo_descr descr ){
     if( descr->closed )return;
-    
-    if( descr->monitor )mqo_resume( descr->monitor, mqo_vf_false() );
+   
+    //TODO: Are we sure about this?
+    if( descr->monitor ){
+        mqo_resume( descr->monitor, mqo_vf_false() );
+        mqo_stop_listening( descr );
+    }
     
     if( descr->type == MQO_CONSOLE )return;
     descr->closed = 1;

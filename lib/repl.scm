@@ -23,20 +23,20 @@
   (define data #f)
   (define done #f)
 
-  (until done
-    (newline) 
-    (write ">> ")
+  (until #f
+    (write "\n>> ")
     (set! data (read))
-    (if (> (string-length data) 0)
-      (guard il-traceback
-        (set! data (string->exprs data))
-        (set! data (compile data))
-        (set! data (optimize data))
-        (set! data (assemble data))
-        (set! data (data))
-        (write ":: ") 
-        (show data))
-      (begin
-        (write "Bye!\n")
+    (cond 
+      ((eof-object? data) (halt))
+      ((> (string-length data) 0)
+       (guard il-traceback
+              (set! data (string->exprs data))
+              (set! data (compile data))
+              (set! data (optimize data))
+              (set! data (assemble data))
+              (set! data (data))
+              (write ":: ") 
+              (show data)))
+      (else
         (set! done #t)))))
 

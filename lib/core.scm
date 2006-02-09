@@ -126,7 +126,7 @@
 
 ;;; We use <object> as a root class for defined classes. 
 (define <object> (make-type 'object <vector>))
-(define (object? value) (eq? <object> value))
+(define (object? value) (eq? <object> (type value)))
 
 ;;; The base class for SRFI-9 Records
 (define-class <record>
@@ -139,152 +139,159 @@
 (define (eof-object? value) (eq? *eof* value))
 
 (define-class <port> <object>
-              (make-port close-fn)
+              (make-port read-fn write-fn close-fn closed)
               port?
-              (close-fn port-close-fn))
+              (read-fn port-read-fn)
+              (write-fn port-write-fn)
+              (close-fn port-close-fn)
+              (closed port-closed? set-port-closed!))
+
+(define (current-input-port)
+  (or (process-input) *console-port*))
+
+(define (current-output-port)
+  (or (process-output) *console-port*))
+
+(define (input-port? value)
+  (and (port? value)
+       (port-read-fn value)))
+
+(define (output-port? value)
+  (and (port? value)
+       (port-write-fn value)))
 
 (define (closed?) (closed? (current-input-port)))
+(define (closed? (<port> other)) (port-closed? other))
 
-(define (close)
-  (close (current-input-port))
-  (close (current-output-port)))
-
+(define (close) (close (current-input-port)))
 (define (close (<port> port))
-  ((port-close-fn port) port))
+  (unless (closed? port)
+    (define close-fn (port-close-fn port))
+    (when close-fn (close-fn port))
+    (set-port-closed! port #t)))
 
-(define-class <input-port> <port>
-              (make-input-port close-fn read-fn)
-              input-port?
-              (read-fn input-port-read-fn))
-
-(define *console-input-port* 
-  (make-input-port ignore-method
-                   (lambda (p) (or (read-descr *console*)
-                                   *eof*))))
-
-(define (closed? (<input-port> port)) #f)
 (define (read) (read (current-input-port)))
-(define (read (<input-port> input-port))
-  ((input-port-read-fn input-port) input-port))
+(define (read (<port> port))
+  (cond ((not (input-port? port))
+         (error 'io "Only input-ports may be read from."))
+        ((closed? port) *eof*)
+        (else (define data ((port-read-fn port) port))
+              (when (eq? data *eof*)
+                (set-port-closed! port #t))
+              data)))
+(define (read (<process> process))
+  (read (process-output process)))
+
+
+(define *console-port* 
+  (make-port (lambda (p) (or (read-descr *console*) *eof*))
+             (lambda (p d) (write-descr *console* d))
+             #f #f))
+
+(define (write data) (write data (current-output-port)))
+(define (write data (<port> port)) 
+  (cond ((not (output-port? port))
+         (error 'io "Only output-ports may be written to."))
+        ((closed? port)
+         (error 'io "You may not write to closed ports."))
+        (else ((port-write-fn port) port data))))
+(define (write data (<process> process))
+  (write data (process-input process)))
+
+(define (newline . rest) (apply write *line-sep* rest))
 
 ;;; Exhausts a port.
-(define (read-all (<input-port> input-port))
+(define (read-all port)
   (define tc (make-tc))
-  (define nxt (read input-port))
-  (until (eof-object? nx)
-    (tc-append! tc nx)
-    (set! nxt (read input-port)))
+  (define next (read port))
+  (until (eof-object? next)
+    (tc-append! tc next)
+    (set! next (read port)))
   (tc->list tc))
 
 ;;; Reads a list of lines from a given port.
-(define (read-lines (<input-port> input-port))
+(define (read-lines port) 
   (split-lines (read-all input-port)))
 
 ;;; Reads all the expressions from a given port.
-(define (read-exprs (<input-port> input-port))
-  (define data (read-all input-port))
+(define (read-exprs port)
+  (define data (read-all port))
   (string->exprs (if (string? data)
                    data
                    (apply string-append data))))
 
-(define-class <output-port> <port>
-              (make-output-port close-fn write-fn)
-              output-port?
-              (write-fn output-port-write-fn))
-
-(define (closed? (<input-port> port)) #f)
-(define *console-output-port* 
-  (make-output-port ignore-method
-                   (lambda (p d) (write-descr *console* d))))
-
-(define (write data) (write data (current-output-port)))
-(define (write data (<output-port> output-port)) 
-  ((output-port-write-fn output-port) output-port data))
-
-(define-class <file-output-port> <output-port>
-              (make-file-output-port close-fn write-fn descr)
-              file-output-port?
+(define-class <file-port> <port>
+              (make-file-port read-fn write-fn close-fn descr)
+              file-port?
               (descr file-port-descr))
 
 ;;; Stripped in functionality, but R5RS compliant.
 (define (open-output-file path)
-  (let ((f (open-file path "wc")))
-    (seek-file f 0)
-    (make-file-output-port (lambda (port) (close-descr f))
-                           (lambda (port data) (write-descr f data)) 
-                           f)))
+  (define descr (open-file path "wc"))
+  (seek-file descr 0)
+  (make-file-port #f
+                  (lambda (p d) (write-descr descr d))
+                  (lambda (p)   (close-descr descr))
+                  descr))
 
-(define (write-byte byte (<file-output-port> port))
+(define (write-byte byte (<file-port> port))
   (write-file-byte (file-port-descr port) byte))
 
-(define (write-word word (<file-output-port> port))
+(define (write-word word (<file-port> port))
   (write-file-word (file-port-descr port) word))
 
-(define (write-quad quad (<file-output-port> port))
+(define (write-quad quad (<file-port> port))
   (write-file-quad (file-port-descr port) quad))
-
-(define-class <file-input-port> <input-port>
-              (make-file-input-port close-fn read-fn descr)
-              file-input-port?
-              (descr file-port-descr))
 
 ;;; Similar to an R5RS file, but returns raw strings.
 (define (open-input-file path)
-  (let ((f (open-file path "r")))
-    (make-file-input-port 
-      (lambda (port) (close-descr f))
-      (lambda (port) 
-        (let ((data (read-descr f)))
-          (if (= 0 (string-length data)) *eof* data))) 
-      f)))
+  (define descr (open-file path "r"))
+  (seek-file descr 0)
+  (make-file-port (lambda (p) (read-descr descr))
+                  #f
+                  (lambda (p) (close-descr descr))
+                  descr))
 
-(define (read-all (<file-input-port> input-port))
+(define (read-all (<file-port> input-port))
   (read-file-all (file-port-descr input-port)))
 
-(define (closed? (<file-input-port> port))
-  (descr-closed? (file-port-descr port)))
-
-(define (closed? (<file-output-port> port))
+(define (closed? (<file-port> port))
   (descr-closed? (file-port-descr port)))
 
 ;;; Redundant, but R5RS specified
-(define (close-output-port (<output-port> port))
-  ((port-close-fn port)))
-
-;;; Redundant, but R5RS specified
-(define (close-input-port (<input-port> port))
-  ((port-close-fn port)))
+(define close-output-port close)
+(define close-input-port close)
 
 ;;; SRFI-6 String Port Emulation
-(define-class <string-output-port> <output-port>
-              (make-string-output-port close-fn write-fn data)
-              string-output-port?
-              (data string-output-port-data))
+(define-class <string-port> <port>
+              (make-string-port read-fn write-fn close-fn data)
+              string-port?
+              (data string-port-data))
 
 (define (open-output-string)
   (let ((tc (make-tc)))
-    (make-string-output-port ignore-method
-                             (lambda (port data) (tc-append! tc data))
-                             tc)))
+    (make-string-port #f
+                      (lambda (p d) (tc-append! tc d))
+                      #f
+                      tc)))
 
-(define (string-port? (<string-output-port> port)) #t)
+(define (write-byte byte (<string-port> port))
+  (tc-append! (string-port-data port) byte))
 
-(define (write-byte byte (<string-output-port> port))
-  (tc-append! (string-output-port-data port) byte))
-
-(define (write-word word (<string-output-port> port))
+(define (write-word word (<string-port> port))
   (write-byte (quotient word 256) port)
   (write-byte (remainder word 256) port))
 
-(define (write-quad quad (<string-output-port> port))
+(define (write-quad quad (<string-port> port))
   (write-word (quotient quad 65536) port)
   (write-word (remainder quad 65536) port))
 
-(define (get-output-string (<string-output-port> port))
+;;; TODO: This is very inefficient if the string was constructed, byte-by-byte.
+(define (get-output-string (<string-port> port))
   ; Each call to g-o-s compresses the queued data into a single string
   ; object, alters the queue to contain that object, then returns
   ; the result.
-  (define tc (string-output-port-data port))
+  (define tc (string-port-data port))
   (define data (apply string-append (tc->list tc)))
   (tc-clear! tc)
   (tc-append! tc data)
@@ -292,36 +299,36 @@
 
 ;;; The queue is both an input, and an output, backed by a tconc.
 (define-class <queue> <port>
-              (make-queue tc ps)
+              (make-queue read-fn write-fn close-fn tc ps)
               queue?
               (tc queue-tc)
               (ps queue-ps set-queue-ps!))
 
-(define (input-port? (<queue> queue)) #t)
-(define (output-port? (<queue> queue)) #t)
 (define (open-queue . data) 
   (define tc (make-tc))
   (unless (null? data)
     (tc-splice! tc (car data)))
-  (make-queue tc #f))
-
-(define (read (<queue> queue))
-  (define tc (queue-tc queue))
-  (if (tc-empty? tc)
-    (begin
-      (when (queue-ps queue)
-        (error 'queue "A process is already waiting on this queue" queue))
-      (set-queue-ps! queue (active-process))
-      (suspend))
-    (tc-next! tc)))
-
-(define (write data (<queue> queue))
-  (define tc (queue-tc queue))
-  (define ps (queue-ps queue))
-  (if (and (tc-empty? tc) ps)
-    (begin (resume ps data)
-           (set-queue-ps! queue #f))
-    (tc-append! tc data)))
+  (make-queue (lambda (p) 
+                (if (tc-empty? tc)
+                  (begin
+                    (when (queue-ps p)
+                      (error 'queue 
+                             "A process is already waiting on this queue"
+                             p))
+                    (set-queue-ps! p (active-process))
+                    (suspend))
+                  (tc-next! tc)))
+              (lambda (p d) 
+                (define ps (queue-ps p))
+                (if (and (tc-empty? tc) ps)
+                  (begin (resume ps d)
+                         (set-queue-ps! p #f))
+                  (tc-append! tc d)))
+              (lambda (p)
+                (define ps (queue-ps p))
+                (when ps (resume ps *eof*)))
+              tc
+              #f))
 
 (define (empty? (<queue> queue))
   (tc-empty? (queue-tc queue)))
@@ -391,21 +398,6 @@
                  (dict-set! *imports* key (if (eq? key *last-imported-key*)
                                             *last-imported-path*
                                             #t)))))
-
-(define (newline) (write *line-sep*))
-(define (newline (<port> port)) (write *line-sep* port))
-
-(define (current-input-port)
-  (or (process-input) *console-input-port*))
-
-(define (current-output-port)
-  (or (process-output) *console-output-port*))
-
-(define (write data (<process> process))
-  (write data (process-input process)))
-
-(define (read (<process> process))
-  (read (process-output process)))
 
 (export "lib/core")
 
