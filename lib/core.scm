@@ -269,14 +269,24 @@
               (data string-port-data))
 
 (define (open-output-string)
-  (let ((tc (make-tc)))
+  (let ((tc (make-tc))
+        (ct 0))
     (make-string-port #f
-                      (lambda (p d) (tc-append! tc d))
+                      (lambda (p d) 
+                        (if (> ct 32)
+                          (begin 
+                            (define data (apply string-append (tc->list tc)))
+                            (tc-clear! tc)
+                            (tc-append! tc data)
+                            (set! ct 0))
+                          (begin
+                            (tc-append! tc d)
+                            (set! ct (+ ct 1)))))
                       #f
                       tc)))
 
 (define (write-byte byte (<string-port> port))
-  (tc-append! (string-port-data port) byte))
+  ((port-write-fn port) port byte))
 
 (define (write-word word (<string-port> port))
   (write-byte (quotient word 256) port)
