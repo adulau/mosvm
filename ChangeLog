@@ -28,6 +28,11 @@
   * il_traceback will display the first string in the error without escapes,
     and all subsequent values using show.
   * Added support for arithmetic comparisons with 1 or more arguments.
+  * Removed <input-port> and <output-port> from the port class hierarchy in
+    favor of using a more sophisticated <port> class.
+  * Added logic to <port> reads to identify a closed port and mark them
+    as closed when *eof* is returned by a port's read method.
+  * Fixed stack contamination from closing a port.
 
 - 2/08/2006, Clarification of Show and Write
   * Updated fakevm and mosc with hacks for Scheme environments to work around

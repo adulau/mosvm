@@ -23,7 +23,7 @@
   (define data #f)
   (define done #f)
 
-  (until #f
+  (until (closed?)
     (write "\n>> ")
     (set! data (read))
     (cond 
@@ -35,8 +35,9 @@
               (set! data (optimize data))
               (set! data (assemble data))
               (set! data (data))
-              (write ":: ") 
-              (show data)))
+              (unless (closed?)
+                (write ":: ") 
+                (show data))))
       (else
         (set! done #t)))))
 
