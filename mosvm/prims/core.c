@@ -1278,6 +1278,7 @@ MQO_BEGIN_PRIM( "dict", dict )
 
     for( ai = ct;  ai; ai-- ){
         mqo_value item = mqo_vector_get( MQO_SV, MQO_SI - ai - 1 );
+        mqo_req_pair( item, "item" );
         mqo_tree_insert( dict, item );
     }
     
