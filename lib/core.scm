@@ -278,7 +278,8 @@
                             (define data (apply string-append (tc->list tc)))
                             (tc-clear! tc)
                             (tc-append! tc data)
-                            (set! ct 0))
+                            (tc-append! tc d)
+                            (set! ct 1))
                           (begin
                             (tc-append! tc d)
                             (set! ct (+ ct 1)))))

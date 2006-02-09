@@ -23,6 +23,8 @@
   * added lib/format.ms, a replacement for show that supports show'ing to
     ports.
   * record types are now named with the supplied name, and bound to <name>
+  * string-output-ports will now periodically compact queued data into a 
+    temporary string to protect against excessively large queues.
 
 - 2/08/2006, Queues Suspend and Resume on Empty
   * Extended the queue read method to suspend the reading process if the queue
