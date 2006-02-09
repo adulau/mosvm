@@ -931,6 +931,32 @@ MQO_BEGIN_PRIM( "make-type", make_type )
     );
 MQO_END_PRIM( make_type );
 
+MQO_BEGIN_PRIM( "parent-type", parent_type )
+    REQ_TYPE_ARG( type );
+    NO_MORE_ARGS( );
+    if( type->direct ){
+        MQO_RESULT( mqo_vf_type( type->super ) );
+    }else{
+        MQO_RESULT( mqo_vf_false( ) );
+    }
+MQO_END_PRIM( parent_type )
+
+MQO_BEGIN_PRIM( "base-type", base_type )
+    REQ_TYPE_ARG( type );
+    NO_MORE_ARGS( );
+    if( type->direct ){
+        MQO_RESULT( mqo_vf_type( type->direct ) );
+    }else{
+        MQO_RESULT( mqo_vf_type( type ) );
+    }
+MQO_END_PRIM( base_type )
+
+MQO_BEGIN_PRIM( "type-name", type_name )
+    REQ_TYPE_ARG( type );
+    NO_MORE_ARGS( );
+    MQO_RESULT( mqo_vf_symbol( type->name ) );
+MQO_END_PRIM( type_name )
+
 MQO_BEGIN_PRIM( "type-info", type_info )
     REQ_TYPE_ARG( type );
     NO_MORE_ARGS( );
@@ -1174,6 +1200,32 @@ MQO_BEGIN_PRIM( "string->exprs", string_to_exprs )
     
     MQO_RESULT( mqo_vf_pair( mqo_read_exprs( mqo_sf_string( src ) ) ) );
 MQO_END_PRIM( string_to_exprs )
+
+MQO_BEGIN_PRIM( "dump-multimethod", dump_multimethod )
+    REQ_VALUE_ARG( multimethod );
+    NO_MORE_ARGS( )
+    mqo_multimethod m = mqo_req_multimethod( multimethod, "multimethod" );
+    while( m ){
+        mqo_write( " (" );
+        mqo_show_symbol( mqo_req_closure( m->func, "func" )->name, NULL );
+        if( mqo_is_pair( m->signature ) ){
+            mqo_show_pair_contents( mqo_pair_fv( m->signature ), NULL );
+        }else{
+            mqo_write( " . " );
+            mqo_show( m->signature, NULL );
+        }
+        mqo_write( " )" );
+        if( mqo_is_multimethod( m->next ) ){
+            m = mqo_multimethod_fv( m->next );
+        }else{
+            mqo_write( " | " );
+            mqo_word ct = 4; mqo_show( m->func, &ct );
+            m = NULL;
+        }
+        mqo_write( "\n" );
+    }
+    MQO_NO_RESULT( );
+MQO_END_PRIM( dump_multimethod );
 
 MQO_BEGIN_PRIM( "dump-lexicon", dump_lexicon )
     NO_MORE_ARGS( );
@@ -1785,7 +1837,11 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( xtype );
     MQO_BIND_PRIM( repr );
     MQO_BIND_PRIM( isaq );
+    
     MQO_BIND_PRIM( type_info );
+    MQO_BIND_PRIM( type_name );
+    MQO_BIND_PRIM( base_type );
+    MQO_BIND_PRIM( parent_type );
 
     MQO_BIND_PRIM( make_multimethod );
     MQO_BIND_PRIM( refuse_method );
@@ -1816,6 +1872,7 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( dump_set );
     MQO_BIND_PRIM( dump_dict );
     MQO_BIND_PRIM( dump_program );
+    MQO_BIND_PRIM( dump_multimethod );
     
     MQO_BIND_PRIM( set );
     MQO_BIND_PRIM( setq );

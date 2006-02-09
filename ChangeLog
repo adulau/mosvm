@@ -16,6 +16,14 @@
   + Added super-type primitive.
   + Added base-type primitive.
 
+- 2/09/2006, Cosmetic Improvements
+  * repl now correctly responds to the closure of its input port.
+  * when multimethods are bound to global names, any anonymous closures
+    contained by them are given that name.
+  * added lib/format.ms, a replacement for show that supports show'ing to
+    ports.
+  * record types are now named with the supplied name, and bound to <name>
+
 - 2/08/2006, Queues Suspend and Resume on Empty
   * Extended the queue read method to suspend the reading process if the queue
     is empty.

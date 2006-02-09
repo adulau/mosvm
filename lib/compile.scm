@@ -54,7 +54,8 @@
             `(if *spot-test?*
                (do-t '(,stmt ,@rest) (lambda (_) ,stmt ,@rest)))))
     (cons 'define-class
-        (lambda (class-name super-class make-proto pred-name . class-fields)
+        (lambda (class-tag super-class make-proto pred-name . class-fields)
+          (define class-name (make-symbol "<" class-tag ">"))
           (define (bind-field-accessor access-name field-name)
             `(define ,access-name 
                (make-multimethod 
@@ -70,7 +71,7 @@
                  (or (? ,modif-name) refuse-method))))
 
           `(begin 
-             (define ,class-name  (make-class ',class-name 
+             (define ,class-name  (make-class ',class-tag 
                                               ,super-class 
                                               ',(map-car class-fields)))
              (define (,pred-name %value) (isa? %value ,class-name))

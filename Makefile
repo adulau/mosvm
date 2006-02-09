@@ -14,7 +14,7 @@ SEED=lib/core.mo lib/lib.mo lib/compile.mo lib/assemble.mo lib/optimize.mo lib/f
 # The MODS are a superset of the SEED that are used by test cases and MOSVM
 # applications. Any file in MODS that is not in SEED are compiled once the 
 # final MOSVM executable has been created.
-MODS=$(SEED) lib/test.mo lib/conn.mo
+MODS=$(SEED) lib/test.mo lib/conn.mo lib/format.mo
 
 # A list of unit test targets. All unit tests are to be compiled by MOSVM.
 TESTS=test-core test-quasi test-parse test-assemble test-compile test-freeze test-process

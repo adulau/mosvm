@@ -129,7 +129,7 @@
 (define (object? value) (eq? <object> (type value)))
 
 ;;; The base class for SRFI-9 Records
-(define-class <record>
+(define-class record
               <object>
               (make-record)
               record?)
@@ -138,7 +138,7 @@
 (define *eof* (tag (make-type 'eof <atom>) atom))
 (define (eof-object? value) (eq? *eof* value))
 
-(define-class <port> <object>
+(define-class port <object>
               (make-port read-fn write-fn close-fn closed)
               port?
               (read-fn port-read-fn)
@@ -220,7 +220,7 @@
                    data
                    (apply string-append data))))
 
-(define-class <file-port> <port>
+(define-class file-port <port>
               (make-file-port read-fn write-fn close-fn descr)
               file-port?
               (descr file-port-descr))
@@ -263,7 +263,7 @@
 (define close-input-port close)
 
 ;;; SRFI-6 String Port Emulation
-(define-class <string-port> <port>
+(define-class string-port <port>
               (make-string-port read-fn write-fn close-fn data)
               string-port?
               (data string-port-data))
@@ -298,7 +298,7 @@
   data)
 
 ;;; The queue is both an input, and an output, backed by a tconc.
-(define-class <queue> <port>
+(define-class queue <port>
               (make-queue read-fn write-fn close-fn tc ps)
               queue?
               (tc queue-tc)

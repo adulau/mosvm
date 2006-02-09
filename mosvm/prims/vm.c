@@ -171,10 +171,25 @@ void mqo_prim_ldg_op( ){
 void mqo_prim_stg_op( ){
     mqo_value v = mqo_pop_ds();
     mqo_symbol s = MQO_IP->sy;
-    if( mqo_is_closure( v ) ){
-        mqo_closure c = mqo_closure_fv( v );
-        if( ! c->name ){ c->name = s; }
+
+    void set_func_name( mqo_value v ){
+        mqo_closure c;
+        if( mqo_is_closure( v ) ){
+            c = mqo_closure_fv( v );
+        }else if( mqo_is_multimethod( v ) ){
+            mqo_multimethod m = mqo_multimethod_fv( v );
+            if( mqo_is_closure( m->func ) ){
+                c = mqo_closure_fv( m->func );
+            }else{
+                return;
+            }
+        }else{
+            return;
+        }
+        if( ! c->name )c->name = s; 
     }
+
+    set_func_name( v );
     s->value = v;
     MQO_PRIM_NEXT;
 }

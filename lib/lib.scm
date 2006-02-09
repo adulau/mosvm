@@ -89,7 +89,7 @@
     (apply string-append 
            (map (lambda (item) 
                   (cond ((string? item) item)
-                        ((char? item) (string item))
+                        ;((char? item) (string item))
                         ((symbol? item) (symbol->string item))))
                 items))))
 
