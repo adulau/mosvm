@@ -134,7 +134,7 @@ void mqo_prim_usen_op( ){
         mqo_push_int_rs( ct );
 
         mqo_errf( 
-            mqo_es_vm, "sissi", 
+            mqo_es_vm, "si", 
             "insufficient arguments to program or closure", ct 
         );
     }
