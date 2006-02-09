@@ -551,10 +551,15 @@ MQO_BEGIN_PRIM( "string-ref", string_ref )
 MQO_END_PRIM( string_ref )
 
 MQO_BEGIN_PRIM( "=", m_eq )
-    REQ_INTEGER_ARG( left );
-    REQ_INTEGER_ARG( right );
-    NO_MORE_ARGS( );
-    MQO_RESULT( mqo_vf_boolean( left == right ) );
+    REQ_INTEGER_ARG( v0 );
+    
+    while( ai < ct ){
+        REQ_INTEGER_ARG( vN );
+        if(!( v0 == vN )){ MQO_RESULT( mqo_vf_false( ) ); };
+        v0 = vN;
+    };
+
+    MQO_RESULT( mqo_vf_true( ) );
 MQO_END_PRIM( m_eq )
 
 MQO_BEGIN_PRIM( "<", m_lt )
