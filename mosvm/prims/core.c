@@ -1445,7 +1445,7 @@ char* mqo_memmem( const char* sp, mqo_integer sl, const char* ip, mqo_integer il
     // Like strstr, but \0-ignorant.
     if( sl < il )return NULL;
 
-    sl -= il;
+    sl = sl - il + 1;
 
     for( mqo_integer i = 0; i < sl; i ++ ){
         if( ! memcmp( sp, ip, il ) ) return (char*)sp;
@@ -1462,9 +1462,9 @@ MQO_BEGIN_PRIM( "string-find", string_find )
     
     const char* sp = mqo_sf_string( string );
     const char* ip = mqo_memmem( sp, 
-                             mqo_string_length( string ), 
-                             mqo_sf_string( item ), 
-                             mqo_string_length( item ) );
+                                 mqo_string_length( string ), 
+                                 mqo_sf_string( item ), 
+                                 mqo_string_length( item ) );
     
     if( ip ){
         MQO_RESULT( mqo_vf_integer( ip - sp ) );
