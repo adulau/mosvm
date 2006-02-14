@@ -8,6 +8,12 @@
   + mqo_halt will clear the monitor of a process.
   + the suspend primitive will report an error if it attempts to suspend
     a process that is monitoring.
+  + Altered write to suspend when writing to socket descriptors, much like
+    read.
+  + Extended dispatcher to handle writes.
+  + Extended descriptors with write buffers.
+  + Added checks to write-descr-byte / word / quad; buffer too for range.
+    REQ_BYTE_ARG
 
 - ?/??/????, Phase Three of the Module System
   + When compiling a module, the export
@@ -16,7 +22,7 @@
   + Added super-type primitive.
   + Added base-type primitive.
 
-- ?/??/????, Buffered Read / Write
+- 2/14/2006, Buffered Read / Write
   * Added the buffer primitive type.
   * Added the (make-buffer size) primitive to core.
   * Added the (buffer? value) primitive to core.
@@ -38,12 +44,6 @@
   * Added the buffer-output macro, which wraps all writes into a string port,
     then outputs the resulting buffer to the output port on completion.
   * Altered traceback to buffer-output.
-  + Altered write to suspend when writing to socket descriptors, much like
-    read.
-  + Extended dispatcher to handle writes.
-  + Extended descriptors with write buffers.
-  + Added checks to write-descr-byte / word / quad; buffer too for range.
-    REQ_BYTE_ARG
 
 - 2/09/2006, Cosmetic Improvements
   * repl now correctly responds to the closure of its input port.
