@@ -92,6 +92,7 @@
 #define REQ_ERROR_ARG( nm )     REQ_TYPED_ARG( nm, error );
 #define REQ_VMSTATE_ARG( nm )   REQ_TYPED_ARG( nm, vmstate );
 #define REQ_STRING_ARG( nm )    REQ_TYPED_ARG( nm, string );
+#define REQ_BUFFER_ARG( nm )    REQ_TYPED_ARG( nm, buffer );
 #define REQ_SYMBOL_ARG( nm )    REQ_TYPED_ARG( nm, symbol );
 #define REQ_DESCR_ARG( nm )     REQ_TYPED_ARG( nm, descr );
 #define REQ_ANY_DESCR_ARG( nm ) REQ_SUBTYPED_ARG( nm, descr );
@@ -141,6 +142,7 @@
 #define OPT_ERROR_ARG( nm )   OPT_TYPED_ARG( nm, error, NULL );
 #define OPT_VMSTATE_ARG( nm ) OPT_TYPED_ARG( nm, vmstate, NULL );
 #define OPT_STRING_ARG( nm )  OPT_TYPED_ARG( nm, string, NULL );
+#define OPT_BUFFER_ARG( nm )  OPT_TYPED_ARG( nm, buffer, NULL );
 #define OPT_SYMBOL_ARG( nm )  OPT_TYPED_ARG( nm, symbol, NULL );
 #define OPT_DESCR_ARG( nm )   OPT_TYPED_ARG( nm, descr, NULL );
 #define OPT_LIST_ARG( nm )    OPT_TYPED_ARG( nm, list, NULL );

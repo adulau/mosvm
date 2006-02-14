@@ -18,13 +18,13 @@
 #define MQO_MOSVM_H 1
 
 #include "mosvm/memory.h"
+#include "mosvm/buffer.h"
 #include "mosvm/exec.h"
 #include "mosvm/parse.h"
 #include "mosvm/show.h"
 #include "mosvm/thaw.h"
 #include "mosvm/tree.h"
 #include "mosvm/os.h"
-#include "mosvm/alarm.h"
 #include "mosvm/string.h"
 #include "mosvm/list.h"
 #include "mosvm/error.h"

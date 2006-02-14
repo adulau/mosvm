@@ -244,7 +244,12 @@ MQO_BEGIN_PRIM( "make-vector", make_vector )
     REQ_INTEGER_ARG( length );
     OPT_VALUE_ARG( init );
     NO_MORE_ARGS( );
+    
+    if( length < 0 )mqo_errf( mqo_es_args, "sx", "expected non-negative",
+                                v_length );
+
     mqo_vector v = mqo_make_vector( length );
+
     if( has_init ){
         while( length-- ){
             mqo_vector_put( v, length, init );
@@ -1772,6 +1777,163 @@ again:
     MQO_RESULT( mqo_vf_symbol( result ) );
 MQO_END_PRIM( function_name )
 
+MQO_BEGIN_PRIM( "make-buffer", make_buffer )
+    REQ_INTEGER_ARG( capacity );
+    NO_MORE_ARGS( );
+   
+    if( capacity < 0 )mqo_errf( mqo_es_args, "sx", "expected non-negative",
+                                v_capacity );
+
+    mqo_buffer buffer = mqo_make_buffer( capacity );
+
+    MQO_RESULT( mqo_vf_buffer( buffer ) );
+MQO_END_PRIM( make_buffer )
+
+MQO_BEGIN_PRIM( "buffer?", bufferq )
+    REQ_VALUE_ARG( value );
+    NO_MORE_ARGS( );
+
+    MQO_RESULT( mqo_vf_boolean( mqo_is_buffer( value ) ) );
+MQO_END_PRIM( bufferq )
+
+MQO_BEGIN_PRIM( "buffer-length", buffer_length )
+    REQ_BUFFER_ARG( buffer )
+    NO_MORE_ARGS( );
+
+    MQO_RESULT( mqo_vf_integer( mqo_buffer_length( buffer ) ) );
+MQO_END_PRIM( buffer_length )
+
+MQO_BEGIN_PRIM( "write-buffer", write_buffer )
+    REQ_BUFFER_ARG( buffer )
+    REQ_STRING_ARG( data )
+    NO_MORE_ARGS( );
+
+    mqo_integer data_len = mqo_string_length( data );
+    mqo_expand_buffer( buffer, data_len );
+    mqo_write_buffer( buffer, mqo_sf_string( data ), data_len );
+
+    MQO_NO_RESULT( );
+MQO_END_PRIM( write_buffer )
+
+MQO_BEGIN_PRIM( "read-buffer", read_buffer )
+    REQ_BUFFER_ARG( buffer );
+    OPT_INTEGER_ARG( max );
+    NO_MORE_ARGS( );
+    if( ! has_max ) max = mqo_buffer_length( buffer );
+    void* data = mqo_read_buffer( buffer, &max );
+    if( max == 0 ){
+        MQO_RESULT( mqo_vf_false( ) );
+    }else{
+        MQO_RESULT( mqo_vf_string( mqo_string_fm( data, max ) ) );
+    }
+MQO_END_PRIM( read_buffer );
+
+MQO_BEGIN_PRIM( "buffer->string", buffer_to_string )
+    REQ_BUFFER_ARG( buffer );
+    NO_MORE_ARGS( );
+    MQO_RESULT( mqo_vf_string( mqo_string_fm( mqo_buffer_head( buffer ),
+                                              mqo_buffer_length( buffer ) ) ) );
+MQO_END_PRIM( buffer_to_string );
+
+MQO_BEGIN_PRIM( "write-buffer-byte", write_buffer_byte )
+    REQ_BUFFER_ARG( buffer )
+    REQ_INTEGER_ARG( byte )
+    NO_MORE_ARGS( );
+    
+    if(!( 0<= byte <= 255 )){
+        mqo_errf( mqo_es_args, "sx", "expected data to be in [0,255]",
+                  v_byte );
+    }
+    mqo_byte data = byte;
+    mqo_expand_buffer( buffer, sizeof( mqo_byte ) );
+    mqo_write_buffer( buffer, &data, sizeof( mqo_byte ) );
+
+    MQO_NO_RESULT( );
+MQO_END_PRIM( write_buffer_byte )
+
+MQO_BEGIN_PRIM( "read-buffer-byte", read_buffer_byte )
+    REQ_BUFFER_ARG( buffer )
+    NO_MORE_ARGS( );
+    
+    mqo_integer read = sizeof( mqo_byte );
+
+    if( mqo_buffer_length( buffer ) < read ){
+        MQO_RESULT( mqo_vf_false( ) );
+    }
+    
+    mqo_byte* data = mqo_read_buffer( buffer, &read ); 
+
+    MQO_RESULT( mqo_vf_integer( *data ) );
+MQO_END_PRIM( read_buffer_byte )
+
+MQO_BEGIN_PRIM( "write-buffer-word", write_buffer_word )
+    REQ_BUFFER_ARG( buffer )
+    REQ_INTEGER_ARG( word )
+    NO_MORE_ARGS( );
+    
+    if(!( 0<= word <= 65535 )){
+        mqo_errf( mqo_es_args, "sx", "expected data to be in [0,65535]",
+                  v_word );
+    }
+    
+    mqo_word data = htons( word );
+
+    mqo_expand_buffer( buffer, sizeof( mqo_word ) );
+    mqo_write_buffer( buffer, &data, sizeof( mqo_word ) );
+
+    MQO_NO_RESULT( );
+MQO_END_PRIM( write_buffer_word )
+
+MQO_BEGIN_PRIM( "read-buffer-word", read_buffer_word )
+    REQ_BUFFER_ARG( buffer )
+    NO_MORE_ARGS( );
+    
+    mqo_integer read = sizeof( mqo_word );
+
+    if( mqo_buffer_length( buffer ) < read ){
+        MQO_RESULT( mqo_vf_false( ) );
+    }
+    
+    mqo_word* data = mqo_read_buffer( buffer, &read ); 
+
+    MQO_RESULT( mqo_vf_integer( ntohs( *data ) ) );
+MQO_END_PRIM( read_buffer_word )
+
+MQO_BEGIN_PRIM( "write-buffer-quad", write_buffer_quad )
+    REQ_BUFFER_ARG( buffer )
+    REQ_INTEGER_ARG( quad )
+    NO_MORE_ARGS( );
+    
+    mqo_long data = htonl( quad );
+
+    mqo_expand_buffer( buffer, sizeof( mqo_long ) );
+    mqo_write_buffer( buffer, &data, sizeof( mqo_long ) );
+
+    MQO_NO_RESULT( );
+MQO_END_PRIM( write_buffer_quad )
+
+MQO_BEGIN_PRIM( "read-buffer-quad", read_buffer_quad )
+    REQ_BUFFER_ARG( buffer )
+    NO_MORE_ARGS( );
+    
+    mqo_integer read = sizeof( mqo_long );
+
+    if( mqo_buffer_length( buffer ) < read ){
+        MQO_RESULT( mqo_vf_false( ) );
+    }
+    
+    mqo_long* data = mqo_read_buffer( buffer, &read ); 
+
+    MQO_RESULT( mqo_vf_integer( ntohl( *data ) ) );
+MQO_END_PRIM( read_buffer_quad )
+
+MQO_BEGIN_PRIM( "dump-buffer", dump_buffer )
+    REQ_BUFFER_ARG( buffer );
+    NO_MORE_ARGS( );
+    mqo_dump_buffer( buffer );
+    MQO_NO_RESULT( );
+MQO_END_PRIM( dump_buffer )
+
 void mqo_bind_core_prims( ){
     // R5RS Standards
     MQO_BEGIN_PRIM_BINDS( );
@@ -1941,6 +2103,20 @@ void mqo_bind_core_prims( ){
 
     MQO_BIND_PRIM( globals );
     MQO_BIND_PRIM( function_name );
+
+    MQO_BIND_PRIM( make_buffer );
+    MQO_BIND_PRIM( bufferq );
+    MQO_BIND_PRIM( buffer_length );
+    MQO_BIND_PRIM( write_buffer );
+    MQO_BIND_PRIM( read_buffer );
+    MQO_BIND_PRIM( buffer_to_string );
+    MQO_BIND_PRIM( write_buffer_byte );
+    MQO_BIND_PRIM( read_buffer_byte );
+    MQO_BIND_PRIM( write_buffer_word );
+    MQO_BIND_PRIM( read_buffer_word );
+    MQO_BIND_PRIM( write_buffer_quad );
+    MQO_BIND_PRIM( read_buffer_quad );
+    MQO_BIND_PRIM( dump_buffer );
 
     mqo_symbol_fs( "atom" )->value = mqo_make_atom( );
 }
