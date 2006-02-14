@@ -218,6 +218,7 @@ MQO_BEGIN_PRIM( "number->string", number_to_string )
     buf[255] = 0;
     int i = 255;
     int neg = number < 0;
+    if( neg ){ number = -number; };
 
     do{
         buf[ --i ] = '0' + number % 10;
