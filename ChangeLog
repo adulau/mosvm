@@ -37,11 +37,13 @@
     that the ports are restored.
   * Added the buffer-output macro, which wraps all writes into a string port,
     then outputs the resulting buffer to the output port on completion.
-  + Added checks to write-descr-byte / word for range. REQ_BYTE_ARG
+  * Altered traceback to buffer-output.
   + Altered write to suspend when writing to socket descriptors, much like
     read.
   + Extended dispatcher to handle writes.
   + Extended descriptors with write buffers.
+  + Added checks to write-descr-byte / word / quad; buffer too for range.
+    REQ_BYTE_ARG
 
 - 2/09/2006, Cosmetic Improvements
   * repl now correctly responds to the closure of its input port.
