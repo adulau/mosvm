@@ -241,7 +241,7 @@
           (for-each (lambda (term)
                       (cond 
                         ;If the term isn't a pair:
-                        ((and (symbol? term) (symbol-starts-with term 37))
+                        ((and (symbol? term) (symbol-starts-with? term 37))
                          (block-append! block (list 'ldc (get-temp term)))
                          (block-append! block '(ldc 2))
                          (block-append! block '(ldg tc-append!))

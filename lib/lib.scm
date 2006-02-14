@@ -98,8 +98,7 @@
     (set-cdr! c c)
     c))
 
-;;; Move to lib/lib
-(define symbol-starts-with
+(define symbol-starts-with?
   (if *mosvm?*
     (lambda (symbol char)
       (eq? (string-ref (symbol->string symbol) 0) char))
