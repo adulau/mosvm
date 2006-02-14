@@ -665,6 +665,13 @@ MQO_BEGIN_PRIM( "error", error )
     mqo_raise( key, info );
 MQO_END_PRIM( error )
 
+MQO_BEGIN_PRIM( "re-error", re_error )
+    REQ_ERROR_ARG( error );
+    NO_MORE_ARGS( );
+    
+    mqo_throw( error );
+MQO_END_PRIM( re_error )
+
 MQO_BEGIN_PRIM( "show", show )
     REQ_VALUE_ARG( val );
     OPT_INTEGER_ARG( count );
@@ -2000,6 +2007,7 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( show );
     MQO_BIND_PRIM( errorq );
     MQO_BIND_PRIM( error );
+    MQO_BIND_PRIM( re_error );
     MQO_BIND_PRIM( error_key );
     MQO_BIND_PRIM( error_info );
     MQO_BIND_PRIM( error_context );

@@ -24,17 +24,20 @@
   * Added the (write-buffer buffer string) primitive to core.
   * Added the (read-buffer buffer ?max) primitive to core.
   * Added the (buffer->string buffer) primitive to core.
-  * Added the (write-buffer-byte buffer) primitive to core.
-  * Added the (write-buffer-word buffer) primitive to core.
-  * Added the (write-buffer-quad buffer) primitive to core.
-  + Altered string-port to use buffers.
-  + Added checks to write-descr-byte / word for range. REQ_BYTE_ARG
-  + Added the re-error primitive to permit guard clauses to repeat an error
+  * Added the (write-buffer-byte buffer byte) primitive to core.
+  * Added the (write-buffer-word buffer word) primitive to core.
+  * Added the (write-buffer-quad buffer quad) primitive to core.
+  * Added the (read-buffer-byte buffer) primitive to core.
+  * Added the (read-buffer-word buffer) primitive to core.
+  * Added the (read-buffer-quad buffer) primitive to core.
+  * Altered string-port to use buffers.
+  * Added the re-error primitive to permit guard clauses to repeat an error
     without altering the error's context.
-  + Added the buffer-output macro, which wraps all writes into a string port,
-    then outputs the resulting buffer to the output port on completion.
-  + Altered with-input-port and with-output-port macros to use guards to ensure
+  * Altered with-input-port and with-output-port macros to use guards to ensure
     that the ports are restored.
+  * Added the buffer-output macro, which wraps all writes into a string port,
+    then outputs the resulting buffer to the output port on completion.
+  + Added checks to write-descr-byte / word for range. REQ_BYTE_ARG
   + Altered write to suspend when writing to socket descriptors, much like
     read.
   + Extended dispatcher to handle writes.

@@ -264,49 +264,45 @@
 
 ;;; SRFI-6 String Port Emulation
 (define-class string-port <port>
-              (make-string-port read-fn write-fn close-fn data)
+              (make-string-port read-fn write-fn close-fn buffer)
               string-port?
-              (data string-port-data))
+              (buffer string-port-buffer))
 
 (define (open-output-string)
-  (let ((tc (make-tc))
-        (ct 0))
-    (make-string-port #f
-                      (lambda (p d) 
-                        (if (> ct 32)
-                          (begin 
-                            (define data (apply string-append (tc->list tc)))
-                            (tc-clear! tc)
-                            (tc-append! tc data)
-                            (tc-append! tc d)
-                            (set! ct 1))
-                          (begin
-                            (tc-append! tc d)
-                            (set! ct (+ ct 1)))))
-                      #f
-                      tc)))
+  (define buf (make-buffer 256))
+  (make-string-port (lambda (p) (read-buffer buf))
+                    (lambda (p d) (write-buffer buf d))
+                    #f
+                    buf))
+
+(define (open-input-string data)
+  (define buf (make-buffer (string-length data)))
+  (write-buffer buf data)
+  (make-string-port (lambda (p) (read-buffer buf))
+                    (lambda (p d) (write-buffer buf d))
+                    #f
+                    buf))
 
 (define (write-byte byte (<string-port> port))
-  ((port-write-fn port) port byte))
+  (write-buffer-byte (string-port-buffer port) byte))
 
 (define (write-word word (<string-port> port))
-  (write-byte (quotient word 256) port)
-  (write-byte (remainder word 256) port))
+  (write-buffer-word (string-port-buffer port) word))
 
 (define (write-quad quad (<string-port> port))
-  (write-word (quotient quad 65536) port)
-  (write-word (remainder quad 65536) port))
+  (write-buffer-quad (string-port-buffer port) quad))
 
-;;; TODO: This is very inefficient if the string was constructed, byte-by-byte.
+(define (read-byte (<string-port> port))
+  (read-buffer-byte (string-port-buffer port)))
+
+(define (read-word (<string-port> port))
+  (read-buffer-word (string-port-buffer port)))
+
+(define (read-quad (<string-port> port))
+  (read-buffer-quad (string-port-buffer port)))
+
 (define (get-output-string (<string-port> port))
-  ; Each call to g-o-s compresses the queued data into a single string
-  ; object, alters the queue to contain that object, then returns
-  ; the result.
-  (define tc (string-port-data port))
-  (define data (apply string-append (tc->list tc)))
-  (tc-clear! tc)
-  (tc-append! tc data)
-  data)
+  (buffer->string (string-port-buffer port)))
 
 ;;; The queue is both an input, and an output, backed by a tconc.
 (define-class queue <port>

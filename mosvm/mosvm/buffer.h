@@ -58,6 +58,7 @@ static inline mqo_integer mqo_buffer_length( mqo_buffer buffer ){
     return buffer->length;
 }
 
-#define mqo_show_buffer mqo_show_unknown
+#define mqo_show_buffer NULL
+void mqo_dump_buffer( mqo_buffer buffer );
 
 #endif

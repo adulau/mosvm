@@ -104,7 +104,10 @@ void mqo_raise( mqo_symbol key, mqo_pair info ){
     }
     
     mqo_error err = mqo_make_error( key, info, frames );
-    
+    mqo_throw( err );
+}
+
+void mqo_throw( mqo_error err ){
     if( MQO_GP ){
         mqo_guard g = mqo_guard_fv( mqo_car( MQO_GP ) );
 

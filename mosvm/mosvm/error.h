@@ -20,6 +20,7 @@
 #include "memory.h"
 
 void mqo_raise( mqo_symbol key, mqo_pair info );
+void mqo_throw( mqo_error err );
 void mqo_errf( mqo_symbol key, const char* fmt, ... );
 
 void mqo_report_os_error( );
