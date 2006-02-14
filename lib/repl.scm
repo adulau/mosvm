@@ -18,6 +18,7 @@
 
 (export "lib/repl")
 (import "lib/compile")
+(import "lib/trace")
 
 (define (repl)
   (define data #f)
@@ -29,7 +30,7 @@
     (cond 
       ((eof-object? data) (halt))
       ((> (string-length data) 0)
-       (guard il-traceback
+       (guard traceback
               (set! data (string->exprs data))
               (set! data (compile data))
               (set! data (optimize data))

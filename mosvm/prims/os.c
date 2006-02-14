@@ -264,6 +264,8 @@ MQO_BEGIN_PRIM( "seek-file", seek_file )
 MQO_END_PRIM( seek_file )
 
 void mqo_bind_os_prims( ){
+    MQO_BEGIN_PRIM_BINDS( );
+
     mqo_es_fs = mqo_symbol_fs( "fs" );
 
 #if defined(_WIN32)||defined(__CYGWIN__)

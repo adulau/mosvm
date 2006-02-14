@@ -181,17 +181,19 @@ MQO_BEGIN_PRIM( "program-symbol-at", program_symbol_at )
 MQO_END_PRIM( program_symbol_at )
 
 void mqo_bind_progn_prims( ){
+    MQO_BEGIN_PRIM_BINDS( );
+
     MQO_BIND_PRIM( make_program );
     MQO_BIND_PRIM( program_length );
-	MQO_BIND_PRIM( program_code_at );
-	MQO_BIND_PRIM( set_program_code_at );
-	MQO_BIND_PRIM( program_word1_at );
-	MQO_BIND_PRIM( set_program_word1_at );
-	MQO_BIND_PRIM( program_word2_at );
-	MQO_BIND_PRIM( set_program_word2_at );
-	MQO_BIND_PRIM( program_value_at );
-	MQO_BIND_PRIM( set_program_value_at );
-	MQO_BIND_PRIM( program_symbol_at );
-	MQO_BIND_PRIM( set_program_symbol_at );
+    MQO_BIND_PRIM( program_code_at );
+    MQO_BIND_PRIM( set_program_code_at );
+    MQO_BIND_PRIM( program_word1_at );
+    MQO_BIND_PRIM( set_program_word1_at );
+    MQO_BIND_PRIM( program_word2_at );
+    MQO_BIND_PRIM( set_program_word2_at );
+    MQO_BIND_PRIM( program_value_at );
+    MQO_BIND_PRIM( set_program_value_at );
+    MQO_BIND_PRIM( program_symbol_at );
+    MQO_BIND_PRIM( set_program_symbol_at );
 }
 

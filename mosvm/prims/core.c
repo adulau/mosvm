@@ -657,7 +657,7 @@ MQO_BEGIN_PRIM( "error", error )
     REST_ARGS( info );
     NO_MORE_ARGS( );
 
-    mqo_err( key, info );
+    mqo_raise( key, info );
 MQO_END_PRIM( error )
 
 MQO_BEGIN_PRIM( "show", show )
@@ -691,12 +691,12 @@ MQO_BEGIN_PRIM( "error-info", error_info )
     MQO_RESULT( mqo_vf_pair( err->info ) );
 MQO_END_PRIM( error_info )
 
-MQO_BEGIN_PRIM( "error-state", error_state )
+MQO_BEGIN_PRIM( "error-context", error_context )
     REQ_ERROR_ARG( err );
     NO_MORE_ARGS( );
   
-    MQO_RESULT( mqo_vf_vmstate( err->state ) );
-MQO_END_PRIM( error_state )
+    MQO_RESULT( mqo_vf_pair( err->context ) );
+MQO_END_PRIM( error_context )
 
 MQO_BEGIN_PRIM( "vmstate-ip", vmstate_ip )
     REQ_VMSTATE_ARG( vms );
@@ -740,14 +740,14 @@ MQO_BEGIN_PRIM( "vmstate-gp", vmstate_gp )
     MQO_RESULT( mqo_vf_pair( vms->gp ) );
 MQO_END_PRIM( vmstate_gp )
 
-MQO_BEGIN_PRIM( "il-traceback", il_traceback )
+MQO_BEGIN_PRIM( "dump-error", dump_error )
     REQ_ERROR_ARG( err );
     NO_MORE_ARGS( );
   
-    mqo_il_traceback( err );
+    mqo_dump_error( err );
 
     MQO_NO_RESULT( );
-MQO_END_PRIM( il_traceback )
+MQO_END_PRIM( dump_error )
 
 MQO_BEGIN_PRIM( "map-car", map_car )
     REQ_PAIR_ARG( src );
@@ -1030,7 +1030,7 @@ MQO_END_PRIM( make_multimethod )
 MQO_BEGIN_PRIM( "refuse-method", refuse_method )
     REST_ARGS( rest );
     NO_MORE_ARGS( );
-    mqo_err( 
+    mqo_raise( 
         mqo_es_vm,
         mqo_cons( mqo_vf_string( mqo_string_fs( "method not found" ) ), 
                   mqo_vf_pair( rest ) )
@@ -1748,8 +1748,34 @@ MQO_BEGIN_PRIM( "set-process-output!", set_process_output )
     MQO_NO_RESULT( );
 MQO_END_PRIM( set_process_output )
 
+MQO_BEGIN_PRIM( "function-name", function_name )
+    REQ_VALUE_ARG( function )
+    NO_MORE_ARGS( );
+
+    mqo_symbol result;
+again:
+
+    if( mqo_is_closure( function ) ){
+        result = mqo_closure_fv( function )->name;
+        if( ! result ) result = mqo_symbol_fs( "<unknown>" );
+    }else if( mqo_is_program( function ) ){
+        result = mqo_symbol_fs( "<program>" );
+    }else if( mqo_is_multimethod( function ) ){
+        function = mqo_multimethod_fv( function )->func;
+        goto again;
+    }else if( mqo_is_prim( function ) ){
+        result = mqo_prim_fv( function )->name;
+    }else{
+        mqo_errf( mqo_es_args, "sx", "expected function", function );
+    }
+
+    MQO_RESULT( mqo_vf_symbol( result ) );
+MQO_END_PRIM( function_name )
+
 void mqo_bind_core_prims( ){
     // R5RS Standards
+    MQO_BEGIN_PRIM_BINDS( );
+
     MQO_BIND_PRIM( symbolq );
     MQO_BIND_PRIM( stringq );
     MQO_BIND_PRIM( integerq );
@@ -1814,8 +1840,8 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( error );
     MQO_BIND_PRIM( error_key );
     MQO_BIND_PRIM( error_info );
-    MQO_BIND_PRIM( error_state );
-    MQO_BIND_PRIM( il_traceback );
+    MQO_BIND_PRIM( error_context );
+    MQO_BIND_PRIM( dump_error );
 
     MQO_BIND_PRIM( vmstate_ip );
     MQO_BIND_PRIM( vmstate_cp );
@@ -1914,6 +1940,7 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( set_process_output );
 
     MQO_BIND_PRIM( globals );
+    MQO_BIND_PRIM( function_name );
 
     mqo_symbol_fs( "atom" )->value = mqo_make_atom( );
 }

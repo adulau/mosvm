@@ -42,9 +42,14 @@
 #define MQO_RESULT( v ) rs = v; goto exeunt;
 #define MQO_NO_RESULT( v ) goto exeunt;
 
+#define MQO_BEGIN_PRIM_BINDS( )\
+    mqo_symbol _sym; \
+    mqo_prim   _prim; \
+
 #define MQO_BIND_PRIM( pn ) \
-    mqo_symbol_fs( MQO_PRIM_NAME( pn ) )->value = \
-        mqo_vf_prim( mqo_make_prim( MQO_PRIM_NAME( pn ), mqo_prim_##pn ) ); 
+    _sym = mqo_symbol_fs( MQO_PRIM_NAME( pn ) ); \
+    _prim = mqo_make_prim( _sym, mqo_prim_##pn ); \
+    _sym->value = mqo_vf_prim( _prim );
 
 #define REQ_VALUE_ARG( nm ) \
     if( ai >= ct ){ \

@@ -150,10 +150,6 @@ void mqo_prim_rag_op( );
 // The following two functions signal that an error has occurred.  They will
 // never return, since they will result in a non-local jump upwards into the
 // top level execution loop followed by a call to the current guard procedure.
-void mqo_err( mqo_symbol key, mqo_pair info );
-void mqo_errf( mqo_symbol key, const char* fmt, ... );
-
-void mqo_il_traceback( mqo_error err );
 void mqo_dump_stack( mqo_vector sv, mqo_integer si );
 
 void mqo_bind_core_prims();
@@ -185,9 +181,6 @@ void mqo_unsched_process( mqo_process process );
 void mqo_resume( mqo_process process, mqo_value value );
 
 extern mqo_boolean mqo_trace_vm;
-
-void mqo_report_os_error( );
-int mqo_os_error( int code );
 
 void mqo_show_closure( mqo_closure c, mqo_word* ct );
 void mqo_show_prim( mqo_prim p, mqo_word* ct );

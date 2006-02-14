@@ -19,9 +19,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <setjmp.h>
-#include <stdarg.h>
 #include <string.h>
-#include <errno.h>
 
 mqo_boolean mqo_trace_vm = 0;
 mqo_symbol mqo_es_os = NULL;
@@ -320,167 +318,6 @@ void mqo_return( ){
     }
 }
 
-void mqo_err( mqo_symbol key, mqo_pair info ){
-    mqo_error err = mqo_make_error( key, info );
-
-    if( MQO_GP ){
-        mqo_guard g = mqo_guard_fv( mqo_car( MQO_GP ) );
-
-        MQO_GP = mqo_pair_fv( mqo_cdr( MQO_GP ) );
-        MQO_SI = g->si;
-        MQO_RI = g->ri;
-        MQO_CP = g->cp;
-        MQO_IP = g->ip;
-        MQO_EP = g->ep;
-
-        mqo_push_ds( mqo_vf_error( err ) );
-        mqo_push_int_ds( 1 );
-
-        mqo_call( g->fn );
-        
-        MQO_CONTINUE( );
-    }else{
-        mqo_il_traceback( err );
-        MQO_IP = NULL;
-        MQO_EP = NULL;
-        MQO_SI = MQO_RI = 0;
-        // We will rely on mqo_execute to identify an empty data stack
-        // as the result of an unhandled error condition.
-
-        MQO_HALT( );
-    }
-}
-
-void mqo_il_traceback( mqo_error error ){
-    mqo_vector  rv = error->state->rv;
-    mqo_vector  sv = error->state->sv;
-    mqo_integer ri = error->state->ri;
-    mqo_integer si = error->state->si;
-    mqo_value*  af = NULL;
-    mqo_integer ai = 0, ct = 0;
-    mqo_pair ep = error->state->ep;
-
-    mqo_value fn, x;
-    
-    int tc = 0;
-    
-    void load_stack_frame( ){
-        // A stack frame is always the last frame, since they are
-        // only used by primitives, and primitives NEVER call, they only
-        // jump.
-        //TODO: Signal an error if si < ct + 2;
-        si = si - ct - 1;
-        af = mqo_vector_ref( sv, si );
-    }
-    void load_env_frame( ){
-        //TODO: Signal an error if ct < ep->length
-        //TODO: Signal an error if (not? (vector? (car ep)))
-        if( ct ){
-            af = mqo_vector_ref( mqo_vector_fv( mqo_car( ep ) ), 0 );
-        }else{
-            af = NULL;
-        }
-    }
-    void show_call( ){
-        mqo_write( "(" );
-
-        if( mqo_is_closure( fn ) ){
-            mqo_closure c = mqo_closure_fv( fn );
-            
-            if( c->name ){
-                mqo_writesym( c->name );
-            }else{
-                mqo_show_closure( c, NULL );
-            }
-            
-            load_env_frame( );
-        }else if( mqo_is_program( fn ) ){
-            mqo_write( "<program>" );
-            load_env_frame( );
-        }else if( mqo_is_prim( fn ) ){
-            mqo_writestr( mqo_prim_fv( fn )->name );
-            if( tc ){
-                //TODO: Signal an error if this is not the first show_call.
-                mqo_write( "...)" );
-                return;
-            }else{
-                load_stack_frame( );
-            }
-        }else{
-            mqo_word ct = 5; mqo_show( fn, &ct );
-        };
-    
-        for( ai = 0; ai < ct; ai ++ ){
-            mqo_space();
-            if( ai == 5 ){ 
-                mqo_write ( "..." ); 
-                break; 
-            }
-            mqo_word ct = 5; mqo_show( af[ ai ], &ct );
-        }
-        
-        mqo_write( ")" );
-    }   
-    
-    // Display the Key and Info
-    mqo_newline( );
-    mqo_write( "Error: " );
-    mqo_writesym( error->key );
-    mqo_pair info = error->info;
-    if( info ){
-        mqo_value text = mqo_car( info );
-        if( mqo_is_string( text ) ){
-            mqo_write( ": " );
-            info = mqo_pair_fv( mqo_cdr( info ) );
-            mqo_writestr( mqo_string_fv( text ) );
-            mqo_write( " " );
-        };
-        mqo_word ct = 16; mqo_show_pair_contents( info, &ct );
-    };
-    mqo_newline( );
-
-    // Display the stacks.
-    mqo_write( "DS: " );
-    mqo_dump_stack( sv, si );
-    mqo_write( "\nRS: " );
-    mqo_dump_stack( rv, ri );
-    mqo_write( "\n" );
-
-    // Display the Traceback
-    mqo_write( "Trace: " );
-
-    while( ri > 1 ){ //Note, there's always one base RI from the executing
-                     //program.
-        if( tc > 0 ) mqo_write( "       " );
-      
-        if( ri < 5 ){
-            //TODO: Signal an error.
-            return;
-        }
-
-        x = mqo_vector_get( rv, --ri );
-        if( ! mqo_is_integer( x ) ){
-            //TODO: Signal an error.
-            return;
-        }
-        ct = mqo_integer_fv( x );
-        fn = mqo_vector_get( rv, --ri );
-        
-        show_call( );
-        mqo_newline( );
-        
-        x = mqo_vector_get( rv,  --ri );
-        if( ! mqo_is_pair( x ) ){
-            //TODO: Signal an error.
-            return;
-        }
-        ep = mqo_pair_fv( x );
-
-        ri -= 2;
-        tc++;
-    }
-}
-
 mqo_pair mqo_rest( mqo_integer ct, mqo_integer dp ){
     mqo_pair pr = NULL;
     for( mqo_integer ai = 0; ai < ct; ai ++ ){
@@ -492,51 +329,6 @@ mqo_pair mqo_rest( mqo_integer ct, mqo_integer dp ){
     return pr;
 }
 
-void mqo_errf( mqo_symbol key, const char* fmt, ... ){
-    va_list ap;
-    mqo_pair head = NULL;
-    mqo_pair tail = NULL;
-    mqo_pair item = NULL;
-    
-    const char* ptr = fmt;
-    va_start( ap, fmt );
-    for(;;){
-        mqo_value value;
-
-        switch( *(ptr++) ){
-        case 'x':
-            value = va_arg( ap, mqo_value );
-            break;
-        case 's': 
-            value = mqo_vf_string( 
-                mqo_string_fs( va_arg( ap, const char* ) ) );
-            break;
-        case 'S': 
-            value = mqo_vf_string( va_arg( ap, mqo_string ) );
-            break;
-        case 'i': 
-            value = mqo_vf_integer( va_arg( ap, mqo_integer ) );
-            break;
-        case 0:
-            goto done;
-        default:
-            va_end( ap );
-            mqo_errf( mqo_es_vm, "ss", 
-                "mqo_errf cannot process format string", fmt );
-        }
-
-        item = mqo_cons( value, mqo_vf_empty( ) );
-        if( tail ){ 
-            mqo_set_cdr( tail, mqo_vf_pair( item ) );
-        }else{ 
-            head = item;
-        };
-        tail = item;
-    }
-done:
-    va_end( ap );
-    mqo_err( key, head );
-}
 void mqo_init_exec_subsystem( ){
     mqo_es_os = mqo_symbol_fs( "os" );
     mqo_es_vm = mqo_symbol_fs( "vm" );
@@ -550,7 +342,7 @@ void mqo_init_exec_subsystem( ){
     for(;;){
         struct mqo_op_row* row = mqo_op_table + ( ct ++ );
         if( row->fn == NULL )break;
-        row->prim = mqo_make_prim( row->name, row->fn );
+        row->prim = mqo_make_prim( mqo_symbol_fs( row->name ), row->fn );
     }
 
     mqo_tadpole = mqo_make_program( 2 );
@@ -598,16 +390,6 @@ void mqo_resume( mqo_process process, mqo_value value ){
         mqo_resched_process( process );
     }
 }
-void mqo_report_os_error( ){
-    mqo_errf( mqo_es_os, "s", strerror( errno ) );
-}
-int mqo_os_error( int code ){
-    if( code == -1 ){
-        mqo_report_os_error( );
-    }else{
-        return code;
-    }
-}
 void mqo_show_closure( mqo_closure c, mqo_word* ct ){
     if( ! c )return mqo_show_unknown( mqo_closure_type, 0 );
 
@@ -623,7 +405,7 @@ void mqo_show_prim( mqo_prim p, mqo_word* ct ){
     if( ! p )mqo_show_unknown( mqo_prim_type, 0 );
 
     mqo_write( "[prim " );
-    mqo_writestr( p->name );
+    mqo_writesym( p->name );
     mqo_write( "]" );
 }
 void mqo_show_process( mqo_process p, mqo_word* ct ){
@@ -647,9 +429,9 @@ mqo_vmstate mqo_make_vmstate( ){
 
     return e;
 }
-mqo_prim mqo_make_prim( const char *name, mqo_prim_fn fn ){
+mqo_prim mqo_make_prim( mqo_symbol name, mqo_prim_fn fn ){
     mqo_prim p = MQO_ALLOC( mqo_prim, 0 );
-    p->name = mqo_string_fs( name );
+    p->name = name;
     p->fn = fn;
     return p;
 }

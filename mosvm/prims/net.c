@@ -51,6 +51,8 @@ MQO_BEGIN_PRIM( "serve-tcp", serve_tcp )
 MQO_END_PRIM( serve_tcp )
 
 void mqo_bind_net_prims( ){
+    MQO_BEGIN_PRIM_BINDS( );
+
     MQO_BIND_PRIM( serve_tcp );
     MQO_BIND_PRIM( connect_tcp );
     MQO_BIND_PRIM( resolve );

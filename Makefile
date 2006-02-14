@@ -9,7 +9,7 @@ include $(ROOT)/Makefile.cf
 # either be compiled using the Scheme implementation of MOSC, or are 
 # written in a language that is a union between MOSVM and R5RS.
 
-SEED=lib/core.mo lib/lib.mo lib/compile.mo lib/assemble.mo lib/optimize.mo lib/freeze.mo lib/repl.mo lib/run.mo
+SEED=lib/core.mo lib/lib.mo lib/compile.mo lib/assemble.mo lib/optimize.mo lib/freeze.mo lib/trace.mo lib/repl.mo lib/run.mo
 
 # The MODS are a superset of the SEED that are used by test cases and MOSVM
 # applications. Any file in MODS that is not in SEED are compiled once the 

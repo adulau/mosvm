@@ -19,6 +19,13 @@
 
 #include "memory.h"
 
+void mqo_raise( mqo_symbol key, mqo_pair info );
+void mqo_errf( mqo_symbol key, const char* fmt, ... );
+
+void mqo_report_os_error( );
+int mqo_os_error( int code );
+void mqo_dump_error( mqo_error e );
+
 void mqo_show_error( mqo_error e, mqo_word* ct );
 #define mqo_show_guard NULL;
 

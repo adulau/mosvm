@@ -156,7 +156,7 @@ MQO_TYPE_INLINES( symbol )
 
 typedef void (*mqo_prim_fn)( );
 MQO_BEGIN_TYPE( prim )
-    mqo_string  name;
+    mqo_symbol  name;
     mqo_prim_fn fn;
 MQO_END_TYPE( prim )
 
@@ -222,8 +222,7 @@ MQO_END_TYPE( process )
 
 MQO_BEGIN_TYPE( error )
     mqo_symbol  key;
-    mqo_pair    info;
-    mqo_vmstate state;
+    mqo_pair    info, context;
 MQO_END_TYPE( error )
 
 MQO_DECL_TYPE( integer );
@@ -385,7 +384,7 @@ static inline void mqo_set_cdr( mqo_pair p, mqo_value v ){
 mqo_type mqo_make_type( mqo_symbol name, mqo_type super, 
                         mqo_show_mt mt_show,
                         mqo_pair info );
-mqo_error mqo_make_error( mqo_symbol key, mqo_pair info );
+mqo_error mqo_make_error( mqo_symbol key, mqo_pair info, mqo_pair context );
 mqo_process mqo_make_process( );
 mqo_string mqo_make_string( mqo_integer length );
 mqo_guard mqo_make_guard( mqo_value fn, mqo_integer ri, mqo_integer si, mqo_program cp, mqo_instruction ip, mqo_pair ep );
@@ -439,7 +438,7 @@ static inline int mqo_eq( mqo_value a, mqo_value b ){
 }
 
 mqo_vmstate mqo_make_vmstate( );
-mqo_prim mqo_make_prim( const char* name, mqo_prim_fn fn );
+mqo_prim mqo_make_prim( mqo_symbol name, mqo_prim_fn fn );
 
 mqo_process mqo_make_process( );
 mqo_multimethod mqo_make_multimethod( 

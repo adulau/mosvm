@@ -16,6 +16,20 @@
   + Added super-type primitive.
   + Added base-type primitive.
 
+- ?/??/????, Buffered Read / Write
+  + Added the buffer primitive type.
+  + Altered write to suspend when writing to socket descriptors, much like
+    read.
+  + Altered string-port to use buffers.
+  + Added the buffer-output macro, which wraps all writes into a string port,
+    then outputs the resulting buffer to the output port on completion.
+  + Altered with-input-port and with-output-port macros to use guards to ensure
+    that the ports are restored.
+  + Added the re-error primitive to permit guard clauses to repeat an error
+    without altering the error's context.
+  + Extended dispatcher to handle writes.
+  + Extended descriptors with write buffers.
+
 - 2/09/2006, Cosmetic Improvements
   * repl now correctly responds to the closure of its input port.
   * when multimethods are bound to global names, any anonymous closures
@@ -25,6 +39,14 @@
   * record types are now named with the supplied name, and bound to <name>
   * string-output-ports will now periodically compact queued data into a 
     temporary string to protect against excessively large queues.
+  * added lib/traceback.scm, a replacement for il-traceback written in MOSVM
+    that interoperates with lib/format and ports.
+  * added the function-name primitive; given a function it will attempt to
+    determine the symbolic name of that function.
+  * primitive names are now symbols.
+  * altered error types to replace the out-dated vmstate information with
+    context, an easier to use representation of the return and data stack at
+    the time of the error.
 
 - 2/08/2006, Queues Suspend and Resume on Empty
   * Extended the queue read method to suspend the reading process if the queue
