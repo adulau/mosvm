@@ -14,19 +14,127 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA  
 ;  
 
-(export "lib/compile")
+(module "lib/compile")
 (import "lib/lib")
+(export compile)
 
-(define-record-type <context>
-                    (make-context reality parent symbols slots rules)
+(define-record-type context
+                    (make-context reality parent symbols slots rules exports)
                     context?
                     (reality context-reality)
                     (parent  context-parent)
                     (symbols context-symbols set-context-symbols!)
                     (slots context-slots set-context-slots!)
-                    (rules context-rules set-context-rules!))
+                    (rules context-rules set-context-rules!)
+                    (exports context-exports set-context-exports!))
+    
+(define (add-context-slot! context slot)
+  (set-context-slots! context (append! (context-slots context) (list slot))))
+
+(define (add-context-symbol! context symbol)
+  (set-context-symbols! context (cons symbol (context-symbols context))))
+
+(define (add-context-rule! context key function)
+  (set-context-rules! context (cons (cons key function) 
+                                    (context-rules context))))
+
+(define (find-context-rule context key)
+  (if context
+    (let ((rule (assq key (context-rules context))))
+      (if rule 
+        (cdr rule)
+        (find-context-rule (context-parent context) key)))
+    #f))
+
+(define (add-context-binding! local symbol)
+  (add-context-slot! (find-actual-context local)
+                     (cons symbol local))
+  (add-context-symbol! local symbol))
+
+(define (make-slots context symbols)
+  (map (lambda (symbol) 
+         (cons symbol context))
+       symbols))
+
+(define (make-actual-context parent symbols)
+  (let ((new-context (make-context #t parent symbols #f '() #f)))
+    (set-context-slots! new-context 
+                        (make-slots new-context symbols))
+    new-context))
+
+(define (make-top-context)
+  (define top (make-actual-context #f '()))
+  (set-context-rules! top *mosvm-syntax*)
+  top)
+
+(define (is-top-context? context)
+  (not (context-parent context)))
+                
+(define (is-actual-context? context)
+  (context-reality context))
+
+(define (is-virtual-context? context)
+  (not (context-reality context)))
+
+(define (is-exported? symbol context)
+  (if (context-exports context)
+    (memq symbol (context-exports (find-top-context context)))
+    #t))
+
+(define (context-slot-count context)
+  (length (context-slots context)))
+
+(define (find-top-context context)
+  (cond ((not context) #f)
+        ((is-top-context? context) context)
+        (else (find-top-context (context-parent context)))))
+
+(define (find-actual-context context)
+  (cond
+    ((not context) #f)
+    ((is-actual-context? context) context)
+    (else (find-actual-context (context-parent context)))))
+
+(define (make-virtual-context parent symbols)
+  (let ((new-context (make-context #f parent symbols #f '() #f))
+        (actual-context (find-actual-context parent)))
+    (set-context-slots! actual-context
+                        (append (context-slots actual-context)
+                                (make-slots new-context symbols)))
+    new-context))
+
+(define (context-defines-symbol? context symbol)
+  (if (memq symbol (context-symbols context)) 
+      #t #f))
+
+(define (context-slot-index context slot-context slot-symbol)
+  (list-index (lambda (x) (and (eq? (car x)
+                                    slot-symbol)
+                               (eq? (cdr x)
+                                    slot-context)))
+              (context-slots context)))
+
+(define (context-symbol-addr context symbol)
+  (define result #f)
+  (define actuals 0)
+  (while context
+    (cond ((context-defines-symbol? context symbol)
+           (set! result 
+             (list actuals
+                   (context-slot-index (find-actual-context context)
+                                       context
+                                       symbol)))
+           (set! context #f))
+          ((is-actual-context? context)
+           (set! context (context-parent context))
+           (set! actuals (+ actuals 1)))
+          (else
+           (set! context (context-parent context)))))
+  result)
+
 (define *mosvm-syntax*
   (list 
+    (cons 'export (lambda any '(begin)))
     (cons 'with-input-port
           (lambda (port . rest)
             `(let ((%old-input (current-input-port)))
@@ -108,6 +216,7 @@
                         (bind-field-modifier (caddr field) (car field))
                         '(begin)))
                     class-fields))))
+
     (cons 'define-record-type
           (lambda (record-name make-proto pred-name . record-fields)
             `(define-class ,record-name <record> ,make-proto ,pred-name 
@@ -331,39 +440,6 @@
     (cons 'set!  (lambda (block env . expr)
                    (compile-store block expr env)
                    (block-append! block '(ldu))))
-    (cons 'define (lambda (block env formals . expr)
-                    (define key formals)
-                    (define top #t)
-                    (define addr #f)
-                    (define func #f)
-                    (define meth #f)
-                    (when (context-parent env)
-                      (set! top #f)
-                      (set! addr (context-symbol-addr env key)))
-                    (when (pair? formals) 
-                      (set! func #t)
-                      (set! key (car formals))
-                      (set! formals (parse-formals (cdr formals))))
-                    (when (and func (method-formals? formals))
-                      (set! func #f)
-                      (set! meth (if addr 
-                                     `(or (asm (ldb ,@addr))
-                                          refuse-method)
-                                     `(or (get-global ',key)
-                                          refuse-method))))
-                    (unless top 
-                      (add-context-binding! env key)
-                      (set! addr (context-symbol-addr env key)))
-                    (cond 
-                      (func (compile-function block formals expr env))
-                      (meth (compile-method block meth formals expr env))
-                      (else (compile-expr block (car expr) env)))
-                            ;;; Error if expr length != 1.
-                    (if top
-                      (block-append! block `(stg ,key)) 
-                      (block-append! block (cons 'stb addr)))
-                    (block-append! block '(ldu))))
-
     (cons 'lambda (lambda (block env formals . body)
                     (compile-function block
                                       (parse-formals formals)
@@ -376,100 +452,20 @@
                     (compile-expr block 
                                   `(get-global (quote ,key)) 
                                   env)))))
-    
+    (cons '?? (lambda (block env key)
+                (cond 
+                  ((is-top-context? env)
+                   (compile-expr block `(get-global (quote ,key)) env))
+                  ((is-top-context? (context-parent env))
+                   (compile-expr block `(get-global (quote ,key)) env))
+                  (else
+                    (let ((addr (context-symbol-addr env key)))
+                      (if addr 
+                        (block-append! block (cons 'ldb addr))
+                        (compile-expr block 
+                                      `(get-global (quote ,key)) 
+                                      env)))))))
     ))
-
-    
-(define (add-context-slot! context slot)
-  (set-context-slots! context (append! (context-slots context) (list slot))))
-
-(define (add-context-symbol! context symbol)
-  (set-context-symbols! context (cons symbol (context-symbols context))))
-
-(define (add-context-rule! context key function)
-  (set-context-rules! context (cons (cons key function) 
-                                    (context-rules context))))
-
-(define (find-context-rule context key)
-  (if context
-    (let ((rule (assq key (context-rules context))))
-      (if rule 
-        (cdr rule)
-        (find-context-rule (context-parent context) key)))
-    #f))
-
-(define (add-context-binding! local symbol)
-  (add-context-slot! (find-actual-context local)
-                     (cons symbol local))
-  (add-context-symbol! local symbol))
-
-(define (make-slots context symbols)
-  (map (lambda (symbol) 
-         (cons symbol context))
-       symbols))
-
-(define (make-actual-context parent symbols)
-  (let ((new-context (make-context #t parent symbols #f '())))
-    (set-context-slots! new-context 
-                        (make-slots new-context symbols))
-    new-context))
-
-(define (make-top-context)
-  (let ((new-context (make-actual-context #f '(*args*))))
-    (set-context-rules! new-context *mosvm-syntax*)
-    new-context))
-
-(define (is-actual-context? context)
-  (context-reality context))
-
-(define (is-virtual-context? context)
-  (not (context-reality context)))
-
-(define (context-slot-count context)
-  (length (context-slots context)))
-
-(define (find-actual-context context)
-  (cond
-    ((not context) #f)
-    ((is-actual-context? context) context)
-    (else (find-actual-context (context-parent context)))))
-
-(define (make-virtual-context parent symbols)
-  (let ((new-context (make-context #f parent symbols #f '()))
-        (actual-context (find-actual-context parent)))
-    (set-context-slots! actual-context
-                        (append (context-slots actual-context)
-                                (make-slots new-context symbols)))
-    new-context))
-
-(define (context-defines-symbol? context symbol)
-  (if (memq symbol (context-symbols context)) 
-      #t #f))
-
-(define (context-slot-index context slot-context slot-symbol)
-  (list-index (lambda (x) (and (eq? (car x)
-                                    slot-symbol)
-                               (eq? (cdr x)
-                                    slot-context)))
-              (context-slots context)))
-
-(define (context-symbol-addr context symbol)
-  (define result #f)
-  (define actuals 0)
-  (while context
-    (cond ((context-defines-symbol? context symbol)
-           (set! result 
-             (list actuals
-                   (context-slot-index (find-actual-context context)
-                                       context
-                                       symbol)))
-           (set! context #f))
-          ((is-actual-context? context)
-           (set! context (context-parent context))
-           (set! actuals (+ actuals 1)))
-          (else
-           (set! context (context-parent context)))))
-  result)
 
 (define (make-scheme-program) (make-tc))
 
@@ -514,28 +510,115 @@
             (if syn (expand (apply syn (cdr expr)) env)
                     expr)))))
 
+(define (compile-exports code env)
+  (define tc (make-tc))
+
+  (define (is-export? expr)
+    (and (pair? expr)
+         (not (null? expr))
+         (eq? (car expr) 'export)))
+
+  (define (isnt-export? expr)
+    (not (is-export? expr)))
+
+  ;TODO: This needs to be a set.
+  (for-each (lambda (x) (tc-splice! tc (cdr x)))
+            (filter is-export? code))
+
+  (unless (tc-empty? tc)
+    (set-context-exports! env (tc->list tc)))
+
+  (filter isnt-export? code))
+
+
+(define (compile-defines code env)
+  (define (is-define? expr)
+    (and (pair? expr)
+         (not (null? expr))
+         (eq? (car expr) 'define)))
+
+  (define (compile-decl sym env)
+    (cond ((and (is-top-context? env)
+                (is-exported? sym env)) 
+           #f)
+          (else 
+           (add-context-binding! env sym)
+           #t)))
+           
+  (define (compile-define expr)
+    (when (< (length expr) 2)
+      (error 'compile 
+             "the define form requires a term to define, and a definition" 
+             expr))
+    (let ((term (cadr expr))
+          (body (cdr (cdr expr))))
+    
+      (if (pair? term)
+        (let ((args (cdr term)))
+          (set! term (car term))
+
+          (if (and (pair? args) (any pair? (unkink args)))
+            ;;;TODO: These should be named-lambda's.
+            (set! body `(make-multimethod (list ,@(parse-signature args))
+                                          (lambda ,(parse-slots args)
+                                            ,@body)
+                                          (or (?? ,term) refuse-method)))
+            (set! body `(lambda ,args ,@body))))
+        (if (= (length body) 1)
+          (set! body (car body))
+          (error 'compile "variable definitions should be one expression"
+                 expr)))
+
+      (compile-decl term env)
+      (list 'set! term body)))
+    
+  (map (lambda (stmt)
+         (if (is-define? stmt)
+           (compile-define stmt)
+           stmt))
+       code))
+
+(define (parse-defines source)
+  ;TODO: This needs to be a set.
+  (define tc (make-tc))
+  (for-each (lambda (x) 
+               (set! x (cadr x))
+               (set! x (if (pair? x)
+                           (car x)
+                           x))
+               (unless (memq x (tc->list tc))
+                  (tc-append! tc x)))
+            (filter (lambda (x) 
+                      (and (pair? x)
+                           (> (length x) 1)
+                           (eq? (car x) 'define)))
+                    source))
+  (tc->list tc))
+
 (define (compile code)
-  (let ((scheme-program (make-scheme-program)))
-    (let ((base-block (make-block scheme-program))
-          (env (make-top-context)))
-      (compile-block base-block code env)
+  ;; I loathe nested lets, but Scheme's inner defines are let-like,
+  ;; and MOSVM doesn't do letrec.
+  (let ((program (make-scheme-program)))
+    (let ((base-block (make-block program))
+          (top-context (make-top-context)))
+      (set! code (compile-exports code top-context))
+      (compile-block base-block code top-context)
       (block-prepend! base-block 
-                      (list 'usea 0 (context-slot-count env)))
-      (block-append! base-block '(retn)))
-    (scheme-program->list scheme-program)))
+                      (list 'usen 0 (context-slot-count top-context)))
+      (block-append! base-block '(retn))
+      (scheme-program->list program))))
 
 (define (compile-block block code env)
   ;; This will produce an extra ldu/drop at the beginning of any non-null
   ;; block, but the optimizer will detect and remove it.
   (block-append! block '(ldu))
+  (set! code (compile-defines code env))
   (until (null? code)
     (block-append! block '(drop))
     (compile-expr block (car code) env)
     (set! code (cdr code))))
 
 (define (compile-expr block expr env)
-  ;(write (list 'compile-expr expr))
-  ;(newline)
   (cond ((null? expr)    (compile-null block env))
         ((list? expr)    (compile-form block expr env))
         ((integer? expr) (compile-integer block expr env))
@@ -596,7 +679,6 @@
      (make-formals #t (parse-signature formals) (parse-slots formals)))
     (else (make-formals #f (parse-signature formals) (parse-slots formals)))))
 
-
 (define (compile-function outer formals body env)
   (set! env (make-actual-context env (formal-slots formals)))
   (let ((label (make-branch-symbol 'lambda))
@@ -616,22 +698,14 @@
 
     (block-append! outer (list 'ldf label))))
 
-(define (compile-method block genexpr formals body env)
-  (compile-expr block 
-                (list 'make-multimethod 
-                      (cons 'list (formal-signature formals))
-                      (cons 'lambda 
-                            (cons (formal-slots formals) 
-                                  body))
-                      genexpr)
-                env))
-
 (define (compile-load block sym env) 
+  ;TODO Test for is-imported?
   (let ((addr (context-symbol-addr env sym)))
     (block-append! block (if addr (cons 'ldb addr)
                                   (list 'ldg sym)))))
 
 (define (compile-store block expr env) 
+  ;TODO Test for is-imported?
   (let ((sym (car expr))
         (val (cadr expr)))
     (compile-expr block val env)

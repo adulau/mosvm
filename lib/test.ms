@@ -24,7 +24,8 @@
 ; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 ; POSSIBILITY OF SUCH DAMAGE.
 
-(export "lib/test")
+(module "lib/test")
+
 
 (define *spot-test?* #f)
 (define *spot-s* #f)
@@ -55,7 +56,7 @@
 
 (define (do-r expr fn)
   (let ((x (fn)))
-    (if (not (equal? x *spot-v*))
+    (if (not (eqv? x *spot-v*))
       (spot-error (cons "r:  " expr)
                   (list "sv: " *spot-v*)
                   (list "rv: " x)))))
@@ -78,3 +79,7 @@
 (define (main . ignored)
   (spot-report)
   (= *spot-ect* 0))
+
+(export *spot-test?* do-s do-r do-t spot-report main 
+        enable-spot-tests disable-spot-tests)
+

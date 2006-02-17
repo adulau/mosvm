@@ -13,7 +13,7 @@
 ; along with this library; if not, write to the Free Software Foundation, 
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
-(export "lib/format")
+(module "lib/format")
 
 (define (unknown->string unknown)
   (string-append "[" (symbol->string (type-name (type unknown))) "]"))
@@ -64,9 +64,8 @@
 
 (define (type->string type) 
   (string-append "<" 
-                 (type-name type) 
-                 (pair-contents->string 
-                 (type-info pair)) 
+                 (symbol->string (type-name type))
+                 (pair-contents->string (type-info type) #t)
                  ">"))
 
 (define (value->string unknown) (unknown->string unknown))
@@ -83,4 +82,9 @@
 
 (define (show value) (show value (current-output-port)))
 (define (show value (<port> port)) (write (value->string value) port))
+
+(export unknown->string pair-contents->string pair->string 
+        vector-contents->string vector->string object->string
+        set->string dict->string type->string value->string 
+        show)
 

@@ -66,7 +66,7 @@ extern mqo_instruction MQO_IP; // Next instruction.
 
 extern mqo_process MQO_PP; // The current process.
 
-#define MQO_STACK_SZ 16384
+#define MQO_STACK_SZ 1024
 
 struct mqo_op_row{
     const char* name;

@@ -64,7 +64,7 @@ void mqo_raise( mqo_symbol key, mqo_pair info ){
     mqo_pair frame;
     mqo_pair frames = NULL;
 
-    MQO_CRASH_UNLESS( ( ri <= 1 )||( ri > 5 ) );
+    MQO_CRASH_UNLESS( ( ri <= 1 )||( ri > 4 ) );
 
     while( ri > 1 ){ //Note, there's always one base RI from the executing
                      //program.
@@ -125,8 +125,8 @@ void mqo_throw( mqo_error err ){
         
         MQO_CONTINUE( );
     }else{
-        mqo_dump_stack( MQO_SV, MQO_SI );
-        mqo_dump_stack( MQO_RV, MQO_RI );
+        //mqo_dump_stack( MQO_SV, MQO_SI );
+        //mqo_dump_stack( MQO_RV, MQO_RI );
         mqo_dump_error( err );
         MQO_IP = NULL;
         MQO_EP = NULL;

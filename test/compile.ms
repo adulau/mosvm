@@ -22,19 +22,19 @@
 (enable-spot-tests)
 
 (s: (compile '()))
-(r: '((usea 0 1) 
+(r: '((usea 0 0) 
       (ldu)
       (retn)))
 
 (s: (compile '(1)))
-(r: '((usea 0 1) 
+(r: '((usea 0 0) 
       (ldu)
       (drop)
       (ldc 1)
       (retn)))
 
 (s: (compile '(1 2)))
-(r: '((usea 0 1) 
+(r: '((usea 0 0) 
       (ldu)
       (drop)
       (ldc 1)
@@ -43,7 +43,7 @@
       (retn)))
 
 (s: (compile '((fn))))
-(r: '((usea 0 1)
+(r: '((usea 0 0)
       (ldu)
       (drop)
       (ldc 0)
@@ -56,12 +56,12 @@
       (ldu)
       (drop)
       (ldc 1)
-      (stg x)
+      (stb 0 1)
       (ldu)
       (retn)))
 
 (s: (compile '((let ((x 1)) x))))
-(r: '((usea 0 2)
+(r: '((usea 0 1)
       (ldu)
       (drop)
       (ldc 1)
@@ -72,28 +72,28 @@
       (retn)))
 
 (s: (compile '((quote x))))
-(r: '((usea 0 1)
+(r: '((usea 0 0)
       (ldu)
       (drop)
       (ldc x)
       (retn)))
 
 (s: (compile '((asm x))))
-(r: '((usea 0 1)
+(r: '((usea 0 0)
       (ldu)
       (drop)
       x
       (retn)))
 
 (s: (compile '((begin))))
-(r: '((usea 0 1)
+(r: '((usea 0 0)
       (ldu)
       (drop)
       (ldu)
       (retn)))
 
 (s: (compile '((begin 1 2 3))))
-(r: '((usea 0 1)
+(r: '((usea 0 0)
       (ldu)
       (drop)
       (ldu)
@@ -106,7 +106,7 @@
       (retn)))
 
 (s: (compile '(1 2 3)))
-(r: '((usea 0 1)
+(r: '((usea 0 0)
       (ldu)
       (drop)
       (ldc 1)
@@ -118,7 +118,7 @@
 
 (reset-branch-index)
 (s: (compile '((if x y))))
-(r: '((usea 0 1)
+(r: '((usea 0 0)
       (ldu)
       (drop)
       (ldg x)
@@ -132,7 +132,7 @@
 
 (reset-branch-index)
 (s: (compile '((if x y z))))
-(r: '((usea 0 1)
+(r: '((usea 0 0)
       (ldu)
       (drop)
       (ldg x)
@@ -146,7 +146,7 @@
 
 (reset-branch-index)
 (s: (compile '((when x y z))))
-(r: '((usea 0 1)
+(r: '((usea 0 0)
       (ldu)
       (drop)
       (ldg x)
@@ -164,7 +164,7 @@
 
 (reset-branch-index)
 (s: (compile '((unless x y z))))
-(r: '((usea 0 1)
+(r: '((usea 0 0)
       (ldu)
       (drop)
       (ldg x)
@@ -182,7 +182,7 @@
 
 (reset-branch-index)
 (s: (compile '((lambda x x))))
-(r: '((usea 0 1)
+(r: '((usea 0 0)
       (ldu)
       (drop)
       (ldf lambda-1)
@@ -195,7 +195,7 @@
       (retn)))
 
 (s: (compile '(`(a b c))))
-(r: '((usea 0 1)
+(r: '((usea 0 0)
       (ldu)
       (drop)
       (ldc 0) (ldg make-tc) (call)

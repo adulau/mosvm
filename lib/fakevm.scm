@@ -159,6 +159,8 @@
 (define (read-all port)
   (read-all-loop port (make-tc)))
 
-(define (export . dont-care) #f) ;This is used by MOSVM to ensure built-in
+(define (module . dont-care) #f) ;This is used by MOSVM to ensure built-in
                                  ;modules are registered.
 
+(define-macro (export . don't-car) 1) ;This is used by MOSVM to identify
+                                      ;exported identifiers.

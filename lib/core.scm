@@ -15,6 +15,7 @@
 ;  
 
 (define *mosvm?* #t)
+(export *mosvm?*)
 
 ;;; for-each, map, find-tail, list-index, any, filter, fold and find from SRFI-1
 (define (filter fn list)
@@ -84,6 +85,8 @@
                  (set! lists (map-cdr lists)))))
   found)
 
+(export filter filter! fold for-each map find-tail list-index find any)
+
 ;;; Underpinnings of the define-class method of constructing new
 ;;; classes.
 (define (make-class class-name super-class fields)
@@ -128,15 +131,22 @@
 (define <object> (make-type 'object <vector>))
 (define (object? value) (eq? <object> (type value)))
 
+(export make-class class-fields make-class-constructor make-field-accessor
+        make-field-modifier ignore-method <object> object?)
+
 ;;; The base class for SRFI-9 Records
 (define-class record
               <object>
               (make-record)
               record?)
-              
+
+(export <record> make-record record?)
+
 ;;; Specifies a magical "end of file" object returned by ports.
 (define *eof* (tag (make-type 'eof <atom>) atom))
 (define (eof-object? value) (eq? *eof* value))
+
+(export *eof* eof-object?)
 
 (define-class port <object>
               (make-port read-fn write-fn close-fn closed)
@@ -182,7 +192,6 @@
 (define (read (<process> process))
   (read (process-output process)))
 
-
 (define *console-port* 
   (make-port (lambda (p) (or (read-descr *console*) *eof*))
              (lambda (p d) (write-descr *console* d))
@@ -220,10 +229,16 @@
                    data
                    (apply string-append data))))
 
+(export current-input-port current-output-port input-port? output-port?
+        closed? close read write *console-port* newline read-all 
+        read-lines read-exprs <port>) 
+
 (define-class file-port <port>
               (make-file-port read-fn write-fn close-fn descr)
               file-port?
               (descr file-port-descr))
+
+(export <file-port> make-file-port file-port? file-port-descr)
 
 ;;; Stripped in functionality, but R5RS compliant.
 (define (open-output-file path)
@@ -243,6 +258,8 @@
 (define (write-quad quad (<file-port> port))
   (write-file-quad (file-port-descr port) quad))
 
+(export open-output-file write-word write-quad write-byte)
+
 ;;; Similar to an R5RS file, but returns raw strings.
 (define (open-input-file path)
   (define descr (open-file path "r"))
@@ -258,9 +275,13 @@
 (define (closed? (<file-port> port))
   (descr-closed? (file-port-descr port)))
 
+(export open-input-file read-all closed?)
+
 ;;; Redundant, but R5RS specified
 (define close-output-port close)
 (define close-input-port close)
+
+(export close-output-port close-input-port)
 
 ;;; SRFI-6 String Port Emulation
 (define-class string-port <port>
@@ -303,6 +324,10 @@
 
 (define (get-output-string (<string-port> port))
   (buffer->string (string-port-buffer port)))
+
+(export <string-port> open-input-string open-output-string string-port?
+        read-byte read-word read-quad write-byte write-word write-quad
+        get-output-string)
 
 ;;; The queue is both an input, and an output, backed by a tconc.
 (define-class queue <port>
@@ -348,6 +373,8 @@
 
 (define (read-exprs (<queue> queue) (read-all queue)))
 
+(export <queue> open-queue empty? read-all read-exprs)
+
 ;;; Similar to an R5RS file with reads returning read s-exprs.
 (define (open-lisp-input-file path)
   (define f (open-input-file path))
@@ -356,17 +383,17 @@
   (close f)
   q)
 
+(export open-lisp-input-file)
+
 (define (thaw-file path)
   (define p (open-input-file path))
   (define r (thaw (read-all p)))
   (close p)
   r)
 
-;;; The omnipotent module loader
-(define import #f)
-(define reload #f)
-(define export #f)
+(export thaw-file)
 
+;;; The omnipotent module loader
 (define (load-mo path)
   (set! path (apply string-join *path-sep*
                                 (string-split* path "/")))
@@ -385,26 +412,29 @@
         ((string-ends-with? path ".scm") (load-ms path))
         (else (error 'load "load only handles scm, ms and mo files" path))))
 
-(let ((*basedir* (getcwd))
-      (*imports* (dict))
-      (*last-imported-key* #f)
-      (*last-imported-path* #f))
-      
-  (set! import (lambda (skey)
-                 (define key (string->symbol skey))
-                 (unless (dict-set? *imports* key)
-                   (define path (string-append skey ".mo"))
-                   (load-mo path))))
+(export load-mo load-ms load)
 
-  (set! reload (lambda (skey)
-                 (dict-remove! *imports* key)
-                 (import key)))
+(define *basedir* (getcwd))
+(define *imports* (dict))
+(define *last-imported-key* #f)
+(define *last-imported-path* #f)
 
-  (set! export (lambda (skey . exports)
-                 (define key (string->symbol skey))
-                 (dict-set! *imports* key (if (eq? key *last-imported-key*)
-                                            *last-imported-path*
-                                            #t)))))
+(define (import skey)
+  (define key (string->symbol skey))
+  (unless (dict-set? *imports* key)
+    (define path (string-append skey ".mo"))
+    (load-mo path)))
 
-(export "lib/core")
+(define (reload skey)
+  (dict-remove! *imports* key)
+  (import key))
 
+(define (module skey)
+  (define key (string->symbol skey))
+  (dict-set! *imports* key (if (eq? key *last-imported-key*)
+                             *last-imported-path*
+                             #t)))
+
+(export import reload module)
+
+(module "lib/core")

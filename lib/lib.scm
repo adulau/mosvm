@@ -14,7 +14,12 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA  
 ;  
 
-(export "lib/lib")
+(module "lib/lib")
+
+(define write-data
+  (if *mosvm?*
+    write
+    display))
 
 (define *branch-index* 0)
 
@@ -106,3 +111,6 @@
       (eq? (string-ref (symbol->string symbol) 0) 
            (integer->char char)))))
 
+(export req-arg opt-arg reset-branch-index make-branch-symbol
+        find-op-row-by-name find-op-row-by-code unkink make-symbol
+        circle symbol-starts-with? write-data)

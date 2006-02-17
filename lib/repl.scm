@@ -16,7 +16,7 @@
 ; as published by the Free Software Foundation.
 
 
-(export "lib/repl")
+(module "lib/repl")
 (import "lib/compile")
 (import "lib/trace")
 
@@ -41,4 +41,6 @@
                 (show data))))
       (else
         (set! done #t)))))
+
+(export repl)
 

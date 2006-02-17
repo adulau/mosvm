@@ -14,13 +14,8 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA  
 ;  
 
-(export "lib/freeze")
+(module "lib/freeze")
 (import "lib/lib")
-
-(define write-data
-  (if *mosvm?*
-    write
-    display))
 
 (define (program-values program)
   (define inv '())
@@ -176,4 +171,6 @@
         ((env)  (write-word (program-word1-at value ofs) port)
                 (write-word (program-word2-at value ofs) port))))
     (set! ofs (+ ofs 1))))
+
+(export freeze) 
 

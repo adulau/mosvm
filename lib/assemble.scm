@@ -14,8 +14,9 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA  
 ;  
 
-(export "lib/assemble")
+(module "lib/assemble")
 (import "lib/lib")
+(export assemble)
 
 (define-record-type <assembler>
   (make-assembler size index program addrs labels)

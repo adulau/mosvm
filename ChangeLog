@@ -15,12 +15,30 @@
   + Added checks to write-descr-byte / word / quad; buffer too for range.
     REQ_BYTE_ARG
 
-- ?/??/????, Phase Three of the Module System
-  + When compiling a module, the export
-  + Added the eval procedure to core.
+- ?/??/????, Phase Five of the Module System
+  + (builtins) primitive added to core.
+  + (builtins) added to lib/fakevm.scm.
+  + Any reference to an identifier not bound in builtins, imports is identified
+    during compilation as an error.
+
+- ?/??/????, Phase Four of the Module System, Phase Three of the Macro System
+  + Added export-syntax
+  + Compiler now analyzes imports for exported syntaxes.
+
+- ?/??/????, Phase Two of the Macro System
   + Added define-macro
-  + Added super-type primitive.
-  + Added base-type primitive.
+
+- ?/??/????, Phase Three of the Module System
+  * Renamed the export special form to module.
+  * Modified compile to analyze the source for top level export statements --
+    top level defines that define identifiers that are not exported will
+    not be mapped into the global namespace.
+  * Made inner-defines forward looking in namespace.
+  * Fixed typo in type->string
+  * Altered REPL to insert an export for all variables bound in the
+    expression.
+  * Added parent-type primitive.
+  * Added direct-type primitive.
 
 - 2/14/2006, Buffered Read / Write
   * Added the buffer primitive type.
