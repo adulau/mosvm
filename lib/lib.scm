@@ -16,6 +16,13 @@
 
 (module "lib/lib")
 
+(define make-procedure
+  (if *mosvm?*
+    (lambda (args body) (eval `(lambda ,args ,@body)))
+    (lambda (args body) (primitive-eval `(lambda ,args ,@body)))))
+
+(export make-procedure)
+
 (define write-data
   (if *mosvm?*
     write

@@ -12,7 +12,6 @@
 ; You should have received a copy of the GNU Lesser General Public License  
 ; along with this library; if not, write to the Free Software Foundation,  
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA  
-;  
 
 (module "lib/compile")
 (import "lib/lib")
@@ -267,7 +266,6 @@
             (tc-append! tc '(ldu)))
           (tc-append! tc done)
           `(asm ,@(tc->list tc)))))
-
     (cons 'cond (lambda clauses 
                   ;TODO: Should raise an error if there is rest with else.
                   (if (null? clauses) 
@@ -530,6 +528,32 @@
 
   (filter isnt-export? code))
 
+(define (compile-macros code env)
+  (define (is-macro? expr)
+    (and (pair? expr)
+      (not (null? expr))
+      (eq? (car expr) 'define-macro)))
+ 
+  (define (isnt-macro? expr)
+    (not (is-macro? expr)))
+
+  (define (compile-macro expr)
+    (when (< (length expr) 3)
+      (error 'compile
+             "the define-macro form requires a form and a body"
+             expr))
+    (let ((args (cadr expr))
+          (body (cdr (cdr expr))))
+      (unless (pair? args)
+        (error 'compile
+               "the define-macro form requires a list for its form"
+               expr))
+      (let ((name (car args)))
+        (set! args (cdr args))
+        (add-context-rule! env name (make-procedure args body)))))
+
+  (for-each compile-macro (filter is-macro? code))
+  (filter isnt-macro? code))
 
 (define (compile-defines code env)
   (define (is-define? expr)
@@ -612,6 +636,7 @@
   ;; This will produce an extra ldu/drop at the beginning of any non-null
   ;; block, but the optimizer will detect and remove it.
   (block-append! block '(ldu))
+  (set! code (compile-macros code env))
   (set! code (compile-defines code env))
   (until (null? code)
     (block-append! block '(drop))

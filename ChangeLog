@@ -26,9 +26,11 @@
   + Compiler now analyzes imports for exported syntaxes.
 
 - ?/??/????, Phase Two of the Macro System
-  + Added define-macro
+  * Added define-macro
+  * Added eval
+  * Added make-procedure
 
-- ?/??/????, Phase Three of the Module System
+- 2/17/2006, Phase Three of the Module System
   * Renamed the export special form to module.
   * Modified compile to analyze the source for top level export statements --
     top level defines that define identifiers that are not exported will

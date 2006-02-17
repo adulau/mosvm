@@ -17,6 +17,11 @@
 (define *mosvm?* #t)
 (export *mosvm?*)
 
+(define (eval expr)
+  ((assemble (optimize (compile (list expr))))))
+
+(export eval)
+
 ;;; for-each, map, find-tail, list-index, any, filter, fold and find from SRFI-1
 (define (filter fn list)
   (define tc (make-tc))
