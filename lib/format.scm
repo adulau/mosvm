@@ -30,7 +30,7 @@
           (set! pair (cdr pair))
           (begin
            (write " . " sp)
-           (write (value->string (cdr pair) sp))
+           (write (value->string (cdr pair)) sp)
            (set! pair #f))))))
   (get-output-string sp))
 

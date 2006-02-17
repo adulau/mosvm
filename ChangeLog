@@ -34,11 +34,14 @@
     top level defines that define identifiers that are not exported will
     not be mapped into the global namespace.
   * Made inner-defines forward looking in namespace.
-  * Fixed typo in type->string
   * Altered REPL to insert an export for all variables bound in the
     expression.
   * Added parent-type primitive.
   * Added direct-type primitive.
+  * Fixed typo in type->string
+  * Fixed error in mqo_raise that would cause an error when parsing
+    environments with 0 bindings.
+  * Fixed typo in compile-expr that would cause a bogus error.
 
 - 2/14/2006, Buffered Read / Write
   * Added the buffer primitive type.

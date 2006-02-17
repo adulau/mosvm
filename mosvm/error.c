@@ -82,7 +82,11 @@ void mqo_raise( mqo_symbol key, mqo_pair info ){
         mqo_tc_append( frame, fn );
 
         if( mqo_is_closure( fn ) ){
-            argv = mqo_vector_ref( mqo_vector_fv( mqo_car( ep ) ), 0 );
+            if( argc ){
+                argv = mqo_vector_ref( mqo_vector_fv( mqo_car( ep ) ), 0 );
+            }else{
+                argv = NULL;
+            }
         }else if( argc ){
             si = si - argc - 1;
             argv = mqo_vector_ref( sv, si );

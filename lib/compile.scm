@@ -626,7 +626,7 @@
         ((symbol? expr)  (compile-load block expr env))
         ((eq? expr #f)   (compile-false block env))
         ((eq? expr #t)   (compile-true block env))
-        (else (error "Unrecognized element ~a." expr))))
+        (else (error 'compile "unrecognized expression" expr))))
 
 (define (compile-null block env) (compile-constant block '() env))
 (define (compile-true block env) (compile-constant block #t env))
