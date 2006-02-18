@@ -138,8 +138,8 @@ MQO_DEFN_TYPE( console );
 MQO_DEFN_TYPE( listener);
 MQO_DEFN_TYPE( buffer );
 
-struct mqo_type_data mqo_atom_type_data = { NULL, NULL, NULL, NULL }; 
-mqo_type mqo_atom_type = &mqo_atom_type_data; 
+struct mqo_type_data mqo_quark_type_data = { NULL, NULL, NULL, NULL }; 
+mqo_type mqo_quark_type = &mqo_quark_type_data; 
 
 struct mqo_type_data mqo_void_type_data = { NULL, NULL, NULL, NULL }; 
 mqo_type mqo_void_type = &mqo_void_type_data; 
@@ -170,8 +170,8 @@ void mqo_init_memory_subsystem( ){
     MQO_BIND_TYPE( descr, NULL );
     MQO_BIND_TYPE( tree, NULL );
     
-    MQO_BIND_TYPE( atom, NULL );
-    MQO_BIND_TYPE( void, atom );
+    MQO_BIND_TYPE( quark, NULL );
+    MQO_BIND_TYPE( void, quark );
 
     MQO_BIND_TYPE( tc, NULL );
     MQO_BIND_TYPE( set, NULL );                            

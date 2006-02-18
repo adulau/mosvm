@@ -1,4 +1,34 @@
-- ?/??/????, Simplification of Continue
+- ?/??/????, Phase Five of the Module System
+  + (builtins) primitive added to core.
+  + (builtins) added to lib/fakevm.scm.
+  + Any reference to an identifier not bound in builtins, imports is identified
+    during compilation as an error.
+
+- ?/??/????, Phase Four of the Module System, Phase Three of the Macro System
+  + Added dict emulation to lib/fakevm.scm
+  + Altered context-syntax to use a dict
+  + Altered make-top-context to build a syntax dict from the *mosvm-syntax*
+    list.
+  + Altered export to recognize syntax.
+  + Compiler now analyzes imports for exported syntaxes.
+  + rename <file> to <file-descr>
+
+- ?/??/????, Buffers in the Dispatch Loop
+  Like gorillas in the mist..
+  * Added file-len
+  * Renamed seek-file to file-seek, skip-file to file-skip, and 
+    pos-file to file-pos
+  * Renamed open-file to open-file-descr
+  * Renamed <atom> to <quark>
+  * Added file-input-port?, file-output-port?, string-input-port?, and 
+    string-output-port? to lib/core.
+  * Fixed typo in filter causing a global, "it", to be bound.
+  + Altered write to suspend when writing to socket descriptors, much like
+    read.
+  + Extended dispatcher to handle writes.
+  + Extended descriptors with write buffers.
+  + Added checks to write-descr-byte / word / quad; buffer too for range.
+    REQ_BYTE_ARG
   + mqo_cycle_process added, which cycles the current process out of operation,
     advances the registers to the next process, then does a nonlocal exit.
   + mqo_cycle_process performs montior dispatch when it hits the end of the
@@ -8,24 +38,9 @@
   + mqo_halt will clear the monitor of a process.
   + the suspend primitive will report an error if it attempts to suspend
     a process that is monitoring.
-  + Altered write to suspend when writing to socket descriptors, much like
-    read.
-  + Extended dispatcher to handle writes.
-  + Extended descriptors with write buffers.
-  + Added checks to write-descr-byte / word / quad; buffer too for range.
-    REQ_BYTE_ARG
 
-- ?/??/????, Phase Five of the Module System
-  + (builtins) primitive added to core.
-  + (builtins) added to lib/fakevm.scm.
-  + Any reference to an identifier not bound in builtins, imports is identified
-    during compilation as an error.
 
-- ?/??/????, Phase Four of the Module System, Phase Three of the Macro System
-  + Added export-syntax
-  + Compiler now analyzes imports for exported syntaxes.
-
-- ?/??/????, Phase Two of the Macro System
+- 2/17/2006, Phase Two of the Macro System
   * Added define-macro
   * Added eval
   * Added make-procedure

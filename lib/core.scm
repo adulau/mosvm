@@ -26,7 +26,7 @@
 (define (filter fn list)
   (define tc (make-tc))
   (until (null? list)
-         (set! it (car list))
+         (define it (car list))
          (if (fn it)
            (tc-append! tc it))
          (set! list (cdr list)))
@@ -148,7 +148,7 @@
 (export <record> make-record record?)
 
 ;;; Specifies a magical "end of file" object returned by ports.
-(define *eof* (tag (make-type 'eof <atom>) atom))
+(define *eof* (tag (make-type 'eof <quark>) quark))
 (define (eof-object? value) (eq? *eof* value))
 
 (export *eof* eof-object?)
@@ -235,8 +235,9 @@
                    (apply string-append data))))
 
 (export current-input-port current-output-port input-port? output-port?
+        port-read-fn port-write-fn port-close-fn
         closed? close read write *console-port* newline read-all 
-        read-lines read-exprs <port>) 
+        read-lines read-exprs <port> make-port port?)
 
 (define-class file-port <port>
               (make-file-port read-fn write-fn close-fn descr)
@@ -247,12 +248,18 @@
 
 ;;; Stripped in functionality, but R5RS compliant.
 (define (open-output-file path)
-  (define descr (open-file path "wc"))
-  (seek-file descr 0)
+  (define descr (open-file-descr path "wc"))
+  (file-seek descr 0)
   (make-file-port #f
                   (lambda (p d) (write-descr descr d))
                   (lambda (p)   (close-descr descr))
                   descr))
+
+(define (file-input-port? value)
+  (and (file-port? value) (port-read-fn value)))
+
+(define (file-output-port? value)
+  (and (file-port? value) (port-write-fn value)))
 
 (define (write-byte byte (<file-port> port))
   (write-file-byte (file-port-descr port) byte))
@@ -263,12 +270,13 @@
 (define (write-quad quad (<file-port> port))
   (write-file-quad (file-port-descr port) quad))
 
-(export open-output-file write-word write-quad write-byte)
+(export open-output-file write-word write-quad write-byte file-input-port? 
+        file-output-port?)
 
 ;;; Similar to an R5RS file, but returns raw strings.
 (define (open-input-file path)
-  (define descr (open-file path "r"))
-  (seek-file descr 0)
+  (define descr (open-file-descr path "r"))
+  (file-seek descr 0)
   (make-file-port (lambda (p) (read-descr descr))
                   #f
                   (lambda (p) (close-descr descr))
@@ -309,6 +317,12 @@
                     #f
                     buf))
 
+(define (string-input-port? value)
+  (and (string-port? value) (port-read-fn value)))
+
+(define (string-output-port? value)
+  (and (string-port? value) (port-write-fn value)))
+
 (define (write-byte byte (<string-port> port))
   (write-buffer-byte (string-port-buffer port) byte))
 
@@ -332,7 +346,7 @@
 
 (export <string-port> open-input-string open-output-string string-port?
         read-byte read-word read-quad write-byte write-word write-quad
-        get-output-string)
+        get-output-string string-input-port? string-output-port?)
 
 ;;; The queue is both an input, and an output, backed by a tconc.
 (define-class queue <port>

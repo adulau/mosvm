@@ -2127,5 +2127,5 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( read_buffer_quad );
     MQO_BIND_PRIM( dump_buffer );
 
-    mqo_symbol_fs( "atom" )->value = mqo_make_atom( );
+    mqo_symbol_fs( "quark" )->value = mqo_make_quark( );
 }

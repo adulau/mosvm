@@ -86,8 +86,8 @@
 #define mqo_NULL_type NULL
 
 #define MQO_ALLOC( tn, ext ) ((tn)GC_malloc(sizeof( struct tn##_data ) + ext ))
-// GC_malloc_atomic does not appear to work on OpenBSD, and is disabled.
-// #define MQO_AALLOC( tn, ext ) ((tn)GC_malloc_atomic(sizeof( struct tn##_data ) + ext ))
+// GC_malloc_quarkic does not appear to work on OpenBSD, and is disabled.
+// #define MQO_AALLOC( tn, ext ) ((tn)GC_malloc_quarkic(sizeof( struct tn##_data ) + ext ))
 
 #include <assert.h>
 #include <stdlib.h>
@@ -228,7 +228,7 @@ MQO_END_TYPE( error )
 MQO_DECL_TYPE( integer );
 MQO_TYPE_INLINES( integer );
 
-MQO_DECL_TYPE( atom );
+MQO_DECL_TYPE( quark );
 MQO_DECL_TYPE( void );
 
 MQO_DECL_TYPE( boolean );
@@ -464,11 +464,11 @@ static inline mqo_boolean mqo_is_function( mqo_value v ){
     );
 }
 
-static inline mqo_value mqo_make_atom( ){
-    return (mqo_value){ mqo_atom_type, 0 };
+static inline mqo_value mqo_make_quark( ){
+    return (mqo_value){ mqo_quark_type, 0 };
 }
-static mqo_boolean mqo_isa_atom( mqo_value v ){
-    return mqo_isa( v, mqo_atom_type );
+static mqo_boolean mqo_isa_quark( mqo_value v ){
+    return mqo_isa( v, mqo_quark_type );
 }
 static inline mqo_value mqo_make_void( ){
     return (mqo_value){ mqo_void_type, 0 };

@@ -40,7 +40,7 @@ void mqo_show( mqo_value v, mqo_word* ct );
 
 void mqo_write_address( mqo_integer c );
 void mqo_show_unknown( mqo_type t, mqo_integer d );
-#define mqo_show_atom NULL
+#define mqo_show_quark NULL
 #define mqo_show_void NULL
 
 #endif

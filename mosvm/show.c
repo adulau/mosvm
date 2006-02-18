@@ -97,7 +97,7 @@ void mqo_show( mqo_value v, mqo_word* ct ){
     mqo_type t = mqo_value_type( v );
     if( t->mt_show ){ 
         t->mt_show( (void*)v.data, ct ); 
-    }else if( mqo_isa_atom( v ) ){
+    }else if( mqo_isa_quark( v ) ){
         mqo_write( "[" );
         mqo_writesym( mqo_value_type( v )->name );
         mqo_write( "]" );

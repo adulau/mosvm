@@ -32,7 +32,7 @@
 
 mqo_symbol mqo_es_fs;
 
-MQO_BEGIN_PRIM( "open-file", open_file )
+MQO_BEGIN_PRIM( "open-file-descr", open_file_descr )
     REQ_STRING_ARG( path );
     REQ_STRING_ARG( flags );
     OPT_INTEGER_ARG( mode );
@@ -107,7 +107,7 @@ MQO_BEGIN_PRIM( "open-file", open_file )
         }
     }
     MQO_RESULT( mqo_vf_file( mqo_make_file( path, mqo_os_error( open( mqo_sf_string( path ), flag, mode ) ) ) ) );
-MQO_END_PRIM( open_file )
+MQO_END_PRIM( open_file_descr )
 
 MQO_BEGIN_PRIM( "descr?", descrq )
     REQ_VALUE_ARG( value );
@@ -115,6 +115,17 @@ MQO_BEGIN_PRIM( "descr?", descrq )
 
     MQO_RESULT( mqo_vf_boolean( mqo_is_descr( value ) ) );
 MQO_END_PRIM( descrq )
+
+MQO_BEGIN_PRIM( "file-len", file_len )
+    REQ_FILE_ARG( file );
+    NO_MORE_ARGS( );
+    
+    mqo_integer pos = mqo_os_error( lseek( file->fd, 0, SEEK_CUR ) );
+    mqo_integer len = mqo_os_error( lseek( file->fd, 0, SEEK_END ) );
+    mqo_os_error( lseek( file->fd, pos, SEEK_SET ) );   
+
+    MQO_RESULT( mqo_vf_integer( len ) );
+MQO_END_PRIM( file_len )
 
 MQO_BEGIN_PRIM( "read-descr", read_descr )
     REQ_DESCR_ARG( descr );
@@ -125,8 +136,12 @@ MQO_BEGIN_PRIM( "read-descr", read_descr )
     }else if( descr->type == MQO_FILE ){
         static char buffer[ BUFSIZ ];
         mqo_integer count = mqo_os_error( read( descr->fd, buffer, BUFSIZ ) );
-    
-        MQO_RESULT( mqo_vf_string( mqo_string_fm( buffer, count ) ) );
+
+        if( count == 0 ){
+            MQO_RESULT( mqo_vf_false( ) );
+        }else{
+            MQO_RESULT( mqo_vf_string( mqo_string_fm( buffer, count ) ) );
+        }
     }else{
         if( descr->monitor ){
             mqo_errf( mqo_es_vm, "s", 
@@ -149,6 +164,9 @@ MQO_BEGIN_PRIM( "read-file-all", read_file_all )
     mqo_integer len = mqo_os_error( lseek( descr->fd, 0, SEEK_END ) - ofs );
     mqo_os_error( lseek( descr->fd, ofs, SEEK_SET ) );
     
+    if( len == 0 ){
+        MQO_RESULT( mqo_vf_false( ) );
+    };
     mqo_string data = mqo_make_string( len );
     len = mqo_os_error( read( descr->fd, data->data, len ) );
     
@@ -228,7 +246,7 @@ MQO_BEGIN_PRIM( "write-file-quad", write_file_quad )
     MQO_NO_RESULT( )
 MQO_END_PRIM( write_file_quad )
 
-MQO_BEGIN_PRIM( "skip-file", skip_file )
+MQO_BEGIN_PRIM( "file-skip", file_skip )
     REQ_FILE_ARG( descr );
     REQ_INTEGER_ARG( offset );
     NO_MORE_ARGS( );
@@ -236,18 +254,18 @@ MQO_BEGIN_PRIM( "skip-file", skip_file )
     offset = mqo_os_error( lseek( descr->fd, offset, SEEK_CUR ) );
 
     MQO_RESULT( mqo_vf_integer( offset ) );
-MQO_END_PRIM( skip_file )
+MQO_END_PRIM( file_skip )
 
-MQO_BEGIN_PRIM( "pos-file", pos_file )
+MQO_BEGIN_PRIM( "file-pos", file_pos )
     REQ_FILE_ARG( descr );
     NO_MORE_ARGS( );
 
     mqo_integer offset = mqo_os_error( lseek( descr->fd, 0, SEEK_CUR ) );
 
     MQO_RESULT( mqo_vf_integer( offset ) );
-MQO_END_PRIM( pos_file )
+MQO_END_PRIM( file_pos )
 
-MQO_BEGIN_PRIM( "seek-file", seek_file )
+MQO_BEGIN_PRIM( "file-seek", file_seek )
     REQ_FILE_ARG( descr );
     REQ_INTEGER_ARG( offset );
     NO_MORE_ARGS( );
@@ -261,7 +279,7 @@ MQO_BEGIN_PRIM( "seek-file", seek_file )
     mqo_os_error( offset );
 
     MQO_RESULT( mqo_vf_integer( offset ) );
-MQO_END_PRIM( seek_file )
+MQO_END_PRIM( file_seek )
 
 void mqo_bind_os_prims( ){
     MQO_BEGIN_PRIM_BINDS( );
@@ -281,7 +299,7 @@ void mqo_bind_os_prims( ){
 #endif
     mqo_symbol_fs( "*console*" )->value = mqo_vf_console( mqo_the_console );
 
-    MQO_BIND_PRIM( open_file );
+    MQO_BIND_PRIM( open_file_descr );
     MQO_BIND_PRIM( close_descr );
     MQO_BIND_PRIM( descr_closedq );
     MQO_BIND_PRIM( descrq );
@@ -291,9 +309,10 @@ void mqo_bind_os_prims( ){
     MQO_BIND_PRIM( write_file_byte );
     MQO_BIND_PRIM( write_file_word );
     MQO_BIND_PRIM( write_file_quad );
-    MQO_BIND_PRIM( skip_file );
-    MQO_BIND_PRIM( seek_file );
-    MQO_BIND_PRIM( pos_file );
+    MQO_BIND_PRIM( file_skip );
+    MQO_BIND_PRIM( file_seek );
+    MQO_BIND_PRIM( file_pos );
+    MQO_BIND_PRIM( file_len );
 
     //TODO: Halt needs to know if a process is monitoring a port, so it can
     //      clear that.
