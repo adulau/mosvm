@@ -4,25 +4,7 @@
   + Any reference to an identifier not bound in builtins, imports is identified
     during compilation as an error.
 
-- ?/??/????, Phase Four of the Module System, Phase Three of the Macro System
-  + Added dict emulation to lib/fakevm.scm
-  + Altered context-syntax to use a dict
-  + Altered make-top-context to build a syntax dict from the *mosvm-syntax*
-    list.
-  + Altered export to recognize syntax.
-  + Compiler now analyzes imports for exported syntaxes.
-  + rename <file> to <file-descr>
-
-- ?/??/????, Buffers in the Dispatch Loop
-  Like gorillas in the mist..
-  * Added file-len
-  * Renamed seek-file to file-seek, skip-file to file-skip, and 
-    pos-file to file-pos
-  * Renamed open-file to open-file-descr
-  * Renamed <atom> to <quark>
-  * Added file-input-port?, file-output-port?, string-input-port?, and 
-    string-output-port? to lib/core.
-  * Fixed typo in filter causing a global, "it", to be bound.
+- ?/??/???, Buffers in the Dispatch Loop
   + Altered write to suspend when writing to socket descriptors, much like
     read.
   + Extended dispatcher to handle writes.
@@ -39,6 +21,31 @@
   + the suspend primitive will report an error if it attempts to suspend
     a process that is monitoring.
 
+- ?/??/????, Night of the Long Knives
+  + lib/core broken out into smaller modules.
+  + lib/manifest introduced; constructs a load order based on the imports.
+    required to execute a particular program.
+  + manifest used to glue a binary capable of executing the repl.
+
+- ?/??/????, Phase Four of the Module System, Phase Three of the Macro System
+  + Added dict emulation to lib/fakevm.scm
+  + Altered context-syntax to use a dict
+  + Altered make-top-context to build a syntax dict from the *mosvm-syntax*
+    list.
+  + Altered export to recognize syntax.
+  + Compiler now analyzes imports for exported syntaxes.
+
+- 2/18/2006, File Function Renames
+  * Added file-len
+  * Renamed seek-file to file-seek, skip-file to file-skip, and 
+    pos-file to file-pos
+  * Renamed open-file to open-file-descr
+  * Renamed <atom> to <quark>
+  * Added file-input-port?, file-output-port?, string-input-port?, and 
+    string-output-port? to lib/core.
+  * Fixed typo in filter causing a global, "it", to be bound.
+  * Renamed <file> to <file-descr>
+  * Fixed typo in dict->string that could crash traceback.
 
 - 2/17/2006, Phase Two of the Macro System
   * Added define-macro

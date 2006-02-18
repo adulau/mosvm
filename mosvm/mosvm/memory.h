@@ -56,13 +56,13 @@
     }; \
     MQO_TYPE_INLINES( tn ) \
 
-#define MQO_DEFN_TYPE( tn ) \
+#define MQO_DEFN_TYPE2( sn, tn ) \
     mqo_##tn mqo_req_##tn( mqo_value v, const char* f ){ \
         if( mqo_is_##tn( v ) ){ \
             return mqo_##tn##_fv( v ); \
         }else{ \
             mqo_errf( mqo_es_args, "sx", \
-                                   "expected " #tn, v ); \
+                                   "expected " sn, v ); \
         } \
     } \
     mqo_##tn mqo_req_sub_##tn( mqo_value v, const char* f ){ \
@@ -70,20 +70,24 @@
             return (mqo_##tn)(v.data); \
         }else{ \
             mqo_errf( mqo_es_args, "sx", \
-                                   "expected subtype of " #tn, v ); \
+                                   "expected subtype of " sn, v ); \
         } \
     } \
     struct mqo_type_data mqo_##tn##_type_data = { NULL, NULL, NULL, NULL }; \
     mqo_type mqo_##tn##_type = &mqo_##tn##_type_data; 
 
-#define MQO_BIND_TYPE( tn, di ) \
+#define MQO_DEFN_TYPE( tt ) MQO_DEFN_TYPE2( ""#tt, tt );
+
+#define MQO_BIND_TYPE2( sn, tn, di ) \
     mqo_##tn##_type_data.mt_show = (mqo_show_mt)mqo_show_##tn; \
     mqo_##tn##_type_data.direct = mqo_##di##_type; \
     mqo_##tn##_type_data.super = mqo_##di##_type; \
-    mqo_##tn##_type_data.name = mqo_symbol_fs( #tn ); \
-    mqo_symbol_fs( "<" #tn ">" )->value = mqo_vf_type( mqo_##tn##_type );
+    mqo_##tn##_type_data.name = mqo_symbol_fs( sn ); \
+    mqo_symbol_fs( "<" sn ">" )->value = mqo_vf_type( mqo_##tn##_type );
 
-#define mqo_NULL_type NULL
+#define MQO_BIND_TYPE( tt, di ) MQO_BIND_TYPE2( #tt, tt, di );
+
+#define mqo_nil_type NULL
 
 #define MQO_ALLOC( tn, ext ) ((tn)GC_malloc(sizeof( struct tn##_data ) + ext ))
 // GC_malloc_quarkic does not appear to work on OpenBSD, and is disabled.

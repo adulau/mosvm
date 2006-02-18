@@ -60,7 +60,7 @@
   (string-append "[set" (pair-contents->string (set->list set) #t) "]" ))
 
 (define (dict->string dict)
-  (string-append "[dict" (pair-contents->string (dict->list set) #t) "]" ))
+  (string-append "[dict" (pair-contents->string (dict->list dict) #t) "]" ))
 
 (define (type->string type) 
   (string-append "<" 

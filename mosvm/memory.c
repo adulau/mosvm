@@ -132,7 +132,7 @@ MQO_DEFN_TYPE( descr );
 MQO_DEFN_TYPE( tc );
 MQO_DEFN_TYPE( set );
 MQO_DEFN_TYPE( dict );
-MQO_DEFN_TYPE( file );
+MQO_DEFN_TYPE2( "file-descr", file );
 MQO_DEFN_TYPE( socket );
 MQO_DEFN_TYPE( console );
 MQO_DEFN_TYPE( listener);
@@ -151,36 +151,36 @@ void mqo_init_memory_subsystem( ){
     
     mqo_lexicon = mqo_make_tree( mqo_symbol_key );
 
-    MQO_BIND_TYPE( symbol, NULL );
-    MQO_BIND_TYPE( type, NULL );
-    MQO_BIND_TYPE( pair, NULL );
-    MQO_BIND_TYPE( error, NULL );
-    MQO_BIND_TYPE( process, NULL );
-    MQO_BIND_TYPE( string, NULL );
-    MQO_BIND_TYPE( guard, NULL );
-    MQO_BIND_TYPE( closure, NULL );
-    MQO_BIND_TYPE( vector, NULL );
-    MQO_BIND_TYPE( vmstate, NULL );
-    MQO_BIND_TYPE( prim, NULL );
-    MQO_BIND_TYPE( instruction, NULL );
-    MQO_BIND_TYPE( program, NULL );
-    MQO_BIND_TYPE( integer, NULL );
-    MQO_BIND_TYPE( boolean, NULL );
-    MQO_BIND_TYPE( multimethod, NULL );
-    MQO_BIND_TYPE( descr, NULL );
-    MQO_BIND_TYPE( tree, NULL );
+    MQO_BIND_TYPE( symbol, nil );
+    MQO_BIND_TYPE( type, nil );
+    MQO_BIND_TYPE( pair, nil );
+    MQO_BIND_TYPE( error, nil );
+    MQO_BIND_TYPE( process, nil );
+    MQO_BIND_TYPE( string, nil );
+    MQO_BIND_TYPE( guard, nil );
+    MQO_BIND_TYPE( closure, nil );
+    MQO_BIND_TYPE( vector, nil );
+    MQO_BIND_TYPE( vmstate, nil );
+    MQO_BIND_TYPE( prim, nil );
+    MQO_BIND_TYPE( instruction, nil );
+    MQO_BIND_TYPE( program, nil );
+    MQO_BIND_TYPE( integer, nil );
+    MQO_BIND_TYPE( boolean, nil );
+    MQO_BIND_TYPE( multimethod, nil );
+    MQO_BIND_TYPE( descr, nil );
+    MQO_BIND_TYPE( tree, nil );
     
-    MQO_BIND_TYPE( quark, NULL );
+    MQO_BIND_TYPE( quark, nil );
     MQO_BIND_TYPE( void, quark );
 
-    MQO_BIND_TYPE( tc, NULL );
-    MQO_BIND_TYPE( set, NULL );                            
-    MQO_BIND_TYPE( dict, NULL );                            
+    MQO_BIND_TYPE( tc, nil );
+    MQO_BIND_TYPE( set, nil );                            
+    MQO_BIND_TYPE( dict, nil );                            
 
-    MQO_BIND_TYPE( file, descr );
+    MQO_BIND_TYPE2( "file-descr", file, descr );
     MQO_BIND_TYPE( socket, descr );
     MQO_BIND_TYPE( console, descr );
     MQO_BIND_TYPE( listener, descr );
     
-    MQO_BIND_TYPE( buffer, NULL );                            
+    MQO_BIND_TYPE( buffer, nil );                            
 }
