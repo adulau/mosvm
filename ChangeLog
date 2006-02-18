@@ -23,11 +23,15 @@
 
 - ?/??/????, Night of the Long Knives
   + lib/core broken out into smaller modules.
-  + lib/manifest introduced; constructs a load order based on the imports.
-    required to execute a particular program.
   + manifest used to glue a binary capable of executing the repl.
 
 - ?/??/????, Phase Four of the Module System, Phase Three of the Macro System
+  * Fixed a bug with parse.c that would cause the parser to loop indefinitely
+    on encountering an unmatched ")".
+  * Fixed a bug with parse.c that would cause a bogus OS error to be thrown
+    if the parser parsed an integer after an OS error had occurred.
+  * lib/manifest introduced; constructs a load order based on the imports.
+    required to execute a particular program.
   + Added dict emulation to lib/fakevm.scm
   + Altered context-syntax to use a dict
   + Altered make-top-context to build a syntax dict from the *mosvm-syntax*
