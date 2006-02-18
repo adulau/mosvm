@@ -208,6 +208,8 @@ mqo_value mqo_read_value( const char** pt ){
         }
     case '\0':
         mqo_errf( mqo_es_vm, "ss", "no value found in", og );
+    case ')':
+        mqo_errf( mqo_es_vm, "ss", "unmatched ) found in", og );
     default:
         if( isdigit( *((*pt)) ) ){
             return mqo_vf_integer( mqo_read_integer( pt ) );
