@@ -51,8 +51,6 @@ mqo_integer mqo_read_integer( const char** pt ){
     mqo_integer r = strtol( og, (char**)pt, 10 );
     if( og == *pt ){
         mqo_errf( mqo_es_vm, "ss", "could not parse integer", og );
-    }else if( errno ){
-        mqo_errf( mqo_es_vm, "ss", strerror( errno ), og );
     }else{
         return r;
     }
