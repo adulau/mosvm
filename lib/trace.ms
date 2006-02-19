@@ -17,7 +17,7 @@
 (import "lib/format")
 
 (define (traceback error) 
-  (buffer-output 
+  (begin;buffer-output 
     (write "ERROR: ")
     (write (symbol->string (error-key error)))
     (define info (error-info error))

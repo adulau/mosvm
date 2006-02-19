@@ -23,36 +23,16 @@
 (import "lib/optimize")
 (import "lib/freeze")
 
-(define *mosc-phase* "setup")
-(define *mosc-data* #f)
+(define (mosc module)
+  (define src-file (string-append module ".ms"))
+  (define dst-file (string-append module ".scm"))
+  (define data (read-lisp-file src-file))
+  (set! data (compile data))
+  (set! data (optimize data))
+  (set! data (assemble data))
+  (set! data (freeze data))
+  (set! dst-file (open-output-file dst-file))
+  (write-data data dst-file)
+  (close-output-port dst-file))
 
-(define (phase pn pf)
-  (set! *mosc-phase* pn)
-  (set! *mosc-data* (pf *mosc-data*)))
-
-(define print (if *mosvm?* write display))
-  
-(define (main src-file dst-file)
-  (print "Compiling ")
-  (show src-file)
-  (print " to ")
-  (show dst-file)
-  (newline)
-
-  (set! *mosc-phase* "load")
-  (set! *mosc-data* 
-    (if *mosvm?*
-        (read-all (open-lisp-input-file src-file))
-        (read-all (open-input-file src-file))))
-
-  (phase "compile" compile)
-  (phase "optimize" optimize)
-  (phase "assemble" assemble)
-  (phase "freeze" freeze)
-
-  (set! *mosc-phase* "save")
-  (write-data *mosc-data* (open-output-file dst-file))
-  
-  #t)
-
-(export main)
+(export mosc)

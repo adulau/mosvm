@@ -32,12 +32,17 @@
     if the parser parsed an integer after an OS error had occurred.
   * lib/manifest introduced; constructs a load order based on the imports.
     required to execute a particular program.
-  + Added dict emulation to lib/fakevm.scm
-  + Altered context-syntax to use a dict
-  + Altered make-top-context to build a syntax dict from the *mosvm-syntax*
+  * Added set emulation to lib/fakevm.scm
+  * Added dict emulation to lib/run-mzscheme.scm
+  * Altered context-syntax to use a dict
+  * Altered make-top-context to build a syntax dict from the *mosvm-syntax*
     list.
+  + Renamed all .scm files to .ms
+  + Wrote mosc rule in Makefile for constructing the mosc compiler
+  + Altered the .ms -> .mo rule to use the mosc compiler
+  + Wrote an alternate version of read-module for Scheme
+  + Compiler now analyzes imports for exported syntaxes
   + Altered export to recognize syntax.
-  + Compiler now analyzes imports for exported syntaxes.
 
 - 2/18/2006, File Function Renames
   * Added file-len

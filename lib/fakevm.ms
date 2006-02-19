@@ -156,6 +156,15 @@
       (begin (tc-append! tc item)
              (read-all-loop port tc)))))
 
+(define (set . data) (cons data #f))
+
+(define (set-member? d v)
+  (member v (car d)))
+
+(define (set-add! d v)
+  (unless (member v (car d))
+    (set-car! d (cons v (car d)))))
+
 (define (read-all port)
   (read-all-loop port (make-tc)))
 

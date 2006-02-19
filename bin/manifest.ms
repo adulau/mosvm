@@ -14,29 +14,12 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA  
 ;  
 
-(require (lib "1.ss" "srfi"))
-(require (lib "9.ss" "srfi"))
+(import "lib/lib")
 
-(define import #f)
-(define reload #f)
+(define print (if *mosvm?* write display))
+  
+(define (main module)
+  (for-each (lambda (x) (print x) (print " "))
+            (parse-dependencies module))
+  (newline))
 
-(let ((cwd (current-directory))
-      (cat '()))
- (set! import (lambda (key)
-               (if (not (assoc key cat))
-                (let ((path (string-append cwd "/" key ".ms")))
-                 (set! cat (cons (cons key path) cat))
-                 (reload key)))))
- (set! reload (lambda (key)
-   (load (cdr (assoc key cat))))))
-
-(define (dict . data) (cons data #f))
-(define (dict-set! d k v)
-  (unless (assq k (car d))
-    (set-car! d (cons (cons k v) (car d)))
-    d))
-(define (dict-ref d k)
-  (define p (assq k (car d)))
-  (if p (cdr p) p))
-
-(import "lib/fakevm")

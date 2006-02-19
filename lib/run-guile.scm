@@ -24,7 +24,7 @@
       (cat '()))
  (set! import (lambda (key)
                (if (not (assoc key cat))
-                (let ((path (string-append cwd "/" key ".scm")))
+                (let ((path (string-append cwd "/" key ".ms")))
                  (set! cat (cons (cons key path) cat))
                  (reload key)))))
  (set! reload (lambda (key)
@@ -51,8 +51,11 @@
 (define (guile-main args)
   (apply main (cdr args)))
 
-(define (dict)
-  (make-hash-table 31))
+(define (dict . items)
+  (define d (make-hash-table 31))
+  (for-each (lambda (kv) (dict-set! d (car kv) (cdr kv)))
+            items)
+  d)
 
 (define (dict-set! d k v)
   (hashq-set! d k v))

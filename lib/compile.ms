@@ -15,6 +15,7 @@
 
 (module "lib/compile")
 (import "lib/lib")
+
 (export compile)
 
 (define-record-type context
@@ -34,14 +35,13 @@
   (set-context-symbols! context (cons symbol (context-symbols context))))
 
 (define (add-context-rule! context key function)
-  (set-context-rules! context (cons (cons key function) 
-                                    (context-rules context))))
+  (dict-set! (context-rules context) key function))
 
 (define (find-context-rule context key)
   (if context
-    (let ((rule (assq key (context-rules context))))
+    (let ((rule (dict-ref (context-rules context) key)))
       (if rule 
-        (cdr rule)
+        rule
         (find-context-rule (context-parent context) key)))
     #f))
 
@@ -56,14 +56,14 @@
        symbols))
 
 (define (make-actual-context parent symbols)
-  (let ((new-context (make-context #t parent symbols #f '() #f)))
+  (let ((new-context (make-context #t parent symbols #f (dict) #f)))
     (set-context-slots! new-context 
                         (make-slots new-context symbols))
     new-context))
 
 (define (make-top-context)
   (define top (make-actual-context #f '()))
-  (set-context-rules! top *mosvm-syntax*)
+  (set-context-rules! top (apply dict (mosvm-syntax)))
   top)
 
 (define (is-top-context? context)
@@ -95,7 +95,7 @@
     (else (find-actual-context (context-parent context)))))
 
 (define (make-virtual-context parent symbols)
-  (let ((new-context (make-context #f parent symbols #f '() #f))
+  (let ((new-context (make-context #f parent symbols #f (dict) #f))
         (actual-context (find-actual-context parent)))
     (set-context-slots! actual-context
                         (append (context-slots actual-context)
@@ -528,33 +528,6 @@
 
   (filter isnt-export? code))
 
-(define (compile-macros code env)
-  (define (is-macro? expr)
-    (and (pair? expr)
-      (not (null? expr))
-      (eq? (car expr) 'define-macro)))
- 
-  (define (isnt-macro? expr)
-    (not (is-macro? expr)))
-
-  (define (compile-macro expr)
-    (when (< (length expr) 3)
-      (error 'compile
-             "the define-macro form requires a form and a body"
-             expr))
-    (let ((args (cadr expr))
-          (body (cdr (cdr expr))))
-      (unless (pair? args)
-        (error 'compile
-               "the define-macro form requires a list for its form"
-               expr))
-      (let ((name (car args)))
-        (set! args (cdr args))
-        (add-context-rule! env name (make-procedure args body)))))
-
-  (for-each compile-macro (filter is-macro? code))
-  (filter isnt-macro? code))
-
 (define (compile-defines code env)
   (define (is-define? expr)
     (and (pair? expr)
@@ -602,22 +575,76 @@
            stmt))
        code))
 
-(define (parse-defines source)
-  ;TODO: This needs to be a set.
-  (define tc (make-tc))
-  (for-each (lambda (x) 
-               (set! x (cadr x))
-               (set! x (if (pair? x)
-                           (car x)
-                           x))
-               (unless (memq x (tc->list tc))
-                  (tc-append! tc x)))
-            (filter (lambda (x) 
-                      (and (pair? x)
-                           (> (length x) 1)
-                           (eq? (car x) 'define)))
-                    source))
-  (tc->list tc))
+(define (compile-imports code env) 
+  (define (is-import? expr) 
+    (and (pair? expr)
+         (= (length expr) 2)
+         (eq? (car expr) 'import)
+         (string? (cadr expr))))
+
+  (define (compile-dependency path)
+    (define code (read-module path))
+    (define exports (list))
+    
+    (define (compile-imported-export expr)
+       (for-each (lambda (item) 
+                   (set! exports (cons item exports)))
+                 (cdr expr)))
+    
+    (define (compile-imported-macro expr)
+       (define args (cadr expr))
+       (define body (cdr (cdr expr)))
+       (define name (car args))
+       (set! args (cdr args))
+
+       (when (memq name exports)
+         (add-context-rule! env (make-procedure args body))))
+
+    (for-each compile-imported-export
+              (filter is-export? data))
+
+    (for-each compile-imported-macro 
+              (filter is-macro? data)))
+
+  (define (compile-import expr) 
+    (define id (cadr expr))
+    (compile-dependency (module-dependencies id)))
+    
+  (for-each compile-import (filter is-import? code)))
+
+(define (compile-macros code env)
+  (define (is-macro? expr)
+    (and (pair? expr)
+      (not (null? expr))
+      (eq? (car expr) 'define-macro)))
+ 
+  (define (isnt-macro? expr)
+    (not (is-macro? expr)))
+
+  (define (compile-macro expr)
+    (when (< (length expr) 3)
+      (error 'compile
+             "the define-macro form requires a form and a body"
+             expr))
+    (let ((args (cadr expr))
+          (body (cdr (cdr expr))))
+      (unless (pair? args)
+        (error 'compile
+               "the define-macro form requires a list for its form"
+               expr))
+      (let ((name (car args)))
+        (set! args (cdr args))
+        (add-context-rule! env name (make-procedure args body))
+        (if (and (is-top-context? env)
+                 (is-exported? name env))
+          `(set-macro! ,name (lambda ,args ,@body))
+          '(begin)))))
+
+  (map (lambda (expr)
+         (if (is-macro? expr) 
+           (compile-macro expr) 
+           expr))
+       code))
 
 (define (compile code)
   ;; I loathe nested lets, but Scheme's inner defines are let-like,
@@ -626,6 +653,7 @@
     (let ((base-block (make-block program))
           (top-context (make-top-context)))
       (set! code (compile-exports code top-context))
+      (compile-imports code top-context)
       (compile-block base-block code top-context)
       (block-prepend! base-block 
                       (list 'usen 0 (context-slot-count top-context)))
