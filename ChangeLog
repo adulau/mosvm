@@ -37,10 +37,10 @@
   * Altered context-syntax to use a dict
   * Altered make-top-context to build a syntax dict from the *mosvm-syntax*
     list.
-  + Renamed all .scm files to .ms
-  + Wrote mosc rule in Makefile for constructing the mosc compiler
+  * Renamed all .scm files to .ms
+  * Wrote mosc rule in Makefile for constructing the mosc compiler
   + Altered the .ms -> .mo rule to use the mosc compiler
-  + Wrote an alternate version of read-module for Scheme
+  * Wrote an alternate version of read-module for Scheme
   + Compiler now analyzes imports for exported syntaxes
   + Altered export to recognize syntax.
 

@@ -165,13 +165,15 @@
 (define (parse-dependencies module)
   (define deps (make-tc))
   (define ign (set))
-
+    
   (define (gen-module-deps mod)
     (unless (set-member? ign mod)
       (set-add! ign mod)
       (for-each (lambda (imp) (gen-module-deps imp))
                 (parse-imports mod))
       (tc-append! deps mod)))
+
+  (tc-append! deps "lib/core")
 
   (gen-module-deps module)
   (tc->list deps))

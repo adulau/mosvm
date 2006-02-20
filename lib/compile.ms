@@ -603,7 +603,7 @@
        (set! args (cdr args))
 
        (when (memq name exports)
-         (add-context-rule! env (make-procedure args body))))
+         (add-context-rule! env name (make-procedure args body))))
 
     (for-each compile-imported-export
               (filter is-export? code))
@@ -637,7 +637,7 @@
         (add-context-rule! env name (make-procedure args body))
         (if (and (is-top-context? env)
                  (is-exported? name env))
-          `(set-macro! ,name (lambda ,args ,@body))
+          `(set-macro! (quote ,name) (lambda ,args ,@body))
           '(begin)))))
 
   (map (lambda (expr)

@@ -25,7 +25,7 @@
 
 (define (mosc module)
   (let ((src-file (string-append module ".ms"))
-        (dst-file (string-append module ".scm")))
+        (dst-file (string-append module ".mo")))
     (let ((data (read-lisp-file src-file)))
       (set! data (compile data))
       (set! data (optimize data))

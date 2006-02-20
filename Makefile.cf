@@ -69,5 +69,6 @@ endif
 MOSVM=$(BUILD)/bin/mosvm$(EXE)
 MOSVM_STUB=$(BUILD)/bin/mosvm-stub$(EXE)
 GLUE=$(BUILD)/bin/glue$(EXE)
+MOSC=$(BUILD)/bin/mosc$(EXE)
 
 endif
