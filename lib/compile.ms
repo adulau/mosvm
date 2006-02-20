@@ -598,13 +598,13 @@
                  (cdr expr)))
     
     (define (compile-imported-macro expr)
-       (define args (cadr expr))
-       (define body (cdr (cdr expr)))
-       (define name (car args))
-       (set! args (cdr args))
+      (let ((args (cadr expr)))
+        (define body (cdr (cdr expr)))
+        (define name (car args))
+        (set! args (cdr args))
 
-       (when (memq name exports)
-         (add-context-rule! env name (make-procedure args body))))
+        (when (memq name exports)
+          (add-context-rule! env name (make-procedure args body)))))
 
     (for-each compile-imported-export
               (filter is-export? code))

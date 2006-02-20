@@ -9,9 +9,6 @@ test: $(TESTS)
 test-%: test/%.mo $(MOSVM)
 	$(MOSVM) $<
 
-seed: lib/*.ms
-	sh bin/build-seed.sh
-
 clean:
 	cd $(ROOT)/mosvm && $(MAKE) clean
 	rm -f *.core tags build/bin/* examples/*mo test/*mo 
@@ -25,7 +22,7 @@ $(MOSVM_STUB): mosvm/*.[ch] mosvm/mosvm/*.[ch] mosvm/prims/*.[ch]
 $(GLUE): mosvm/glue.c mosvm/mosvm/*.[ch]
 	cd $(ROOT)/mosvm && $(MAKE)
 
-$(MOSC): $(MOSVM_STUB) $(GLUE) seed
+$(MOSC): $(MOSVM_STUB) $(GLUE) 
 	sh bin/build-app.sh $(MOSVM_STUB) bin/mosc $(MOSC)
 
 $(MOSVM): $(MOSC) $(GLUE)
