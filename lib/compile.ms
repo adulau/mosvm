@@ -131,196 +131,197 @@
            (set! context (context-parent context)))))
   result)
 
-(define *mosvm-syntax*
-  (list 
-    (cons 'export (lambda any '(begin)))
-    (cons 'with-input-port
-          (lambda (port . rest)
-            `(let ((%old-input (current-input-port)))
-               (set-process-input! ,port)
-               (guard (lambda (%e) 
+(set-macro! 'export (lambda any '(begin)))
+(set-macro! 'with-input-port
+            (lambda (port . rest)
+              `(let ((%old-input (current-input-port)))
+                 (set-process-input! ,port)
+                 (guard (lambda (%e) 
+                          (set-process-input! %old-input)
+                          (re-error %e))
+                        (define %result (begin ,@rest))
                         (set-process-input! %old-input)
-                        (re-error %e))
-                 (define %result (begin ,@rest))
-                 (set-process-input! %old-input)
-                 %result))))
-    (cons 'with-output-port
-          (lambda (port . rest)
-            `(let ((%old-output (current-output-port)))
-               (set-process-output! ,port)
-               (guard (lambda (%e) 
+                        %result))))
+(set-macro! 'with-output-port
+            (lambda (port . rest)
+              `(let ((%old-output (current-output-port)))
+                 (set-process-output! ,port)
+                 (guard (lambda (%e) 
+                          (set-process-output! %old-output)
+                          (re-error %e))
+                        (define %result (begin ,@rest))
                         (set-process-output! %old-output)
-                        (re-error %e))
-                 (define %result (begin ,@rest))
-                 (set-process-output! %old-output)
-                 %result))))
-    (cons 'buffer-output
-          (lambda rest
-            `(let ((%old-output (current-output-port))
-                   (%buffer (open-output-string)))
-               (set-process-output! %buffer)
-               (guard (lambda (%e)
+                        %result))))
+(set-macro! 'buffer-output
+            (lambda rest
+              `(let ((%old-output (current-output-port))
+                     (%buffer (open-output-string)))
+                 (set-process-output! %buffer)
+                 (guard (lambda (%e)
+                          (set-process-output! %old-output)
+                          (write (get-output-string %buffer))
+                          (re-error %e))
+                        (define %result (begin ,@rest))
                         (set-process-output! %old-output)
-                        (write (get-output-string %buffer))
-                        (re-error %e))
-                 (define %result (begin ,@rest))
-                 (set-process-output! %old-output)
-                 (write (get-output-string %buffer))))))
-    (cons 's:
-          (lambda (stmt . rest)
-            `(if *spot-test?*
-               (do-s '(,stmt ,@rest) (lambda () ,stmt ,@rest)))))
-    (cons 'r:
-          (lambda (stmt . rest)
-            `(if *spot-test?*
-               (do-r '(,stmt ,@rest) (lambda () ,stmt ,@rest)))))
-    (cons 't:
-          (lambda (stmt . rest)
-            `(if *spot-test?*
-               (do-t '(,stmt ,@rest) (lambda (_) ,stmt ,@rest)))))
-    (cons 'define-class
-        (lambda (class-tag super-class make-proto pred-name . class-fields)
-          (define class-name (make-symbol "<" class-tag ">"))
-          (define (bind-field-accessor access-name field-name)
-            `(define ,access-name 
-               (make-multimethod 
-                 (list ,class-name) 
-                 (make-field-accessor ,class-name (quote ,field-name))
-                 (or (? ,access-name) refuse-method))))
+                        (write (get-output-string %buffer))))))
+(set-macro! 's:
+            (lambda (stmt . rest)
+              `(if *spot-test?*
+                 (do-s '(,stmt ,@rest) (lambda () ,stmt ,@rest)))))
+(set-macro! 'r:
+            (lambda (stmt . rest)
+              `(if *spot-test?*
+                 (do-r '(,stmt ,@rest) (lambda () ,stmt ,@rest)))))
+(set-macro! 't:
+            (lambda (stmt . rest)
+              `(if *spot-test?*
+                 (do-t '(,stmt ,@rest) (lambda (_) ,stmt ,@rest)))))
+(set-macro! 'define-class
+            (lambda (class-tag super-class make-proto pred-name . class-fields)
+              (define class-name (make-symbol "<" class-tag ">"))
+              (define (bind-field-accessor access-name field-name)
+                `(define ,access-name 
+                   (make-multimethod 
+                     (list ,class-name) 
+                     (make-field-accessor ,class-name (quote ,field-name))
+                     (or (? ,access-name) refuse-method))))
 
-          (define (bind-field-modifier modif-name field-name)
-            `(define ,modif-name 
-               (make-multimethod 
-                 (list ,class-name #t) 
-                 (make-field-modifier ,class-name (quote ,field-name))
-                 (or (? ,modif-name) refuse-method))))
+              (define (bind-field-modifier modif-name field-name)
+                `(define ,modif-name 
+                   (make-multimethod 
+                     (list ,class-name #t) 
+                     (make-field-modifier ,class-name (quote ,field-name))
+                     (or (? ,modif-name) refuse-method))))
 
-          `(begin 
-             (define ,class-name  (make-class ',class-tag 
-                                              ,super-class 
-                                              ',(map-car class-fields)))
-             (define (,pred-name %value) (isa? %value ,class-name))
-             (define ,(car make-proto) (make-class-constructor 
-                                         ',class-name 
-                                         ,class-name
-                                         ',(cdr make-proto)))
-             ,@(map (lambda (field) 
-                      (if (> (length field) 1)
-                        (bind-field-accessor (cadr field) (car field))
-                        '(begin)))
-                    class-fields)
+              `(begin 
+                 (define ,class-name  (make-class ',class-tag 
+                                                  ,super-class 
+                                                  ',(map-car class-fields)))
+                 (define (,pred-name %value) (isa? %value ,class-name))
+                 (define ,(car make-proto) (make-class-constructor 
+                                             ',class-name 
+                                             ,class-name
+                                             ',(cdr make-proto)))
+                 ,@(map (lambda (field) 
+                          (if (> (length field) 1)
+                            (bind-field-accessor (cadr field) (car field))
+                            '(begin)))
+                        class-fields)
 
-             ,@(map (lambda (field) 
-                      (if (> (length field) 2)
-                        (bind-field-modifier (caddr field) (car field))
-                        '(begin)))
-                    class-fields))))
+                 ,@(map (lambda (field) 
+                          (if (> (length field) 2)
+                            (bind-field-modifier (caddr field) (car field))
+                            '(begin)))
+                        class-fields))))
 
-    (cons 'define-record-type
-          (lambda (record-name make-proto pred-name . record-fields)
-            `(define-class ,record-name <record> ,make-proto ,pred-name 
-                           ,@record-fields)))
-    (cons 'guard
-          (lambda (fn . rest)
-            (let ((el (make-branch-symbol 'exit)))
-              `(asm (mos ,fn)
-                    (gar ,el)
-                    (mos (begin ,@rest))
-                    (rag)
-                    ,el))))
-    (cons 'case 
-      (lambda (expr . branches)
-        (let ((tc (make-tc))
-              (done (make-branch-symbol 'done))
-              (next #f))
-          (tc-append! tc `(mos ,expr))
-          (for-each (lambda (branch)
-                      (when next (tc-append! tc next))
-                      (set! next #f)
-                      (let ((test (car branch))
-                            (body (cdr branch)))
-                        (if (eq? test 'else)
-                          (begin 
-                            (tc-append! tc '(drop))
-                            (tc-append! tc `(mos ,@body))
-                            (tc-append! tc `(jmp ,done)))
-                          (let ((case-branch (make-branch-symbol 'case)))
-                            (set! next (make-branch-symbol 'next))
-                            (for-each (lambda (value)
-                                        (tc-append! tc '(copy)) 
-                                        (tc-append! tc `(ldc ,value))
-                                        (tc-append! tc '(ldc 2))
-                                        (tc-append! tc '(ldg eq?))
-                                        (tc-append! tc '(call))
-                                        (tc-append! tc `(jt ,case-branch)))
-                                      test)
-                            (tc-append! tc `(jmp ,next))
-                            (tc-append! tc case-branch)
-                            (tc-append! tc '(drop))
-                            (tc-append! tc `(mos ,@body))
-                            (tc-append! tc `(jmp ,done))))))
-                    branches)
-          (when next
-            (tc-append! tc next)
-            (tc-append! tc '(drop))
-            (tc-append! tc '(ldu)))
-          (tc-append! tc done)
-          `(asm ,@(tc->list tc)))))
-    (cons 'cond (lambda clauses 
-                  ;TODO: Should raise an error if there is rest with else.
-                  (if (null? clauses) 
-                    #f
-                    (let ((clause (car clauses))
-                          (rest (cdr clauses)))
-                      (if (eq? (car clause) 'else)
-                        `(begin ,@(cdr clause))
-                        `(if ,(car clause)
-                           (begin ,@(cdr clause))
-                           (cond ,@rest)))))))
-    (cons 'when (lambda (test . rest)   `(if ,test (begin ,@rest))))
-    (cons 'unless (lambda (test . rest) `(if ,test (begin) (begin ,@rest))))
-    (cons 'while (lambda (test . rest)  
-                   (let ((enter (make-branch-symbol 'enter))
-                         (exit  (make-branch-symbol 'exit)))
-                     `(asm (ldc #f)
-                           ,enter
-                           (mos ,test) 
-                           (jf ,exit) 
-                           (drop)
-                           (mos ,@rest)
-                           (jmp ,enter)
-                           ,exit))))
-    (cons 'until (lambda (test . rest)  
-                   (let ((enter (make-branch-symbol 'enter))
-                         (exit  (make-branch-symbol 'exit)))
-                     `(asm (ldc #f)
-                           ,enter
-                           (mos ,test) 
-                           (jt ,exit) 
-                           (drop)
-                           (mos ,@rest)
-                           (jmp ,enter)
-                           ,exit))))
-    (cons 'or (lambda (test . rest)  
-                (if (null? rest)
-                      test
-                  (let ((done (make-branch-symbol 'done)))
-                    `(asm (mos ,test)
-                          (copy)
-                          (jt ,done)
-                          (drop)
-                          (mos (or ,@rest))
-                          ,done)))))
-    (cons 'and (lambda (test . rest)  
-                 (if (null? rest)
-                   test
-                   (let ((done (make-branch-symbol 'done)))
-                     `(asm (mos ,test)
-                           (copy)
-                           (jf ,done)
-                           (drop)
-                           (mos (and ,@rest))
-                           ,done))))))) 
+(set-macro! 'define-record-type
+            (lambda (record-name make-proto pred-name . record-fields)
+              `(define-class ,record-name <record> ,make-proto ,pred-name 
+                             ,@record-fields)))
+(set-macro! 'guard
+            (lambda (fn . rest)
+              (let ((el (make-branch-symbol 'exit)))
+                `(asm (mos ,fn)
+                      (gar ,el)
+                      (mos (begin ,@rest))
+                      (rag)
+                      ,el))))
+(set-macro! 'case 
+            (lambda (expr . branches)
+              (let ((tc (make-tc))
+                    (done (make-branch-symbol 'done))
+                    (next #f))
+                (tc-append! tc `(mos ,expr))
+                (for-each (lambda (branch)
+                            (when next (tc-append! tc next))
+                            (set! next #f)
+                            (let ((test (car branch))
+                                  (body (cdr branch)))
+                              (if (eq? test 'else)
+                                (begin 
+                                  (tc-append! tc '(drop))
+                                  (tc-append! tc `(mos ,@body))
+                                  (tc-append! tc `(jmp ,done)))
+                                (let ((case-branch (make-branch-symbol 'case)))
+                                  (set! next (make-branch-symbol 'next))
+                                  (for-each (lambda (value)
+                                              (tc-append! tc '(copy)) 
+                                              (tc-append! tc `(ldc ,value))
+                                              (tc-append! tc '(ldc 2))
+                                              (tc-append! tc '(ldg eq?))
+                                              (tc-append! tc '(call))
+                                              (tc-append! tc `(jt ,case-branch)))
+                                            test)
+                                  (tc-append! tc `(jmp ,next))
+                                  (tc-append! tc case-branch)
+                                  (tc-append! tc '(drop))
+                                  (tc-append! tc `(mos ,@body))
+                                  (tc-append! tc `(jmp ,done))))))
+                          branches)
+                (when next
+                  (tc-append! tc next)
+                  (tc-append! tc '(drop))
+                  (tc-append! tc '(ldu)))
+                (tc-append! tc done)
+                `(asm ,@(tc->list tc)))))
+(set-macro! 'cond (lambda clauses 
+                    ;TODO: Should raise an error if there is rest with else.
+                    (if (null? clauses) 
+                      #f
+                      (let ((clause (car clauses))
+                            (rest (cdr clauses)))
+                        (if (eq? (car clause) 'else)
+                          `(begin ,@(cdr clause))
+                          `(if ,(car clause)
+                             (begin ,@(cdr clause))
+                             (cond ,@rest)))))))
+(set-macro! 'when 
+            (lambda (test . rest)   `(if ,test (begin ,@rest))))
+(set-macro! 'unless 
+            (lambda (test . rest) `(if ,test (begin) (begin ,@rest))))
+(set-macro! 'while (lambda (test . rest)  
+                     (let ((enter (make-branch-symbol 'enter))
+                           (exit  (make-branch-symbol 'exit)))
+                       `(asm (ldc #f)
+                             ,enter
+                             (mos ,test) 
+                             (jf ,exit) 
+                             (drop)
+                             (mos ,@rest)
+                             (jmp ,enter)
+                             ,exit))))
+(set-macro! 'until 
+            (lambda (test . rest)  
+              (let ((enter (make-branch-symbol 'enter))
+                    (exit  (make-branch-symbol 'exit)))
+                `(asm (ldc #f)
+                      ,enter
+                      (mos ,test) 
+                      (jt ,exit) 
+                      (drop)
+                      (mos ,@rest)
+                      (jmp ,enter)
+                      ,exit))))
+(set-macro! 'or (lambda (test . rest)  
+                  (if (null? rest)
+                    test
+                    (let ((done (make-branch-symbol 'done)))
+                      `(asm (mos ,test)
+                            (copy)
+                            (jt ,done)
+                            (drop)
+                            (mos (or ,@rest))
+                            ,done)))))
+(set-macro! 'and (lambda (test . rest)  
+                   (if (null? rest)
+                     test
+                     (let ((done (make-branch-symbol 'done)))
+                       `(asm (mos ,test)
+                             (copy)
+                             (jf ,done)
+                             (drop)
+                             (mos (and ,@rest))
+                             ,done)))))
 
 (define *mosvm-specials*
   (list

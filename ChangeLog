@@ -43,6 +43,7 @@
   * Wrote an alternate version of read-module for Scheme
   + Compiler now analyzes imports for exported syntaxes
   + Altered export to recognize syntax.
+  * Added the trace macro to lib/trace -- traces within a block context.
 
 - 2/18/2006, File Function Renames
   * Added file-len

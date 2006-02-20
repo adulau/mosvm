@@ -53,4 +53,12 @@
 (define (traceback error (<port> port))
   (with-output-port port (traceback error)))
 
-(export traceback)
+(define-macro (trace . stmts)
+    `(guard (lambda (err) (disable-trace)
+                          (re-error err))
+            (enable-trace)
+            (let ((%x (begin ,@stmts)))
+              (disable-trace)
+              %x)))
+
+(export traceback trace)
