@@ -508,16 +508,27 @@
             (if syn (expand (apply syn (cdr expr)) env)
                     expr)))))
 
+(define (is-import? expr) 
+  (and (pair? expr)
+       (= (length expr) 2)
+       (eq? (car expr) 'import)
+       (string? (cadr expr))))
+
+(define (is-export? expr)
+  (and (pair? expr)
+       (not (null? expr))
+       (eq? (car expr) 'export)))
+
+(define (isnt-export? expr)
+  (not (is-export? expr)))
+
+(define (is-macro? expr)
+  (and (pair? expr)
+       (not (null? expr))
+       (eq? (car expr) 'define-macro)))
+ 
 (define (compile-exports code env)
   (define tc (make-tc))
-
-  (define (is-export? expr)
-    (and (pair? expr)
-         (not (null? expr))
-         (eq? (car expr) 'export)))
-
-  (define (isnt-export? expr)
-    (not (is-export? expr)))
 
   ;TODO: This needs to be a set.
   (for-each (lambda (x) (tc-splice! tc (cdr x)))
@@ -576,12 +587,6 @@
        code))
 
 (define (compile-imports code env) 
-  (define (is-import? expr) 
-    (and (pair? expr)
-         (= (length expr) 2)
-         (eq? (car expr) 'import)
-         (string? (cadr expr))))
-
   (define (compile-dependency path)
     (define code (read-module path))
     (define exports (list))
@@ -601,23 +606,18 @@
          (add-context-rule! env (make-procedure args body))))
 
     (for-each compile-imported-export
-              (filter is-export? data))
+              (filter is-export? code))
 
     (for-each compile-imported-macro 
-              (filter is-macro? data)))
+              (filter is-macro? code)))
 
   (define (compile-import expr) 
     (define id (cadr expr))
-    (compile-dependency (module-dependencies id)))
+    (for-each compile-dependency (parse-dependencies id)))
     
   (for-each compile-import (filter is-import? code)))
 
 (define (compile-macros code env)
-  (define (is-macro? expr)
-    (and (pair? expr)
-      (not (null? expr))
-      (eq? (car expr) 'define-macro)))
- 
   (define (isnt-macro? expr)
     (not (is-macro? expr)))
 

@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# Check for MOSVM.
+
 if [ x$USE_GUILE != x ]; then
     DO_SCHEME="guile --debug -l lib/run-guile.scm -e guile-main -s"
 elif [ x$USE_MZSCHEME != x ]; then
@@ -17,6 +19,6 @@ for DEP in $DEPS; do
     DEP_MS=$DEP.ms
     DEP_MO=$DEP.mo
     if [ ! -s $DEP_MO ]||[ $DEP_MS -nt $DEP_MO ]; then
-        echo "Must compile $DEP_MS to $DEP_MO"
+        $DO_SCHEME bin/mosc.ms $DEP || exit 1
     fi
 done
