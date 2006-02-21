@@ -39,11 +39,12 @@
     list.
   * Renamed all .scm files to .ms
   * Wrote mosc rule in Makefile for constructing the mosc compiler
-  + Altered the .ms -> .mo rule to use the mosc compiler
   * Wrote an alternate version of read-module for Scheme
-  + Compiler now analyzes imports for exported syntaxes
-  + Altered export to recognize syntax.
+  * Compiler now analyzes imports for exported syntaxes
+  * Altered export to recognize syntax.
   * Added the trace macro to lib/trace -- traces within a block context.
+  + Added bin/manifest.ms 
+  + Altered the .ms -> .mo rule to use the mosc compiler
 
 - 2/18/2006, File Function Renames
   * Added file-len

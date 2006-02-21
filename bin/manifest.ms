@@ -23,3 +23,5 @@
             (parse-dependencies module))
   (newline))
 
+;(when *mosvm?* (apply main (argv)))
+
