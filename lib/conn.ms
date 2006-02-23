@@ -13,34 +13,31 @@
 ; along with this library; if not, write to the Free Software Foundation, 
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
+;TODO: make-connection should use the read/write/close slots!
 (define-class connection
               <port>
-              (make-connection descr)
+              (make-connection descr read-fn write-fn close-fn)
               connection?
-              (descr connection-descr))
+              (descr connection-descr)
+              (read-fn port-read-fn)
+              (write-fn port-write-fn)
+              (close-fn port-close-fn))
 
-(define (read (<connection> connection))
-  (or (read-descr (connection-descr connection))
-      *eof*))
-
-(define (write (<string> data) (<connection> connection))
-  (write-descr (connection-descr connection) data))
-
-(define (close (<connection> connection))
-  (close-descr (connection-descr connection)))
-
-(define (closed? (<connection> connection))
-  (descr-closed? (connection-descr connection)))
+(define (make-connection-from-socket socket)
+    (make-connection socket
+                     (lambda (x) (read-descr socket))
+                     (lambda (x d) (write-descr socket d))
+                     (lambda (x) (close-descr socket))))
 
 (define (open-tcp-connection host port)
-  (make-connection (connect-tcp host port)))
+  (make-connection-from-socket (connect-tcp host port)))
 
 (define (spawn-tcp-server port fn)
   (define server (serve-tcp port))
   (spawn (lambda ()
             (until (descr-closed? server)
               (define conn (read-descr server))
-              (define port (make-connection conn))
+              (define port (make-connection-from-socket conn))
               ;; Born just a little too slooooooooow!
               (with-input-port port
                 (with-output-port port
