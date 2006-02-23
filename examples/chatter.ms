@@ -16,16 +16,43 @@
 (import "lib/conn")
 (import "lib/format")
 
+(define-record-type chat-session 
+                    (make-chat-session process username)
+                    chat-session?
+                    (process chat-session-process)
+                    (username chat-session-username))
+
 (define (chatter portno)
   (spawn-tcp-server portno chatter-session))
 
 (define (chatter-session)
-  (emit "CONNECTED")
-  (register-chatter-session! (active-process))
-  (until (closed?)
-     (emit (read)))
-  (unregister-chatter-session! (active-process))
-  (emit "DISCONNECTED"))
+  (define (read-line)
+    (define packet (read))
+    (when (eof-object? packet)
+      (error 'eof))
+    ;TODO: We should be using a line splitter for this.
+    (car (split-lines packet)))
+
+  (define session #f)
+  (define username #f)
+
+  (guard (lambda (e) 
+           (unless (eq? (error-key e) 'eof) (re-error e))
+           (unregister-chatter-session! session)
+           (if session (emit session "has disconnected.")))
+
+    (write "User name? ")
+
+    (set! session (make-chat-session (active-process) (read-line)))
+    
+    (emit session "has connected.")
+
+    (register-chatter-session! session)
+
+    (write (string-append "Welcome, " (chat-session-username session) "\n"))
+
+    (until #f
+      (emit session (string-append "says, \"" (read-line) "\"")))))
 
 (define (register-chatter-session! process)
   (set! *chatter-sessions* (cons process *chatter-sessions*)))
@@ -35,11 +62,18 @@
                                      (not (eq? session process)))
                                  *chatter-sessions*)))
 
-(define (emit message)
-  (unless (eof-object? message)
-    (for-each (lambda (session) (write message session))
-              *chatter-sessions*)))
+(define (emit session message)
+  (set! message (string-append (chat-session-username session) 
+                               " "
+                               message
+                               "\n"))
+  (for-each (lambda (session) (notify session message))
+            *chatter-sessions*))
+
+(define (notify session message)
+  (write message (chat-session-process session)))
 
 (define *chatter-sessions* '())
 
 (export chatter)
+
