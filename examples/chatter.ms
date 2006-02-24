@@ -37,8 +37,8 @@
   (define username #f)
 
   (guard (lambda (e) 
-           (unless (eq? (error-key e) 'eof) (re-error e))
            (unregister-chatter-session! session)
+           (unless (eq? (error-key e) 'eof) (re-error e))
            (if session (emit session "has disconnected.")))
 
     (write "User name? ")
