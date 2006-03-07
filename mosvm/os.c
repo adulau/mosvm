@@ -282,8 +282,11 @@ void mqo_read_descr_event( mqo_descr descr ){
 }
 void mqo_read_listener_event( mqo_descr descr ){
     struct sockaddr_storage addr;
+#ifdef _WIN32
+    unsigned long len = sizeof( addr );
+#else
     socklen_t len = sizeof( addr );
-
+#endif
     int fd = accept( descr->fd, (struct sockaddr*)&addr, &len );
 
     if( fd == -1 ){
