@@ -245,9 +245,13 @@ void mqo_read_descr_event( mqo_descr descr ){
     }
 
     if( datalen == 0 ){
-        //TODO: WRONG;
         descr->closed = 1;
-        descr->read_mt( descr );
+
+        if( descr->monitor ){ 
+            descr->read_mt( descr ); 
+        }else{ 
+            mqo_stop_dispatching( descr );
+        };
     }else if( datalen > 0 ){
         mqo_expand_buffer( descr->read_data, datalen );
         mqo_write_buffer( descr->read_data, data, datalen );
@@ -492,6 +496,7 @@ mqo_console mqo_make_console( mqo_string path ){
 void mqo_read_data_mt( mqo_descr descr ){
     if( descr->closed && !( mqo_buffer_length( descr->read_data ) ) ){ 
         mqo_resume( descr->monitor, mqo_vf_false() );
+        return;
     }
 
     mqo_integer datalen = BUFSIZ;
@@ -515,6 +520,7 @@ void mqo_read_all_mt( mqo_descr descr ){
 void mqo_read_byte_mt( mqo_descr descr ){
     if( descr->closed && !( mqo_buffer_length( descr->read_data ) ) ){ 
         mqo_resume( descr->monitor, mqo_vf_false() );
+        return;
     }
 
     mqo_integer datalen = sizeof( mqo_byte );
@@ -525,6 +531,7 @@ void mqo_read_byte_mt( mqo_descr descr ){
 void mqo_read_word_mt( mqo_descr descr ){
     if( descr->closed && !( mqo_buffer_length( descr->read_data ) ) ){ 
         mqo_resume( descr->monitor, mqo_vf_false() );
+        return;
     }
 
     mqo_integer datalen = sizeof( mqo_word );
@@ -535,6 +542,7 @@ void mqo_read_word_mt( mqo_descr descr ){
 void mqo_read_quad_mt( mqo_descr descr ){
     if( descr->closed && !( mqo_buffer_length( descr->read_data ) ) ){ 
         mqo_resume( descr->monitor, mqo_vf_false() );
+        return;
     }
 
     mqo_integer datalen = sizeof( mqo_long );
