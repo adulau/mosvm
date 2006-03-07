@@ -127,6 +127,10 @@ MQO_BEGIN_PRIM( "file-len", file_len )
     MQO_RESULT( mqo_vf_integer( len ) );
 MQO_END_PRIM( file_len )
 
+//TODO: read-descr-byte
+//TODO: read-descr-word
+//TODO: read-descr-quad
+
 MQO_BEGIN_PRIM( "read-descr", read_descr )
     REQ_DESCR_ARG( descr );
     NO_MORE_ARGS( );
@@ -142,38 +146,44 @@ MQO_BEGIN_PRIM( "read-descr", read_descr )
         }else{
             MQO_RESULT( mqo_vf_string( mqo_string_fm( buffer, count ) ) );
         }
+    }else if( mqo_is_reading( descr ) ){
+        mqo_errf( mqo_es_vm, "s", 
+                  "another object is waiting on descriptor" );
     }else{
-        if( descr->monitor ){
-            mqo_errf( mqo_es_vm, "s", 
-                      "another object is waiting on descriptor" );
-        }else{
-            descr->monitor = MQO_PP; 
-            mqo_start_listening( descr );
-            mqo_drop_ds( 2 );
-            mqo_return( );
-            MQO_SUSPEND( );
-        }
+        mqo_start_reading( descr, MQO_PP, mqo_read_data_mt );
+        mqo_drop_ds( 2 );
+        mqo_return( );
+        MQO_SUSPEND( );
     }
 MQO_END_PRIM( read_descr )
 
-MQO_BEGIN_PRIM( "read-file-all", read_file_all )
-    REQ_FILE_ARG( descr );
+MQO_BEGIN_PRIM( "read-descr-all", read_descr_all )
+    REQ_ANY_DESCR_ARG( descr );
     NO_MORE_ARGS( )
+   
+    if( descr->type == MQO_FILE ){
+        mqo_integer ofs = mqo_os_error( lseek( descr->fd, 0, SEEK_CUR ) );
+        mqo_integer len = mqo_os_error( lseek( descr->fd, 0, SEEK_END ) - ofs );
+        mqo_os_error( lseek( descr->fd, ofs, SEEK_SET ) );
     
-    mqo_integer ofs = mqo_os_error( lseek( descr->fd, 0, SEEK_CUR ) );
-    mqo_integer len = mqo_os_error( lseek( descr->fd, 0, SEEK_END ) - ofs );
-    mqo_os_error( lseek( descr->fd, ofs, SEEK_SET ) );
+        if( len == 0 ){
+            MQO_RESULT( mqo_vf_false( ) );
+        };
+        mqo_string data = mqo_make_string( len );
+        len = mqo_os_error( read( descr->fd, data->data, len ) );
     
-    if( len == 0 ){
-        MQO_RESULT( mqo_vf_false( ) );
+        data->data[len] = 0;
+        data->length = len;
+        MQO_RESULT( mqo_vf_string( data ) );
+    }else if( descr->type == MQO_SOCKET ){
+        mqo_start_reading( descr, MQO_PP, mqo_read_all_mt );
+    }else{
+        mqo_errf( mqo_es_os, "s", 
+                  "only sockets and files permit read-descr-all" );
+
+        //TODO: We should support MQO_CONSOLE for this.
     };
-    mqo_string data = mqo_make_string( len );
-    len = mqo_os_error( read( descr->fd, data->data, len ) );
-    
-    data->data[len] = 0;
-    data->length = len;
-    MQO_RESULT( mqo_vf_string( data ) );
-MQO_END_PRIM( read_file_all )
+MQO_END_PRIM( read_descr_all )
 
 MQO_BEGIN_PRIM( "close-descr", close_descr )
     REQ_ANY_DESCR_ARG( descr );
@@ -189,62 +199,50 @@ MQO_BEGIN_PRIM( "descr-closed?", descr_closedq )
     MQO_RESULT( mqo_vf_boolean( descr->closed ) ); 
 MQO_END_PRIM( descr_closedq )
 
+//TODO Fix for new buffered writes.
+
 MQO_BEGIN_PRIM( "write-descr", write_descr )
     REQ_ANY_DESCR_ARG( descr );
     REQ_STRING_ARG( data );
     NO_MORE_ARGS( )
+   
+    mqo_write_descr( descr, mqo_sf_string( data ), mqo_string_length( data ) );
     
-    ssize_t result;
-    const char* dataptr = mqo_sf_string( data );
-    mqo_integer datalen = mqo_string_length( data );
-
-    if( descr->type == MQO_CONSOLE ){
-        result = write( STDOUT_FILENO, dataptr, datalen );
-    }else if( descr->type == MQO_SOCKET ){
-        result = send( descr->fd, dataptr, datalen, 0 );
-    }else if( descr->type == MQO_LISTENER ){
-        mqo_errf( mqo_es_vm, "s", "cannot write to listener descriptors" );
-    }else{
-        result = write( descr->fd, dataptr, datalen );
-    } 
-
-    mqo_os_error( result );
-
     MQO_NO_RESULT( )
 MQO_END_PRIM( write_descr )
 
-MQO_BEGIN_PRIM( "write-file-byte", write_file_byte )
+MQO_BEGIN_PRIM( "write-descr-byte", write_descr_byte )
     REQ_ANY_DESCR_ARG( descr );
-    REQ_INTEGER_ARG( byte );
+    REQ_BYTE_ARG( byte );
     NO_MORE_ARGS( )
     
     mqo_byte data = byte;
-    mqo_os_error( write( descr->fd, &data, 1 ) );  
+    mqo_write_descr( descr, &data, 1 );
 
     MQO_NO_RESULT( )
-MQO_END_PRIM( write_file_byte )
+MQO_END_PRIM( write_descr_byte )
 
-MQO_BEGIN_PRIM( "write-file-word", write_file_word )
-    REQ_DESCR_ARG( descr );
-    REQ_INTEGER_ARG( word );
+MQO_BEGIN_PRIM( "write-descr-word", write_descr_word )
+    REQ_ANY_DESCR_ARG( descr );
+    REQ_WORD_ARG( word );
     NO_MORE_ARGS( )
     
     mqo_word data = htons( word );
-    mqo_os_error( write( descr->fd, &data, 2 ) );  
+    mqo_write_descr( descr, &data, 2 );
 
     MQO_NO_RESULT( )
-MQO_END_PRIM( write_file_word )
+MQO_END_PRIM( write_descr_word )
 
-MQO_BEGIN_PRIM( "write-file-quad", write_file_quad )
-    REQ_DESCR_ARG( descr );
-    REQ_INTEGER_ARG( quad );
+MQO_BEGIN_PRIM( "write-descr-quad", write_descr_quad )
+    REQ_ANY_DESCR_ARG( descr );
+    REQ_QUAD_ARG( quad );
     NO_MORE_ARGS( )
     
     mqo_long data = htonl( quad );
-    mqo_os_error( write( descr->fd, &data, 4 ) );  
+    mqo_write_descr( descr, &data, 4 );  
 
     MQO_NO_RESULT( )
-MQO_END_PRIM( write_file_quad )
+MQO_END_PRIM( write_descr_quad )
 
 MQO_BEGIN_PRIM( "file-skip", file_skip )
     REQ_FILE_ARG( descr );
@@ -304,11 +302,11 @@ void mqo_bind_os_prims( ){
     MQO_BIND_PRIM( descr_closedq );
     MQO_BIND_PRIM( descrq );
     MQO_BIND_PRIM( read_descr );
-    MQO_BIND_PRIM( read_file_all );
+    MQO_BIND_PRIM( read_descr_all );
     MQO_BIND_PRIM( write_descr );
-    MQO_BIND_PRIM( write_file_byte );
-    MQO_BIND_PRIM( write_file_word );
-    MQO_BIND_PRIM( write_file_quad );
+    MQO_BIND_PRIM( write_descr_byte );
+    MQO_BIND_PRIM( write_descr_word );
+    MQO_BIND_PRIM( write_descr_quad );
     MQO_BIND_PRIM( file_skip );
     MQO_BIND_PRIM( file_seek );
     MQO_BIND_PRIM( file_pos );

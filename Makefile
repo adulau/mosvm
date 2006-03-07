@@ -36,6 +36,6 @@ $(MOSVM): $(MOSC) $(GLUE)
 really-clean: clean clean-seed
 
 # Constructs a CTAGS file.
-tags: mosvm/*.[ch] mosvm/mosvm/*.[ch] lib/* bin/*
+tags: mosvm/*.[ch] mosvm/*/*.[ch] lib/*.ms bin/*.ms 
 	ectags --recurse=yes --langmap=scheme:+.ms mosvm lib bin
 

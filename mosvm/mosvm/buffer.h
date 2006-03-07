@@ -52,7 +52,7 @@ void* mqo_read_buffer( mqo_buffer buffer, mqo_integer* count );
 // write operation.
 
 static inline mqo_boolean mqo_buffer_empty( mqo_buffer buffer ){ 
-    return buffer->length > 0;
+    return buffer->length <= 0;
 }
 static inline mqo_integer mqo_buffer_length( mqo_buffer buffer ){
     return buffer->length;

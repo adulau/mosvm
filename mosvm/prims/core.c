@@ -1695,7 +1695,11 @@ MQO_BEGIN_PRIM( "halt", halt )
     if( process == MQO_PP ){
         MQO_HALT( );
     }else{
+        //TODO: Move this to mqo_halt.
+
         process->status = mqo_ps_halted;
+        if( process->reading )mqo_stop_reading( process->reading );
+
         mqo_unsched_process( process );
     }
 MQO_END_PRIM( halt )

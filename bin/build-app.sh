@@ -29,7 +29,7 @@ for DEP in $DEPS; do
     DEPS_MO="$DEPS_MO $DEP_MO"
 done
 
-if [ x$RE_GLUE != x ]||[ ! -s $OUTP ]; then
+if [ x$RE_GLUE != x ]||[ ! -s $OUTP ]||[ $STUB -nt $OUTP ]; then
     ./build/bin/glue $STUB $DEPS_MO $OUTP && chmod 0755 $OUTP || exit 2
 else
     echo No assembly required for $OUTP.

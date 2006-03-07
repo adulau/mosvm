@@ -84,7 +84,9 @@ void* mqo_read_buffer( mqo_buffer buffer, mqo_integer* r_count ){
     return data;
 }
 void mqo_dump_buffer( mqo_buffer buffer ){
-    mqo_write( "[buffer" );
+    mqo_write( "[" );
+    if( mqo_buffer_empty( buffer ) ) mqo_write( "empty " );
+    mqo_write( "buffer" );
     mqo_write( " capacity: " );
     mqo_writeint( buffer->capacity );
     mqo_write( " origin: " );

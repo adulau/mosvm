@@ -381,14 +381,18 @@ void mqo_use_process( mqo_process p ){
         MQO_GP = s->gp;
     };
 }
+//TODO: mqo_halt should call mqo_stop_reading.
 void mqo_resume( mqo_process process, mqo_value value ){
-    if( process->status == mqo_ps_suspended ){
-        process->status = mqo_ps_paused;
-        mqo_vector_put( process->state->sv,
-                        process->state->si++,
-                        value );
-        mqo_resched_process( process );
-    }
+    if( process->status != mqo_ps_suspended )return;
+    //TODO: Signal an error.
+
+    if( process->reading )mqo_stop_reading( (mqo_descr)process->reading );
+    
+    process->status = mqo_ps_paused;
+    mqo_vector_put( process->state->sv,
+                    process->state->si++,
+                    value );
+    mqo_resched_process( process );
 }
 void mqo_show_closure( mqo_closure c, mqo_word* ct ){
     if( ! c )return mqo_show_unknown( mqo_closure_type, 0 );
@@ -440,6 +444,7 @@ mqo_process mqo_make_process( ){
     mqo_vmstate s = mqo_make_vmstate( );
     p->status = mqo_ps_suspended;
     p->state = s;
+    p->reading = NULL;
     s->rv = mqo_make_vector( MQO_STACK_SZ );
     s->sv = mqo_make_vector( MQO_STACK_SZ );
     return p;

@@ -1,44 +1,40 @@
-+ Add the buffer type.
-  (make-buffer initial-size)
-  (buffer-size)
-  (buffer-append! buffer . items)
-    items may be bytes, buffers or strings.
-  (buffer->string buffer)
++ Write Dispatch
+  descriptors have a read_monitor process.
+  descriptors have a read_mt method.
+  descriptors have a read_data buffer.
+  descriptors have a write_data buffer.
+  
+  mqo_read_mt accepts a descriptor pointer and a context value.
+ 
+  void mqo_write_socket( mqo_socket socket, const char* data, 
+                         mqo_word datalen ){
 
-+ Fix Show.
-  Strings should be wrapped with "..."
-  Any use of show that relied on this, mqo_il_traceback, should be fixed.
+    if( descr.write_data ) == NULL ){
+        descr->write_data = mqo_make_buffer( datalen );
+    };
 
-+ Add the Alarm API/2
-  (timed-alarm time process) -> alarm
-    Resumes the specified process some time after timeout 
-    milliseconds with 'time
+    mqo_append_buffer( descr->write_data, data, datalen );
+    mqo_add_dispatch( socket ); 
+  }
+    
+  void mqo_read_socket( mqo_socket socket, mqo_process process, 
+                        mqo_read_mt read_mt ){
 
-  (alarm-time alarm)
-    Returns the time scheduled for a timed alarm.
+    if( descr.read_data ) == NULL ){
+        descr->read_data = mqo_make_buffer( BUFSIZ );
+    }else if( descr.read_mt ){
+        mqo_errf( mqo_es_os, 
+    };
+    
+    mqo_add_dispatch( socket ); 
+  }
+  descriptors have a monitor field for use by read_mt
+  descriptors have a buffer field for use by write
 
-  (define (recv (<connection> conn))
-    (define why (wait (connection-read-alarm conn)
-                      (connection-timeout alarm conn)))
-    (cond
-      (read-alarm? why) (read-descr (connection-descr conn))
-      (timeout-alarm? why) <timeout>))
+  the read_mt accepts a descriptor argument, and returns no results.
+  the read_mt
 
-  (alarm-pending? value)
-    Returns true if the supplied value is an alarm that has not been
-    completed.
-
-  (timed-alarm? value)
-    Returns true if the supplied value is a timed-alarm.
-
-+ Add the with special form.
-  (with ((...))
-    (define (...) ...))
-
-  Translates to (let ((...))
-                   (define-global ...))
-
-+ Add the export special form. Make module toplevels bound.
++ When a process is halted, it loses its monitor.
 
 + Add LAMBDA/2 form
   (lambda/2 name formals . body)
@@ -106,38 +102,6 @@
 
   Only lists need to be decorated by line during read.
   Likewise, only calls need to be decorated by line.
-
-------------------------------------------------------------------------------
-+ Write an eval for macros.
-  Compile it.
-  Assemble it.
-  Execute it.
-  
-  Can assemble be inlined to Compile?
-  At least we don't have to bind it.
-  The only assemble part that has any logic is the label / addr code.
-  We also have the block sorting properties of the lambda code..
-  So.. No.
-
--------------------------------------------------------------------------------
-
-+ Add the let-syntax special form.
-  (let-syntax ((syntax-key syntax-fn) ...) stmt ...)
-
-  Caches the current *syntaxes* global, then adds the specified rules on
-  a temporary basis.  The statements are expanded using these syntaxes, then
-  the syntaxes are removed from the system.
-
-+ Add the define-syntax special form.
-  (define-syntax (syntax-key syntax-fn) ...) stmt ...)
-
-  Adds a new syntax to the *syntaxes* global -- only usable from the top level
-  of a program.
-
-+ Add the syntax-rules special form.
-  (syntax-rules ...)
-
-  Creates a lambda usable by let-syntax and define-syntax.
 
 + Expand freeze/thaw to add a list type.
   Encodes a sequence of pairs as list, for compression.

@@ -100,6 +100,17 @@
 #define REQ_LIST_ARG( nm )      REQ_TYPED_ARG( nm, list );
 #define REQ_ALARM_ARG( nm )     REQ_TYPED_ARG( nm, alarm );
     
+#define REQ_RANGED_ARG( nm, min, max ) \
+    REQ_INTEGER_ARG( nm ); \
+    if(! ( min <= nm ) && ( nm <= max ) ){ \
+        mqo_errf( mqo_es_args, "si", #nm "must be between " #min " and " #max, \
+                  nm ); \
+    } \
+
+#define REQ_BYTE_ARG( nm )      REQ_RANGED_ARG( nm, 0, 255 );
+#define REQ_WORD_ARG( nm )      REQ_RANGED_ARG( nm, 0, 65535 );
+#define REQ_QUAD_ARG( nm )      REQ_INTEGER_ARG( nm );
+
 #define REST_ARGS( nm )         mqo_pair nm = mqo_rest( ct - ai, 1 ); \
                                 ai = ct; \
 

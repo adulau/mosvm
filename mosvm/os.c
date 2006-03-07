@@ -35,27 +35,6 @@
 #define MQO_EWOULDBLOCK EWOULDBLOCK
 #endif
 
-
-void mqo_start_listening( mqo_descr descr ){
-    if( mqo_first_listening )mqo_first_listening->prev = descr;
-    descr->prev = NULL;
-    descr->next = mqo_first_listening;
-    mqo_first_listening = descr;
-}
-void mqo_stop_listening( mqo_descr descr ){
-    if( descr->monitor ){
-        if( descr->prev ){
-            descr->prev->next = descr->next;
-        }else{
-            mqo_first_listening = descr->next;
-        }
-
-        if( descr->next )descr->next->prev = descr->prev;
-        descr->next = descr->prev = NULL;
-        descr->monitor = NULL;
-    };
-}
-
 void mqo_report_net_error( ){
 #if defined(_WIN32)||defined(__CYGWIN__)
     mqo_errf( mqo_es_os, "s", strerror( WSAGetLastError() ) );
@@ -63,10 +42,12 @@ void mqo_report_net_error( ){
     mqo_errf( mqo_es_os, "s", strerror( errno ) );
 #endif
 }
+
 mqo_integer mqo_net_error( mqo_integer k ){
     if( k == -1 )mqo_report_net_error( );
     return k;
 }
+
 void mqo_unblock_socket( mqo_integer s ){
 #if defined( _WIN32 )||defined( __CYGWIN__ )
     unsigned long unblocking = 1;
@@ -75,6 +56,110 @@ void mqo_unblock_socket( mqo_integer s ){
     mqo_os_error( fcntl( s, F_SETFL, O_NONBLOCK ) );
 #endif
 }
+
+void mqo_start_dispatching( mqo_descr descr ){
+    if( mqo_first_dispatching )mqo_first_dispatching->prev = descr;
+    descr->prev = NULL;
+    descr->next = mqo_first_dispatching;
+    descr->dispatch = 1;
+    mqo_first_dispatching = descr;
+}
+
+void mqo_stop_dispatching( mqo_descr descr ){
+    if( descr->dispatch ){
+        if( descr->prev ){
+            descr->prev->next = descr->next;
+        }else{
+            mqo_first_dispatching = descr->next;
+        }
+
+        if( descr->next )descr->next->prev = descr->prev;
+        descr->next = descr->prev = NULL;
+        descr->dispatch = 0;
+    };
+}
+
+//TODO: Test - write continuously to a port -- close the port remotely.
+
+int mqo_in_dispatch( mqo_descr descr ){ return descr->dispatch; };
+int mqo_is_reading( mqo_descr descr ){ 
+    return mqo_in_dispatch( descr )&& descr->read_mt;
+}
+int mqo_is_writing( mqo_descr descr ){
+    return ( mqo_in_dispatch( descr )
+             &&( descr->write_data )
+             &&( ! mqo_buffer_empty( descr->write_data ) ) );
+}
+int mqo_is_listening( mqo_descr descr ){
+    return ( mqo_in_dispatch( descr )
+             &&( descr->type == MQO_LISTENER ) );
+}
+
+void mqo_write_descr( mqo_descr descr, const void* data, mqo_integer datalen ){
+    mqo_integer written = 0;
+
+    if( descr->type == MQO_CONSOLE ){
+        while( written < datalen ){
+            written += mqo_os_error( write( STDOUT_FILENO, data, 
+                                            datalen ) );     
+        }
+    }else if( descr->type == MQO_SOCKET ){
+        mqo_start_writing( descr, data, datalen );
+    }else if( descr->type == MQO_LISTENER ){
+        mqo_errf( mqo_es_vm, "s", "cannot write to listener descriptors" );
+    }else{
+        while( written < datalen ){
+            written += mqo_os_error( write( descr->fd, data, datalen ) );     
+        }        
+    }
+}
+
+void mqo_start_reading( mqo_descr descr, mqo_process monitor, 
+                        mqo_read_mt read_mt 
+){
+    assert( ! mqo_is_reading( descr ) );
+    assert( monitor->reading == NULL );
+
+    if( ( descr->type != MQO_LISTENER )&&( descr->read_data == NULL ) ){
+        descr->read_data = mqo_make_buffer( BUFSIZ );
+    };
+
+    descr->monitor = monitor;
+    descr->read_mt = read_mt;
+    monitor->reading = descr;
+
+    if( ! mqo_in_dispatch( descr ) )mqo_start_dispatching( descr );
+}
+
+void mqo_start_writing( mqo_descr descr, const char* data, 
+                        mqo_integer datalen 
+){
+    assert( descr->type != MQO_LISTENER );
+    
+    if( descr->write_data == NULL ){
+        descr->write_data = mqo_make_buffer( BUFSIZ );
+    }
+
+    mqo_expand_buffer( descr->write_data, datalen );
+    mqo_write_buffer( descr->write_data, data, datalen );
+
+    if( ! mqo_in_dispatch( descr ) )mqo_start_dispatching( descr );
+}
+
+void mqo_stop_reading( mqo_descr descr ){
+    // Should only be called via mqo_resume, and the halt prim.
+    descr->read_mt = NULL;
+    if( descr->monitor ){
+        descr->monitor->reading = NULL;
+        descr->monitor = NULL;
+    }
+    if( ! mqo_is_writing( descr ) )mqo_stop_dispatching( descr );
+}
+void mqo_stop_writing( mqo_descr descr ){
+    // Should only be called via write_event
+    if( ! mqo_is_reading( descr ) )mqo_stop_dispatching( descr );
+}
+
 mqo_integer mqo_resolve( mqo_string name ){
     struct hostent *entry = gethostbyname( mqo_sf_string( name ) );
     if( !entry ){ 
@@ -89,6 +174,7 @@ mqo_integer mqo_resolve( mqo_string name ){
         return ntohl( *(mqo_integer*)(entry->h_addr) );
     }
 }
+
 mqo_socket mqo_connect_tcp( mqo_integer address, mqo_integer port ){
     static struct sockaddr_in addr;
 
@@ -97,13 +183,19 @@ mqo_socket mqo_connect_tcp( mqo_integer address, mqo_integer port ){
     addr.sin_addr.s_addr = htonl( address );
     addr.sin_port = htons( port );
 
-    int client_fd = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
+    int client_fd = mqo_net_error( socket( AF_INET, SOCK_STREAM, 
+                                           IPPROTO_TCP ) );
 
-    connect( client_fd, (struct sockaddr*)&addr, sizeof( addr ) );
+    mqo_net_error( connect( client_fd, (struct sockaddr*)&addr, 
+                            sizeof( addr ) ) );
+
+    //TODO: Create a client name.
+
     mqo_unblock_socket( client_fd );
     mqo_string client_name = mqo_string_fs( "tcp-client-conn" );
     return mqo_make_socket( client_name, client_fd );
 }
+
 mqo_listener mqo_serve_tcp( mqo_integer port ){
     static struct sockaddr_in addr;
 
@@ -112,7 +204,8 @@ mqo_listener mqo_serve_tcp( mqo_integer port ){
     addr.sin_addr.s_addr = htonl( INADDR_ANY );
     addr.sin_port = htons( port );
 
-    int server_fd = mqo_net_error( socket( AF_INET, SOCK_STREAM, IPPROTO_TCP ) );
+    int server_fd = mqo_net_error( socket( AF_INET, SOCK_STREAM, 
+                                           IPPROTO_TCP ) );
     mqo_net_error( bind( server_fd, (struct sockaddr*)&addr, sizeof( addr ) ) );
     mqo_net_error( listen( server_fd, 5 ) ); 
     mqo_unblock_socket( server_fd );    
@@ -123,50 +216,75 @@ mqo_listener mqo_serve_tcp( mqo_integer port ){
     return mqo_make_listener( server_name, server_fd );
 }
 
-mqo_descr mqo_first_listening = NULL;
+mqo_descr mqo_first_dispatching = NULL;
 
-void mqo_poll_descr( mqo_descr descr ){
-    static char buffer[ BUFSIZ ];
-    
-    mqo_value result;
-    mqo_integer rs;
-    mqo_type type;
-    
-    if( descr->type == MQO_LISTENER ){
-        struct sockaddr_storage addr;
-        mqo_long len = sizeof( addr );
-        rs = accept( descr->fd, (struct sockaddr*)&addr, &len);
-        type = mqo_listener_type;
-        if( rs == -1 && errno == MQO_EWOULDBLOCK )return;
-        mqo_unblock_socket( rs );
-        mqo_string name = mqo_string_fs( "tcp-incoming" );
-        result = mqo_vf_socket( mqo_make_socket( name, rs ) );
+void mqo_write_event( mqo_descr descr ){
+    mqo_buffer buffer = descr->write_data;
+    const char* data = mqo_buffer_head( buffer );
+    mqo_word datalen = mqo_buffer_length( buffer );
+
+    if( descr->type == MQO_SOCKET ){
+        datalen = mqo_net_error( send( descr->fd, data, datalen, 0 ) );
     }else{
-        if( descr->type == MQO_SOCKET ){
-            rs = recv( descr->fd, buffer, BUFSIZ, 0 );
-            type = mqo_socket_type;
-        }else{
-            rs = read( descr->fd, buffer, BUFSIZ );
-            type = mqo_console_type;
-        };
-
-        if( rs == -1 ){
-            if( errno == MQO_EWOULDBLOCK ){
-                return;
-            }else{
-                mqo_report_net_error( );
-            }
-        }else if( rs == 0 ){
-            // POSIX specifies that a terminal read or recv has size 0.
-            mqo_close( descr );
-            return;
-        }else{
-            result = mqo_vf_string( mqo_string_fm( buffer, rs ) );
-        }
+        datalen = mqo_net_error( write( descr->fd, data, datalen ) );
     }
- 
-    mqo_resume( descr->monitor, result );
-    mqo_stop_listening( descr );
+
+    mqo_skip_buffer( buffer, datalen );
+
+    /* Death is slow, but death is sure.. */
+    if( mqo_buffer_empty( buffer ) )mqo_stop_writing( descr );
+}
+void mqo_read_descr_event( mqo_descr descr ){
+    static char data[ BUFSIZ ];
+    mqo_word datalen;
+
+    if( descr->type == MQO_SOCKET ){
+        datalen = recv( descr->fd, data, BUFSIZ, 0 );
+    }else{
+        datalen = read( descr->fd, data, BUFSIZ );
+    }
+
+    if( datalen == 0 ){
+        //TODO: WRONG;
+        descr->closed = 1;
+        descr->read_mt( descr );
+    }else if( datalen > 0 ){
+        mqo_expand_buffer( descr->read_data, datalen );
+        mqo_write_buffer( descr->read_data, data, datalen );
+        descr->read_mt( descr );
+    }else if( errno == MQO_EWOULDBLOCK ){
+        // WIN32 and other OS's do not guarantee that a read event means that
+        // the socket can actually be read -- EAGAIN / EWOULDBLOCK in this
+        // context means "Gee, our select implementation sucks."
+        return;
+    }else if( descr->type == MQO_SOCKET ){
+        mqo_report_net_error( );
+    }else{
+        mqo_report_os_error( );
+    }
+}
+void mqo_read_listener_event( mqo_descr descr ){
+    struct sockaddr_storage addr;
+    socklen_t len = sizeof( addr );
+
+    int fd = accept( descr->fd, (struct sockaddr*)&addr, &len );
+
+    if( fd == -1 ){
+        if( errno == MQO_EWOULDBLOCK )return;
+        // As in mqo_read_descr_event, select sometimes liiiiiies.
+    }else{
+        mqo_unblock_socket( fd );
+        mqo_string name = mqo_string_fs( "tcp-incoming" );
+        mqo_resume( descr->monitor, 
+                    mqo_vf_socket( mqo_make_socket( name, fd ) ) );
+    }
+}
+void mqo_read_event( mqo_descr descr ){
+    if( descr->type == MQO_LISTENER ){
+        mqo_read_listener_event( descr );
+    }else{
+        mqo_read_descr_event( descr );
+    }
 }
 
 int mqo_dispatch_monitors_once( ){
@@ -175,12 +293,14 @@ int mqo_dispatch_monitors_once( ){
     //      that have not completed connection for WRITE.
 
     struct timeval *timeout;
-    struct fd_set reads, errors;
+    struct fd_set reads, writes, errors;
     mqo_descr descr, next;
     int fd, maxfd;
 
     FD_ZERO( &reads );
+    FD_ZERO( &writes );
     FD_ZERO( &errors );
+
     maxfd = -1;
 
     if( mqo_first_process ){
@@ -192,18 +312,25 @@ int mqo_dispatch_monitors_once( ){
         timeout = NULL;
     }
     
-    descr = mqo_first_listening;
+    descr = mqo_first_dispatching;
     while( descr ){
         next = descr->next;
 #ifdef _WIN32
         if( descr->type == MQO_CONSOLE ){
-            mqo_poll_descr( descr );   
+            mqo_read_event( descr );
         }else{
 #endif
             fd = descr->fd;
             if( fd > maxfd ) maxfd = fd;
-            FD_SET( fd, &reads );
-            FD_SET( fd, &errors );
+
+            if( mqo_is_reading( descr ) || mqo_is_listening( descr ) ){
+                FD_SET( fd, &reads );
+                FD_SET( fd, &errors );
+            };
+
+            if( mqo_is_writing( descr ) ){
+                FD_SET( fd, &writes );
+            };
 #ifdef _WIN32
         }
 #endif
@@ -211,18 +338,23 @@ int mqo_dispatch_monitors_once( ){
     }
     
     if( maxfd >= 0 ){
-        maxfd = select( maxfd + 1, &reads, NULL, &errors, timeout ); 
+        maxfd = select( maxfd + 1, &reads, &writes, &errors, timeout ); 
 
-        descr = mqo_first_listening;
+        descr = mqo_first_dispatching;
         while( descr ){
             next = descr->next;
 #ifdef _WIN32
             if( descr->type != MQO_CONSOLE ){
 #endif
                 fd = descr->fd;
+
                 if( FD_ISSET( fd, &reads ) || FD_ISSET( fd, &errors ) ){ 
-                    mqo_poll_descr( descr );
-                }
+                    mqo_read_event( descr );
+                };
+
+                if( FD_ISSET( fd, &writes ) ){
+                    mqo_write_event( descr );
+                };
 #ifdef _WIN32
             }
 #endif
@@ -230,8 +362,9 @@ int mqo_dispatch_monitors_once( ){
         }
     }
 }
+
 int mqo_dispatch_monitors( ){
-    while( mqo_first_listening ){
+    while( mqo_first_dispatching ){
         mqo_dispatch_monitors_once( );
         if( mqo_first_process )return 1;
     }
@@ -240,14 +373,11 @@ int mqo_dispatch_monitors( ){
 
 void mqo_close( mqo_descr descr ){
     if( descr->closed )return;
-   
-    //TODO: Are we sure about this?
-    if( descr->monitor ){
-        mqo_resume( descr->monitor, mqo_vf_false() );
-        mqo_stop_listening( descr );
-    }
-    
     if( descr->type == MQO_CONSOLE )return;
+   
+    if( descr->monitor )mqo_resume( descr->monitor, mqo_vf_false( ) );
+    if( descr->dispatch )mqo_stop_dispatching( descr );
+
     descr->closed = 1;
 #ifdef _WIN32
     if( descr->type != MQO_FILE ){
@@ -358,4 +488,57 @@ mqo_listener mqo_make_listener( mqo_string path, int fd ){
 }
 mqo_console mqo_make_console( mqo_string path ){
     return mqo_make_descr( path, 0, MQO_CONSOLE );
+}
+void mqo_read_data_mt( mqo_descr descr ){
+    if( descr->closed && !( mqo_buffer_length( descr->read_data ) ) ){ 
+        mqo_resume( descr->monitor, mqo_vf_false() );
+    }
+
+    mqo_integer datalen = BUFSIZ;
+    char *data = mqo_read_buffer( descr->read_data, &datalen );
+    mqo_resume( descr->monitor, 
+                mqo_vf_string( mqo_string_fm( data, datalen ) ) );
+}
+void mqo_read_all_mt( mqo_descr descr ){
+    if( ! descr->closed ){
+        return;
+    }else if( mqo_buffer_length( descr->read_data ) ){
+        mqo_integer datalen = 1 << 30;
+        char *data = mqo_read_buffer( descr->read_data, &datalen );
+        mqo_resume( descr->monitor, 
+                mqo_vf_string( mqo_string_fm( data, datalen ) ) );
+    }else{
+        mqo_resume( descr->monitor, mqo_vf_false() );
+    }
+
+}
+void mqo_read_byte_mt( mqo_descr descr ){
+    if( descr->closed && !( mqo_buffer_length( descr->read_data ) ) ){ 
+        mqo_resume( descr->monitor, mqo_vf_false() );
+    }
+
+    mqo_integer datalen = sizeof( mqo_byte );
+    if( mqo_buffer_length( descr->read_data ) < datalen )return;
+    mqo_byte *data = mqo_read_buffer( descr->read_data, &datalen );
+    mqo_resume( descr->monitor, mqo_vf_integer( *data ) );
+}
+void mqo_read_word_mt( mqo_descr descr ){
+    if( descr->closed && !( mqo_buffer_length( descr->read_data ) ) ){ 
+        mqo_resume( descr->monitor, mqo_vf_false() );
+    }
+
+    mqo_integer datalen = sizeof( mqo_word );
+    if( mqo_buffer_length( descr->read_data ) < datalen )return;
+    mqo_word *data = mqo_read_buffer( descr->read_data, &datalen );
+    mqo_resume( descr->monitor, mqo_vf_integer( ntohs( *data ) ) );
+}
+void mqo_read_quad_mt( mqo_descr descr ){
+    if( descr->closed && !( mqo_buffer_length( descr->read_data ) ) ){ 
+        mqo_resume( descr->monitor, mqo_vf_false() );
+    }
+
+    mqo_integer datalen = sizeof( mqo_long );
+    if( mqo_buffer_length( descr->read_data ) < datalen )return;
+    mqo_long *data = mqo_read_buffer( descr->read_data, &datalen );
+    mqo_resume( descr->monitor, mqo_vf_integer( ntohl( *data ) ) );
 }

@@ -239,12 +239,25 @@
         closed? close read write *console-port* newline read-all 
         read-lines read-exprs <port> make-port port?)
 
-(define-class file-port <port>
-              (make-file-port read-fn write-fn close-fn descr)
-              file-port?
-              (descr file-port-descr))
+(define-class descr-port <port>
+              (make-descr-port read-fn write-fn close-fn descr)
+              descr-port?
+              (descr port-descr))
 
-(export <file-port> make-file-port file-port? file-port-descr)
+(define (descr-input-port? value)
+  (and (descr-port? value) (port-read-fn value)))
+
+(define (descr-output-port? value)
+  (and (descr-port? value) (port-write-fn value)))
+
+(export <descr-port> make-descr-port descr-port? port-descr descr-input-port? 
+        descr-output-port?)
+
+(define-class file-port <descr-port>
+              (make-file-port read-fn write-fn close-fn descr)
+              file-port?)
+
+(export <file-port> make-file-port file-port?)
 
 ;;; Stripped in functionality, but R5RS compliant.
 (define (open-output-file path)
@@ -261,14 +274,14 @@
 (define (file-output-port? value)
   (and (file-port? value) (port-write-fn value)))
 
-(define (write-byte byte (<file-port> port))
-  (write-file-byte (file-port-descr port) byte))
+(define (write-byte byte (<descr-port> port))
+  (write-descr-byte (port-descr port) byte))
 
-(define (write-word word (<file-port> port))
-  (write-file-word (file-port-descr port) word))
+(define (write-word word (<descr-port> port))
+  (write-descr-word (port-descr port) word))
 
-(define (write-quad quad (<file-port> port))
-  (write-file-quad (file-port-descr port) quad))
+(define (write-quad quad (<descr-port> port))
+  (write-descr-quad (port-descr port) quad))
 
 (export open-output-file write-word write-quad write-byte file-input-port? 
         file-output-port?)
@@ -282,11 +295,12 @@
                   (lambda (p) (close-descr descr))
                   descr))
 
-(define (read-all (<file-port> input-port))
-  (read-file-all (file-port-descr input-port)))
+;;; TODO: Implement for connections.
+(define (read-all (<descr-port> input-port))
+  (read-descr-all (port-descr input-port)))
 
-(define (closed? (<file-port> port))
-  (descr-closed? (file-port-descr port)))
+(define (closed? (<descr-port> port))
+  (descr-closed? (port-descr port)))
 
 (export open-input-file read-all closed?)
 

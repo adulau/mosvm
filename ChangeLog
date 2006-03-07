@@ -4,28 +4,33 @@
   + Any reference to an identifier not bound in builtins, imports is identified
     during compilation as an error.
 
-- ?/??/???, Buffers in the Dispatch Loop
-  + Altered write to suspend when writing to socket descriptors, much like
-    read.
-  + Extended dispatcher to handle writes.
-  + Extended descriptors with write buffers.
-  + Added checks to write-descr-byte / word / quad; buffer too for range.
-    REQ_BYTE_ARG
-  + mqo_cycle_process added, which cycles the current process out of operation,
-    advances the registers to the next process, then does a nonlocal exit.
-  + mqo_cycle_process performs montior dispatch when it hits the end of the
-    schedule.
-  + mqo_process contains a field, monitoring, indicating if a process is
-    blocked monitoring a descriptor.
-  + mqo_halt will clear the monitor of a process.
-  + the suspend primitive will report an error if it attempts to suspend
-    a process that is monitoring.
-
 - ?/??/????, Night of the Long Knives
   + lib/core broken out into smaller modules.
   + manifest used to glue a binary capable of executing the repl.
 
-- ?/??/????, Phase Four of the Module System, Phase Three of the Macro System
+- 1/07/2006, Buffers in the Dispatch Loop
+  * Altered mqo_halt to identify reading processes and remove their
+    descriptor from the reading state
+  * Extended processes with a reading field that refers to a descriptor which
+    caused the process to suspend while reading.
+  * Extended descriptors with write buffers that may be used to asynchronously
+    respond to writable events by feeding data out of the write buffer.
+  * Extended descriptors with read buffers that are filled whenever a 
+    dispatched descriptor signals that it is readable, and a read method
+    function that will parse the read data on behalf of a suspended monitor
+    process.
+  * Altered write-descr to buffer data written to 
+  * Renamed write-file-byte to write-descr-byte, and altered it to use the
+    write buffer when writing to sockets.
+  * Renamed write-file-word to write-descr-word, and altered it to use the
+    write buffer when writing to sockets.
+  * Renamed write-file-quad to write-descr-quad, and altered it to use the
+    write buffer when writing to sockets.
+  * Replaced read-file-all with read-descr-all
+  * Added checks to write-descr-byte / word / quad for range, using 
+    REQ_BYTE_ARG, REQ_WORD_ARG and REQ_QUAD_ARG.
+
+- 2/28/2006, Phase Four of the Module System, Phase Three of the Macro System
   * Fixed a bug with parse.c that would cause the parser to loop indefinitely
     on encountering an unmatched ")".
   * Fixed a bug with parse.c that would cause a bogus OS error to be thrown

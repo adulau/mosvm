@@ -26,7 +26,6 @@
 
 (module "lib/test")
 
-
 (define *spot-test?* #f)
 (define *spot-s* #f)
 (define *spot-v* #f)

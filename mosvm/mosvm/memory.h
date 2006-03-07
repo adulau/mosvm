@@ -222,6 +222,7 @@ MQO_BEGIN_TYPE( process )
     mqo_symbol status;
     mqo_vmstate state;
     mqo_value input, output;
+    void *reading; //TODO: This should be mqo_descr; sigh
 MQO_END_TYPE( process )
 
 MQO_BEGIN_TYPE( error )
@@ -241,87 +242,6 @@ MQO_TYPE_INLINES( boolean );
 MQO_DECL_TYPE( tc );
 typedef mqo_pair mqo_tc;
 MQO_TYPE_INLINES( tc );
-
-#define MQO_CONSOLE 0
-#define MQO_LISTENER 1
-#define MQO_SOCKET 2
-#define MQO_FILE 3
-
-MQO_BEGIN_TYPE( descr )
-    unsigned int type:2;
-    unsigned int closed:1;
-    
-    mqo_descr next, prev;
-    mqo_string name;
-    mqo_integer fd;
-    mqo_process monitor;
-    mqo_value result;
-};
-mqo_descr mqo_descr_fv( mqo_value v );
-mqo_value mqo_vf_descr( mqo_descr d );
-mqo_boolean mqo_is_descr( mqo_value v );
-mqo_descr mqo_req_descr( mqo_value v, const char* w );
-mqo_descr mqo_req_sub_descr( mqo_value v, const char* w );
-
-MQO_DECL_TYPE( socket );
-typedef mqo_descr mqo_socket;
-static inline mqo_boolean mqo_is_socket( mqo_value v ){
-    return mqo_value_type( v ) == mqo_socket_type;
-}
-static inline mqo_value mqo_vf_socket( mqo_socket x ){
-    return (mqo_value){ mqo_socket_type, (mqo_integer)x };
-};
-static inline mqo_socket mqo_socket_fv( mqo_value value ){
-    assert( value.type == mqo_socket_type );
-    return (mqo_socket)(value.data);
-};
-mqo_socket mqo_req_socket( mqo_value v, const char* w );
-mqo_socket mqo_req_sub_socket( mqo_value v, const char* w );
-
-MQO_DECL_TYPE( listener );
-typedef mqo_descr mqo_listener;
-static inline mqo_boolean mqo_is_listener( mqo_value v ){
-    return mqo_value_type( v ) == mqo_listener_type;
-}
-static inline mqo_value mqo_vf_listener( mqo_listener x ){
-    return (mqo_value){ mqo_listener_type, (mqo_integer)x };
-};
-static inline mqo_listener mqo_listener_fv( mqo_value value ){
-    assert( value.type == mqo_listener_type );
-    return (mqo_listener)(value.data);
-};
-mqo_listener mqo_req_listener( mqo_value v, const char* w );
-mqo_listener mqo_req_sub_listener( mqo_value v, const char* w );
-
-MQO_DECL_TYPE( console );
-typedef mqo_descr mqo_console;
-static inline mqo_boolean mqo_is_console( mqo_value v ){
-    return mqo_value_type( v ) == mqo_console_type;
-}
-static inline mqo_value mqo_vf_console( mqo_console x ){
-    return (mqo_value){ mqo_console_type, (mqo_integer)x };
-};
-static inline mqo_console mqo_console_fv( mqo_value value ){
-    assert( value.type == mqo_console_type );
-    return (mqo_console)(value.data);
-};
-mqo_console mqo_req_console( mqo_value v, const char* w );
-mqo_console mqo_req_sub_console( mqo_value v, const char* w );
-
-MQO_DECL_TYPE( file );
-typedef mqo_descr mqo_file;
-static inline mqo_boolean mqo_is_file( mqo_value v ){
-    return mqo_value_type( v ) == mqo_file_type;
-}
-static inline mqo_value mqo_vf_file( mqo_file x ){
-    return (mqo_value){ mqo_file_type, (mqo_integer)x };
-};
-static inline mqo_file mqo_file_fv( mqo_value value ){
-    assert( value.type == mqo_file_type );
-    return (mqo_file)(value.data);
-};
-mqo_file mqo_req_file( mqo_value v, const char* w );
-mqo_file mqo_req_sub_file( mqo_value v, const char* w );
 
 typedef mqo_value (*mqo_key_fn) (mqo_value);
 
@@ -395,11 +315,6 @@ mqo_guard mqo_make_guard( mqo_value fn, mqo_integer ri, mqo_integer si, mqo_prog
 mqo_closure mqo_make_closure( mqo_program cp, mqo_instruction ip, mqo_pair ep );
 mqo_vector mqo_make_vector( mqo_integer length );
 mqo_program mqo_make_program( mqo_integer length );
-mqo_descr mqo_make_descr( mqo_string path, int fd, mqo_byte type );
-mqo_socket mqo_make_socket( mqo_string path, int fd );
-mqo_file mqo_make_file( mqo_string path, int fd );
-mqo_listener mqo_make_listener( mqo_string path, int fd );
-mqo_console mqo_make_console( mqo_string path );
 
 static inline mqo_integer mqo_vector_length( mqo_vector v ){ 
     return v->length; 
