@@ -378,13 +378,19 @@ int mqo_dispatch_monitors( ){
 void mqo_close( mqo_descr descr ){
     if( descr->closed )return;
     if( descr->type == MQO_CONSOLE )return;
-   
-    if( descr->monitor )mqo_resume( descr->monitor, mqo_vf_false( ) );
-    if( descr->dispatch )mqo_stop_dispatching( descr );
-
+ 
     descr->closed = 1;
+
+    if( descr->dispatch ){
+        mqo_stop_dispatching( descr );
+        
+        if( descr->monitor ){
+            descr->read_mt( descr );
+        }
+    }
+
 #ifdef _WIN32
-    if( descr->type != MQO_FILE ){
+    if(( descr->type == MQO_SOCKET )||( descr->type == MQO_LISTENER )){
         mqo_net_error( closesocket( descr->fd ) );
         return;
     }
