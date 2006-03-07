@@ -909,6 +909,14 @@ MQO_BEGIN_PRIM( "getcwd", getcwd )
     };
 MQO_END_PRIM( getcwd )
 
+MQO_BEGIN_PRIM( "chdir", chdir )
+    REQ_STRING_ARG( path )
+    NO_MORE_ARGS( );
+    
+    mqo_os_error( chdir( mqo_sf_string( path ) ) );
+    MQO_NO_RESULT( );
+MQO_END_PRIM( chdir )
+
 MQO_BEGIN_PRIM( "argv", argv )
     OPT_INTEGER_ARG( ix );
     NO_MORE_ARGS( );
@@ -2030,6 +2038,7 @@ void mqo_bind_core_prims( ){
 
     MQO_BIND_PRIM( thaw );
     MQO_BIND_PRIM( getcwd );
+    MQO_BIND_PRIM( chdir );
     MQO_BIND_PRIM( argv );
     MQO_BIND_PRIM( argc );
 

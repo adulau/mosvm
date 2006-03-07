@@ -131,6 +131,18 @@ MQO_END_PRIM( file_len )
 //TODO: read-descr-word
 //TODO: read-descr-quad
 
+void mqo_async_read( mqo_descr descr, mqo_read_mt read_mt ){
+    mqo_value r = mqo_start_reading( descr, MQO_PP, read_mt );
+    mqo_drop_ds( mqo_pop_int_ds() );
+
+    if( mqo_is_void( r ) ){
+        mqo_return( );
+        MQO_SUSPEND( );
+    }else{
+        mqo_push_ds( r );
+    };
+}
+
 MQO_BEGIN_PRIM( "read-descr", read_descr )
     REQ_DESCR_ARG( descr );
     NO_MORE_ARGS( );
@@ -150,10 +162,8 @@ MQO_BEGIN_PRIM( "read-descr", read_descr )
         mqo_errf( mqo_es_vm, "s", 
                   "another object is waiting on descriptor" );
     }else{
-        mqo_start_reading( descr, MQO_PP, mqo_read_data_mt );
-        mqo_drop_ds( 2 );
-        mqo_return( );
-        MQO_SUSPEND( );
+        mqo_async_read( descr, mqo_read_data_mt );
+        return;
     }
 MQO_END_PRIM( read_descr )
 
@@ -176,7 +186,8 @@ MQO_BEGIN_PRIM( "read-descr-all", read_descr_all )
         data->length = len;
         MQO_RESULT( mqo_vf_string( data ) );
     }else if( descr->type == MQO_SOCKET ){
-        mqo_start_reading( descr, MQO_PP, mqo_read_all_mt );
+        mqo_async_read( descr, mqo_read_all_mt );
+        return;
     }else{
         mqo_errf( mqo_es_os, "s", 
                   "only sockets and files permit read-descr-all" );

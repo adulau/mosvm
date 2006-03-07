@@ -114,21 +114,29 @@ void mqo_write_descr( mqo_descr descr, const void* data, mqo_integer datalen ){
     }
 }
 
-void mqo_start_reading( mqo_descr descr, mqo_process monitor, 
-                        mqo_read_mt read_mt 
+mqo_value mqo_start_reading( mqo_descr descr, mqo_process monitor, 
+                             mqo_read_mt read_mt 
 ){
-    assert( ! mqo_is_reading( descr ) );
-    assert( monitor->reading == NULL );
+    mqo_value r = mqo_make_void( );
 
-    if( ( descr->type != MQO_LISTENER )&&( descr->read_data == NULL ) ){
+    if( ( descr->type == MQO_LISTENER ) ){
+    }else if( descr->read_data == NULL ){
         descr->read_data = mqo_make_buffer( BUFSIZ );
+    }else if( ! mqo_buffer_empty( descr->read_data ) ){
+        r = read_mt( descr );
+    }
+
+    if( mqo_is_void( r ) && monitor ){
+        assert( monitor->reading == NULL );
+
+        descr->read_mt = read_mt;
+        descr->monitor = monitor;
+        monitor->reading = descr;
+
+        if( ! mqo_in_dispatch( descr ) )mqo_start_dispatching( descr );
     };
 
-    descr->monitor = monitor;
-    descr->read_mt = read_mt;
-    monitor->reading = descr;
-
-    if( ! mqo_in_dispatch( descr ) )mqo_start_dispatching( descr );
+    return r;
 }
 
 void mqo_start_writing( mqo_descr descr, const char* data, 
@@ -236,7 +244,7 @@ void mqo_write_event( mqo_descr descr ){
 }
 void mqo_read_descr_event( mqo_descr descr ){
     static char data[ BUFSIZ ];
-    mqo_word datalen;
+    mqo_integer datalen;
 
     if( descr->type == MQO_SOCKET ){
         datalen = recv( descr->fd, data, BUFSIZ, 0 );
@@ -244,18 +252,23 @@ void mqo_read_descr_event( mqo_descr descr ){
         datalen = read( descr->fd, data, BUFSIZ );
     }
 
-    if( datalen == 0 ){
-        descr->closed = 1;
+    if( datalen >= 0 ){
+        if( datalen == 0 ){
+            descr->closed = 1;
+        }else{
+            mqo_expand_buffer( descr->read_data, datalen );
+            mqo_write_buffer( descr->read_data, data, datalen );
+        };
 
         if( descr->monitor ){ 
-            descr->read_mt( descr ); 
+            mqo_value r = descr->read_mt( descr ); 
+
+            if( ! mqo_is_void( r ) ){
+                mqo_resume( descr->monitor, r );
+            }
         }else{ 
             mqo_stop_dispatching( descr );
         };
-    }else if( datalen > 0 ){
-        mqo_expand_buffer( descr->read_data, datalen );
-        mqo_write_buffer( descr->read_data, data, datalen );
-        descr->read_mt( descr );
     }else if( errno == MQO_EWOULDBLOCK ){
         // WIN32 and other OS's do not guarantee that a read event means that
         // the socket can actually be read -- EAGAIN / EWOULDBLOCK in this
@@ -378,16 +391,20 @@ int mqo_dispatch_monitors( ){
 void mqo_close( mqo_descr descr ){
     if( descr->closed )return;
     if( descr->type == MQO_CONSOLE )return;
- 
+
     descr->closed = 1;
 
     if( descr->dispatch ){
         mqo_stop_dispatching( descr );
         
         if( descr->monitor ){
-            descr->read_mt( descr );
+            mqo_value r = descr->read_mt( descr );
+            if( ! mqo_is_void( r ) ){ mqo_resume( descr->monitor, r ); }
         }
     }
+
+    descr->dispatch = 0;
+    descr->monitor = NULL;
 
 #ifdef _WIN32
     if(( descr->type == MQO_SOCKET )||( descr->type == MQO_LISTENER )){
@@ -499,60 +516,54 @@ mqo_listener mqo_make_listener( mqo_string path, int fd ){
 mqo_console mqo_make_console( mqo_string path ){
     return mqo_make_descr( path, 0, MQO_CONSOLE );
 }
-void mqo_read_data_mt( mqo_descr descr ){
-    if( descr->closed && !( mqo_buffer_length( descr->read_data ) ) ){ 
-        mqo_resume( descr->monitor, mqo_vf_false() );
-        return;
-    }
+mqo_value mqo_read_data_mt( mqo_descr descr ){
+    if( mqo_buffer_empty( descr->read_data ) ){
+        return descr->closed ? mqo_make_void( ) 
+                             : mqo_vf_string( mqo_make_string( 0 ) );
+    }else{
+        mqo_integer datalen = BUFSIZ;
+        char *data = mqo_read_buffer( descr->read_data, &datalen );
 
-    mqo_integer datalen = BUFSIZ;
-    char *data = mqo_read_buffer( descr->read_data, &datalen );
-    mqo_resume( descr->monitor, 
-                mqo_vf_string( mqo_string_fm( data, datalen ) ) );
+        return datalen ? mqo_vf_string( mqo_string_fm( data, datalen ) )
+                       : mqo_make_void( );
+    };
 }
-void mqo_read_all_mt( mqo_descr descr ){
+mqo_value mqo_read_all_mt( mqo_descr descr ){
     if( ! descr->closed ){
-        return;
-    }else if( mqo_buffer_length( descr->read_data ) ){
+        return mqo_make_void( );
+    }else{
         mqo_integer datalen = 1 << 30;
         char *data = mqo_read_buffer( descr->read_data, &datalen );
-        mqo_resume( descr->monitor, 
-                mqo_vf_string( mqo_string_fm( data, datalen ) ) );
-    }else{
-        mqo_resume( descr->monitor, mqo_vf_false() );
-    }
 
+        return mqo_vf_string( mqo_string_fm( data, datalen ) );
+    }
 }
-void mqo_read_byte_mt( mqo_descr descr ){
-    if( descr->closed && !( mqo_buffer_length( descr->read_data ) ) ){ 
-        mqo_resume( descr->monitor, mqo_vf_false() );
-        return;
+mqo_value mqo_read_byte_mt( mqo_descr descr ){
+    if( mqo_buffer_length( descr->read_data ) >= 1 ){
+        mqo_integer datalen = 1;
+        mqo_byte *data = mqo_read_buffer( descr->read_data, &datalen );
+        return mqo_vf_integer( *data );
     }
-
-    mqo_integer datalen = sizeof( mqo_byte );
-    if( mqo_buffer_length( descr->read_data ) < datalen )return;
-    mqo_byte *data = mqo_read_buffer( descr->read_data, &datalen );
-    mqo_resume( descr->monitor, mqo_vf_integer( *data ) );
+    if( descr->closed )return mqo_vf_false( );
+    return mqo_make_void( );
 }
-void mqo_read_word_mt( mqo_descr descr ){
-    if( descr->closed && !( mqo_buffer_length( descr->read_data ) ) ){ 
-        mqo_resume( descr->monitor, mqo_vf_false() );
-        return;
-    }
 
-    mqo_integer datalen = sizeof( mqo_word );
-    if( mqo_buffer_length( descr->read_data ) < datalen )return;
-    mqo_word *data = mqo_read_buffer( descr->read_data, &datalen );
-    mqo_resume( descr->monitor, mqo_vf_integer( ntohs( *data ) ) );
+mqo_value mqo_read_word_mt( mqo_descr descr ){
+    if( mqo_buffer_length( descr->read_data ) >= 2 ){
+        mqo_integer datalen = 2;
+        mqo_word *data = mqo_read_buffer( descr->read_data, &datalen );
+        return mqo_vf_integer( ntohs( *data ) );
+    }
+    if( descr->closed )return mqo_vf_false( );
+    return mqo_make_void( );
 }
-void mqo_read_quad_mt( mqo_descr descr ){
-    if( descr->closed && !( mqo_buffer_length( descr->read_data ) ) ){ 
-        mqo_resume( descr->monitor, mqo_vf_false() );
-        return;
-    }
 
-    mqo_integer datalen = sizeof( mqo_long );
-    if( mqo_buffer_length( descr->read_data ) < datalen )return;
-    mqo_long *data = mqo_read_buffer( descr->read_data, &datalen );
-    mqo_resume( descr->monitor, mqo_vf_integer( ntohl( *data ) ) );
+mqo_value mqo_read_quad_mt( mqo_descr descr ){
+    if( mqo_buffer_length( descr->read_data ) >= 4 ){
+        mqo_integer datalen = 4;
+        mqo_long *data = mqo_read_buffer( descr->read_data, &datalen );
+        return mqo_vf_integer( ntohl( *data ) );
+    }
+    if( descr->closed )return mqo_vf_false( );
+    return mqo_make_void( );
 }

@@ -29,6 +29,11 @@
   * Replaced read-file-all with read-descr-all
   * Added checks to write-descr-byte / word / quad for range, using 
     REQ_BYTE_ARG, REQ_WORD_ARG and REQ_QUAD_ARG.
+  * Altered mqo_close to attempt a final read_mt for monitored descriptors.
+  * Added the chdir primitive to core.
+  + Added the substring primitive to core -- (substring string index length)
+  + Added the string-slice primitive to core -- (string-slice string length)
+  + Added the string-slice* primitive to core -- (string-slice* string length)
 
 - 2/28/2006, Phase Four of the Module System, Phase Three of the Macro System
   * Fixed a bug with parse.c that would cause the parser to loop indefinitely

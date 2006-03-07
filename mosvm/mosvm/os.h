@@ -27,7 +27,7 @@
 extern mqo_type mqo_descr_type;
 struct mqo_descr_data;
 typedef struct mqo_descr_data* mqo_descr;
-typedef void (*mqo_read_mt) (mqo_descr);
+typedef mqo_value (*mqo_read_mt) (mqo_descr);
 struct mqo_descr_data {
     unsigned int type:2;
     unsigned int closed:1;
@@ -70,8 +70,8 @@ mqo_integer mqo_resolve( mqo_string name );
 void mqo_start_dispatching( mqo_descr descr );
 void mqo_stop_dispatching( mqo_descr descr );
 
-void mqo_start_reading( mqo_descr descr, mqo_process monitor, 
-                        mqo_read_mt read_mt );
+mqo_value mqo_start_reading( mqo_descr descr, mqo_process monitor, 
+                             mqo_read_mt read_mt );
 void mqo_stop_reading( mqo_descr descr );
 
 void mqo_start_writing( mqo_descr descr, const char* data, 
@@ -86,11 +86,11 @@ void mqo_write_descr( mqo_descr descr, const void* data, mqo_integer datalen );
 void mqo_read_descr( mqo_descr descr, mqo_process monitor, 
                      mqo_read_mt read_mt );
 
-void mqo_read_all_mt( mqo_descr descr );
-void mqo_read_data_mt( mqo_descr descr );
-void mqo_read_byte_mt( mqo_descr descr );
-void mqo_read_word_mt( mqo_descr descr );
-void mqo_read_quad_mt( mqo_descr descr );
+mqo_value mqo_read_all_mt( mqo_descr descr );
+mqo_value mqo_read_data_mt( mqo_descr descr );
+mqo_value mqo_read_byte_mt( mqo_descr descr );
+mqo_value mqo_read_word_mt( mqo_descr descr );
+mqo_value mqo_read_quad_mt( mqo_descr descr );
 
 mqo_descr mqo_connect_tcp( mqo_integer addr, mqo_integer port );
 mqo_descr mqo_serve_tcp( mqo_integer port );
