@@ -21,6 +21,6 @@
 
 (define main
   (if *mosvm?* 
-    (mosc (cadr (argv)))
+    (begin (mosc (cadr (argv))) (exit 0))
     mosc))
 

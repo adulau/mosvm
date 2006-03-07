@@ -29,7 +29,7 @@ $(MOSVM): $(MOSC) $(GLUE)
 	sh bin/build-app.sh $(MOSVM_STUB) bin/mosvm $(MOSVM)
 
 %.mo: %.ms $(MOSC) 
-	$(MOSC) $< $@
+	$(MOSC) $<
 
 # We don't clean lib/*.mo, since we distribute a stock set of compiled
 # objects for systems without guile.

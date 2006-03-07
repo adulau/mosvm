@@ -24,15 +24,28 @@
 (import "lib/freeze")
 
 (define (mosc module)
-  (let ((src-file (string-append module ".ms"))
-        (dst-file (string-append module ".mo")))
-    (let ((data (read-lisp-file src-file)))
-      (set! data (compile data))
-      (set! data (optimize data))
-      (set! data (assemble data))
-      (set! data (freeze data))
-      (set! dst-file (open-output-file dst-file))
-      (write-data data dst-file)
-      (close-output-port dst-file))))
+  (define src-file #f)
+  (define dst-file #f)
+
+  (cond
+    ((string-ends-with? module ".ms")
+     (set! src-file module)
+     (set! module (string-head module (- (string-length module) 3))))
+    ((string-ends-with? module ".scm")
+     (set! src-file module)
+     (set! module (string-head module (- (string-length module) 4))))
+    (else
+      (set! src-file (string-append module ".ms"))))
+
+  (set! dst-file (string-append module ".mo"))
+
+  (let ((data (read-lisp-file src-file)))
+    (set! data (compile data))
+    (set! data (optimize data))
+    (set! data (assemble data))
+    (set! data (freeze data))
+    (set! dst-file (open-output-file dst-file))
+    (write-data data dst-file)
+    (close-output-port dst-file)))
 
 (export mosc)

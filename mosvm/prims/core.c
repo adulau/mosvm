@@ -545,6 +545,67 @@ MQO_BEGIN_PRIM( "string-length", string_length )
     MQO_RESULT( mqo_vf_integer( mqo_string_length( string ) ) );
 MQO_END_PRIM( string_length )
 
+MQO_BEGIN_PRIM( "substring", substring )
+    REQ_STRING_ARG( string );
+    REQ_INTEGER_ARG( index );
+    REQ_INTEGER_ARG( length );
+    NO_MORE_ARGS( );
+
+    const char* data = mqo_sf_string( string );
+    mqo_integer datalen = mqo_string_length( string );
+    
+    if( index < 0 ) mqo_errf( mqo_es_args, "s", "index must not be negative" );
+    if( index > datalen ) mqo_errf( mqo_es_args, "s", 
+                                    "index must be not exceed the string"
+                                    " length" );
+    if( length < 0 ) mqo_errf( mqo_es_args, "s", 
+                               "length must not be negative" );
+    if( length > datalen ) mqo_errf( mqo_es_args, "s", 
+                                    "length must be not exceed the string"
+                                    " length" );
+    if( (length + index) > datalen ){
+        mqo_errf( mqo_es_args, "s", 
+                  "the sum of index and length must not exceed the"
+                  " string length" 
+        );
+    }
+
+    MQO_RESULT( mqo_vf_string( mqo_string_fm( data + index, length ) ) );
+MQO_END_PRIM( substring )
+
+MQO_BEGIN_PRIM( "string-head", string_head )
+    REQ_STRING_ARG( string );
+    REQ_INTEGER_ARG( length );
+    NO_MORE_ARGS( );
+
+    const char* data = mqo_sf_string( string );
+    mqo_integer datalen = mqo_string_length( string );
+    
+    if( length < 0 ) mqo_errf( mqo_es_args, "s", 
+                               "length must not be negative" );
+    if( length > datalen ) mqo_errf( mqo_es_args, "s", 
+                                    "length must be not exceed the string"
+                                    " length" );
+    MQO_RESULT( mqo_vf_string( mqo_string_fm( data, length ) ) );
+MQO_END_PRIM( string_head )
+
+MQO_BEGIN_PRIM( "string-tail", string_tail )
+    REQ_STRING_ARG( string );
+    REQ_INTEGER_ARG( index );
+    NO_MORE_ARGS( );
+
+    const char* data = mqo_sf_string( string );
+    mqo_integer datalen = mqo_string_length( string );
+    mqo_integer length = datalen - index;
+
+    if( index < 0 ) mqo_errf( mqo_es_args, "s", 
+                               "index must not be negative" );
+    if( index > datalen ) mqo_errf( mqo_es_args, "s", 
+                                    "index must be not exceed the string"
+                                    " length" );
+    MQO_RESULT( mqo_vf_string( mqo_string_fm( data + index, length ) ) );
+MQO_END_PRIM( string_tail )
+
 MQO_BEGIN_PRIM( "string-ref", string_ref )
     REQ_STRING_ARG( string );
     REQ_INTEGER_ARG( index );
@@ -2139,6 +2200,10 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( write_buffer_quad );
     MQO_BIND_PRIM( read_buffer_quad );
     MQO_BIND_PRIM( dump_buffer );
+
+    MQO_BIND_PRIM( substring );
+    MQO_BIND_PRIM( string_head );
+    MQO_BIND_PRIM( string_tail );
 
     mqo_symbol_fs( "quark" )->value = mqo_make_quark( );
 }
