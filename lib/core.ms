@@ -225,7 +225,7 @@
 
 ;;; Reads a list of lines from a given port.
 (define (read-lines port) 
-  (split-lines (read-all input-port)))
+  (split-lines (read-all port)))
 
 ;;; Reads all the expressions from a given port.
 (define (read-exprs port)
