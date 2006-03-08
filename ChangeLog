@@ -4,10 +4,6 @@
   + Any reference to an identifier not bound in builtins, imports is identified
     during compilation as an error.
 
-- ?/??/????, Night of the Long Knives
-  + lib/core broken out into smaller modules.
-  + manifest used to glue a binary capable of executing the repl.
-
 - 1/07/2006, Buffers in the Dispatch Loop
   * Altered mqo_halt to identify reading processes and remove their
     descriptor from the reading state
