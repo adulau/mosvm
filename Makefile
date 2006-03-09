@@ -16,7 +16,10 @@ clean:
 clean-seed:
 	rm -f lib/*mo bin/*mo
 
-$(MOSVM_STUB): mosvm/*.[ch] mosvm/mosvm/*.[ch] mosvm/prims/*.[ch]
+$(LTC): crypt/* crypt/*/* crypt/*/*/*
+	cd $(ROOT)/crypt && $(MAKE)
+
+$(MOSVM_STUB): $(LTC) mosvm/*.[ch] mosvm/mosvm/*.[ch] mosvm/prims/*.[ch]
 	cd $(ROOT)/mosvm && $(MAKE)
 
 $(GLUE): mosvm/glue.c mosvm/mosvm/*.[ch]

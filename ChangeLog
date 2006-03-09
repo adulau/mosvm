@@ -4,6 +4,54 @@
   + Any reference to an identifier not bound in builtins, imports is identified
     during compilation as an error.
 
+- ?/??/????, Integration of the ??? block cipher from LibTomCrypt
+  * Added mqo_???_key type
+  * Added mqo_make_???_key( ???_key key )
+  * Added prims/???.c
+  * Added (generate-???-key key-size) -> ???-key
+  * Added (???-encrypt ???-key data-str) -> string
+  * Added (???-decrypt ???-key data-str) -> string
+  * Added (export-???-key ???-key) -> string
+  * Added (import-???-key string) -> ???-key
+  * Added (???-key? value) -> #t or #f
+
+- ?/??/????, Integration of the RSA asymmetric cipher from LibTomCrypt
+  * Added mqo_rsa_key type
+  * Added mqo_make_rsa_key( rsa_key key )
+  * Added prims/rsa.c
+  * Added (generate-rsa-key key-size) -> rsa-key
+  * Added (export-rsa-public rsa-key) -> string
+  * Added (export-rsa-private rsa-key) -> string
+  * Added (import-rsa key-str) -> rsa-key
+  * Added (rsa-public-encrypt rsa-key data-str) -> string
+  * Added (rsa-private-encrypt rsa-key data-str) -> string
+  * Added (rsa-public-decrypt rsa-key data-str) -> string 
+  * Added (rsa-key? value) -> #t or #f
+  * Added (rsa-private-key? value) -> #t or #f
+  * Added (rsa-public-key? value) -> #t or #f
+  * Added (encode-base64 string) -> string
+  * Added (decode-base64 string) -> string
+
+- 1/09/2006, Integration of LibTomCrypt
+  * Added libtomcrypt 1.0 to the source tree with some light modifications to
+    integrate with MOSVM.
+  * Added support for LTC's pseudorandom number generators and entropy
+    gathering routines.
+  * Added the <random> type.
+  * Added the make-random primitive.
+  * Added the add-entropy primitive.
+  * Added the random-string primitive.
+  * Added the random-quad primitive.
+  * Added the random-integer primitive.
+  * Added the random-algorithm primitive.
+  + Added the import-random primitive.
+  + Added the export-random primitive.
+
+- ?/??/????, Integration of Entropy from LibTomCrypt
+  * Added prims/entropy.c
+  * Added (gather-entropy count) -> string 
+  * Added (random max) -> integer
+
 - 1/07/2006, Buffers in the Dispatch Loop
   * Altered mqo_halt to identify reading processes and remove their
     descriptor from the reading state

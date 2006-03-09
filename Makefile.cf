@@ -1,8 +1,13 @@
 ifndef MQO_CFG_LOADED
-
 MQO_CFG_LOADED=1
 
-CFLAGS+=-std=gnu99
+# This must be first -- in case there's LTC in /usr/local/include.  If there's
+# LTC in /usr/include, well, we're fucked.
+
+CFLAGS += -I$(ROOT)/crypt/src/headers 
+CFLAGS += -std=gnu99
+HAS_DEVRANDOM=yes
+
 BUILD=$(ROOT)/build
 
 OS=$(shell uname)
@@ -31,32 +36,37 @@ endif
 ifeq ($(OS),Linux)
 # Tested on Debian.
 LIBGC=/usr/lib/libgc.a
-CPPFLAGS += -I/usr/include/gc -D_GNU_SOURCE
+CFLAGS += -I/usr/local/include -I/usr/include/gc -D_GNU_SOURCE
 CFLAGS += -pthread
 endif
 
 ifeq ($(OS),MinGW)
-CPPFLAGS += -I/mingw/include -DGC_WIN32_THREADS=1
+CFLAGS += -I/mingw/include -DGC_WIN32_THREADS=1
 
 LIBGC=/mingw/lib/libgc.a 
+LIBTC=/mingw/lib/libtomcrypt.a
 EXE=.exe
+HAS_DEVRANDOM=no
 endif
 
 ifeq ($(OS),Cygwin)
 CFLAGS += -mno-cygwin
-CPPFLAGS += -I/usr/local/include
+CFLAGS += -I/usr/local/include
 LIBGC=/usr/local/lib/libgc.a
+LIBTC=/usr/local/lib/libtomcrypt.a
 LIBS += -lwsock32
 EXE=.exe
+HAS_DEVRANDOM=no
 endif
 
 ifeq ($(OS),OpenBSD)
-CFLAGS += -fno-stack-protector
+CFLAGS += -fno-stack-protector -I/usr/local/include
 LIBGC=/usr/local/lib/libgc.a
+LIBTC=/usr/local/lib/libtomcrypt.a
 endif
 
 ifeq ($(OS),Darwin)
-CPPFLAGS += -I/opt/local/include -DNO_PARALLEL_GC
+CFLAGS += -I/opt/local/include -DNO_PARALLEL_GC
 LIBGC=/opt/local/lib/libgc.a
 endif
 
@@ -66,9 +76,14 @@ else
 CFLAGS+=-g 
 endif
 
+LIBTC=$(ROOT)/crypt/libtomcrypt.a
 MOSVM=$(BUILD)/bin/mosvm$(EXE)
 MOSVM_STUB=$(BUILD)/bin/mosvm-stub$(EXE)
 GLUE=$(BUILD)/bin/glue$(EXE)
 MOSC=$(BUILD)/bin/mosc$(EXE)
+
+ifeq ($(HAS_DEVRANDOM),yes)
+CFLAGS += -DDEVRANDOM
+endif
 
 endif

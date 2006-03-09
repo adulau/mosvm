@@ -155,6 +155,7 @@ void mqo_dump_stack( mqo_vector sv, mqo_integer si );
 void mqo_bind_core_prims();
 void mqo_bind_os_prims();
 void mqo_bind_progn_prims();
+void mqo_bind_crypto_prims();
 void mqo_init_exec_subsystem();
 
 extern mqo_symbol mqo_es_os;
