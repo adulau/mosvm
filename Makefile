@@ -16,8 +16,14 @@ clean:
 clean-seed:
 	rm -f lib/*mo bin/*mo
 
-$(MOSVM_STUB): mosvm/*.[ch] mosvm/mosvm/*.[ch] mosvm/prims/*.[ch]
+$(LTC): crypt/* crypt/*/* crypt/*/*/*
+	cd $(ROOT)/crypt && $(MAKE)
+
+$(MOSVM_STUB): $(LTC) mosvm/*.[ch] mosvm/mosvm/*.[ch] mosvm/prims/*.[ch]
 	cd $(ROOT)/mosvm && $(MAKE)
+
+kabuki-filter:
+	sh bin/build-app.sh $(MOSVM_STUB) examples/kabuki-filter build/bin/kabuki-filter$(EXE)
 
 $(GLUE): mosvm/glue.c mosvm/mosvm/*.[ch]
 	cd $(ROOT)/mosvm && $(MAKE)
