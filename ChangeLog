@@ -44,8 +44,8 @@
   * Added the random-quad primitive.
   * Added the random-integer primitive.
   * Added the random-algorithm primitive.
-  + Added the import-random primitive.
-  + Added the export-random primitive.
+  * Added the import-random primitive.
+  * Added the export-random primitive.
 
 - ?/??/????, Integration of Entropy from LibTomCrypt
   * Added prims/entropy.c

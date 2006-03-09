@@ -207,6 +207,30 @@ MQO_BEGIN_PRIM( "random-algorithm", random_algorithm )
     MQO_RESULT( mqo_vf_string( mqo_string_fs( random->descr->name ) ) );
 MQO_END_PRIM( random_algorithm )
 
+MQO_BEGIN_PRIM( "export-random", export_random )
+    OPT_RANDOM_ARG( random );
+    NO_MORE_ARGS( );
+    
+    static char data[ 1024 ];
+    unsigned long datalen = 1024;
+    mqo_crypto_err( random->descr->pexport( data, &datalen, &( random->state ) ) );
+
+    MQO_RESULT( mqo_vf_string( mqo_string_fm( data, datalen ) ) );
+MQO_END_PRIM( export_random )
+
+MQO_BEGIN_PRIM( "import-random", import_random )
+    REQ_STRING_ARG( algorithm );
+    REQ_STRING_ARG( data );
+    NO_MORE_ARGS( );
+    
+    int id = find_prng( mqo_sf_string( algorithm ) );
+    if( id == -1 ) mqo_errf( mqo_es_crypto, "s", "could not find prng" );
+
+    struct ltc_prng_descriptor* descr = prng_descriptor + id;
+    MQO_RESULT( mqo_vf_random( mqo_make_random( descr, mqo_sf_string( data ),
+                                                mqo_string_length( data ) ) ) );
+MQO_END_PRIM( import_random )
+
 void mqo_bind_crypto_prims( ){
     MQO_BEGIN_PRIM_BINDS( );
 
@@ -257,11 +281,10 @@ void mqo_bind_crypto_prims( ){
     MQO_BIND_PRIM( random_quad );
     MQO_BIND_PRIM( random_integer );
     MQO_BIND_PRIM( random_algorithm );
-/*
-    //TODO:
     MQO_BIND_PRIM( import_random );
     MQO_BIND_PRIM( export_random );
 
+/*
     //TODO:
     MQO_BIND_PRIM( make_key );
     MQO_BIND_PRIM( public_key );
