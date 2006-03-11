@@ -53,7 +53,6 @@ MQO_DEFN_TYPE2( "aes-key", aes_key )
 
 mqo_integer mqo_crypto_err( mqo_integer result ){
     if( result != CRYPT_OK ){
-    assert( 0 );
         mqo_errf( mqo_es_crypto, "s", error_to_string( result ) );
     }
     return result;
@@ -378,6 +377,34 @@ MQO_BEGIN_PRIM( "xor-string", xor_string )
     MQO_RESULT( mqo_vf_string( dst ) );
 MQO_END_PRIM( xor_string )
 
+MQO_BEGIN_PRIM( "base64-encode", base64_encode )
+    REQ_STRING_ARG( plaintext )
+    NO_MORE_ARGS( );
+
+    unsigned long pslen = mqo_string_length( plaintext );
+    unsigned long cslen = ( pslen << 2 ) / 3 + 5; 
+    mqo_string ciphertext = mqo_make_string( cslen );
+    mqo_crypto_err( base64_encode( mqo_sf_string( plaintext ), pslen,
+                                   ciphertext->data, &cslen ) );
+    ciphertext->length = cslen; 
+
+    MQO_RESULT( mqo_vf_string( ciphertext ) );
+MQO_END_PRIM( base64_encode )
+
+MQO_BEGIN_PRIM( "base64-decode", base64_decode )
+    REQ_STRING_ARG( ciphertext )
+    NO_MORE_ARGS( );
+
+    unsigned long cslen = mqo_string_length( ciphertext );
+    unsigned long pslen = ( cslen * 3 ) >> 2; 
+    mqo_string plaintext = mqo_make_string( pslen );
+    mqo_crypto_err( base64_decode( mqo_sf_string( ciphertext ), cslen,
+                                   plaintext->data, &pslen ) );
+    plaintext->length = pslen; 
+
+    MQO_RESULT( mqo_vf_string( plaintext ) );
+MQO_END_PRIM( base64_decode )
+
 void mqo_bind_crypto_prims( ){
     MQO_BEGIN_PRIM_BINDS( );
 
@@ -443,6 +470,8 @@ void mqo_bind_crypto_prims( ){
     MQO_BIND_PRIM( key_size )     // key
     MQO_BIND_PRIM( key_block_size ) // key
 
+    MQO_BIND_PRIM( base64_encode )
+    MQO_BIND_PRIM( base64_decode )
 /*
     //TODO:
     MQO_BIND_PRIM( make_key );
