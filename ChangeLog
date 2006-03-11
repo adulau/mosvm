@@ -5,14 +5,16 @@
     during compilation as an error.
 
 - ?/??/????, Filter Ports and Crypto Filters
-  
+  * Added the lib/filter module
+  * Added filter-output, filter-input and filter-port to lib/filter
+
 - 5/08/2006, Integration of ECDH cipher from LibTomCrypt
   * Added (random? value) -> #t or #f
   * Added mqo_ecdh_key subtype of mqo_key
   * Added (make-ecdh-key key-size data) -> ecdh-key
   * Added (import-ecdh data) -> ecdh-key
-  * Added (export-public-ecdh key type) -> string
-  * Added (export-private-ecdh key type) -> string
+  * Added (export-public-ecdh key) -> string
+  * Added (export-private-ecdh key) -> string
   * Added (ecdh-shared-secret local remote) -> string
   * Added (ecdh-key? value) -> #t or #f
   * Added (ecdh-public-key? value) -> #t or #f
