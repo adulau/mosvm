@@ -20,13 +20,16 @@
 
 #define OPT_RANDOM_ARG( nm ) OPT_TYPED_ARG( nm, random, mqo_default_random );
 #define REQ_AES_ARG( nm ) REQ_TYPED_ARG( nm, aes_key );
+#define REQ_ECDH_ARG( nm ) REQ_TYPED_ARG( nm, ecdh_key );
 
 MQO_BEGIN_TYPE( random )
     const struct ltc_prng_descriptor* descr;
     prng_state state;
+    int id;
 MQO_END_TYPE( random )
 
 mqo_symbol mqo_es_crypto = NULL;
+
 mqo_random mqo_default_random = NULL;
 
 void mqo_show_random( mqo_random random, mqo_word* ct ){
@@ -38,7 +41,6 @@ void mqo_show_random( mqo_random random, mqo_word* ct ){
 MQO_DEFN_TYPE( random )
 
 MQO_BEGIN_TYPE( aes_key )
-    const struct ltc_cipher_descriptor *descr;
     symmetric_key key;
     mqo_integer keysize;
 MQO_END_TYPE( aes_key )
@@ -50,6 +52,16 @@ void mqo_show_aes_key( mqo_aes_key key, mqo_word* ct ){
 }
 
 MQO_DEFN_TYPE2( "aes-key", aes_key )
+
+MQO_BEGIN_TYPE( ecdh_key )
+    ecc_key key;
+MQO_END_TYPE( ecdh_key )
+
+void mqo_show_ecdh_key( mqo_ecdh_key key, mqo_word* ct ){
+    mqo_write( "[ecdh-key]" );
+}
+
+MQO_DEFN_TYPE2( "ecdh-key", ecdh_key )
 
 mqo_integer mqo_crypto_err( mqo_integer result ){
     if( result != CRYPT_OK ){
@@ -114,16 +126,21 @@ mqo_integer mqo_random_integer( mqo_random random, mqo_integer min,
     return min + rnd % base;
 }
 
+mqo_ecdh_key mqo_make_ecdh_key( ){
+    mqo_ecdh_key key = MQO_ALLOC( mqo_ecdh_key, 0 );
+    return key;
+}
+
 mqo_aes_key mqo_make_aes_key( const void* keydata, int keylen, int keysize ){
     mqo_aes_key key = MQO_ALLOC( mqo_aes_key, 0 );
-    key->descr = &aes_desc;
     key->keysize = keysize;
     mqo_crypto_err( aes_setup( keydata, keylen, 0, &( key->key ) ) );  
     return key;
 }
 
-mqo_random mqo_make_random( const struct ltc_prng_descriptor* descr, const void* init, int initlen ){
+mqo_random mqo_make_random( const struct ltc_prng_descriptor* descr, const void* init, int initlen, int id ){
     mqo_random random = MQO_ALLOC( mqo_random, 0 );
+    random->id = id;
     random->descr = descr;
 
     // mqo_crypto_err( random->descr->start( &( random->state ) ) );
@@ -171,14 +188,20 @@ MQO_BEGIN_PRIM( "make-random", make_random )
     
     if( has_init ){
         rng = mqo_make_random( descr, mqo_sf_string( init ),
-                            mqo_string_length( init ) );
+                            mqo_string_length( init ), id );
     }else{    
-        rng = mqo_make_random( descr, NULL, 0 );
+        rng = mqo_make_random( descr, NULL, 0, id );
     }
 
     MQO_RESULT( mqo_vf_random( rng ) );
 MQO_END_PRIM( make_random )
 
+MQO_BEGIN_PRIM( "random?", randomq )
+    REQ_VALUE_ARG( value );
+    NO_MORE_ARGS( );
+
+    MQO_RESULT( mqo_vf_boolean( mqo_is_random( value ) ) );
+MQO_END_PRIM( randomq )
 MQO_BEGIN_PRIM( "add-entropy", add_entropy )
     REQ_STRING_ARG( entropy );
     OPT_RANDOM_ARG( random );
@@ -249,7 +272,8 @@ MQO_BEGIN_PRIM( "import-random", import_random )
 
     struct ltc_prng_descriptor* descr = prng_descriptor + id;
     MQO_RESULT( mqo_vf_random( mqo_make_random( descr, mqo_sf_string( data ),
-                                                mqo_string_length( data ) ) ) );
+                                                mqo_string_length( data ),
+                                                id) ) );
 MQO_END_PRIM( import_random )
 
 MQO_BEGIN_PRIM( "make-aes-key", make_aes_key )
@@ -299,7 +323,8 @@ MQO_BEGIN_PRIM( "aes-encrypt", aes_encrypt )
 
     int pslen = mqo_string_length( plaintext );
     if( pslen > 16 ){
-        mqo_errf( mqo_es_args, "s" "plaintext cannot be longer than 16 bytes" );
+        mqo_errf( mqo_es_args, "s", 
+                  "plaintext cannot be longer than 16 bytes" );
     }
     
     static char ps[16];
@@ -308,7 +333,7 @@ MQO_BEGIN_PRIM( "aes-encrypt", aes_encrypt )
     memcpy( ps, mqo_sf_string( plaintext ), pslen );
     if( pslen < 16 ) mqo_read_random( random, ps + pslen, 16 - pslen );
 
-    aes->descr->ecb_encrypt( ps, cs, &( aes->key ) );
+    aes_ecb_encrypt( ps, cs, &( aes->key ) );
 
     MQO_RESULT( mqo_vf_string( mqo_string_fm( cs, 16 ) ) );
 MQO_END_PRIM( aes_encrypt )
@@ -320,7 +345,7 @@ MQO_BEGIN_PRIM( "aes-decrypt", aes_decrypt )
 
     int cslen = mqo_string_length( ciphertext );
     if( cslen != 16 ){
-        mqo_errf( mqo_es_args, "s" "ciphertext must be 16 bytes" );
+        mqo_errf( mqo_es_args, "s", "ciphertext must be 16 bytes" );
     }
     
     static char ps[16];
@@ -328,7 +353,7 @@ MQO_BEGIN_PRIM( "aes-decrypt", aes_decrypt )
 
     memcpy( cs, mqo_sf_string( ciphertext ), cslen );
 
-    aes->descr->ecb_decrypt( cs, ps, &( aes->key ) );
+    aes_ecb_decrypt( cs, ps, &( aes->key ) );
 
     MQO_RESULT( mqo_vf_string( mqo_string_fm( ps, 16 ) ) );
 MQO_END_PRIM( aes_decrypt )
@@ -404,11 +429,99 @@ MQO_BEGIN_PRIM( "base64-decode", base64_decode )
     MQO_RESULT( mqo_vf_string( plaintext ) );
 MQO_END_PRIM( base64_decode )
 
+MQO_BEGIN_PRIM( "make-ecdh-key", make_ecdh_key )
+    REQ_INTEGER_ARG( keysize );
+    OPT_RANDOM_ARG( random );
+    NO_MORE_ARGS( );
+
+    mqo_ecdh_key key = mqo_make_ecdh_key( );
+    keysize = keysize / 8;
+
+    mqo_crypto_err( ecc_make_key( &( random->state ), random->id, 
+                                  keysize, &( key->key ) ) );
+    
+    MQO_RESULT( mqo_vf_ecdh_key( key ) );
+MQO_END_PRIM( make_ecdh_key );
+
+MQO_BEGIN_PRIM( "import-ecdh", import_ecdh )
+    REQ_STRING_ARG( data );
+    NO_MORE_ARGS( );
+
+    mqo_ecdh_key key = mqo_make_ecdh_key( );
+
+    mqo_crypto_err( ecc_import( mqo_sf_string( data ), 
+                                mqo_string_length( data ),
+                                &( key->key ) ) );
+
+    MQO_RESULT( mqo_vf_ecdh_key( key ) );
+MQO_END_PRIM( import_ecdh );
+
+MQO_BEGIN_PRIM( "export-public-ecdh", export_public_ecdh )
+    REQ_ECDH_ARG( key );
+    NO_MORE_ARGS( );
+
+    static char buf[ 1024 ];
+    unsigned long buflen = 1024;
+
+    mqo_crypto_err( ecc_export( buf, &buflen, PK_PUBLIC, &( key->key ) ) );
+
+    MQO_RESULT( mqo_vf_string( mqo_string_fm( buf, buflen ) ) );
+MQO_END_PRIM( export_public_ecdh )
+
+MQO_BEGIN_PRIM( "export-private-ecdh", export_private_ecdh )
+    REQ_ECDH_ARG( key );
+    NO_MORE_ARGS( );
+
+    static char buf[ 1024 ];
+    unsigned long buflen = 1024;
+
+    mqo_crypto_err( ecc_export( buf, &buflen, PK_PRIVATE, &( key->key ) ) );
+
+    MQO_RESULT( mqo_vf_string( mqo_string_fm( buf, buflen ) ) );
+MQO_END_PRIM( export_private_ecdh )
+
+MQO_BEGIN_PRIM( "ecdh-shared-secret", ecdh_shared_secret )
+    REQ_ECDH_ARG( local );
+    REQ_ECDH_ARG( remote );
+    NO_MORE_ARGS( );
+    
+    static char buf[ 1024 ];
+    unsigned long buflen = 1024;
+
+    mqo_crypto_err( ecc_shared_secret( &( local->key ), 
+                                       &( remote->key ), 
+                                       buf, &buflen ) );
+
+    MQO_RESULT( mqo_vf_string( mqo_string_fm( buf, buflen ) ) );
+MQO_END_PRIM( ecdh_shared_secret )
+
+MQO_BEGIN_PRIM( "ecdh-key?", ecdh_keyq )
+    REQ_VALUE_ARG( value )
+    NO_MORE_ARGS( );
+    
+    MQO_RESULT( mqo_vf_boolean( mqo_is_ecdh_key( value ) ) );
+MQO_END_PRIM( ecdh_keyq )
+
+MQO_BEGIN_PRIM( "ecdh-public-key?", ecdh_public_keyq )
+    REQ_VALUE_ARG( value )
+    NO_MORE_ARGS( );
+    
+    MQO_RESULT( mqo_vf_boolean( mqo_is_ecdh_key( value ) && ( mqo_ecdh_key_fv( value )->key.type == PK_PUBLIC ) ) );
+MQO_END_PRIM( ecdh_public_keyq )
+
+MQO_BEGIN_PRIM( "ecdh-private-key?", ecdh_private_keyq )
+    REQ_VALUE_ARG( value )
+    NO_MORE_ARGS( );
+    
+    MQO_RESULT( mqo_vf_boolean( mqo_is_ecdh_key( value ) && ( mqo_ecdh_key_fv( value )->key.type == PK_PRIVATE ) ) );
+MQO_END_PRIM( ecdh_private_keyq )
+
 void mqo_bind_crypto_prims( ){
     MQO_BEGIN_PRIM_BINDS( );
 
     MQO_BIND_TYPE( random, nil )
     MQO_BIND_TYPE2( "aes-key", aes_key, nil )
+    MQO_BIND_TYPE2( "ecdh-key", ecdh_key, nil )
 
     mqo_es_crypto = mqo_symbol_fs( "crypto" );
 
@@ -436,13 +549,11 @@ void mqo_bind_crypto_prims( ){
 
 // MOSREF stretches rare entropy bytes by the use of a default RANDOM.
 #if defined( FORTUNA )
-    mqo_default_random = mqo_make_random( &fortuna_desc, NULL, 0 );
+    int id = find_prng( "fortuna" );
+    mqo_default_random = mqo_make_random( &fortuna_desc, NULL, 0, id );
 #elif defined( YARROW )
-    mqo_default_random = mqo_make_random( &yarrow_desc, NULL, 0 );
-#elif defined( SOBER128 )
-    mqo_default_random = mqo_make_random( &sober128_desc, NULL, 0 );
-#elif defined( RC4 )
-    mqo_default_random = mqo_make_random( &rc4_desc, NULL, 0 );
+    int id = find_prng( "yarrow" );
+    mqo_default_random = mqo_make_random( &yarrow_desc, NULL, 0, id );
 #else
 #  error "Could not find a PRNG suitable for mqo_default_random."
 #endif
@@ -471,26 +582,16 @@ void mqo_bind_crypto_prims( ){
 
     MQO_BIND_PRIM( base64_encode )
     MQO_BIND_PRIM( base64_decode )
-/*
-    //TODO:
-    MQO_BIND_PRIM( make_key );
-    MQO_BIND_PRIM( public_key );
-    MQO_BIND_PRIM( private_key );
 
-    MQO_BIND_PRIM( keyq );
+    MQO_BIND_PRIM( randomq );
 
-    MQO_BIND_PRIM( symmetric_keyq );
-    MQO_BIND_PRIM( public_keyq );
-    MQO_BIND_PRIM( private_keyq );
-
-    //TODO: for block ciphers and rsa
-    MQO_BIND_PRIM( encrypt );
-    MQO_BIND_PRIM( decrypt );
+    MQO_BIND_PRIM( make_ecdh_key );
+    MQO_BIND_PRIM( import_ecdh );
+    MQO_BIND_PRIM( export_public_ecdh );
+    MQO_BIND_PRIM( export_private_ecdh );
+    MQO_BIND_PRIM( ecdh_shared_secret );
     
-    //TODO: for DH and ECDH systems
-    MQO_BIND_PRIM( shared_key );
-
-    //TODO: for hashes
-    MQO_BIND_PRIM( hash );
-*/
+    MQO_BIND_PRIM( ecdh_public_keyq );
+    MQO_BIND_PRIM( ecdh_keyq );
+    MQO_BIND_PRIM( ecdh_private_keyq );
 }

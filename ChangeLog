@@ -4,19 +4,24 @@
   + Any reference to an identifier not bound in builtins, imports is identified
     during compilation as an error.
 
-- ?/??/????, Integration of ECDH cipher from LibTomCrypt
-  (import-aes key-size (ecdh-shared drone-key console-key))
+- ?/??/????, Filter Ports and Crypto Filters
+  
+- 5/08/2006, Integration of ECDH cipher from LibTomCrypt
+  + t Added (random? value) -> #t or #f
+  + t Added mqo_ecdh_key subtype of mqo_key
+  + t Added (make-ecdh-key key-size data) -> ecdh-key
+  + t Added (import-ecdh data) -> ecdh-key
+  + t Added (export-public-ecdh key type) -> string
+  + t Added (export-private-ecdh key type) -> string
+  + t Added (ecdh-shared-secret local remote) -> string
+  + t Added (ecdh-key? value) -> #t or #f
+  + t Added (ecdh-public-key? value) -> #t or #f
+  + t Added (ecdh-private-key? value) -> #t or #f
+  + Added tests for AES, XOR, BASE64, ECDH to test/crypto
 
-  + Added mqo_ecdh_key subtype of mqo_key
-  + Added (generate-ecdh key-size random) -> ecdh-key
-  + Added (import-ecdh-public string) -> ecdh-key
-  + Added (import-ecdh-private string) -> ecdh-key
-  + Added (shared-ecdh-key my-key his-key) -> string
-
-- ?/??/????, Integration of AES cipher from LibTomCrypt
-  + Added mqo_key type
+- 5/07/2006, Integration of AES cipher from LibTomCrypt
   * Added mqo_aes_key subtype of mqo_key
-  * Added (make-aes-key key-size random) -> aes-key
+  * Added (make-aes-key key-size data) -> aes-key
   * Added (aes-key? value) -> #t or #f
   * Added (aes-encrypt aes-key plaintext random) -> ciphertext
   * Added (aes-decrypt aes-key ciphertext) -> plaintext
