@@ -28,6 +28,7 @@
     lib subdirectory.
   * Added (encode64 string) -> string
   * Added (decode64 string) -> string
+
 - 1/09/2006, Integration of LibTomCrypt
   * Added libtomcrypt 1.0 to the source tree with some light modifications to
     integrate with MOSVM.

@@ -316,11 +316,10 @@ MQO_END_PRIM( aes_encrypt )
 MQO_BEGIN_PRIM( "aes-decrypt", aes_decrypt )
     REQ_AES_ARG( aes );
     REQ_STRING_ARG( ciphertext );
-    OPT_RANDOM_ARG( random );
     NO_MORE_ARGS( );
 
     int cslen = mqo_string_length( ciphertext );
-    if( cslen > 16 ){
+    if( cslen != 16 ){
         mqo_errf( mqo_es_args, "s" "ciphertext must be 16 bytes" );
     }
     
