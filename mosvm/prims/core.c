@@ -1859,11 +1859,15 @@ again:
 MQO_END_PRIM( function_name )
 
 MQO_BEGIN_PRIM( "make-buffer", make_buffer )
-    REQ_INTEGER_ARG( capacity );
+    OPT_INTEGER_ARG( capacity );
     NO_MORE_ARGS( );
-   
-    if( capacity < 0 )mqo_errf( mqo_es_args, "sx", "expected non-negative",
-                                v_capacity );
+    
+    if( ! has_capacity ){ 
+        capacity = 1024; 
+    }else if( capacity < 0 ){
+        mqo_errf( mqo_es_args, "sx", "expected non-negative",
+                                     v_capacity );
+    }
 
     mqo_buffer buffer = mqo_make_buffer( capacity );
 
@@ -1883,6 +1887,13 @@ MQO_BEGIN_PRIM( "buffer-length", buffer_length )
 
     MQO_RESULT( mqo_vf_integer( mqo_buffer_length( buffer ) ) );
 MQO_END_PRIM( buffer_length )
+
+MQO_BEGIN_PRIM( "buffer-empty?", buffer_emptyq )
+    REQ_BUFFER_ARG( buffer )
+    NO_MORE_ARGS( );
+
+    MQO_RESULT( mqo_vf_integer( mqo_buffer_length( buffer ) ) );
+MQO_END_PRIM( buffer_empty )
 
 MQO_BEGIN_PRIM( "write-buffer", write_buffer )
     REQ_BUFFER_ARG( buffer )
@@ -2190,6 +2201,7 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( make_buffer );
     MQO_BIND_PRIM( bufferq );
     MQO_BIND_PRIM( buffer_length );
+    MQO_BIND_PRIM( buffer_emptyq );
     MQO_BIND_PRIM( write_buffer );
     MQO_BIND_PRIM( read_buffer );
     MQO_BIND_PRIM( buffer_to_string );

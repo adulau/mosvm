@@ -5,8 +5,17 @@
     during compilation as an error.
 
 - ?/??/????, Filter Ports and Crypto Filters
+  (define rx-key (make-cfb aes iv aes-encrypt))
+  (define tx-key (make-cfb aes iv aes-encrypt))
+  (set-process-output! (encrypt-output (process-output) tx-key cfb-encrypt))
+  (set-process-input! (encrypt-input (process-input) rx-key cfb-decrypt))
+  
   * Added the lib/filter module
   * Added filter-output, filter-input and filter-port to lib/filter
+  * Added the lib/crypto-port module
+  * Added the buffer-empty? primitive.
+  * Modified make-buffer to make capacity optional
+  * Added the crypto-port test suite.
 
 - 5/08/2006, Integration of ECDH cipher from LibTomCrypt
   * Added (random? value) -> #t or #f
