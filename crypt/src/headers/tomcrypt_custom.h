@@ -127,7 +127,7 @@
 #define SOBER128
 
 /* the *nix style /dev/random device */
-#define DEVRANDOM
+// #define DEVRANDOM
 /* try /dev/urandom before trying /dev/random */
 #define TRY_URANDOM_FIRST
 

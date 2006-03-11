@@ -4,34 +4,24 @@
   + Any reference to an identifier not bound in builtins, imports is identified
     during compilation as an error.
 
-- ?/??/????, Integration of the ??? block cipher from LibTomCrypt
-  * Added mqo_???_key type
-  * Added mqo_make_???_key( ???_key key )
-  * Added prims/???.c
-  * Added (generate-???-key key-size) -> ???-key
-  * Added (???-encrypt ???-key data-str) -> string
-  * Added (???-decrypt ???-key data-str) -> string
-  * Added (export-???-key ???-key) -> string
-  * Added (import-???-key string) -> ???-key
-  * Added (???-key? value) -> #t or #f
+- ?/??/????, Integration of ECDH cipher from LibTomCrypt
+  (import-aes key-size (ecdh-shared drone-key console-key))
 
-- ?/??/????, Integration of the RSA asymmetric cipher from LibTomCrypt
-  * Added mqo_rsa_key type
-  * Added mqo_make_rsa_key( rsa_key key )
-  * Added prims/rsa.c
-  * Added (generate-rsa-key key-size) -> rsa-key
-  * Added (export-rsa-public rsa-key) -> string
-  * Added (export-rsa-private rsa-key) -> string
-  * Added (import-rsa key-str) -> rsa-key
-  * Added (rsa-public-encrypt rsa-key data-str) -> string
-  * Added (rsa-private-encrypt rsa-key data-str) -> string
-  * Added (rsa-public-decrypt rsa-key data-str) -> string 
-  * Added (rsa-key? value) -> #t or #f
-  * Added (rsa-private-key? value) -> #t or #f
-  * Added (rsa-public-key? value) -> #t or #f
-  * Added (encode-base64 string) -> string
-  * Added (decode-base64 string) -> string
+  + Added mqo_ecdh_key subtype of mqo_key
+  + Added (generate-ecdh key-size random) -> ecdh-key
+  + Added (import-ecdh-public string) -> ecdh-key
+  + Added (import-ecdh-private string) -> ecdh-key
+  + Added (shared-ecdh-key my-key his-key) -> string
 
+- ?/??/????, Integration of AES cipher from LibTomCrypt
+  + Added mqo_key type
+  + t Added mqo_aes_key subtype of mqo_key
+  + t Added (make-aes-key key-size random) -> aes-key
+  + t Added (aes-key? value) -> #t or #f
+  + Added (aes-export aes-key) -> data
+  + Added (aes-encrypt aes-key plaintext random) -> ciphertext
+  + Added (aes-decrypt aes-key ciphertext) -> plaintext
+  
 - 1/09/2006, Integration of LibTomCrypt
   * Added libtomcrypt 1.0 to the source tree with some light modifications to
     integrate with MOSVM.
