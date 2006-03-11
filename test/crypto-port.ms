@@ -4,7 +4,7 @@
 
 (enable-spot-tests)
 
-(define qp (open-queue))
+(define qp (open-output-string))
 
 (define iv "themagicinitvect")
 (define ky (make-aes-key 256))

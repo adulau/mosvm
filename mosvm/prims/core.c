@@ -1892,7 +1892,7 @@ MQO_BEGIN_PRIM( "buffer-empty?", buffer_emptyq )
     REQ_BUFFER_ARG( buffer )
     NO_MORE_ARGS( );
 
-    MQO_RESULT( mqo_vf_integer( mqo_buffer_length( buffer ) ) );
+    MQO_RESULT( mqo_vf_boolean( mqo_buffer_empty( buffer ) ) );
 MQO_END_PRIM( buffer_empty )
 
 MQO_BEGIN_PRIM( "write-buffer", write_buffer )

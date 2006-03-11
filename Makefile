@@ -6,7 +6,7 @@ TESTS=test-core test-quasi test-parse test-assemble test-compile test-freeze tes
 
 all: $(MOSC) $(MOSVM) libs
 test: $(TESTS)
-test-%: test/%.mo $(MOSVM)
+test-%: test/%.mo $(MOSVM) libs
 	$(MOSVM) $<
 
 libs: $(MOSVM)

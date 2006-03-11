@@ -28,17 +28,18 @@
                     (enc cfb-enc))
 
 (define (make-cfb key iv enc)
-  (make-cfb-state key enc iv))
+  (make-cfb-state key iv enc))
 
 (define (next-cfb-mask cfb)
-  (define mask ((cfb-enc cfb) (cfb-key) (cfb-mask cfb)))
-  (set-cfb-mask! cfb mask))
+  (define mask ((cfb-enc cfb) (cfb-key cfb) (cfb-mask cfb)))
+  (set-cfb-mask! cfb mask)
+  mask)
 
 (define (cfb-encrypt cfb ciphertext)
-  (xor-string (next-cfb-mask cfb)))
+  (xor-string (next-cfb-mask cfb) ciphertext))
 
 (define (cfb-decrypt cfb ciphertext)
-  (xor-string (next-cfb-mask cfb)))
+  (xor-string (next-cfb-mask cfb) ciphertext))
 
 (define (key-size (<cfb> cfb))
   (key-size (cfb-key cfb)))

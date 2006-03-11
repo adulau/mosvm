@@ -318,7 +318,7 @@
 
 (define (open-output-string)
   (define buf (make-buffer 256))
-  (make-string-port (lambda (p) (read-buffer buf))
+  (make-string-port (lambda (p) (or (read-buffer buf) *eof*))
                     (lambda (p d) (write-buffer buf d))
                     #f
                     buf))
@@ -326,7 +326,7 @@
 (define (open-input-string data)
   (define buf (make-buffer (string-length data)))
   (write-buffer buf data)
-  (make-string-port (lambda (p) (read-buffer buf))
+  (make-string-port (lambda (p) (or (read-buffer buf) *eof*))
                     (lambda (p d) (write-buffer buf d))
                     #f
                     buf))
@@ -350,10 +350,12 @@
   (read-buffer-byte (string-port-buffer port)))
 
 (define (read-word (<string-port> port))
-  (read-buffer-word (string-port-buffer port)))
+  (or (read-buffer-word (string-port-buffer port))
+      *eof*))
 
 (define (read-quad (<string-port> port))
-  (read-buffer-quad (string-port-buffer port)))
+  (or (read-buffer-quad (string-port-buffer port))
+      *eof*))
 
 (define (get-output-string (<string-port> port))
   (buffer->string (string-port-buffer port)))
