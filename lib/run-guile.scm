@@ -46,7 +46,7 @@
                   (begin ,@stmt 
                          (loop)))))
 
-(import "lib/fakevm")
+(load "fakevm.scm")
 
 (define (guile-main args)
   (apply main (cdr args)))

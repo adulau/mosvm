@@ -15,13 +15,18 @@
 
 - ?/??/????, Integration of AES cipher from LibTomCrypt
   + Added mqo_key type
-  + t Added mqo_aes_key subtype of mqo_key
-  + t Added (make-aes-key key-size random) -> aes-key
-  + t Added (aes-key? value) -> #t or #f
-  + Added (aes-export aes-key) -> data
-  + Added (aes-encrypt aes-key plaintext random) -> ciphertext
-  + Added (aes-decrypt aes-key ciphertext) -> plaintext
-  
+  * Added mqo_aes_key subtype of mqo_key
+  * Added (make-aes-key key-size random) -> aes-key
+  * Added (aes-key? value) -> #t or #f
+  * Added (aes-encrypt aes-key plaintext random) -> ciphertext
+  * Added (aes-decrypt aes-key ciphertext) -> plaintext
+  * Added (xor-string string mask) -> string
+  * Added lib/cfb, a generic implementation of Cipher-Feedback Mode.
+  * Added (key-size key) -> integer
+  * Added (key-block-size key) -> integer
+  * Added bin/build-lib.sh which automatically builds all modules in the
+    lib subdirectory.
+
 - 1/09/2006, Integration of LibTomCrypt
   * Added libtomcrypt 1.0 to the source tree with some light modifications to
     integrate with MOSVM.

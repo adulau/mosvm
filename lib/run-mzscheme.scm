@@ -39,4 +39,4 @@
   (define p (assq k (car d)))
   (if p (cdr p) p))
 
-(import "lib/fakevm")
+(load "lib/fakevm.scm")

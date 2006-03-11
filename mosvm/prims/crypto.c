@@ -335,6 +335,49 @@ MQO_BEGIN_PRIM( "aes-decrypt", aes_decrypt )
     MQO_RESULT( mqo_vf_string( mqo_string_fm( ps, 16 ) ) );
 MQO_END_PRIM( aes_decrypt )
 
+MQO_BEGIN_PRIM( "key-size", key_size )
+    REQ_VALUE_ARG( key );
+    NO_MORE_ARGS( );
+
+    if( mqo_is_aes_key( key ) ){
+        MQO_RESULT( mqo_vf_integer( mqo_aes_key_fv( key )->keysize ) );
+    }else{
+        mqo_errf( mqo_es_args, "s", "required encryption key" );
+    }
+MQO_END_PRIM( key_size )
+
+MQO_BEGIN_PRIM( "key-block-size", key_block_size )
+    REQ_VALUE_ARG( key );
+    NO_MORE_ARGS( );
+
+    if( mqo_is_aes_key( key ) ){
+        MQO_RESULT( mqo_vf_integer( 16 ) );
+    }else{
+        mqo_errf( mqo_es_args, "s", "required encryption key" );
+    }
+MQO_END_PRIM( key_block_size )
+
+MQO_BEGIN_PRIM( "xor-string", xor_string )
+    REQ_STRING_ARG( string );
+    REQ_STRING_ARG( mask );
+    NO_MORE_ARGS( );
+    
+    mqo_integer strlen = mqo_string_length( string );
+    if( strlen > mqo_string_length( mask ) ){
+        mqo_errf( mqo_es_args, "s", 
+                  "string length must be not be greater than mask length" );
+    }
+
+    mqo_string dst = mqo_make_string( strlen );
+    mqo_integer i;
+
+    for( i = 0; i < strlen; i ++ ){
+        dst->data[ i ] = string->data[ i ] ^ mask->data[ i ];    
+    }
+
+    MQO_RESULT( mqo_vf_string( dst ) );
+MQO_END_PRIM( xor_string )
+
 void mqo_bind_crypto_prims( ){
     MQO_BEGIN_PRIM_BINDS( );
 
@@ -396,18 +439,16 @@ void mqo_bind_crypto_prims( ){
 
     MQO_BIND_PRIM( aes_encrypt )  // aes plaintext random
     MQO_BIND_PRIM( aes_decrypt )  // aes ciphertext 
+    MQO_BIND_PRIM( xor_string  )  // dst src
+    MQO_BIND_PRIM( key_size )     // key
+    MQO_BIND_PRIM( key_block_size ) // key
 
 /*
     //TODO:
-    MQO_BIND_PRIM( aes_export )   // aes
-
     MQO_BIND_PRIM( make_key );
     MQO_BIND_PRIM( public_key );
     MQO_BIND_PRIM( private_key );
 
-    MQO_BIND_PRIM( import_key );
-    MQO_BIND_PRIM( export_key );
-    
     MQO_BIND_PRIM( keyq );
 
     MQO_BIND_PRIM( symmetric_keyq );
