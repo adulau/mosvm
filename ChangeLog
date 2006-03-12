@@ -16,6 +16,7 @@
   * Added the buffer-empty? primitive.
   * Modified make-buffer to make capacity optional
   * Added the crypto-port test suite.
+  * Added buffer-skip primitive.
 
 - 5/08/2006, Integration of ECDH cipher from LibTomCrypt
   * Added (random? value) -> #t or #f

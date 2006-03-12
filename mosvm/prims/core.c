@@ -1907,6 +1907,17 @@ MQO_BEGIN_PRIM( "write-buffer", write_buffer )
     MQO_NO_RESULT( );
 MQO_END_PRIM( write_buffer )
 
+MQO_BEGIN_PRIM( "buffer-skip", buffer_skip )
+    REQ_BUFFER_ARG( buffer );
+    REQ_INTEGER_ARG( offset );
+    NO_MORE_ARGS( );
+    if( offset > mqo_buffer_length( buffer ) ){
+        mqo_errf( mqo_es_args, "s", "skip past end of buffer" );
+    }
+    mqo_skip_buffer( buffer, offset );
+    MQO_NO_RESULT( );
+MQO_END_PRIM( buffer_skip );
+
 MQO_BEGIN_PRIM( "read-buffer", read_buffer )
     REQ_BUFFER_ARG( buffer );
     OPT_INTEGER_ARG( max );
@@ -2212,6 +2223,7 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( write_buffer_quad );
     MQO_BIND_PRIM( read_buffer_quad );
     MQO_BIND_PRIM( dump_buffer );
+    MQO_BIND_PRIM( buffer_skip );
 
     MQO_BIND_PRIM( substring );
     MQO_BIND_PRIM( string_head );

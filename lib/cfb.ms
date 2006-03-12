@@ -35,11 +35,11 @@
   (set-cfb-mask! cfb mask)
   mask)
 
-(define (cfb-encrypt cfb ciphertext)
-  (xor-string (next-cfb-mask cfb) ciphertext))
+(define (cfb-encrypt cfb plaintext)
+  (xor-string plaintext (next-cfb-mask cfb)))
 
 (define (cfb-decrypt cfb ciphertext)
-  (xor-string (next-cfb-mask cfb) ciphertext))
+  (xor-string ciphertext (next-cfb-mask cfb)))
 
 (define (key-size (<cfb> cfb))
   (key-size (cfb-key cfb)))
