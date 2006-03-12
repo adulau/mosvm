@@ -61,4 +61,5 @@ static inline mqo_integer mqo_buffer_length( mqo_buffer buffer ){
 #define mqo_show_buffer NULL
 void mqo_dump_buffer( mqo_buffer buffer );
 
+void mqo_flush_buffer( mqo_buffer buffer );
 #endif

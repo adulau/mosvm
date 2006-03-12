@@ -1874,6 +1874,14 @@ MQO_BEGIN_PRIM( "make-buffer", make_buffer )
     MQO_RESULT( mqo_vf_buffer( buffer ) );
 MQO_END_PRIM( make_buffer )
 
+MQO_BEGIN_PRIM( "flush-buffer", flush_buffer )
+    REQ_BUFFER_ARG( buffer );
+    NO_MORE_ARGS( );
+
+    mqo_flush_buffer( buffer );
+    MQO_NO_RESULT( );
+MQO_END_PRIM( flush_buffer )
+
 MQO_BEGIN_PRIM( "buffer?", bufferq )
     REQ_VALUE_ARG( value );
     NO_MORE_ARGS( );
@@ -2210,6 +2218,7 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( function_name );
 
     MQO_BIND_PRIM( make_buffer );
+    MQO_BIND_PRIM( flush_buffer );
     MQO_BIND_PRIM( bufferq );
     MQO_BIND_PRIM( buffer_length );
     MQO_BIND_PRIM( buffer_emptyq );

@@ -16,8 +16,8 @@
 (define rp (decrypt-input qp rx cfb-decrypt))
 
 (define m1 "transmission-001")
-(define m2 "transmission-002")
-(define m3 "transmission-003")
+(define m2 "now is the time for all good people")
+(define m3 "abc")
 
 (s: (write m1 tp)
     (read rp))

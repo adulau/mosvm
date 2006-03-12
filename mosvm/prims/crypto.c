@@ -386,16 +386,21 @@ MQO_BEGIN_PRIM( "xor-string", xor_string )
     NO_MORE_ARGS( );
     
     mqo_integer strlen = mqo_string_length( string );
+    mqo_integer masklen = mqo_string_length( mask );
+
     if( strlen > mqo_string_length( mask ) ){
         mqo_errf( mqo_es_args, "s", 
                   "string length must be not be greater than mask length" );
     }
 
-    mqo_string dst = mqo_make_string( strlen );
+    mqo_string dst = mqo_make_string( masklen );
     mqo_integer i;
 
     for( i = 0; i < strlen; i ++ ){
         dst->data[ i ] = string->data[ i ] ^ mask->data[ i ];    
+    }
+    for( ; i < masklen; i ++ ){
+        dst->data[ i ] = mask->data[ i ];
     }
 
     MQO_RESULT( mqo_vf_string( dst ) );

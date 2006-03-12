@@ -27,42 +27,38 @@
 
 (define (decrypt-input port key decrypt)
   (define block-size (key-block-size key))
-
-  (define ciphertext (make-buffer))
-
   (define plaintext (make-buffer))
+  (define body-length #f)
+  (define message-body #f)
 
-  (define (more-ciphertext)
-    (when (closed? port)
-      (error 'io "port closed in the middle of a ciphertext read"))
-    (write-buffer ciphertext (read port)))
+  (define (read-block) 
+    (write-buffer plaintext (decrypt key (read block-size port))))
 
-  (define (more-plaintext)
-    (when (buffer-empty? ciphertext)
-      (more-ciphertext))
-    (write-buffer plaintext (decrypt key (read-buffer ciphertext 
-                                                      block-size))))
+  (define (flush-plaintext)
+    (flush-buffer plaintext))
+ 
+  ;;;TODO: Needs to eof on eof.
+  (define (read-header)
+    (read-block)
+    (set! body-length (read-buffer-quad plaintext))
+    (flush-plaintext))
 
-  (define (fill-plaintext amount)
-    (until (>= (buffer-length plaintext) amount)
-      (more-plaintext)))
+  ;;;TODO: Needs to throw an exception on eof.
+  (define (read-body)
+    (until (>= (buffer-length plaintext) body-length)
+      (read-block))
+    (set! message-body (read-buffer plaintext body-length))
+    (flush-buffer plaintext))
 
-  (define (read-message ignored)
-    ;; TODO: Put a common sense barrier in this.
-    (fill-plaintext 4)
-    (define message-length (read-buffer-quad plaintext))
-    (define padding-length (remainder (+ 4 message-length) block-size))
-    (if (> padding-length 0)
-      (set! padding-length (- block-size padding-length))
-      (set! padding-length #f))
+  ;;;TODO: Needs checksums.
+  (define (check-body) #t)
 
-    (fill-plaintext message-length)
-    (define r (read-buffer plaintext message-length))
-
-    (when padding-length (buffer-skip plaintext padding-length))
-
-    r)
-
+  (define (read-message ignored also-ignored)
+    (read-header)
+    (read-body)
+    (check-body)
+    message-body)
+    
   (make-port read-message
              (and (output-port? port) (lambda (p d) (write d port)))
              (lambda (p) (close port))
@@ -72,22 +68,26 @@
   (define block-size (key-block-size key))
   (define plaintext (make-buffer))
   (define ciphertext (make-buffer))
+
+  (define message-body #f)
+  (define message-length #f)
+
+  (define (write-block)
+    (write-buffer ciphertext (encrypt key (read-buffer plaintext block-size))))
+
+  (define (write-header)
+    (write-buffer-quad plaintext message-length)
+    (write-block))
+
+  (define (write-body)
+    (write-buffer plaintext message-body)
+    (until (buffer-empty? plaintext) (write-block)))
+
   (define (write-message ignored message)
-    (define message-length (string-length message))
-    (define padding-length (remainder (+ 4 message-length) block-size))
-
-    (if (> padding-length 0)
-      (set! padding-length (- block-size padding-length))
-      (set! padding-length #f))
-
-    (write-buffer-quad plaintext (string-length message))
-    (write-buffer plaintext message)
-    (when padding-length
-      (write-buffer plaintext (random-string padding-length)))
-
-    (until (buffer-empty? plaintext)
-      (write-buffer ciphertext (encrypt key 
-                                        (read-buffer plaintext block-size))))
+    (set! message-length (string-length message))
+    (set! message-body message)
+    (write-header)
+    (write-body)
     (write (read-buffer ciphertext) port))
 
   (make-port (and (input-port? port) (lambda (p) (read p)))

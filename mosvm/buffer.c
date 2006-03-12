@@ -57,7 +57,9 @@ void mqo_expand_buffer( mqo_buffer buffer, mqo_integer count ){
         buffer->capacity = new_capacity;
     }
 }
-
+void mqo_flush_buffer( mqo_buffer buffer ){
+    buffer->origin = buffer->length = 0;
+}
 void mqo_write_buffer( mqo_buffer buffer, const void* src, mqo_integer srclen ){
     memmove( buffer->data + buffer->origin + buffer->length, src, srclen );
     buffer->length += srclen;
