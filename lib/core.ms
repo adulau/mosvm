@@ -377,7 +377,29 @@
         read-byte read-word read-quad write-byte write-word write-quad
         get-output-string string-input-port? string-output-port?)
 
-;;; The queue is both an input, and an output, backed by a tconc.
+(define (open-buffer-port)
+  (define buf (make-buffer))
+  (define ps  #f)
+  (make-port (lambda (p q) 
+               (cond
+                 (ps (error 'buffer 
+                            "A process is already waiting on this port"))
+                 ((and q (< (buffer-length buf) q))
+                  (set! ps (active-process))
+                  (suspend)))
+               (if q 
+                 (read-buffer buf q)
+                 (read-buffer buf)))
+             (lambda (p d) 
+               (write-buffer buf d)
+               (when ps
+                 (resume ps)
+                 (set! ps #f)))
+             #f
+             #f))
+
+(export open-buffer-port)
+
 (define-class queue <object>
               (make-queue-state tc ps)
               queue?
