@@ -11,6 +11,13 @@
   * Altered all uses of port-read-fn to include quantity arguments.
   * Added mqo_flush_buffer and flush-buffer
 
+- ?/??/????, MOSREF Control Module
+  * Added (open-buffer-port) -> port to lib/core
+  * Added (fuse-ports read-port write-port) -> port
+  * Added (drone-affiliation console-ecdh port) -> port
+  * Added (console-affiliation console-ecdh port) -> port
+  * Added affiliation unit test
+
 - ?/??/????, Filter Ports and Crypto Filters
   (define rx-key (make-cfb aes iv aes-encrypt))
   (define tx-key (make-cfb aes iv aes-encrypt))
