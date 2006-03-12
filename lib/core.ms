@@ -378,50 +378,47 @@
         get-output-string string-input-port? string-output-port?)
 
 ;;; The queue is both an input, and an output, backed by a tconc.
-(define-class queue <port>
-              (make-queue read-fn write-fn close-fn tc ps)
+(define-class queue <object>
+              (make-queue-state tc ps)
               queue?
               (tc queue-tc)
               (ps queue-ps set-queue-ps!))
 
-(define (open-queue . data) 
+(define (make-queue . data) 
   (define tc (make-tc))
   (unless (null? data)
     (tc-splice! tc (car data)))
-  (make-queue (lambda (p) 
-                (if (tc-empty? tc)
-                  (begin
-                    (when (queue-ps p)
-                      (error 'queue 
-                             "A process is already waiting on this queue"
-                             p))
-                    (set-queue-ps! p (active-process))
-                    (suspend))
-                  (tc-next! tc)))
-              (lambda (p d) 
-                (define ps (queue-ps p))
-                (if (and (tc-empty? tc) ps)
-                  (begin (resume ps d)
-                         (set-queue-ps! p #f))
-                  (tc-append! tc d)))
-              (lambda (p)
-                (define ps (queue-ps p))
-                (when ps (resume ps *eof*)))
-              tc
-              #f))
+  (make-queue-state tc #f))
 
-(define (empty? (<queue> queue))
+(define (read-queue queue)
+  (define tc (queue-tc queue))
+  (if (tc-empty? tc)
+    (begin
+      (when (queue-ps queue)
+        (error 'queue 
+               "A process is already waiting on this queue"))
+      (set-queue-ps! queue (active-process))
+      (suspend))
+    (tc-next! tc)))
+
+(define (write-queue queue data)
+  (define tc (queue-tc queue))
+  (define ps (queue-ps queue))
+  (if (and (tc-empty? tc) ps)
+    (begin (resume ps data)
+           (set-queue-ps! queue #f))
+    (tc-append! tc data)))
+
+(define (queue-empty?  queue)
   (tc-empty? (queue-tc queue)))
 
-(define (read-all (<queue> queue))
+(define (read-queue-all queue)
   (define tc (queue-tc queue))
   (define data (tc->list tc))
   (tc-clear! tc)
   data)
 
-(define (read-exprs (<queue> queue) (read-all queue)))
-
-(export <queue> open-queue empty? read-all read-exprs)
+(export <queue> open-queue read-queue write-queue read-queue-all make-queue)
 
 ;;; Similar to an R5RS file with reads returning read s-exprs.
 (define (open-lisp-input-file path)

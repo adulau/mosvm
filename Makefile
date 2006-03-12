@@ -34,7 +34,7 @@ $(GLUE): mosvm/glue.c mosvm/mosvm/*.[ch]
 $(MOSC): $(MOSVM_STUB) $(GLUE) 
 	sh bin/build-app.sh $(MOSVM_STUB) bin/mosc $(MOSC)
 
-$(MOSVM): $(MOSC) $(GLUE)
+$(MOSVM): $(MOSC) $(GLUE) lib/*.ms
 	sh bin/build-app.sh $(MOSVM_STUB) bin/mosvm $(MOSVM)
 
 %.mo: %.ms $(MOSC) 
