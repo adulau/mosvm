@@ -520,16 +520,23 @@ mqo_console mqo_make_console( mqo_string path ){
     return mqo_make_descr( path, 0, MQO_CONSOLE );
 }
 mqo_value mqo_read_data_mt( mqo_descr descr ){
-    if( mqo_buffer_empty( descr->read_data ) ){
-        return descr->closed ? mqo_make_void( ) 
-                             : mqo_vf_string( mqo_make_string( 0 ) );
-    }else{
-        mqo_integer datalen = BUFSIZ;
-        char *data = mqo_read_buffer( descr->read_data, &datalen );
+    mqo_integer datalen;
+    char* data;
 
-        return datalen ? mqo_vf_string( mqo_string_fm( data, datalen ) )
-                       : mqo_make_void( );
-    };
+    if( mqo_buffer_empty( descr->read_data ) ){
+        return descr->closed ? mqo_vf_false( )
+                             : mqo_make_void( );
+    }else if( descr->quantity ){
+        if( mqo_buffer_length( descr->read_data ) < descr->quantity ){
+            return mqo_make_void( );
+        } 
+        datalen = descr->quantity;
+    }else{
+        datalen = BUFSIZ;
+    }
+
+    data = mqo_read_buffer( descr->read_data, &datalen );
+    return mqo_vf_string( mqo_string_fm( data, datalen ) );
 }
 mqo_value mqo_read_all_mt( mqo_descr descr ){
     if( ! descr->closed ){

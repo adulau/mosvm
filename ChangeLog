@@ -4,6 +4,12 @@
   + Any reference to an identifier not bound in builtins, imports is identified
     during compilation as an error.
 
+- ?/??/????, Quantity Added to Read
+  + Altered read-descr to accept an optional quantity argument.
+  + Added the quantity field to mqo_descr
+  + Altered mqo_read_data_mt to use the quantity field.
+  + Altered all uses of port-read-fn to include quantity arguments.
+
 - ?/??/????, Filter Ports and Crypto Filters
   (define rx-key (make-cfb aes iv aes-encrypt))
   (define tx-key (make-cfb aes iv aes-encrypt))

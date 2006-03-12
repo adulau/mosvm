@@ -19,7 +19,7 @@
               connection?)
 
 (define (make-connection-from-socket socket)
-    (make-connection (lambda (x) (read-descr socket))
+    (make-connection (lambda (x q) (read-descr socket q))
                      (lambda (x d) (write-descr socket d))
                      (lambda (x) (close-descr socket))
                      socket))

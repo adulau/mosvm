@@ -135,8 +135,9 @@ void mqo_async_read( mqo_descr descr, mqo_read_mt read_mt ){
     mqo_value r = mqo_start_reading( descr, MQO_PP, read_mt );
     mqo_drop_ds( mqo_pop_int_ds() );
 
+    mqo_return( );
+
     if( mqo_is_void( r ) ){
-        mqo_return( );
         MQO_SUSPEND( );
     }else{
         mqo_push_ds( r );
@@ -145,14 +146,28 @@ void mqo_async_read( mqo_descr descr, mqo_read_mt read_mt ){
 
 MQO_BEGIN_PRIM( "read-descr", read_descr )
     REQ_DESCR_ARG( descr );
+    OPT_VALUE_ARG( quantity );
     NO_MORE_ARGS( );
+
+    int quantint;
+
+    if( has_quantity && mqo_is_integer( quantity ) ){
+        quantint = mqo_integer_fv( quantity );
+        if(( 0 > quantint )||( quantint > BUFSIZ )){
+            quantint = BUFSIZ;
+        }
+    }else{
+        quantint = 0;
+    }
 
     if( descr->closed ){
         MQO_RESULT( mqo_vf_false() );
     }else if( descr->type == MQO_FILE ){
         static char buffer[ BUFSIZ ];
-        mqo_integer count = mqo_os_error( read( descr->fd, buffer, BUFSIZ ) );
-
+        mqo_integer count = mqo_os_error( read( descr->fd, 
+                                                buffer, 
+                                                quantint ? quantint 
+                                                         : BUFSIZ ) );
         if( count == 0 ){
             MQO_RESULT( mqo_vf_false( ) );
         }else{
@@ -162,6 +177,7 @@ MQO_BEGIN_PRIM( "read-descr", read_descr )
         mqo_errf( mqo_es_vm, "s", 
                   "another object is waiting on descriptor" );
     }else{
+        descr->quantity = quantint;
         mqo_async_read( descr, mqo_read_data_mt );
         return;
     }

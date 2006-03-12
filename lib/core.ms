@@ -179,6 +179,7 @@
 (define (closed? (<port> other)) (port-closed? other))
 
 (define (close) (close (current-input-port)))
+
 (define (close (<port> port))
   (unless (closed? port)
     (define close-fn (port-close-fn port))
@@ -186,19 +187,29 @@
     (set-port-closed! port #t)))
 
 (define (read) (read (current-input-port)))
+
 (define (read (<port> port))
-  (cond ((not (input-port? port))
-         (error 'io "Only input-ports may be read from."))
-        ((closed? port) *eof*)
-        (else (define data ((port-read-fn port) port))
-              (when (eq? data *eof*)
-                (set-port-closed! port #t))
-              data)))
+  (read #f port))
+
 (define (read (<process> process))
-  (read (process-output process)))
+  (read #f process))
+
+(define (read quantity (<process> process))
+  (read quantity (process-output process)))
+
+(define (read q (<port> port))
+  (define fn (port-read-fn port))
+  (cond
+    ((closed? port) *eof*)
+    (fn (define data (fn port q))
+        (when (eq? data *eof*)
+          (set-port-closed! port #t))
+        data)
+    (else
+      (error 'io "Only input-ports may be read from."))))
 
 (define *console-port* 
-  (make-port (lambda (p) (or (read-descr *console*) *eof*))
+  (make-port (lambda (p q) (or (read-descr *console* q) *eof*))
              (lambda (p d) (write-descr *console* d))
              #f #f))
 
@@ -283,6 +294,8 @@
 (define (write-quad quad (<descr-port> port))
   (write-descr-quad (port-descr port) quad))
 
+;;;TODO: read-byte, read-word, read-quad
+
 (export open-output-file write-word write-quad write-byte file-input-port? 
         file-output-port?)
 
@@ -290,7 +303,7 @@
 (define (open-input-file path)
   (define descr (open-file-descr path "r"))
   (file-seek descr 0)
-  (make-file-port (lambda (p) (read-descr descr))
+  (make-file-port (lambda (p q) (read-descr descr q))
                   #f
                   (lambda (p) (close-descr descr))
                   descr))
@@ -318,7 +331,7 @@
 
 (define (open-output-string)
   (define buf (make-buffer 256))
-  (make-string-port (lambda (p) (or (read-buffer buf) *eof*))
+  (make-string-port (lambda (p q) (or (read-buffer buf (or q 256)) *eof*))
                     (lambda (p d) (write-buffer buf d))
                     #f
                     buf))
@@ -326,7 +339,7 @@
 (define (open-input-string data)
   (define buf (make-buffer (string-length data)))
   (write-buffer buf data)
-  (make-string-port (lambda (p) (or (read-buffer buf) *eof*))
+  (make-string-port (lambda (p q) (or (read-buffer buf (or q 256)) *eof*))
                     (lambda (p d) (write-buffer buf d))
                     #f
                     buf))

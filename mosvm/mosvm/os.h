@@ -35,7 +35,7 @@ struct mqo_descr_data {
 
     mqo_descr next, prev;
     mqo_string name;
-    mqo_integer fd;
+    mqo_integer fd, quantity;
     mqo_process monitor;
     mqo_buffer  write_data, read_data;
     mqo_read_mt read_mt;
