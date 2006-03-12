@@ -5,10 +5,11 @@
     during compilation as an error.
 
 - ?/??/????, Quantity Added to Read
-  + Altered read-descr to accept an optional quantity argument.
-  + Added the quantity field to mqo_descr
-  + Altered mqo_read_data_mt to use the quantity field.
-  + Altered all uses of port-read-fn to include quantity arguments.
+  * Altered read-descr to accept an optional quantity argument.
+  * Added the quantity field to mqo_descr
+  * Altered mqo_read_data_mt to use the quantity field.
+  * Altered all uses of port-read-fn to include quantity arguments.
+  * Added mqo_flush_buffer and flush-buffer
 
 - ?/??/????, Filter Ports and Crypto Filters
   (define rx-key (make-cfb aes iv aes-encrypt))

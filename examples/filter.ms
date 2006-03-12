@@ -14,8 +14,8 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
 (define filter 
-  (with-input-port (open-queue)
-    (with-output-port (open-queue)
+  (with-input-port (make-queue)
+    (with-output-port (make-queue)
       (spawn (lambda ()
                (until #f
                  (write (cons 'filtered (read)))))))))

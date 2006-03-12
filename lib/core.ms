@@ -418,15 +418,20 @@
   (tc-clear! tc)
   data)
 
-(export <queue> open-queue read-queue write-queue read-queue-all make-queue)
+(export <queue> make-queue read-queue write-queue read-queue-all make-queue)
 
 ;;; Similar to an R5RS file with reads returning read s-exprs.
 (define (open-lisp-input-file path)
   (define f (open-input-file path))
   (define e (read-exprs f))
-  (define q (open-queue e))
+  (define q (make-queue e))
   (close f)
-  q)
+  (make-port (lambda (x y) (if (queue-empty? q)
+                               *eof*
+                               (read-queue q)))
+             (lambda (x i) (write-queue q i))
+             (lambda (x)   (queue-empty? q))
+             #f))
 
 (export open-lisp-input-file)
 
