@@ -261,9 +261,9 @@ void skipjack_ecb_decrypt(const unsigned char *ct, unsigned char *pt, symmetric_
 */
 int skipjack_test(void)
 {
- #ifndef LTC_TEST
+#ifndef LTC_TEST
     return CRYPT_NOP;
- #else    
+#else    
    static const struct {
        unsigned char key[10], pt[8], ct[8];
    } tests[] = {
@@ -300,7 +300,7 @@ int skipjack_test(void)
    }
 
    return CRYPT_OK;
-  #endif
+#endif
 }
 
 /**

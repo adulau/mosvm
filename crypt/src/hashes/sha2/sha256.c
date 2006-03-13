@@ -291,9 +291,9 @@ int sha256_done(hash_state * md, unsigned char *out)
 */  
 int  sha256_test(void)
 {
- #ifndef LTC_TEST
+#ifndef LTC_TEST
     return CRYPT_NOP;
- #else    
+#else    
   static const struct {
       char *msg;
       unsigned char hash[32];
@@ -325,7 +325,7 @@ int  sha256_test(void)
       }
   }
   return CRYPT_OK;
- #endif
+#endif
 }
 
 #ifdef SHA224

@@ -273,10 +273,10 @@ static void h_func(const unsigned char *in, unsigned char *out, unsigned char *M
 
 /* for GCC we don't use pointer aliases */
 #if defined(__GNUC__)
-    #define S1 skey->twofish.S[0]
-    #define S2 skey->twofish.S[1]
-    #define S3 skey->twofish.S[2]
-    #define S4 skey->twofish.S[3]
+#define S1 skey->twofish.S[0]
+#define S2 skey->twofish.S[1]
+#define S3 skey->twofish.S[2]
+#define S4 skey->twofish.S[3]
 #endif
 
 /* the G function */
@@ -605,9 +605,9 @@ void twofish_ecb_decrypt(const unsigned char *ct, unsigned char *pt, symmetric_k
 */
 int twofish_test(void)
 {
- #ifndef LTC_TEST
+#ifndef LTC_TEST
     return CRYPT_NOP;
- #else    
+#else    
  static const struct { 
      int keylen;
      unsigned char key[32], pt[16], ct[16];

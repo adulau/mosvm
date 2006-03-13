@@ -261,9 +261,9 @@ int sha512_done(hash_state * md, unsigned char *out)
 */  
 int  sha512_test(void)
 {
- #ifndef LTC_TEST
+#ifndef LTC_TEST
     return CRYPT_NOP;
- #else    
+#else    
   static const struct {
       char *msg;
       unsigned char hash[64];
@@ -303,11 +303,11 @@ int  sha512_test(void)
       }
   }
   return CRYPT_OK;
-  #endif
+#endif
 }
 
 #ifdef SHA384
-   #include "sha384.c"
+#include "sha384.c"
 #endif
 
 #endif

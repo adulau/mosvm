@@ -57,9 +57,9 @@ int rng_make_prng(int bits, int wprng, prng_state *prng,
       return err;
    }
 
-   #ifdef LTC_CLEAN_STACK
+#ifdef LTC_CLEAN_STACK
       zeromem(buf, sizeof(buf));
-   #endif
+#endif
    return CRYPT_OK;
 }
 

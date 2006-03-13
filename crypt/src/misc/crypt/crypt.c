@@ -24,18 +24,18 @@ const char *crypt_build_settings =
    "neutral\n"
 #elif defined(ENDIAN_LITTLE)
    "little"
-   #if defined(ENDIAN_32BITWORD)
+#if defined(ENDIAN_32BITWORD)
    " (32-bit words)\n"
-   #else
+#else
    " (64-bit words)\n"
-   #endif
+#endif
 #elif defined(ENDIAN_BIG)
    "big"
-   #if defined(ENDIAN_32BITWORD)
+#if defined(ENDIAN_32BITWORD)
    " (32-bit words)\n"
-   #else
+#else
    " (64-bit words)\n"
-   #endif
+#endif
 #endif
    "Clean stack: "
 #if defined(LTC_CLEAN_STACK)
@@ -70,23 +70,23 @@ const char *crypt_build_settings =
 #endif
 #if defined(TWOFISH)
    "   Twofish "
-   #if defined(TWOFISH_SMALL) && defined(TWOFISH_TABLES) && defined(TWOFISH_ALL_TABLES)
+#if defined(TWOFISH_SMALL) && defined(TWOFISH_TABLES) && defined(TWOFISH_ALL_TABLES)
        "(small, tables, all_tables)\n"
-   #elif defined(TWOFISH_SMALL) && defined(TWOFISH_TABLES)
+#elif defined(TWOFISH_SMALL) && defined(TWOFISH_TABLES)
        "(small, tables)\n"
-   #elif defined(TWOFISH_SMALL) && defined(TWOFISH_ALL_TABLES)
+#elif defined(TWOFISH_SMALL) && defined(TWOFISH_ALL_TABLES)
        "(small, all_tables)\n"
-   #elif defined(TWOFISH_TABLES) && defined(TWOFISH_ALL_TABLES)
+#elif defined(TWOFISH_TABLES) && defined(TWOFISH_ALL_TABLES)
        "(tables, all_tables)\n"
-   #elif defined(TWOFISH_SMALL)
+#elif defined(TWOFISH_SMALL)
        "(small)\n"
-   #elif defined(TWOFISH_TABLES)
+#elif defined(TWOFISH_TABLES)
        "(tables)\n"
-   #elif defined(TWOFISH_ALL_TABLES)
+#elif defined(TWOFISH_ALL_TABLES)
        "(all_tables)\n"
-   #else
+#else
        "\n"
-   #endif
+#endif
 #endif
 #if defined(DES)
    "   DES\n"

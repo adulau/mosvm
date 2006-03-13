@@ -56,9 +56,9 @@ int cbc_encrypt(const unsigned char *pt, unsigned char *ct, symmetric_CBC *cbc)
        cbc->IV[x] = ct[x];
    }
 
-   #ifdef LTC_CLEAN_STACK
+#ifdef LTC_CLEAN_STACK
       zeromem(tmp, sizeof(tmp));
-   #endif
+#endif
    return CRYPT_OK;
 }
 

@@ -85,9 +85,9 @@ int sha384_done(hash_state * md, unsigned char *out)
 */  
 int  sha384_test(void)
 {
- #ifndef LTC_TEST
+#ifndef LTC_TEST
     return CRYPT_NOP;
- #else    
+#else    
   static const struct {
       char *msg;
       unsigned char hash[48];
@@ -123,7 +123,7 @@ int  sha384_test(void)
       }
   }
   return CRYPT_OK;
- #endif
+#endif
 }
 
 

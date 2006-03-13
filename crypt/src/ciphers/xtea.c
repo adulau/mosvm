@@ -138,9 +138,9 @@ void xtea_ecb_decrypt(const unsigned char *ct, unsigned char *pt, symmetric_key 
 */
 int xtea_test(void)
 {
- #ifndef LTC_TEST
+#ifndef LTC_TEST
     return CRYPT_NOP;
- #else    
+#else    
    static const unsigned char key[16] = 
       { 0x78, 0x56, 0x34, 0x12, 0xf0, 0xcd, 0xcb, 0x9a,
         0x48, 0x37, 0x26, 0x15, 0xc0, 0xbf, 0xae, 0x9d };
@@ -169,7 +169,7 @@ int xtea_test(void)
       for (y = 0; y < 8; y++) if (tmp[0][y] != 0) return CRYPT_FAIL_TESTVECTOR;
 
    return CRYPT_OK;
- #endif
+#endif
 }
 
 /**

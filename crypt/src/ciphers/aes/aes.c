@@ -157,11 +157,11 @@ int SETUP(const unsigned char *key, int keylen, int num_rounds, symmetric_key *s
         LOAD32H(rk[4], key + 16);
         LOAD32H(rk[5], key + 20);
         for (;;) {
-        #ifdef _MSC_VER
+#ifdef _MSC_VER
             temp = skey->rijndael.eK[rk - skey->rijndael.eK + 5]; 
-        #else
+#else
             temp = rk[5];
-        #endif
+#endif
             rk[ 6] = rk[ 0] ^ setup_mix(temp) ^ rcon[i];
             rk[ 7] = rk[ 1] ^ rk[ 6];
             rk[ 8] = rk[ 2] ^ rk[ 7];
@@ -180,11 +180,11 @@ int SETUP(const unsigned char *key, int keylen, int num_rounds, symmetric_key *s
         LOAD32H(rk[6], key + 24);
         LOAD32H(rk[7], key + 28);
         for (;;) {
-        #ifdef _MSC_VER
+#ifdef _MSC_VER
             temp = skey->rijndael.eK[rk - skey->rijndael.eK + 7]; 
-        #else
+#else
             temp = rk[7];
-        #endif
+#endif
             rk[ 8] = rk[ 0] ^ setup_mix(temp) ^ rcon[i];
             rk[ 9] = rk[ 1] ^ rk[ 8];
             rk[10] = rk[ 2] ^ rk[ 9];
@@ -220,7 +220,7 @@ int SETUP(const unsigned char *key, int keylen, int num_rounds, symmetric_key *s
     for (i = 1; i < skey->rijndael.Nr; i++) {
         rrk -= 4;
         rk  += 4;
-    #ifdef LTC_SMALL_CODE        
+#ifdef LTC_SMALL_CODE        
         temp = rrk[0];
         rk[0] = setup_mix2(temp);
         temp = rrk[1];
@@ -229,7 +229,7 @@ int SETUP(const unsigned char *key, int keylen, int num_rounds, symmetric_key *s
         rk[2] = setup_mix2(temp);
         temp = rrk[3];
         rk[3] = setup_mix2(temp);
-     #else
+#else
         temp = rrk[0];
         rk[0] =
             Tks0[byte(temp, 3)] ^
@@ -254,7 +254,7 @@ int SETUP(const unsigned char *key, int keylen, int num_rounds, symmetric_key *s
             Tks1[byte(temp, 2)] ^
             Tks2[byte(temp, 1)] ^
             Tks3[byte(temp, 0)];
-      #endif            
+#endif            
      
     }
 
@@ -626,9 +626,9 @@ void ECB_DEC(const unsigned char *ct, unsigned char *pt, symmetric_key *skey)
 */
 int ECB_TEST(void)
 {
- #ifndef LTC_TEST
+#ifndef LTC_TEST
     return CRYPT_NOP;
- #else    
+#else    
  int err;
  static const struct {
      int keylen;
@@ -702,7 +702,7 @@ int ECB_TEST(void)
       for (y = 0; y < 16; y++) if (tmp[0][y] != 0) return CRYPT_FAIL_TESTVECTOR;
  }       
  return CRYPT_OK;
- #endif
+#endif
 }
 
 #endif /* ENCRYPT_ONLY */

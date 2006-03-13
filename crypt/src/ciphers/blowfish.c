@@ -501,9 +501,9 @@ void blowfish_ecb_decrypt(const unsigned char *ct, unsigned char *pt, symmetric_
 */
 int blowfish_test(void)
 {
- #ifndef LTC_TEST
+#ifndef LTC_TEST
     return CRYPT_NOP;
- #else    
+#else    
    int err;
    symmetric_key key;
    static const struct {
@@ -550,7 +550,7 @@ int blowfish_test(void)
       for (y = 0; y < 8; y++) if (tmp[0][y] != 0) return CRYPT_FAIL_TESTVECTOR;
    }
    return CRYPT_OK;
- #endif
+#endif
 }
 
 /**

@@ -544,9 +544,9 @@ int ecc_test(void)
    }
 
    for (i = 0; sets[i].size; i++) {
-       #if 0
+#if 0
           printf("Testing %d\n", sets[i].size);
-       #endif
+#endif
        if ((err = mp_read_radix(&modulus, (char *)sets[i].prime, 64)) != MP_OKAY)   { goto error; }
        if ((err = mp_read_radix(&order, (char *)sets[i].order, 64)) != MP_OKAY)     { goto error; }
 

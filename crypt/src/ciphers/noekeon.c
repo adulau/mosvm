@@ -206,9 +206,9 @@ void noekeon_ecb_decrypt(const unsigned char *ct, unsigned char *pt, symmetric_k
 */
 int noekeon_test(void)
 {
- #ifndef LTC_TEST
+#ifndef LTC_TEST
     return CRYPT_NOP;
- #else
+#else
  static const struct {
      int keylen;
      unsigned char key[16], pt[16], ct[16];
@@ -260,7 +260,7 @@ int noekeon_test(void)
       for (y = 0; y < 16; y++) if (tmp[0][y] != 0) return CRYPT_FAIL_TESTVECTOR;
  }       
  return CRYPT_OK;
- #endif
+#endif
 }
 
 /**

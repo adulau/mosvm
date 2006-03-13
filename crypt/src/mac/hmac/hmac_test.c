@@ -36,9 +36,9 @@ Category: Informational                                        R. Glenn
 */
 int hmac_test(void)
 {
- #ifndef LTC_TEST
+#ifndef LTC_TEST
     return CRYPT_NOP;
- #else    
+#else    
     unsigned char digest[MAXBLOCKSIZE];
     int i;
 
@@ -305,7 +305,7 @@ Key First"
     } else {
         return CRYPT_OK;
     }
- #endif
+#endif
 }
 
 #endif

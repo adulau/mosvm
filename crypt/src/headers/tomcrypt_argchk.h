@@ -6,7 +6,7 @@
 
 /* this is the default LibTomCrypt macro  */
 void crypt_argchk(char *v, char *s, int d);
-#define LTC_ARGCHK(x) if (!(x)) { crypt_argchk(#x, __FILE__, __LINE__); }
+#define LTC_ARGCHK(x) if (!(x)) { crypt_argchk( #x, __FILE__, __LINE__); }
 
 #elif ARGTYPE == 1
 

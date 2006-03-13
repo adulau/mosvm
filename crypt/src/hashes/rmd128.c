@@ -391,9 +391,9 @@ int rmd128_test(void)
        rmd128_process(&md, (unsigned char *)tests[x].msg, strlen(tests[x].msg));
        rmd128_done(&md, buf);
        if (memcmp(buf, tests[x].md, 16) != 0) {
-       #if 0
+#if 0
           printf("Failed test %d\n", x);
-       #endif
+#endif
           return CRYPT_FAIL_TESTVECTOR;
        }
    }

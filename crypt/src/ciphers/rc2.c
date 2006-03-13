@@ -270,9 +270,9 @@ void rc2_ecb_decrypt( const unsigned char *ct,
 */
 int rc2_test(void)
 {
- #ifndef LTC_TEST
+#ifndef LTC_TEST
     return CRYPT_NOP;
- #else    
+#else    
    static const struct {
         int keylen;
         unsigned char key[16], pt[8], ct[8];
@@ -316,7 +316,7 @@ int rc2_test(void)
       for (y = 0; y < 8; y++) if (tmp[0][y] != 0) return CRYPT_FAIL_TESTVECTOR;
     }
     return CRYPT_OK;
-   #endif
+#endif
 }
 
 /**

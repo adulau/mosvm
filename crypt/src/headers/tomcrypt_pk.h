@@ -48,18 +48,18 @@
  int rand_prime(mp_int *N, long len, prng_state *prng, int wprng);
 
 #else
-   #ifdef MRSA
-      #error RSA requires the big int library 
-   #endif
-   #ifdef MECC
-      #error ECC requires the big int library 
-   #endif
-   #ifdef MDH
-      #error DH requires the big int library 
-   #endif
-   #ifdef MDSA
-      #error DSA requires the big int library 
-   #endif
+#ifdef MRSA
+#error RSA requires the big int library 
+#endif
+#ifdef MECC
+#error ECC requires the big int library 
+#endif
+#ifdef MDH
+#error DH requires the big int library 
+#endif
+#ifdef MDSA
+#error DSA requires the big int library 
+#endif
 #endif /* MPI */
 
 

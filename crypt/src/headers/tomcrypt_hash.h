@@ -186,7 +186,7 @@ extern const struct ltc_hash_descriptor sha512_desc;
 
 #ifdef SHA384
 #ifndef SHA512
-   #error SHA512 is required for SHA384
+#error SHA512 is required for SHA384
 #endif
 int sha384_init(hash_state * md);
 #define sha384_process sha512_process
@@ -204,7 +204,7 @@ extern const struct ltc_hash_descriptor sha256_desc;
 
 #ifdef SHA224
 #ifndef SHA256
-   #error SHA256 is required for SHA224
+#error SHA256 is required for SHA224
 #endif
 int sha224_init(hash_state * md);
 #define sha224_process sha256_process
@@ -423,7 +423,7 @@ void pmac_shift_xor(pmac_state *pmac);
 #ifdef EAX_MODE
 
 #if !(defined(OMAC) && defined(CTR))
-   #error EAX_MODE requires OMAC and CTR
+#error EAX_MODE requires OMAC and CTR
 #endif
 
 typedef struct {

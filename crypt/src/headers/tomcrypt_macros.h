@@ -5,10 +5,10 @@
 
 /* fix for MSVC ...evil! */
 #ifdef _MSC_VER
-   #define CONST64(n) n ## ui64
+# define CONST64(n) n ## ui64
    typedef unsigned __int64 ulong64;
 #else
-   #define CONST64(n) n ## ULL
+# define CONST64(n) n ## ULL
    typedef unsigned long long ulong64;
 #endif
 
@@ -332,7 +332,7 @@ static inline unsigned long ROR64c(unsigned long word, const int i)
 
 /* extract a byte portably */
 #ifdef _MSC_VER
-   #define byte(x, n) ((unsigned char)((x) >> (8 * (n))))
+# define byte(x, n) ((unsigned char)((x) >> (8 * (n))))
 #else
-   #define byte(x, n) (((x) >> (8 * (n))) & 255)
+# define byte(x, n) (((x) >> (8 * (n))) & 255)
 #endif   

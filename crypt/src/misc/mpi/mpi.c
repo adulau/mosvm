@@ -2530,9 +2530,9 @@ int mp_exptmod (mp_int * G, mp_int * X, mp_int * P, mp_int * Y)
  */
 
 #ifdef MP_LOW_MEM
-   #define TAB_SIZE 32
+#define TAB_SIZE 32
 #else
-   #define TAB_SIZE 256
+#define TAB_SIZE 256
 #endif
 
 int
@@ -8213,9 +8213,9 @@ s_mp_add (mp_int * a, mp_int * b, mp_int * c)
  */
 
 #ifdef MP_LOW_MEM
-   #define TAB_SIZE 32
+#define TAB_SIZE 32
 #else
-   #define TAB_SIZE 256
+#define TAB_SIZE 256
 #endif
 
 int s_mp_exptmod (mp_int * G, mp_int * X, mp_int * P, mp_int * Y)

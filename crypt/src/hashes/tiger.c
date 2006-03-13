@@ -557,9 +557,9 @@ static const ulong64 table[4*256] = {
     CONST64(0xC83223F1720AEF96) /* 1022 */, CONST64(0xC3A0396F7363A51F) /* 1023 */};
 
 #ifdef _MSC_VER
-   #define INLINE __inline
+#define INLINE __inline
 #else
-   #define INLINE 
+#define INLINE 
 #endif   
 
 /* one round of the hash function */
@@ -734,9 +734,9 @@ int tiger_done(hash_state * md, unsigned char *out)
 */  
 int  tiger_test(void)
 {
- #ifndef LTC_TEST
+#ifndef LTC_TEST
     return CRYPT_NOP;
- #else    
+#else    
   static const struct {
       char *msg;
       unsigned char hash[24];
@@ -781,7 +781,7 @@ int  tiger_test(void)
       }
   }
   return CRYPT_OK;
-  #endif
+#endif
 }
 
 #endif

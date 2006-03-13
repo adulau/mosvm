@@ -25,16 +25,16 @@ we reseed automatically when len(pool0) >= 64 or every FORTUNA_WD calls to the r
 
 /* requries SHA256 and AES  */
 #if !(defined(RIJNDAEL) && defined(SHA256))
-   #error FORTUNA requires SHA256 and RIJNDAEL (AES)
+#error FORTUNA requires SHA256 and RIJNDAEL (AES)
 #endif
 
 #ifndef FORTUNA_POOLS
-   #warning FORTUNA_POOLS was not previously defined (old headers?)
-   #define FORTUNA_POOLS 32
+#warning FORTUNA_POOLS was not previously defined (old headers?)
+#define FORTUNA_POOLS 32
 #endif
 
 #if FORTUNA_POOLS < 4 || FORTUNA_POOLS > 32
-   #error FORTUNA_POOLS must be in [4..32]
+#error FORTUNA_POOLS must be in [4..32]
 #endif
 
 const struct ltc_prng_descriptor fortuna_desc = {

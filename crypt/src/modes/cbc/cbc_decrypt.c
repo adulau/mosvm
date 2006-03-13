@@ -58,10 +58,10 @@ int cbc_decrypt(const unsigned char *ct, unsigned char *pt, symmetric_CBC *cbc)
    for (x = 0; x < cbc->blocklen; x++) {
        cbc->IV[x] = tmp2[x];
    }
-   #ifdef LTC_CLEAN_STACK
+#ifdef LTC_CLEAN_STACK
       zeromem(tmp, sizeof(tmp));
       zeromem(tmp2, sizeof(tmp2));
-   #endif
+#endif
    return CRYPT_OK;
 }
 

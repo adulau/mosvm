@@ -222,9 +222,9 @@ void rc6_ecb_decrypt(const unsigned char *ct, unsigned char *pt, symmetric_key *
 */
 int rc6_test(void)
 {
- #ifndef LTC_TEST
+#ifndef LTC_TEST
     return CRYPT_NOP;
- #else    
+#else    
    static const struct {
        int keylen;
        unsigned char key[32], pt[16], ct[16];
@@ -306,7 +306,7 @@ int rc6_test(void)
       for (y = 0; y < 16; y++) if (tmp[0][y] != 0) return CRYPT_FAIL_TESTVECTOR;
    }
    return CRYPT_OK;
-  #endif
+#endif
 }
 
 /**

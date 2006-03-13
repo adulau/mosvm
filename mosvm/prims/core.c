@@ -1194,7 +1194,8 @@ MQO_BEGIN_PRIM( "tc-splice!", tc_splice )
     REQ_PAIR_ARG( list );
     NO_MORE_ARGS( );
 
-    if( mqo_is_empty( mqo_car( tc ) ) ){
+    if( mqo_is_empty( v_list ) ){
+    }else if( mqo_is_empty( mqo_car( tc ) ) ){
         mqo_set_car( tc, v_list );
     }else{
         mqo_set_cdr( mqo_pair_fv( mqo_cdr( tc ) ), v_list );

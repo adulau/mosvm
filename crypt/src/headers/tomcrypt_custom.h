@@ -91,7 +91,7 @@
 /* ---> Encrypt + Authenticate Modes <--- */
 #define EAX_MODE
 #if defined(EAX_MODE) && !(defined(CTR) && defined(OMAC))
-   #error EAX_MODE requires CTR and OMAC mode
+#error EAX_MODE requires CTR and OMAC mode
 #endif
 
 #define OCB_MODE
@@ -107,7 +107,7 @@
 #define YARROW_AES 0
 
 #if defined(YARROW) && !defined(CTR)
-   #error YARROW requires CTR chaining mode to be defined!
+#error YARROW requires CTR chaining mode to be defined!
 #endif
 
 /* a PRNG that simply reads from an available system source */
@@ -174,11 +174,11 @@
 /* Include ASN.1 DER (required by DSA/RSA) */
 #define LTC_DER
 #if defined(LTC_DER) && !defined(MPI) 
-   #error ASN.1 DER requires MPI functionality
+#error ASN.1 DER requires MPI functionality
 #endif
 
 #if (defined(MDSA) || defined(MRSA)) && !defined(LTC_DER)
-   #error RSA/DSA requires ASN.1 DER functionality, make sure LTC_DER is enabled
+#error RSA/DSA requires ASN.1 DER functionality, make sure LTC_DER is enabled
 #endif
 
 #endif

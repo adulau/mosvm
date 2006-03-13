@@ -71,10 +71,10 @@ static int  sha1_compress(hash_state *md, unsigned char *buf)
 
     /* compress */
     /* round one */
-    #define FF0(a,b,c,d,e,i) e = (ROLc(a, 5) + F0(b,c,d) + e + W[i] + 0x5a827999UL); b = ROLc(b, 30);
-    #define FF1(a,b,c,d,e,i) e = (ROLc(a, 5) + F1(b,c,d) + e + W[i] + 0x6ed9eba1UL); b = ROLc(b, 30);
-    #define FF2(a,b,c,d,e,i) e = (ROLc(a, 5) + F2(b,c,d) + e + W[i] + 0x8f1bbcdcUL); b = ROLc(b, 30);
-    #define FF3(a,b,c,d,e,i) e = (ROLc(a, 5) + F3(b,c,d) + e + W[i] + 0xca62c1d6UL); b = ROLc(b, 30);
+#define FF0(a,b,c,d,e,i) e = (ROLc(a, 5) + F0(b,c,d) + e + W[i] + 0x5a827999UL); b = ROLc(b, 30);
+#define FF1(a,b,c,d,e,i) e = (ROLc(a, 5) + F1(b,c,d) + e + W[i] + 0x6ed9eba1UL); b = ROLc(b, 30);
+#define FF2(a,b,c,d,e,i) e = (ROLc(a, 5) + F2(b,c,d) + e + W[i] + 0x8f1bbcdcUL); b = ROLc(b, 30);
+#define FF3(a,b,c,d,e,i) e = (ROLc(a, 5) + F3(b,c,d) + e + W[i] + 0xca62c1d6UL); b = ROLc(b, 30);
  
 #ifdef LTC_SMALL_CODE
  
@@ -132,10 +132,10 @@ static int  sha1_compress(hash_state *md, unsigned char *buf)
     }
 #endif
 
-    #undef FF0
-    #undef FF1
-    #undef FF2
-    #undef FF3
+#undef FF0
+#undef FF1
+#undef FF2
+#undef FF3
 
     /* store */
     md->sha1.state[0] = md->sha1.state[0] + a;
@@ -244,9 +244,9 @@ int sha1_done(hash_state * md, unsigned char *out)
 */  
 int  sha1_test(void)
 {
- #ifndef LTC_TEST
+#ifndef LTC_TEST
     return CRYPT_NOP;
- #else    
+#else    
   static const struct {
       char *msg;
       unsigned char hash[20];
@@ -276,7 +276,7 @@ int  sha1_test(void)
       }
   }
   return CRYPT_OK;
-  #endif
+#endif
 }
 
 #endif

@@ -1660,9 +1660,9 @@ void des3_ecb_decrypt(const unsigned char *ct, unsigned char *pt, symmetric_key 
 */
 int des_test(void)
 {
- #ifndef LTC_TEST
+#ifndef LTC_TEST
     return CRYPT_NOP;
- #else    
+#else    
     int err;
     static const struct des_test_case {
         int num, mode; // mode 1 = encrypt
@@ -1798,14 +1798,14 @@ int des_test(void)
 }
 
     return CRYPT_OK;
-  #endif
+#endif
 }
 
 int des3_test(void)
 {
- #ifndef LTC_TEST
+#ifndef LTC_TEST
     return CRYPT_NOP;
- #else    
+#else    
    unsigned char key[24], pt[8], ct[8], tmp[8];
    symmetric_key skey;
    int x, err;
@@ -1834,7 +1834,7 @@ int des3_test(void)
    }
    
    return CRYPT_OK;
- #endif
+#endif
 }
 
 /**

@@ -251,9 +251,9 @@ int md4_done(hash_state * md, unsigned char *out)
 */  
 int md4_test(void)
 {
- #ifndef LTC_TEST
+#ifndef LTC_TEST
     return CRYPT_NOP;
- #else    
+#else    
     static const struct md4_test_case {
         char *input;
         unsigned char digest[16];
@@ -294,7 +294,7 @@ int md4_test(void)
 
     }
     return CRYPT_OK;
-  #endif
+#endif
 }
 
 #endif

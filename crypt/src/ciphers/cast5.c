@@ -390,9 +390,9 @@ static const ulong32 S8[256] = {
 
 /* returns the i'th byte of a variable */
 #ifdef _MSC_VER
-   #define GB(x, i) ((unsigned char)((x[(15-i)>>2])>>(unsigned)(8*((15-i)&3))))
+#define GB(x, i) ((unsigned char)((x[(15-i)>>2])>>(unsigned)(8*((15-i)&3))))
 #else   
-   #define GB(x, i) (((x[(15-i)>>2])>>(unsigned)(8*((15-i)&3)))&255)
+#define GB(x, i) (((x[(15-i)>>2])>>(unsigned)(8*((15-i)&3)))&255)
 #endif   
 
  /**
@@ -498,9 +498,9 @@ int cast5_setup(const unsigned char *key, int keylen, int num_rounds, symmetric_
 #endif
 
 #ifdef _MSC_VER
-   #define INLINE __inline
+#define INLINE __inline
 #else
-   #define INLINE 
+#define INLINE 
 #endif   
    
 INLINE static ulong32 FI(ulong32 R, ulong32 Km, ulong32 Kr)
@@ -634,9 +634,9 @@ void cast5_ecb_decrypt(const unsigned char *ct, unsigned char *pt, symmetric_key
 */
 int cast5_test(void)
 {
- #ifndef LTC_TEST
+#ifndef LTC_TEST
     return CRYPT_NOP;
- #else    
+#else    
    static const struct {
        int keylen;
        unsigned char key[16];
@@ -680,7 +680,7 @@ int cast5_test(void)
    
    }
    return CRYPT_OK;
- #endif
+#endif
 }
 
 /**

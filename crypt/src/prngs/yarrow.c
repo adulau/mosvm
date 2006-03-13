@@ -75,7 +75,7 @@ int yarrow_start(prng_state *prng)
 #elif defined(DES)
    prng->yarrow.cipher = register_cipher(&des3_desc);
 #else
-   #error YARROW needs at least one CIPHER
+#error YARROW needs at least one CIPHER
 #endif
    if ((err = cipher_is_valid(prng->yarrow.cipher)) != CRYPT_OK) {
       return err;
@@ -102,7 +102,7 @@ int yarrow_start(prng_state *prng)
 #elif defined(WHIRLPOOL)
    prng->yarrow.hash   = register_hash(&whirlpool_desc);
 #else
-   #error YARROW needs at least one HASH
+#error YARROW needs at least one HASH
 #endif
    if ((err = hash_is_valid(prng->yarrow.hash)) != CRYPT_OK) {
       return err;
