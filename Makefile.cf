@@ -44,7 +44,6 @@ ifeq ($(OS),MinGW)
 CFLAGS += -I/mingw/include -DGC_WIN32_THREADS=1
 
 LIBGC=/mingw/lib/libgc.a 
-LIBTC=/mingw/lib/libtomcrypt.a
 EXE=.exe
 HAS_DEVRANDOM=no
 endif
@@ -53,7 +52,6 @@ ifeq ($(OS),Cygwin)
 CFLAGS += -mno-cygwin
 CFLAGS += -I/usr/local/include
 LIBGC=/usr/local/lib/libgc.a
-LIBTC=/usr/local/lib/libtomcrypt.a
 LIBS += -lwsock32
 EXE=.exe
 HAS_DEVRANDOM=no
@@ -62,7 +60,6 @@ endif
 ifeq ($(OS),OpenBSD)
 CFLAGS += -fno-stack-protector -I/usr/local/include
 LIBGC=/usr/local/lib/libgc.a
-LIBTC=/usr/local/lib/libtomcrypt.a
 endif
 
 ifeq ($(OS),Darwin)
