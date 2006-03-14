@@ -22,6 +22,14 @@
 
 (export eval)
 
+(define (read-data-file path)
+  (define file (open-file-descr path "r"))
+  (define data (read-descr-all file))
+  (close-descr file)
+  data)
+
+(export read-data-file)
+
 ;;; for-each, map, find-tail, list-index, any, filter, fold and find from SRFI-1
 (define (filter fn list)
   (define tc (make-tc))
@@ -465,15 +473,21 @@
 
 (export thaw-file)
 
+(define (path-join . items)
+  (apply string-join *path-sep* items))
+
+(define (convert-path path)
+  (apply path-join (string-split* path "/")))
+
+(export path-join convert-path)
+
 ;;; The omnipotent module loader
 (define (load-mo path)
-  (set! path (apply string-join *path-sep*
-                                (string-split* path "/")))
+  (set! path (convert-path path))
   ((thaw-file path)))
 
 (define (load-ms path)
-  (set! path (apply string-join *path-sep*
-                                (string-split* path "/")))
+  (set! path (convert-path path))
   (define file (open-input-file path))
   (define data (read-exprs file))
   ((assemble (optimize (compile data)))))

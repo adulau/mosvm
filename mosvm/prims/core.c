@@ -322,6 +322,19 @@ MQO_BEGIN_PRIM( "memq", memq )
     MQO_RESULT( mqo_vf_false() );
 MQO_END_PRIM( memq );
 
+MQO_BEGIN_PRIM( "member", member )
+    REQ_VALUE_ARG( item );
+    REQ_PAIR_ARG( list );
+    NO_MORE_ARGS( );
+    while( list ){
+        if( mqo_equal( item, mqo_car( list ) ) ){
+            MQO_RESULT( mqo_vf_pair( list ) );
+        }
+        list = mqo_pair_fv( mqo_cdr( list ) );
+    }
+    MQO_RESULT( mqo_vf_false() );
+MQO_END_PRIM( member );
+
 MQO_BEGIN_PRIM( "exit", exit )
     OPT_INTEGER_ARG( code );
     NO_MORE_ARGS( );
@@ -2074,6 +2087,7 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( eq );
     MQO_BIND_PRIM( apply );
     MQO_BIND_PRIM( memq );
+    MQO_BIND_PRIM( member );
     MQO_BIND_PRIM( assq );
     MQO_BIND_PRIM( string_append );
     MQO_BIND_PRIM( string_length );

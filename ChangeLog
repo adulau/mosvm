@@ -11,19 +11,28 @@
   * Altered all uses of port-read-fn to include quantity arguments.
   * Added mqo_flush_buffer and flush-buffer
 
-- ?/??/????, MOSREF Control Module
+- ?/??/????, MOSREF Compose Module
+  * Added (path-mtime path) -> integer to prims/os
+  * Added (file-path? path) -> #t or #f
+  * Added (path-join string ..) -> string to lib/core
+  * Added (convert-path string) -> string to lib/core
+  + Added (read-data-file path) -> string to lib/core
+  * Added (path-exists? path) -> #t or #f to prims/os
+  * Added (member item list) -> #t or #f to prims/core
+  * Added lib/build
+  * Added (build-dependencies module) to lib/build
+  * Added (build-module module) to lib/build
+  + Added (build-exe platform source) to lib/build 
+  + Added (build-drone platform console-key console-host console-portno)
+
+- 3/12/2006, MOSREF Control Module
   * Added (open-buffer-port) -> port to lib/core
   * Added (fuse-ports read-port write-port) -> port
   * Added (drone-affiliation console-ecdh port) -> port
   * Added (console-affiliation console-ecdh port) -> port
   * Added affiliation unit test
 
-- ?/??/????, Filter Ports and Crypto Filters
-  (define rx-key (make-cfb aes iv aes-encrypt))
-  (define tx-key (make-cfb aes iv aes-encrypt))
-  (set-process-output! (encrypt-output (process-output) tx-key cfb-encrypt))
-  (set-process-input! (encrypt-input (process-input) rx-key cfb-decrypt))
-  
+- 3/11/2006, Filter Ports and Crypto Filters
   * Added the lib/filter module
   * Added filter-output, filter-input and filter-port to lib/filter
   * Added the lib/crypto-port module

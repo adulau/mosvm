@@ -20,13 +20,14 @@
 #include <unistd.h>
 #include <sys/param.h>
 #include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #if defined(_WIN32)||defined(__CYGWIN__)
     // Win32 doesn't supply this header -- we get our htonl and htons
     // from some nasty inline assembler elsewhere.
 #else
 #include <arpa/inet.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #endif
 
@@ -306,6 +307,44 @@ MQO_BEGIN_PRIM( "file-seek", file_seek )
     MQO_RESULT( mqo_vf_integer( offset ) );
 MQO_END_PRIM( file_seek )
 
+//TODO: We really need a time type.
+MQO_BEGIN_PRIM( "path-mtime", path_mtime )
+    REQ_STRING_ARG( path )
+    NO_MORE_ARGS( );
+
+    struct stat s;
+
+    mqo_os_error( stat( mqo_sf_string( path ), &s ) );
+
+    time_t mtime = s.st_mtimespec.tv_sec;
+
+    MQO_RESULT( mqo_vf_integer( mtime ) );
+MQO_END_PRIM( path_mtime )
+
+MQO_BEGIN_PRIM( "path-exists?", path_existsq )
+    REQ_STRING_ARG( path )
+    NO_MORE_ARGS( );
+
+    struct stat s;
+    
+    MQO_RESULT( mqo_vf_boolean( stat( mqo_sf_string( path ), &s ) == 0 ) );
+MQO_END_PRIM( path_existsq )
+
+MQO_BEGIN_PRIM( "file-path?", file_pathq )
+    REQ_STRING_ARG( path )
+    NO_MORE_ARGS( );
+
+    struct stat s;
+
+    int r = stat( mqo_sf_string( path ), &s );
+
+    if( r == 0 ){
+        MQO_RESULT( mqo_vf_boolean( S_ISREG( s.st_mode ) ) );
+    }else{
+        MQO_RESULT( mqo_vf_false( ) );
+    }
+MQO_END_PRIM( file_pathq )
+
 void mqo_bind_os_prims( ){
     MQO_BEGIN_PRIM_BINDS( );
 
@@ -338,6 +377,10 @@ void mqo_bind_os_prims( ){
     MQO_BIND_PRIM( file_seek );
     MQO_BIND_PRIM( file_pos );
     MQO_BIND_PRIM( file_len );
+
+    MQO_BIND_PRIM( path_mtime );
+    MQO_BIND_PRIM( path_existsq );
+    MQO_BIND_PRIM( file_pathq );
 
     //TODO: Halt needs to know if a process is monitoring a port, so it can
     //      clear that.

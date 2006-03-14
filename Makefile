@@ -22,10 +22,10 @@ clean:
 clean-seed:
 	rm -f lib/*mo bin/*mo
 
-$(LTC): crypt/* crypt/*/* crypt/*/*/*
+$(LIBTC): crypt/src/* crypt/src/*/* crypt/src/*/*/*
 	cd $(ROOT)/crypt && $(MAKE)
 
-$(MOSVM_STUB): $(LTC) mosvm/*.[ch] mosvm/mosvm/*.[ch] mosvm/prims/*.[ch]
+$(MOSVM_STUB): $(LIBTC) mosvm/*.[ch] mosvm/mosvm/*.[ch] mosvm/prims/*.[ch]
 	cd $(ROOT)/mosvm && $(MAKE)
 
 kabuki-filter:
