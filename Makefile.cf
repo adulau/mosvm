@@ -8,7 +8,8 @@ CFLAGS += -I$(ROOT)/crypt/src/headers
 CFLAGS += -std=gnu99
 HAS_DEVRANDOM=yes
 
-BUILD=$(ROOT)/build
+BIN=$(ROOT)/bin
+STUBS=$(ROOT)/stubs
 
 OS=$(shell uname)
 
@@ -38,11 +39,12 @@ ifeq ($(OS),Linux)
 LIBGC=/usr/lib/libgc.a
 CFLAGS += -I/usr/local/include -I/usr/include/gc -D_GNU_SOURCE
 CFLAGS += -pthread
+PLATFORM = linux
 endif
 
 ifeq ($(OS),MinGW)
 CFLAGS += -I/mingw/include -DGC_WIN32_THREADS=1
-
+PLATFORM = win32
 LIBGC=/mingw/lib/libgc.a 
 EXE=.exe
 HAS_DEVRANDOM=no
@@ -53,6 +55,7 @@ CFLAGS += -mno-cygwin
 CFLAGS += -I/usr/local/include
 LIBGC=/usr/local/lib/libgc.a
 LIBS += -lwsock32
+PLATFORM = win32
 EXE=.exe
 HAS_DEVRANDOM=no
 endif
@@ -60,11 +63,13 @@ endif
 ifeq ($(OS),OpenBSD)
 CFLAGS += -fno-stack-protector -I/usr/local/include
 LIBGC=/usr/local/lib/libgc.a
+PLATFORM = openbsd
 endif
 
 ifeq ($(OS),Darwin)
 CFLAGS += -I/opt/local/include -DNO_PARALLEL_GC
 LIBGC=/opt/local/lib/libgc.a
+PLATFORM = macosx
 endif
 
 ifdef COMPACT
@@ -74,10 +79,10 @@ CFLAGS+=-g
 endif
 
 LIBTC=$(ROOT)/crypt/libtomcrypt.a
-MOSVM=$(BUILD)/bin/mosvm$(EXE)
-MOSVM_STUB=$(BUILD)/bin/mosvm-stub$(EXE)
-GLUE=$(BUILD)/bin/glue$(EXE)
-MOSC=$(BUILD)/bin/mosc$(EXE)
+MOSVM=$(BIN)/mosvm$(EXE)
+MOSVM_STUB=$(STUBS)/mosvm-stub-$(PLATFORM)$(EXE)
+GLUE=$(BIN)/glue$(EXE)
+MOSC=$(BIN)/mosc$(EXE)
 
 ifeq ($(HAS_DEVRANDOM),yes)
 CFLAGS += -DDEVRANDOM

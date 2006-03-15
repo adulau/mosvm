@@ -20,9 +20,9 @@
   * Added (path-exists? path) -> #t or #f to prims/os
   * Added (member item list) -> #t or #f to prims/core
   * Added lib/build
+  * Added (build-module module) -> string to lib/build
   * Added (build-dependencies module) to lib/build
-  * Added (build-module module) to lib/build
-  + Added (build-exe platform source) to lib/build 
+  + Added (build-exe platform module) -> string to lib/build 
   + Added (build-drone platform console-key console-host console-portno)
 
 - 3/12/2006, MOSREF Control Module

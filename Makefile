@@ -22,6 +22,9 @@ clean:
 clean-seed:
 	rm -f lib/*mo bin/*mo
 
+clean-stubs:
+	rm -f stubs/*
+
 $(LIBTC): crypt/src/* crypt/src/*/* crypt/src/*/*/*
 	cd $(ROOT)/crypt && $(MAKE)
 
