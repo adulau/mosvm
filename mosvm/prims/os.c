@@ -58,8 +58,12 @@ MQO_BEGIN_PRIM( "open-file-descr", open_file_descr )
             break;
         case 'c':
             flag |= O_CREAT;
+            break;
         case 'a':
             flag |= O_APPEND;
+            break;
+        case 't':
+            flag |= O_TRUNC;
             break;
 #ifdef _WIN32
     //The core WIN32 headers don't provide NONBLOCK or SYNC.

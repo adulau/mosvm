@@ -1181,12 +1181,11 @@ MQO_BEGIN_PRIM( "disable-trace", disable_trace )
 MQO_END_PRIM( disable_trace )
 
 MQO_BEGIN_PRIM( "make-tc", make_tc )
-    OPT_PAIR_ARG( seed );
-    NO_MORE_ARGS( );
+    REST_ARGS( seed );
 
     mqo_tc tc = mqo_make_tc( );
 
-    if( has_seed && seed ){
+    if( seed ){
         mqo_set_car( tc, mqo_vf_pair( seed ) );
         mqo_set_cdr( tc, mqo_vf_pair( mqo_last_pair( seed ) ) );
     };

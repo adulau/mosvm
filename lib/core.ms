@@ -28,7 +28,12 @@
   (close-descr file)
   data)
 
-(export read-data-file)
+(define (write-data-file path content)
+  (define file (open-file-descr path "wct"))
+  (write-descr file content)
+  (close-descr file))
+
+(export read-data-file write-data-file)
 
 ;;; for-each, map, find-tail, list-index, any, filter, fold and find from SRFI-1
 (define (filter fn list)

@@ -16,14 +16,23 @@
   * Added (file-path? path) -> #t or #f
   * Added (path-join string ..) -> string to lib/core
   * Added (convert-path string) -> string to lib/core
-  + Added (read-data-file path) -> string to lib/core
+  * Added (read-data-file path) -> string to lib/core
+  * Modified read-lisp-file to use descrs instead of ports.
+  * Fixed bug with make-tc causing optional arguments to be misread.
+  * Fixed bug with open-file-descr causing create to append
+  * Added t for Truncate to open-file-descr
   * Added (path-exists? path) -> #t or #f to prims/os
   * Added (member item list) -> #t or #f to prims/core
   * Added lib/build
   * Added (build-module module) -> string to lib/build
   * Added (build-dependencies module) to lib/build
-  + Added (build-exe platform module) -> string to lib/build 
-  + Added (build-drone platform console-key console-host console-portno)
+  * Added (build-exe platform module) -> string to lib/build 
+  + Added (build-drone platform console-key console-host console-portno) to 
+    mosref/console
+  + Added (write-data-file path data) to lib/core
+  + Added (make-console hostname portno) -> console to mosref/console
+  + Added (make-drone console platform) -> drone to mosref/console
+  + Added (drone->exe drone) to mosref/console
 
 - 3/12/2006, MOSREF Control Module
   * Added (open-buffer-port) -> port to lib/core

@@ -128,7 +128,10 @@
 (define read-lisp-file
   (if *mosvm?*
     (lambda (path)
-      (read-all (open-lisp-input-file path)))
+      (define file (open-file-descr path "r"))
+      (define data (read-descr-all file))
+      (close-descr file)
+      (string->exprs data))
     (lambda (path)
       (read-all (open-input-file path)))))
 
