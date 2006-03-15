@@ -1924,7 +1924,7 @@ MQO_BEGIN_PRIM( "write-buffer", write_buffer )
     mqo_integer data_len = mqo_string_length( data );
     mqo_expand_buffer( buffer, data_len );
     mqo_write_buffer( buffer, mqo_sf_string( data ), data_len );
-
+    
     MQO_NO_RESULT( );
 MQO_END_PRIM( write_buffer )
 

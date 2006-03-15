@@ -27,9 +27,8 @@
   * Added (build-module module) -> string to lib/build
   * Added (build-dependencies module) to lib/build
   * Added (build-exe platform module) -> string to lib/build 
-  + Added (build-drone platform console-key console-host console-portno) to 
-    mosref/console
-  + Added (write-data-file path data) to lib/core
+  * Fixed a bug in mqo_expand_buffer that caused a buffer not to expand.
+  * Added (write-data-file path data) to lib/core
   + Added (make-console hostname portno) -> console to mosref/console
   + Added (make-drone console platform) -> drone to mosref/console
   + Added (drone->exe drone) to mosref/console

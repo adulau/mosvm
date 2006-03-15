@@ -32,7 +32,7 @@ mqo_buffer mqo_make_buffer( mqo_integer capacity ){
 
 void mqo_expand_buffer( mqo_buffer buffer, mqo_integer count ){
     mqo_integer space = (
-        buffer->capacity - buffer->origin - buffer->length - - count 
+        buffer->capacity - buffer->origin - buffer->length - count 
     );
 
     if( space >= 0 ) return;
