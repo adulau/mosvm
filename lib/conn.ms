@@ -18,26 +18,26 @@
               (make-connection read-fn write-fn close-fn descr)
               connection?)
 
-(define (make-connection-from-socket socket)
+(define (wrap-socket socket)
     (make-connection (lambda (x q) (read-descr socket q))
                      (lambda (x d) (write-descr socket d))
                      (lambda (x) (close-descr socket))
                      socket))
 
 (define (open-tcp-connection host port)
-  (make-connection-from-socket (connect-tcp host port)))
+  (wrap-socket (connect-tcp host port)))
 
 (define (spawn-tcp-server port fn)
   (define server (serve-tcp port))
   (spawn (lambda ()
             (until (descr-closed? server)
               (define conn (read-descr server))
-              (define port (make-connection-from-socket conn))
+              (define port (wrap-socket conn))
               ;; Born just a little too slooooooooow!
               (with-input-port port
                 (with-output-port port
                   (spawn fn)))))))
 
-(export <connection> open-tcp-connection spawn-tcp-server
+(export <connection> open-tcp-connection spawn-tcp-server wrap-socket
         connection?)
 

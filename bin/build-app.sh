@@ -15,6 +15,7 @@ else
 fi
 
 DEPS=`$DO_SCHEME bin/manifest.ms $PROG`
+echo $DEPS
 DEPS_MO=""
 RE_GLUE=""
 
@@ -29,8 +30,4 @@ for DEP in $DEPS; do
     DEPS_MO="$DEPS_MO $DEP_MO"
 done
 
-if [ x$RE_GLUE != x ]||[ ! -s $OUTP ]||[ $STUB -nt $OUTP ]; then
-    ./bin/glue $STUB $DEPS_MO $OUTP && chmod 0755 $OUTP || exit 2
-else
-    echo No assembly required for $OUTP.
-fi
+./bin/glue $STUB $DEPS_MO $OUTP && chmod 0755 $OUTP || exit 2

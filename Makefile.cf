@@ -12,6 +12,27 @@ BIN=$(ROOT)/bin
 STUBS=$(ROOT)/stubs
 
 OS=$(shell uname)
+ARCH=$(shell uname -m)
+
+ifeq ($(ARCH),i386)
+# BSD calls anything after i386, i386.
+ARCH=x86
+endif
+
+ifeq ($(ARCH),i686)
+# GNU calls post-pentium i686
+ARCH=x86
+endif
+
+ifeq ($(ARCH),Power Macintosh)
+# Oh lawd, it don't come easy with you macs..
+ARCH=ppc
+endif
+
+ifeq ($(ARCH),macppc)
+# Somebody smell BSD?
+ARCH=ppc
+endif
 
 DO_CC=gcc
 ifdef USE_MZSCHEME
@@ -39,12 +60,12 @@ ifeq ($(OS),Linux)
 LIBGC=/usr/lib/libgc.a
 CFLAGS += -I/usr/local/include -I/usr/include/gc -D_GNU_SOURCE -DLINUX
 CFLAGS += -pthread
-PLATFORM = linux
+PLATFORM = linux-$(ARCH)
 endif
 
 ifeq ($(OS),MinGW)
 CFLAGS += -I/mingw/include -DGC_WIN32_THREADS=1
-PLATFORM = win32
+PLATFORM = winnt-$(ARCH)
 LIBGC=/mingw/lib/libgc.a 
 EXE=.exe
 HAS_DEVRANDOM=no
@@ -55,7 +76,7 @@ CFLAGS += -mno-cygwin
 CFLAGS += -I/usr/local/include
 LIBGC=/usr/local/lib/libgc.a
 LIBS += -lwsock32
-PLATFORM = win32
+PLATFORM = winnt-$(ARCH)
 EXE=.exe
 HAS_DEVRANDOM=no
 endif
@@ -63,13 +84,13 @@ endif
 ifeq ($(OS),OpenBSD)
 CFLAGS += -fno-stack-protector -I/usr/local/include
 LIBGC=/usr/local/lib/libgc.a
-PLATFORM = openbsd
+PLATFORM = openbsd-$(ARCH)
 endif
 
 ifeq ($(OS),Darwin)
 CFLAGS += -I/opt/local/include -DNO_PARALLEL_GC
 LIBGC=/opt/local/lib/libgc.a
-PLATFORM = macosx
+PLATFORM = darwin-$(ARCH)
 endif
 
 ifdef COMPACT
@@ -80,6 +101,7 @@ endif
 
 LIBTC=$(ROOT)/crypt/libtomcrypt.a
 MOSVM=$(BIN)/mosvm$(EXE)
+MOSREF=$(BIN)/mosref$(EXE)
 MOSVM_STUB=$(STUBS)/mosvm-stub-$(PLATFORM)$(EXE)
 GLUE=$(BIN)/glue$(EXE)
 MOSC=$(BIN)/mosc$(EXE)

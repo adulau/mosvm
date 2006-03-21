@@ -21,6 +21,20 @@
 #include <sys/param.h>
 #include <errno.h>
 
+MQO_BEGIN_PRIM( "string->integer", string_to_integer )
+    REQ_STRING_ARG( string )
+    NO_MORE_ARGS( )
+    
+    const char* hd = mqo_sf_string( string );
+    const char* pt = hd;
+
+    mqo_integer i = mqo_read_integer( &pt );
+    if( ( pt - hd )!= mqo_string_length( string ) ){
+        mqo_errf( mqo_es_vm, "ss", "garbage trails integer", hd );
+    }
+    MQO_RESULT( mqo_vf_integer( i ) );
+MQO_END_PRIM( string_to_integer )
+
 MQO_BEGIN_PRIM( "cadr", cadr )
     REQ_LIST_ARG( list )
     list = mqo_req_list( mqo_cdr( list ), "list" );
@@ -2251,6 +2265,8 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( substring );
     MQO_BIND_PRIM( string_head );
     MQO_BIND_PRIM( string_tail );
+
+    MQO_BIND_PRIM( string_to_integer )
 
     mqo_symbol_fs( "quark" )->value = mqo_make_quark( );
 }

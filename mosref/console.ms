@@ -21,7 +21,8 @@
 (import "lib/freeze")
 (import "lib/format")
 
-(export console-affiliation console-repl drone-exec)
+(export console-affiliation console-repl drone-exec make-drone-exe 
+        make-console-ecdh)
 
 (define *sprng* (make-random "sprng"))
 (define *ecdh-keysize* 384)
@@ -29,6 +30,8 @@
 
 (define (make-iv)
   (random-string 16 *sprng*))
+
+(define (make-console-ecdh) (make-ecdh *ecdh-keysize*))
 
 (define (console-affiliation session-ecdh port)
   ;;;TODO: Configure timeout.
@@ -61,7 +64,7 @@
 
   (fuse-ports report-port command-port))
 
-(define (make-drone-exe console-addr console-portno console-ecdh)
+(define (make-drone-exe console-addr console-portno console-ecdh platform)
   (build-exe platform
              `((import "mosref/drone")
                (import "lib/conn")

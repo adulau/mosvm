@@ -4,10 +4,13 @@ include $(ROOT)/Makefile.cf
 # A list of unit test targets. All unit tests are to be compiled by MOSVM.
 TESTS=test-core test-quasi test-parse test-assemble test-compile test-freeze test-process test-buffer
 
-all: $(MOSC) $(MOSVM) libs mosrefs
+all: $(MOSC) $(MOSVM) libs mosrefs $(MOSREF)
 test: $(TESTS)
 test-%: test/%.mo $(MOSVM) libs mosrefs
 	$(MOSVM) $<
+
+$(MOSREF): $(MOSC) $(MOSVM) libs mosrefs
+	sh bin/build-app.sh $(MOSVM_STUB) mosref/main $(MOSREF)
 
 mosrefs: $(MOSVM) libs
 	sh bin/build-dir.sh mosref

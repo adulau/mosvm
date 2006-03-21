@@ -4,6 +4,13 @@
   + Any reference to an identifier not bound in builtins, imports is identified
     during compilation as an error.
 
+- ?/??/????, MOSREF Remote REPL
+  * Added string->integer to core prims
+  * Added a platform architecture tag to the stubs
+  + Added mosref/main, a command wrapper for MOSREF to establish a remote 
+    repl / terminal.
+  + Added support for dotted-quad addresses to MOSVM's address resolution.
+
 - 3/20/2006, MOSREF Drone Exec / Repl Interface
   * Broke mosref functionality into mosref/drone and mosref/console
   * Added drone-exec, console-repl to mosref/console
