@@ -17,6 +17,7 @@
 #include "mosvm.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 #if defined(_WIN32)||defined(__CYGWIN__)
 #include <sys/time.h>
@@ -47,6 +48,14 @@ void mqo_report_net_error( ){
 #else
     mqo_errf( mqo_es_os, "s", strerror( errno ) );
 #endif
+}
+
+void mqo_report_host_error( ){
+// #if defined(_WIN32)||defined(__CYGWIN__)
+//    mqo_errf( mqo_es_os, "s", strerror( WSAGetLastError() ) );
+// #else
+    mqo_errf( mqo_es_os, "s", hstrerror( h_errno ) );
+// #endif
 }
 
 mqo_integer mqo_net_error( mqo_integer k ){
@@ -174,19 +183,50 @@ void mqo_stop_writing( mqo_descr descr ){
     if( ! mqo_is_reading( descr ) )mqo_stop_dispatching( descr );
 }
 
-mqo_integer mqo_resolve( mqo_string name ){
-    struct hostent *entry = gethostbyname( mqo_sf_string( name ) );
-    if( !entry ){ 
-        mqo_report_net_error( );
-    //TODO }else if( entry->h_addrtype != ... ){
-        //TODO: Signal an error.
-    }else if( entry->h_length != 4 ){
-        //TODO: Signal an error.
-    }else{
-        //TODO: A better version of resolve would return a list of
-        //      addresses..
-        return ntohl( *(mqo_integer*)(entry->h_addr) );
+int mqo_parse_dotted_quad( mqo_string quad, mqo_integer* addr ){
+    mqo_byte* bytes = (mqo_byte*)addr;
+
+    int ct = 0;
+    const char* ptr = mqo_sf_string( quad );
+    const char* tail = ptr + mqo_string_length( quad );
+    char* next; 
+
+    while(( ct < 4 )&&( ptr != tail )){
+        mqo_long x = strtoul( ptr, &next, 10 );  
+        if( ptr == next ) break; // *ptr wasn't a digit
+        if(( x > 255 )||( x < 0 )) return 0; // Not a byte.
+        bytes[ ct ++ ] = (mqo_byte)x; // Otherwise, we've got one more byte.
+        ptr = next;              // Advance our base-pointer.
+        if( *ptr != '.' ) break; // A dot indicates we've got another quad
+        ptr ++;
     }
+    
+    if( ct != 4 ) return 0;        // Not enough bytes were found.
+    if( ptr != tail ) return 0; // Not all of the string was parsed.
+
+    *addr = ntohl( *addr );
+    return 1;
+}
+
+mqo_integer mqo_resolve( mqo_string name ){
+    mqo_integer addr;
+
+    if( ! mqo_parse_dotted_quad( name, &addr ) ){
+        struct hostent *entry = gethostbyname( mqo_sf_string( name ) );
+        if( !entry ){ 
+            mqo_report_host_error( );
+            //TODO }else if( entry->h_addrtype != ... ){
+            //TODO: Signal an error.
+        }else if( entry->h_length != 4 ){
+            //TODO: Signal an error.
+        }else{
+            //TODO: A better version of resolve would return a list of
+            //      addresses..
+            addr = ntohl( *(mqo_integer*)(entry->h_addr) );
+        }
+    }
+
+    return addr;
 }
 
 mqo_socket mqo_connect_tcp( mqo_integer address, mqo_integer port ){

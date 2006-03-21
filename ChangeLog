@@ -12,7 +12,9 @@
   * Modified decrypt-input to recognize eof conditions.
   * Added mosref/main, a command wrapper for MOSREF to establish a remote 
     repl / terminal.
-  + Added support for dotted-quad addresses to MOSVM's address resolution.
+  * Added support for dotted-quad addresses to MOSVM's address resolution.
+  * Added (resolve-addr string) -> address for testing MOSVM's resolution.
+  * Improved error reporting for host resolution errors.
 
 - 3/20/2006, MOSREF Drone Exec / Repl Interface
   * Broke mosref functionality into mosref/drone and mosref/console

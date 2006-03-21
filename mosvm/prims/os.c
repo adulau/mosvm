@@ -33,6 +33,13 @@
 
 mqo_symbol mqo_es_fs;
 
+MQO_BEGIN_PRIM( "resolve-addr", resolve_addr )
+    REQ_STRING_ARG( addr )
+    NO_MORE_ARGS( )
+    
+    MQO_RESULT( mqo_vf_integer( mqo_resolve( addr ) ) );
+MQO_END_PRIM( resolve_addr )
+
 MQO_BEGIN_PRIM( "open-file-descr", open_file_descr )
     REQ_STRING_ARG( path );
     REQ_STRING_ARG( flags );
@@ -389,6 +396,8 @@ void mqo_bind_os_prims( ){
     MQO_BIND_PRIM( path_mtime );
     MQO_BIND_PRIM( path_existsq );
     MQO_BIND_PRIM( file_pathq );
+
+    MQO_BIND_PRIM( resolve_addr );
 
     //TODO: Halt needs to know if a process is monitoring a port, so it can
     //      clear that.
