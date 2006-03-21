@@ -23,6 +23,12 @@
 #include <winsock2.h>
 #define MQO_EWOULDBLOCK WSAEWOULDBLOCK
 #else
+#ifdef LINUX
+// Linux sometimes conforms to POSIX, but only when
+// it conflicts with BSD.
+#include <sys/select.h>
+#endif
+#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -313,7 +319,13 @@ int mqo_dispatch_monitors_once( ){
     //      that have not completed connection for WRITE.
 
     struct timeval *timeout;
+#ifdef LINUX
+    //Because, hey, why should we use the same typedef as every other
+    //OS..
+    fd_set reads, writes, errors;
+#else
     struct fd_set reads, writes, errors;
+#endif
     mqo_descr descr, next;
     int fd, maxfd;
 

@@ -320,7 +320,11 @@ MQO_BEGIN_PRIM( "path-mtime", path_mtime )
 
     mqo_os_error( stat( mqo_sf_string( path ), &s ) );
 
+#ifdef LINUX
+    time_t mtime = s.st_mtime;
+#else
     time_t mtime = s.st_mtimespec.tv_sec;
+#endif
 
     MQO_RESULT( mqo_vf_integer( mtime ) );
 MQO_END_PRIM( path_mtime )

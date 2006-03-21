@@ -37,7 +37,7 @@ endif
 ifeq ($(OS),Linux)
 # Tested on Debian.
 LIBGC=/usr/lib/libgc.a
-CFLAGS += -I/usr/local/include -I/usr/include/gc -D_GNU_SOURCE
+CFLAGS += -I/usr/local/include -I/usr/include/gc -D_GNU_SOURCE -DLINUX
 CFLAGS += -pthread
 PLATFORM = linux
 endif
