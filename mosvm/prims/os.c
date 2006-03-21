@@ -327,7 +327,7 @@ MQO_BEGIN_PRIM( "path-mtime", path_mtime )
 
     mqo_os_error( stat( mqo_sf_string( path ), &s ) );
 
-#ifdef LINUX
+#if defined( LINUX )||defined( _WIN32 )
     time_t mtime = s.st_mtime;
 #else
     time_t mtime = s.st_mtimespec.tv_sec;

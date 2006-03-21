@@ -100,6 +100,7 @@ void mqo_continue( ){
             switch( flag ){
             case 0: // setjmp always returns 0.
             case MQO_NEXT_INSTR:
+                if( MQO_PP == NULL )return;
                 MQO_PP->status = mqo_ps_running;
                 while( MQO_IP ){
                     if( mqo_trace_vm ){

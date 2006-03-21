@@ -69,7 +69,8 @@
                    (import-ecdh
                      (base64-decode ,(base64-encode (export-public-ecdh 
                                                       console-ecdh))))
-                   (open-tcp-connection ,console-addr ,console-portno))))))
+                   (open-tcp-connection ,console-addr ,console-portno)))
+               (exit 0))))
 
 (define (drone-exec cmd port)
   (cond 
@@ -128,8 +129,9 @@
   (until (closed? port)
     (write ">> ")
     (define cmd (read))
-    (define cmd-fn (dict-ref cmds cmd default-cmd))
-    (cmd-fn cmd)))
+    (if (eof-object? cmd)
+     (close port)
+     ((dict-ref cmds cmd default-cmd) cmd))))
 
 ;;; >> (define listener (spawn-mosref-listener "foo.com" 9191))
 ;;; :: #f

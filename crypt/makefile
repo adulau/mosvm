@@ -36,7 +36,7 @@ CFLAGS += -Os -DLTC_SMALL_CODE
 
 # older GCCs can't handle the "rotate with immediate" ROLc/RORc/etc macros
 # define this to help
-#CFLAGS += -DLTC_NO_ROLC
+CFLAGS += -DLTC_NO_ROLC
 
 # compile for DEBUGING (required for ccmalloc checking!!!)
 #CFLAGS += -g3 -DLTC_NO_ASM

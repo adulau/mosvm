@@ -51,11 +51,11 @@ void mqo_report_net_error( ){
 }
 
 void mqo_report_host_error( ){
-// #if defined(_WIN32)||defined(__CYGWIN__)
-//    mqo_errf( mqo_es_os, "s", strerror( WSAGetLastError() ) );
-// #else
+#if defined(_WIN32)||defined(__CYGWIN__)
+    mqo_errf( mqo_es_os, "s", strerror( WSAGetLastError() ) );
+#else
     mqo_errf( mqo_es_os, "s", hstrerror( h_errno ) );
-// #endif
+#endif
 }
 
 mqo_integer mqo_net_error( mqo_integer k ){

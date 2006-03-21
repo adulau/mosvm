@@ -137,8 +137,8 @@
 
 (define (build-exe platform main)
   (define stub-path (path-join *stub-dir* 
-                               (if (string=? platform "win32")
-                                 "mosvm-stub-win32.exe"
+                               (if (string-begins-with? platform "win")
+                                 (string-append "mosvm-stub-" platform ".exe")
                                  (string-append "mosvm-stub-" platform) )))
   (unless (file-path? stub-path)
     (error 'build "cannot find stub for platform"))
