@@ -15,23 +15,19 @@
 
 (module "mosref/console")
 
+(import "mosref/base")
+
 (import "lib/cfb")
 (import "lib/fuse")
 (import "lib/crypto-port")
 (import "lib/freeze")
 (import "lib/format")
+(import "lib/build")
 
 (export console-affiliation console-repl drone-exec make-drone-exe 
         make-console-ecdh)
 
-(define *sprng* (make-random "sprng"))
-(define *ecdh-keysize* 384)
-(define *sig-length* 16)
-
-(define (make-iv)
-  (random-string 16 *sprng*))
-
-(define (make-console-ecdh) (make-ecdh *ecdh-keysize*))
+(define (make-console-ecdh) (make-ecdh-key *ecdh-keysize*))
 
 (define (console-affiliation session-ecdh port)
   ;;;TODO: Configure timeout.
@@ -70,7 +66,9 @@
                (import "lib/conn")
                (drone-repl
                  (drone-affiliation 
-                   (decode64 ,(encode64 console-ecdh))
+                   (import-ecdh
+                     (base64-decode ,(base64-encode (export-public-ecdh 
+                                                      console-ecdh))))
                    (open-tcp-connection ,console-addr ,console-portno))))))
 
 (define (drone-exec cmd port)

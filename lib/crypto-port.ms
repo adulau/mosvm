@@ -32,7 +32,10 @@
   (define message-body #f)
 
   (define (read-block) 
-    (write-buffer plaintext (decrypt key (read block-size port))))
+    (define data (read block-size port))
+    (if (eof-object? data)
+      (error 'eof)
+      (write-buffer plaintext (decrypt key data))))
 
   (define (flush-plaintext)
     (flush-buffer plaintext))
@@ -54,10 +57,14 @@
   (define (check-body) #t)
 
   (define (read-message ignored also-ignored)
-    (read-header)
-    (read-body)
-    (check-body)
-    message-body)
+    (guard (lambda (e)
+             (if (eq? (error-key e) 'eof)
+               *eof*
+               (re-error e)))
+      (read-header)
+      (read-body)
+      (check-body)
+      message-body))
     
   (make-port read-message
              (and (output-port? port) (lambda (p d) (write d port)))

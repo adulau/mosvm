@@ -1138,7 +1138,6 @@ MQO_END_PRIM( make_multimethod )
 
 MQO_BEGIN_PRIM( "refuse-method", refuse_method )
     REST_ARGS( rest );
-    NO_MORE_ARGS( );
     mqo_raise( 
         mqo_es_vm,
         mqo_cons( mqo_vf_string( mqo_string_fs( "method not found" ) ), 

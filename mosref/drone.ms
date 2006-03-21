@@ -21,13 +21,15 @@
 (import "lib/freeze")
 (import "lib/format")
 
+(import "mosref/base")
+
 (define (drone-affiliation console-ecdh port)
   ;;;TODO: Configure timeout.
 
   (define drone-iv (make-iv))
   (define drone-ecdh (make-ecdh-key 384)) 
   (define aes-key (make-aes-key 256 
-                                (ecdh-shared-secret console-ecdh drone-ecdh)))
+                                (ecdh-shared-secret drone-ecdh console-ecdh)))
 
   ;;; Drone --> Console, via plaintext, Dp
   (write (export-public-ecdh drone-ecdh) port)

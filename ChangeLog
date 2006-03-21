@@ -7,7 +7,10 @@
 - ?/??/????, MOSREF Remote REPL
   * Added string->integer to core prims
   * Added a platform architecture tag to the stubs
-  + Added mosref/main, a command wrapper for MOSREF to establish a remote 
+  * Disabled set-macro! generation by the compiler; imported macros can
+    be determined by module source examination, now.
+  * Modified decrypt-input to recognize eof conditions.
+  * Added mosref/main, a command wrapper for MOSREF to establish a remote 
     repl / terminal.
   + Added support for dotted-quad addresses to MOSVM's address resolution.
 

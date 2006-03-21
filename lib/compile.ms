@@ -636,10 +636,13 @@
       (let ((name (car args)))
         (set! args (cdr args))
         (add-context-rule! env name (make-procedure args body))
+        '(begin)
+        "
         (if (and (is-top-context? env)
                  (is-exported? name env))
           `(set-macro! (quote ,name) (lambda ,args ,@body))
-          '(begin)))))
+          '(begin))
+        ")))
 
   (map (lambda (expr)
          (if (is-macro? expr) 
