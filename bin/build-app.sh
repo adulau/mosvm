@@ -26,7 +26,7 @@ for DEP in $DEPS; do
     DEP_MO=$DEP.mo
     if [ ! -s $DEP_MO ]||[ $DEP_MS -nt $DEP_MO ]; then
         echo "Compiling $DEP_MS to $DEP_MO.."
-        $DO_SCHEME $BIN/mosc.ms $DEP || exit 1
+        cd $BASE && $DO_SCHEME $BIN/mosc.ms $DEP || exit 1
         RE_GLUE="yes"
     fi
     DEPS_MO="$DEPS_MO $DEP_MO"

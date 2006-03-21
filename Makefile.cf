@@ -61,6 +61,7 @@ LIBGC=/usr/lib/libgc.a
 CFLAGS += -I/usr/local/include -I/usr/include/gc -D_GNU_SOURCE -DLINUX
 CFLAGS += -pthread
 PLATFORM = linux-$(ARCH)
+PKG=.tar.gz
 endif
 
 ifeq ($(OS),MinGW)
@@ -69,6 +70,7 @@ PLATFORM = winnt-$(ARCH)
 LIBGC=/mingw/lib/libgc.a 
 EXE=.exe
 HAS_DEVRANDOM=no
+PKG=.zip
 endif
 
 ifeq ($(OS),Cygwin)
@@ -79,18 +81,21 @@ LIBS += -lwsock32
 PLATFORM = winnt-$(ARCH)
 EXE=.exe
 HAS_DEVRANDOM=no
+PKG=.zip
 endif
 
 ifeq ($(OS),OpenBSD)
 CFLAGS += -fno-stack-protector -I/usr/local/include
 LIBGC=/usr/local/lib/libgc.a
 PLATFORM = openbsd-$(ARCH)
+PKG=.tar.gz
 endif
 
 ifeq ($(OS),Darwin)
 CFLAGS += -I/opt/local/include -DNO_PARALLEL_GC
 LIBGC=/opt/local/lib/libgc.a
 PLATFORM = darwin-$(ARCH)
+PKG=.tar.gz
 endif
 
 ifdef COMPACT
@@ -105,6 +110,17 @@ MOSREF=$(BIN)/mosref$(EXE)
 MOSVM_STUB=$(STUBS)/mosvm-stub-$(PLATFORM)$(EXE)
 GLUE=$(BIN)/glue$(EXE)
 MOSC=$(BIN)/mosc$(EXE)
+PACKAGENAME=mosref-2.0-$(PLATFORM)
+PACKAGEDIR=$(PACKAGENAME)
+PACKAGE=$(PACKAGEDIR)$(PKG) 
+
+ifeq ($(PKG),.zip)
+PACKAGECMD=zip $(PACKAGE) $(PACKAGEDIR)
+endif
+
+ifeq ($(PKG),.tar.gz)
+PACKAGECMD=tar -czf $(PACKAGE) $(PACKAGEDIR)
+endif
 
 ifeq ($(HAS_DEVRANDOM),yes)
 CFLAGS += -DDEVRANDOM

@@ -12,6 +12,14 @@ test-%: test/%.mo $(MOSVM) libs mosrefs
 $(MOSREF): $(MOSC) $(MOSVM) libs mosrefs
 	sh bin/build-app.sh $(MOSVM_STUB) bin/mosref $(MOSREF)
 
+package: $(PACKAGE)
+
+$(PACKAGE): $(MOSC) $(MOSVM) $(MOSREF) libs mosrefs
+	rm -rf $(PACKAGEDIR) $(PACKAGE)
+	mkdir $(PACKAGEDIR)
+	cp -rf bin lib mosref stubs examples $(PACKAGEDIR)
+	$(PACKAGECMD)
+
 mosrefs: $(MOSVM) libs
 	sh bin/build-dir.sh mosref
 
@@ -20,7 +28,7 @@ libs: $(MOSVM)
 
 clean:
 	cd $(ROOT)/mosvm && $(MAKE) clean
-	rm -f *.core tags build/bin/* examples/*mo test/*mo 
+	rm -f *.tar.gz *.zip *.core tags build/bin/* examples/*mo test/*mo 
 
 clean-seed:
 	rm -f lib/*mo bin/*mo
