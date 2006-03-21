@@ -1,6 +1,7 @@
 (import "lib/test")
 (import "lib/fuse")
-(import "mosref/control")
+(import "mosref/drone")
+(import "mosref/console")
 
 (enable-spot-tests)
 

@@ -1,41 +1,3 @@
-+ Write Dispatch
-  descriptors have a read_monitor process.
-  descriptors have a read_mt method.
-  descriptors have a read_data buffer.
-  descriptors have a write_data buffer.
-  
-  mqo_read_mt accepts a descriptor pointer and a context value.
- 
-  void mqo_write_socket( mqo_socket socket, const char* data, 
-                         mqo_word datalen ){
-
-    if( descr.write_data ) == NULL ){
-        descr->write_data = mqo_make_buffer( datalen );
-    };
-
-    mqo_append_buffer( descr->write_data, data, datalen );
-    mqo_add_dispatch( socket ); 
-  }
-    
-  void mqo_read_socket( mqo_socket socket, mqo_process process, 
-                        mqo_read_mt read_mt ){
-
-    if( descr.read_data ) == NULL ){
-        descr->read_data = mqo_make_buffer( BUFSIZ );
-    }else if( descr.read_mt ){
-        mqo_errf( mqo_es_os, 
-    };
-    
-    mqo_add_dispatch( socket ); 
-  }
-  descriptors have a monitor field for use by read_mt
-  descriptors have a buffer field for use by write
-
-  the read_mt accepts a descriptor argument, and returns no results.
-  the read_mt
-
-+ When a process is halted, it loses its monitor.
-
 + Add LAMBDA/2 form
   (lambda/2 name formals . body)
   (ldf ...)
@@ -67,27 +29,6 @@
 
   expands to
      (guard (lambda %err% (case %err% ((key ...) ...) ...)))
-
--------------------------------------------------------------------------------
-+ Devise a Procedure Documentation Format.
-  ?? What does it take for arguments?
-  ?? Where is it implemented?
-  ?? What does it return?
-  ?? What errors can it raise?
-  ?? What does it do?
-  ?? How is it used?
-
-  Ideally, a primitive file would contain all of this.
-
-  (prim id 
-    (arg...)
-    (ret ...)
-    (imp ...))
-
-  A processor would take these expressions and render a primitive.c file
-  that can be compiled.
-
-  A processor can also take these expressions and create a manual.
 
 + Write the source decoration system.
   Each expr in the source code should have an associated line number.

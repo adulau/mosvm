@@ -11,7 +11,7 @@
   * Altered all uses of port-read-fn to include quantity arguments.
   * Added mqo_flush_buffer and flush-buffer
 
-- ?/??/????, MOSREF Compose Module
+- 3/18/2005, MOSREF Compose Module
   * Added (path-mtime path) -> integer to prims/os
   * Added (file-path? path) -> #t or #f
   * Added (path-join string ..) -> string to lib/core
@@ -29,9 +29,6 @@
   * Added (build-exe platform module) -> string to lib/build 
   * Fixed a bug in mqo_expand_buffer that caused a buffer not to expand.
   * Added (write-data-file path data) to lib/core
-  + Added (make-console hostname portno) -> console to mosref/console
-  + Added (make-drone console platform) -> drone to mosref/console
-  + Added (drone->exe drone) to mosref/console
 
 - 3/12/2006, MOSREF Control Module
   * Added (open-buffer-port) -> port to lib/core

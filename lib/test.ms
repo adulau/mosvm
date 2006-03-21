@@ -55,7 +55,7 @@
 
 (define (do-r expr fn)
   (let ((x (fn)))
-    (if (not (eqv? x *spot-v*))
+    (if (not (equal? x *spot-v*))
       (spot-error (cons "r:  " expr)
                   (list "sv: " *spot-v*)
                   (list "rv: " x)))))
