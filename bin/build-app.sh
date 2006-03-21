@@ -31,4 +31,4 @@ for DEP in $DEPS; do
     DEPS_MO="$DEPS_MO $DEP_MO"
 done
 
-./$BIN/glue $STUB $DEPS_MO $OUTP && chmod 0755 $OUTP || exit 2
+$BIN/glue $STUB $DEPS_MO $OUTP && chmod 0755 $OUTP || exit 2
