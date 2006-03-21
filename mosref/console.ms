@@ -84,18 +84,19 @@
 
 (define (console-repl port)
   (define (display-result item)
-    (write (string-append ":: " (value->string item))))
+    (write (string-append ":: " (value->string item) *line-sep*)))
 
   (define (display-failure key info context)
-    (write (apply string-join 
-                  *line-sep*
-                  (string-join " "
-                               "Drone Error:" 
-                               (symbol->string key)
-                               info)
-                  (map (lambda (item) 
-                         (string-append "    " item))
-                       context))))
+    (write (string-append (apply string-join 
+                                 *line-sep*
+                                 (string-join " "
+                                              "Drone Error:" 
+                                              (symbol->string key)
+                                              info)
+                                 (map (lambda (item) 
+                                        (string-append "             " item))
+                                      context))
+                          *line-sep*)))
 
   (define (quit-repl cmd)
     (close port))
@@ -103,7 +104,8 @@
   (define (drone-cmd cmd)
     (define cmd-ok #t)
     (guard (lambda (e) (write (string-append "Parse Error: " 
-                                             (car (error-info e))))
+                                             (car (error-info e))
+                                             *line-sep*))
                        (set! cmd-ok #f))
            (set! cmd (string->exprs cmd)))
     (when cmd-ok
@@ -126,7 +128,7 @@
     (write ">> ")
     (define cmd (read))
     (define cmd-fn (dict-ref cmds cmd default-cmd))
-    (trace (cmd-fn cmd))))
+    (cmd-fn cmd)))
 
 ;;; >> (define listener (spawn-mosref-listener "foo.com" 9191))
 ;;; :: #f

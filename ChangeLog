@@ -4,7 +4,12 @@
   + Any reference to an identifier not bound in builtins, imports is identified
     during compilation as an error.
 
-- ?/??/????, Quantity Added to Read
+- 3/20/2006, MOSREF Drone Exec / Repl Interface
+  * Broke mosref functionality into mosref/drone and mosref/console
+  * Added drone-exec, console-repl to mosref/console
+  * Added drone-repl to mosref/drone
+
+- 3/18/2006, Quantity Added to Read
   * Altered read-descr to accept an optional quantity argument.
   * Added the quantity field to mqo_descr
   * Altered mqo_read_data_mt to use the quantity field.
