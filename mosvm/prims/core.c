@@ -20,8 +20,9 @@
 #include <unistd.h>
 #include <sys/param.h>
 #include <errno.h>
+#ifndef _WIN32
 #include <arpa/inet.h>
-
+#endif
 MQO_BEGIN_PRIM( "string->integer", string_to_integer )
     REQ_STRING_ARG( string )
     NO_MORE_ARGS( )
