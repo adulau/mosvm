@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <sys/param.h>
 #include <errno.h>
+#include <arpa/inet.h>
 
 MQO_BEGIN_PRIM( "string->integer", string_to_integer )
     REQ_STRING_ARG( string )
