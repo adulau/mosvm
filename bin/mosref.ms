@@ -13,7 +13,7 @@
 ; along with this library; if not, write to the Free Software Foundation, 
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
-(module "mosref/main")
+(module "bin/mosref")
 (import "mosref/console")
 (import "lib/conn")
 

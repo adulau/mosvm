@@ -10,7 +10,7 @@ test-%: test/%.mo $(MOSVM) libs mosrefs
 	$(MOSVM) $<
 
 $(MOSREF): $(MOSC) $(MOSVM) libs mosrefs
-	sh bin/build-app.sh $(MOSVM_STUB) mosref/main $(MOSREF)
+	sh bin/build-app.sh $(MOSVM_STUB) bin/mosref $(MOSREF)
 
 mosrefs: $(MOSVM) libs
 	sh bin/build-dir.sh mosref
