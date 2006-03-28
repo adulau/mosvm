@@ -15,7 +15,7 @@
 
 (module "lib/filter")
 
-(export filter-output filter-input filter)
+(export filter-output filter-input filter-port)
 
 (define (filter-output filter port)
   (make-port (lambda (p) (read port))
