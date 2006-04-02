@@ -14,61 +14,23 @@
   + (http-post url port)
   + (http-head url port)
 
-- ?/??/????, HTTP Server
-  + (serve-http port func) 
-  + (http-respond <http-session> code headers content)
-  + (http-query <http-session> key default)
+- ?/?/????, HTTP Server Module
+  + Added lib/http.ms
+  + (serve-http portno func)
+  + (read-http-msg ?port) -> http-message
+  + (read-http-res ?port) -> http-response
 
-- ?/??/????, URL Parsing Primitives
-  These routines permit RFC 3986 parsing of generic URLs, with the additional
-  ability to accept absolute paths.
-
-  + (url? value) -> #t or #f
-
-  + (string->url string) -> url
-    Converts an ASCII string to a URL, performing initial parsing.
-
-  + (relative-url url string) -> url
-    Given a relative path to a given url, returns a new absolute url.
-    f.ex.:
-    >> (relative-url (string->url "file://etc/passwd") "hosts")
-    :: [url file://etc/hosts]
-
-  + (url-scheme url) -> string
-    Returns the URL scheme; for a HTTP URL, this would be "http"
-
-  + (url-authority url) -> string
-    Returns the authority portion of the URL; the format of the authority is
-    often specific to a particular protocol.
-    
-  + (url-path url) -> string
-    Returns the path portion of the URL; this is all content following the
-    authority with the exception of query and fragment data.
-
-  + (url-query url) -> string
-    Returns the query portion of the URL; generally seen in HTTP and HTTPS
-    schemes as the data following "?"
-
-  + (url-fragment url) -> string
-    Returns the fragment identifier, or #f, associated with the URL; generally
-    seen in HTTP and HTTPS schemes as the data following "#"
-
-  + (url-encode string) -> string
-    Encodes a URL element, escaping all characters with special meanings in
-    the URL context.
-
-  + (url-decode string) -> string
-    Decodes a URL element, replacing all escaped characters with their original
-    URL meaning.
-
-  + (url-auth-user string) -> string
-    Returns the user information portion of the authority field of a URL.
-
-  + (url-auth-addr string) -> string
-    Returs the host address portion of the authority field of a URL.
-
-  + (url-auth-port string) -> string
-    Returns the host port portion of the authority field of a URL.
+- ?/?/????, URL Module
+  * Added lib/url.ms
+  * Added the <url> type
+  * (url-scheme url) -> string
+  * (url-path url) -> string
+  * (url-auth url) -> string
+  * (string->url str) -> url
+  * (url->string url) -> str
+  + (percent-encode string) -> string
+  + (percent-decode string) -> string
+  * Added test/url.ms
 
 - 4/2/2006, REGEX Primitives
   * Added mosvm/regex.c, mosvm/mosvm/regex.h and mosvm/prims/regex.c

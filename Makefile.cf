@@ -68,6 +68,7 @@ ifeq ($(OS),MinGW)
 CFLAGS += -I/mingw/include -DGC_WIN32_THREADS=1
 PLATFORM = winnt-$(ARCH)
 LIBGC=/mingw/lib/libgc.a 
+LIBRX=/mingw/lib/libregex.a
 EXE=.exe
 HAS_DEVRANDOM=no
 PKG=.zip
