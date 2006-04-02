@@ -93,5 +93,3 @@
 (t: (eqv? (url->string _) 
           "urn:oasis:names:specification:docbook:dtd:xml:4.1.2"))
 
-;TODO: Need examples of URLs with fragments..
-;TODO: Need examples of relative URLs..
