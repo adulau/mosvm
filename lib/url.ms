@@ -32,15 +32,31 @@
   ;; W3C -- We make simple things hard, and hard things ambiguous.
   (make-regex "^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)([?]([^#]*))?(#(.*))?"))
 
+(define *url-parsers* (dict))
+
+(define (register-url-parser key parser)
+  (dict-set! *url-parsers* key parser))
+
+(export register-url-parser *url-parsers* *url-regex*)
+
+;; The regex produces a lot of waste results. The adapter hack ignores
+;; the waste results..
+(define (adapt-results-to-parser parser i1 scheme i2 auth path i3 query i4 frag)
+  (parser scheme auth path query frag))
+
 (define (string->url str)
    (define result (match-regex *url-regex* str))
    (unless result (error 'url "string is not a well formed url" str))
-   (define result (apply vector result))
-   (make-url (vector-ref result 1)
-             (vector-ref result 3)
-             (vector-ref result 4)
-             (vector-ref result 6)
-             (vector-ref result 8)))
+   (define parser (dict-ref *url-parsers* (cadr result) make-url))
+   
+   (apply adapt-results-to-parser parser result))
+
+(define (string->url str (<string> scheme))
+   (define result (match-regex *url-regex* str))
+   (define parser (dict-ref *url-parsers* 
+                            (or (cadr result) scheme)
+                            make-url))
+   (apply adapt-results-to-parser parser result))
 
 (define (url->string url)
    (define buf (make-buffer))

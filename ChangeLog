@@ -10,9 +10,9 @@
   + (disable-signal signal)
 
 - ?/??/????, HTTP Client
-  + (http-get url port)
-  + (http-post url port)
-  + (http-head url port)
+  + (http-get http-url) -> str ??? Headers
+  + (http-post http-url) -> str
+  + (http-head http-url) -> str
 
 - ?/?/????, HTTP Server Module
   + Added lib/http.ms
@@ -20,19 +20,24 @@
   + (read-http-msg ?port) -> http-message
   + (read-http-res ?port) -> http-response
 
-- ?/?/????, HTTP-URL
-  + Added lib/http.ms
-  + Added the <http-url> type
-  + (make-http-url host port path args frag) -> http-url
-  + (http-url-args url) -> value
-  + (http-url-arg url key) -> value
-  + (http-url-addr url) -> value
-  + (http-url-port url) -> value
-  + (string->url str) -> http-url
-  + (url->string http-url) -> str
-  + (http-get http-url) -> str ??? Headers
-  + (http-post http-url) -> str
-  + (http-head http-url) -> str
+- 4/2/2006, HTTP-URL
+  * (register-url-parser scheme parser)
+  * Modified string->url to use registered URL "parsers" for various schemes.
+  * Added lib/http.ms
+  * Added the <http-url> type
+  * Added the HTTP URL parser scheme.
+  * (make-http-url host port path args frag) -> http-url
+  * (http-url-args url) -> value
+  * (http-url-arg url key) -> value
+  * (http-url-addr url) -> value
+  * (http-url-port url) -> value
+  * (url-scheme http-url) -> string
+  * (url-path http-url) -> string
+  * (url-auth http-url) -> string
+  * (url-query http-url) -> string
+  * (url-frag http-url) -> string
+  * (string->url string scheme) -> url
+  * Fixed bug with macros not working from imported modules
 
 - 4/2/2006, URL Module
   * Added lib/url.ms
@@ -40,6 +45,8 @@
   * (url-scheme url) -> string
   * (url-path url) -> string
   * (url-auth url) -> string
+  * (url-query url) -> string
+  * (url-frag url) -> string
   * (string->url str) -> url
   * (url->string url) -> str
   * (percent-encode string mask) -> string
