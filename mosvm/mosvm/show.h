@@ -43,5 +43,15 @@ void mqo_show_unknown( mqo_type t, mqo_integer d );
 #define mqo_show_quark NULL
 #define mqo_show_void NULL
 
+void mqo_hexnibble( char* dst, mqo_long nibble );
+void mqo_hexbyte( char* dst, mqo_long byte );
+void mqo_hexword( char* dst, mqo_long word );
+void mqo_hexquad( char* dst, mqo_long quad );
+
+mqo_long mqo_parse_hexnibble( const char* src );
+mqo_long mqo_parse_hexbyte( const char* src );
+mqo_long mqo_parse_hexword( const char* src );
+mqo_long mqo_parse_hexlong( const char* src );
+
 #endif
 

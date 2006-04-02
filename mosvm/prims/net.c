@@ -16,6 +16,81 @@
 
 #include "../mosvm.h"
 #include "../mosvm/prim.h"
+#include <ctype.h>
+
+MQO_BEGIN_PRIM( "percent-encode", percent_encode )
+    REQ_STRING_ARG( data );
+    REQ_STRING_ARG( mask );
+    NO_MORE_ARGS( );
+    
+    const char* src = mqo_sf_string( data );
+    int srclen = mqo_string_length( data );
+
+    const char* maskstr = mqo_sf_string( mask );
+
+    int dstlen = 0;
+    int ix;
+
+    for( ix = 0; ix < srclen; ix ++ ){
+        char ch = src[ix];
+        if( ch == '%' || strchr( maskstr, ch ) ){
+            dstlen += 3;
+        }else{
+            dstlen ++;
+        }
+    }
+    
+    mqo_string result = mqo_make_string( dstlen );
+    char* dst = result->data;
+
+    for( ix = 0; ix < srclen; ix ++ ){
+        char ch = src[ix];
+        if( ch == '%' || strchr( maskstr, ch ) ){
+            *( dst++ ) = '%';
+            mqo_hexbyte( dst, ch );
+            dst += 2;
+        }else{
+            *( dst++ ) = ch;
+        }
+    }
+    
+    MQO_RESULT( mqo_vf_string( result ) );
+MQO_END_PRIM( percent_encode )
+
+MQO_BEGIN_PRIM( "percent-decode", percent_decode )
+    REQ_STRING_ARG( data );
+    NO_MORE_ARGS( );
+
+    const char* src = mqo_sf_string( data );
+    int srclen = mqo_string_length( data );
+    int dstlen = 0;
+    int ix;
+
+    for( ix = 0; ix < srclen; ix ++ ){
+        char ch = src[ix];
+        if( ch != '%' ){
+            dstlen ++;
+        }else if( isxdigit( src[ ix + 1 ] ) && isxdigit( src[ ix + 2 ] ) ){
+            dstlen ++; ix += 2;
+        }else{
+            mqo_errf( mqo_es_vm, "s", "decode failed, bogus code");
+        }
+    }
+    
+    mqo_string result = mqo_make_string( dstlen );
+    char* dst = result->data;
+
+    for( ix = 0; ix < srclen; ix ++ ){
+        char ch = src[ix];
+        if( ch == '%' ){
+            ch = mqo_parse_hexbyte( src + ix + 1 );
+            ix += 2;
+        }
+        *( dst ++ ) = ch;
+    }
+    
+    MQO_RESULT( mqo_vf_string( result ) );
+MQO_END_PRIM( percent_decode )
 
 MQO_BEGIN_PRIM( "resolve", resolve )
     REQ_STRING_ARG( name );
@@ -56,4 +131,7 @@ void mqo_bind_net_prims( ){
     MQO_BIND_PRIM( serve_tcp );
     MQO_BIND_PRIM( connect_tcp );
     MQO_BIND_PRIM( resolve );
+
+    MQO_BIND_PRIM( percent_decode )
+    MQO_BIND_PRIM( percent_encode )
 }

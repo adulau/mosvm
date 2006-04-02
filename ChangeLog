@@ -20,7 +20,21 @@
   + (read-http-msg ?port) -> http-message
   + (read-http-res ?port) -> http-response
 
-- ?/?/????, URL Module
+- ?/?/????, HTTP-URL
+  + Added lib/http.ms
+  + Added the <http-url> type
+  + (make-http-url host port path args frag) -> http-url
+  + (http-url-args url) -> value
+  + (http-url-arg url key) -> value
+  + (http-url-addr url) -> value
+  + (http-url-port url) -> value
+  + (string->url str) -> http-url
+  + (url->string http-url) -> str
+  + (http-get http-url) -> str ??? Headers
+  + (http-post http-url) -> str
+  + (http-head http-url) -> str
+
+- 4/2/2006, URL Module
   * Added lib/url.ms
   * Added the <url> type
   * (url-scheme url) -> string
@@ -28,8 +42,8 @@
   * (url-auth url) -> string
   * (string->url str) -> url
   * (url->string url) -> str
-  + (percent-encode string) -> string
-  + (percent-decode string) -> string
+  * (percent-encode string mask) -> string
+  * (percent-decode string) -> string
   * Added test/url.ms
 
 - 4/2/2006, REGEX Primitives

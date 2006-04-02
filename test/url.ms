@@ -20,6 +20,14 @@
 
 (enable-spot-tests)
 
+(s: (string->url "/xyz/123#aleph"))
+(t: (eqv? (url-scheme _) #f))
+(t: (eqv? (url-auth _) #f))
+(t: (eqv? (url-path _) "/xyz/123"))
+(t: (eqv? (url-query _) #f))
+(t: (eqv? (url-frag _) "aleph"))
+(t: (eqv? (url->string _) "/xyz/123#aleph"))
+
 (s: (string->url "ftp://ftp.is.co.za/rfc/rfc1808.txt"))
 (t: (eqv? (url-scheme _) "ftp"))
 (t: (eqv? (url-auth _) "ftp.is.co.za"))
@@ -27,6 +35,14 @@
 (t: (eqv? (url-query _) #f))
 (t: (eqv? (url-frag _) #f))
 (t: (eqv? (url->string _) "ftp://ftp.is.co.za/rfc/rfc1808.txt"))
+
+(s: (string->url "ftp://ftp.is.co.za/rfc/rfc1808.txt#frag1"))
+(t: (eqv? (url-scheme _) "ftp"))
+(t: (eqv? (url-auth _) "ftp.is.co.za"))
+(t: (eqv? (url-path _) "/rfc/rfc1808.txt"))
+(t: (eqv? (url-query _) #f))
+(t: (eqv? (url-frag _) "frag1"))
+(t: (eqv? (url->string _) "ftp://ftp.is.co.za/rfc/rfc1808.txt#frag1"))
 
 (s: (string->url "ldap://[2001:db8::7]/c=GB?objectClass?one"))
 (t: (eqv? (url-scheme _) "ldap"))

@@ -50,6 +50,50 @@ void mqo_writeint( mqo_integer number ){
 
     write( STDOUT_FILENO, buf + i, 255 - i ); 
 };
+void mqo_hexnibble( char* dst, mqo_long digit ){
+    if( digit > 9 ){
+        *dst = 'A' + digit - 10;
+    }else{
+        *dst = '0' + digit;
+    }
+}
+#define between( l, x, h ) (( (l) <= (x) )&&( (h) >= (x) ))
+
+mqo_long mqo_parse_hexnibble( const char* src ){
+    char ch = *src;
+    if( between( 'A', ch, 'F' ) ){
+        return ch - 'A' + 10;
+    }else if( between( 'a', ch, 'f' ) ){
+        return ch - 'a' + 10;
+    }else{ //Assuming it's '0' to '9'
+        assert( between( '0', ch, 'f' ) );
+        return ch - '0';
+    }
+}
+mqo_long mqo_parse_hexbyte( const char* src ){
+    return (( mqo_parse_hexnibble( src ) << 4  )
+            + mqo_parse_hexnibble( src + 1 ));
+}
+mqo_long mqo_parse_hexword( const char* src ){
+    return (( mqo_parse_hexnibble( src ) << 8  )
+            + mqo_parse_hexnibble( src + 2 ));
+}
+mqo_long mqo_parse_hexlong( const char* src ){
+    return (( mqo_parse_hexnibble( src ) << 16  )
+            + mqo_parse_hexnibble( src + 4 ));
+}
+void mqo_hexbyte( char* dst, mqo_long byte ){
+    mqo_hexnibble( dst, byte / 16 );
+    mqo_hexnibble( dst + 1, byte % 16 );
+}
+void mqo_hexword( char* dst, mqo_long word ){
+    mqo_hexbyte( dst, word / 256 );
+    mqo_hexbyte( dst + 2, word % 256 );
+}
+void mqo_hexquad( char* dst, mqo_long word ){
+    mqo_hexword( dst, word / 65536 );
+    mqo_hexword( dst + 4, word % 65536 );
+}
 void mqo_writehex( mqo_long number ){
     static char buf[256];
     buf[255] = 0;
