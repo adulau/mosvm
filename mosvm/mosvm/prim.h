@@ -98,7 +98,7 @@
 #define REQ_ANY_DESCR_ARG( nm ) REQ_SUBTYPED_ARG( nm, descr );
 #define REQ_FILE_ARG( nm )      REQ_TYPED_ARG( nm, file );
 #define REQ_LIST_ARG( nm )      REQ_TYPED_ARG( nm, list );
-#define REQ_ALARM_ARG( nm )     REQ_TYPED_ARG( nm, alarm );
+#define REQ_REGEX_ARG( nm )     REQ_TYPED_ARG( nm, regex );
     
 #define REQ_RANGED_ARG( nm, min, max ) \
     REQ_INTEGER_ARG( nm ); \
@@ -157,7 +157,6 @@
 #define OPT_SYMBOL_ARG( nm )  OPT_TYPED_ARG( nm, symbol, NULL );
 #define OPT_DESCR_ARG( nm )   OPT_TYPED_ARG( nm, descr, NULL );
 #define OPT_LIST_ARG( nm )    OPT_TYPED_ARG( nm, list, NULL );
-#define OPT_ALARM_ARG( nm )   OPT_TYPED_ARG( nm, alarm, NULL );
 
 #define NO_MORE_ARGS( ) \
     if( ai < ct ){ \

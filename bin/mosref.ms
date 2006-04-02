@@ -42,7 +42,7 @@
     "                         darwin-ppc."
     "       drone-path -- The file to write the drone executable to."
     ""
-    "EXAMPLE: mosref decoy.ephemeralsecurity.com openbsd-x86 a-drone"
+    "EXAMPLE: mosref decoy.ephemeralsecurity.com:19191 openbsd-x86 a-drone"
     ""))
 
 (define (parse-error message)

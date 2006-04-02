@@ -30,6 +30,7 @@
 #include "mosvm/error.h"
 #include "mosvm/vector.h"
 #include "mosvm/program.h"
+#include "mosvm/regex.h"
 
 extern mqo_integer mqo_argc;
 extern mqo_pair mqo_argv;
@@ -38,5 +39,6 @@ void mqo_bind_core_prims( );
 void mqo_bind_os_prims( );
 void mqo_bind_progn_prims( );
 void mqo_bind_net_prims( );
+void mqo_bind_regex_prims( );
 
 #endif

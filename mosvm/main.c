@@ -40,11 +40,13 @@ void mqo_init_mosvm(){
     mqo_init_parse_subsystem();
     mqo_init_exec_subsystem( );
     mqo_init_net_subsystem( );
+    mqo_init_regex_subsystem( );
     mqo_bind_core_prims( );
     mqo_bind_crypto_prims( );
     mqo_bind_os_prims( );
     mqo_bind_net_prims( );
     mqo_bind_progn_prims( );
+    mqo_bind_regex_prims( );
 }
 
 void mqo_handle_sigint( int sig ){

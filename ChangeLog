@@ -4,7 +4,81 @@
   + Any reference to an identifier not bound in builtins, imports is identified
     during compilation as an error.
 
-- ?/??/????, MOSREF Remote REPL
+- ?/??/????, Signals Added to Dispatch
+  + (schedule period repeat process message) -> signal
+  + (enable-signal signal)
+  + (disable-signal signal)
+
+- ?/??/????, HTTP Client
+  + (http-get url port)
+  + (http-post url port)
+  + (http-head url port)
+
+- ?/??/????, HTTP Server
+  + (serve-http port func) 
+  + (http-respond <http-session> code headers content)
+  + (http-query <http-session> key default)
+
+- ?/??/????, URL Parsing Primitives
+  These routines permit RFC 3986 parsing of generic URLs, with the additional
+  ability to accept absolute paths.
+
+  + (url? value) -> #t or #f
+
+  + (string->url string) -> url
+    Converts an ASCII string to a URL, performing initial parsing.
+
+  + (relative-url url string) -> url
+    Given a relative path to a given url, returns a new absolute url.
+    f.ex.:
+    >> (relative-url (string->url "file://etc/passwd") "hosts")
+    :: [url file://etc/hosts]
+
+  + (url-scheme url) -> string
+    Returns the URL scheme; for a HTTP URL, this would be "http"
+
+  + (url-authority url) -> string
+    Returns the authority portion of the URL; the format of the authority is
+    often specific to a particular protocol.
+    
+  + (url-path url) -> string
+    Returns the path portion of the URL; this is all content following the
+    authority with the exception of query and fragment data.
+
+  + (url-query url) -> string
+    Returns the query portion of the URL; generally seen in HTTP and HTTPS
+    schemes as the data following "?"
+
+  + (url-fragment url) -> string
+    Returns the fragment identifier, or #f, associated with the URL; generally
+    seen in HTTP and HTTPS schemes as the data following "#"
+
+  + (url-encode string) -> string
+    Encodes a URL element, escaping all characters with special meanings in
+    the URL context.
+
+  + (url-decode string) -> string
+    Decodes a URL element, replacing all escaped characters with their original
+    URL meaning.
+
+  + (url-auth-user string) -> string
+    Returns the user information portion of the authority field of a URL.
+
+  + (url-auth-addr string) -> string
+    Returs the host address portion of the authority field of a URL.
+
+  + (url-auth-port string) -> string
+    Returns the host port portion of the authority field of a URL.
+
+- 4/2/2006, REGEX Primitives
+  * Added mosvm/regex.c, mosvm/mosvm/regex.h and mosvm/prims/regex.c
+  * (make-regex pattern) -> regex
+  * (regex-match regex string) -> list of groups or match or #f
+  * (regex-match* regex string) -> list of matches 
+  * (regex? value) -> #t or #f
+  * Added test/regex.ms
+
+- 3/24/2006, MOSREF Remote REPL
   * Added string->integer to core prims
   * Added a platform architecture tag to the stubs
   * Disabled set-macro! generation by the compiler; imported macros can
