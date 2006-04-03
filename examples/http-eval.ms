@@ -57,21 +57,21 @@
 
   (define (expr-error-page)
     (string-append page-header
-                   "<h1> PARSE:" (car (error-info err)) "</h1>"
-                   "<pre>" expr-src "</pre>"
+                   "<h1> PARSE:" (xml-escape (car (error-info err))) "</h1>"
+                   (xml-escape expr-src) "<br />"
                    read-expr-form
                    page-footer))
 
   (define (eval-error-page)
     (string-append page-header
-                   "<h1> EVAL:" (car (error-info err)) "</h1>"
-                   "<pre>" expr-src "</pre>"
-                    read-expr-form
-                    page-footer))
+                   "<h1> EVAL:" (xml-escape (car (error-info err))) "</h1>"
+                   (xml-escape expr-src) "<br />"
+                   read-expr-form
+                   page-footer))
 
   (define (eval-expr-page)
     (string-append page-header
-                   "<pre>" (value->string result) "</pre>"
+                   (xml-escape (value->string result))  "<br />"
                    read-expr-form 
                    page-footer))
 
