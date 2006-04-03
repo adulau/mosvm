@@ -6,6 +6,11 @@
 
 #include <gc.h>
 
+// This macro's not worth the trouble it causes..
+#ifndef LTC_NO_ROLC
+#define LTC_NO_ROLC
+#endif
+
 /* macros for various libc functions you can change for embedded targets */
 #define XMALLOC  GC_malloc
 #define XREALLOC GC_realloc

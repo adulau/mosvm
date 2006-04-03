@@ -76,8 +76,9 @@ endif
 
 ifeq ($(OS),Cygwin)
 CFLAGS += -mno-cygwin
-CFLAGS += -I/usr/local/include
+CFLAGS += -I/mingw/include -I/usr/local/include
 LIBGC=/usr/local/lib/libgc.a
+LIBRX=/mingw/lib/libregex.a
 LIBS += -lwsock32
 PLATFORM = winnt-$(ARCH)
 EXE=.exe

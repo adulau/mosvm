@@ -11,12 +11,12 @@ $(MOSVM_STUB): $(OBJECTS)
 	rm -rf cryptlib
 	mkdir cryptlib
 	cd cryptlib && ar x ../../crypt/libtomcrypt.a
-	$(DO_CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBGC) cryptlib/*.o $(LIBS) -o $(MOSVM_STUB)
+	$(DO_CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBGC) $(LIBRX) cryptlib/*.o $(LIBS) -o $(MOSVM_STUB)
 
 
 else
 $(MOSVM_STUB): $(OBJECTS)
-	$(DO_CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBGC) $(LIBTC) $(LIBS) -o $(MOSVM_STUB)
+	$(DO_CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBGC) $(LIBRX) $(LIBTC) $(LIBS) -o $(MOSVM_STUB)
 
 endif
 $(GLUE): glue.o
