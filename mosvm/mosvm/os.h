@@ -87,6 +87,7 @@ void mqo_read_descr( mqo_descr descr, mqo_process monitor,
                      mqo_read_mt read_mt );
 
 mqo_value mqo_read_all_mt( mqo_descr descr );
+mqo_value mqo_read_line_mt( mqo_descr descr );
 mqo_value mqo_read_data_mt( mqo_descr descr );
 mqo_value mqo_read_byte_mt( mqo_descr descr );
 mqo_value mqo_read_word_mt( mqo_descr descr );

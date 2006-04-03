@@ -195,6 +195,22 @@ MQO_BEGIN_PRIM( "read-descr", read_descr )
     }
 MQO_END_PRIM( read_descr )
 
+MQO_BEGIN_PRIM( "read-descr-line", read_descr_line )
+    REQ_DESCR_ARG( descr );
+    NO_MORE_ARGS( );
+    
+    if( descr->type != MQO_SOCKET){
+        //TODO: Implement for files.
+        mqo_errf( mqo_es_args, "s", "read-descr-line only accepts sockets" );
+    }else if( mqo_is_reading( descr ) ){
+        mqo_errf( mqo_es_vm, "s", 
+                  "another object is waiting on descriptor" );
+    }else{
+        mqo_async_read( descr, mqo_read_line_mt );
+        return;
+    }
+MQO_END_PRIM( read_descr_line )
+
 MQO_BEGIN_PRIM( "read-descr-all", read_descr_all )
     REQ_ANY_DESCR_ARG( descr );
     NO_MORE_ARGS( )
@@ -384,6 +400,7 @@ void mqo_bind_os_prims( ){
     MQO_BIND_PRIM( descrq );
     MQO_BIND_PRIM( read_descr );
     MQO_BIND_PRIM( read_descr_all );
+    MQO_BIND_PRIM( read_descr_line );
     MQO_BIND_PRIM( write_descr );
     MQO_BIND_PRIM( write_descr_byte );
     MQO_BIND_PRIM( write_descr_word );

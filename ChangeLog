@@ -13,12 +13,26 @@
   + (http-get http-url) -> str ??? Headers
   + (http-post http-url) -> str
   + (http-head http-url) -> str
+  + (http-options http-url) -> str
+  + (write-http-request port http-request) 
+  + (read-http-response port) -> http-response
 
 - ?/?/????, HTTP Server Module
+  * (read-buffer-line buffer) -> str or #f
+    Handles \n and \r\n termination, but does not handle macos-inbred \r
+  * (read-descr-line descr) -> str
+  * (read-line conn) -> str
+  * (read-line file) -> str
   + Added lib/http.ms
+  + (read-http-request port) -> http-request
+  + (write-http-response port code reason headers body)
   + (serve-http portno func)
-  + (read-http-msg ?port) -> http-message
-  + (read-http-res ?port) -> http-response
+    function is called with a request when a method other than OPTIONS is
+    received.
+    A string response is assumed to be a 200 OK with headers/body.
+    A http error is assumed to be an error response.
+    Persisted HTTP connections are silently supported 
+  + filter doesn't know about counted read lengths
 
 - 4/2/2006, HTTP-URL
   * (register-url-parser scheme parser)

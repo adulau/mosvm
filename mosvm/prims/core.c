@@ -2005,6 +2005,17 @@ MQO_BEGIN_PRIM( "read-buffer-byte", read_buffer_byte )
     MQO_RESULT( mqo_vf_integer( *data ) );
 MQO_END_PRIM( read_buffer_byte )
 
+MQO_BEGIN_PRIM( "read-buffer-line", read_buffer_line )
+    REQ_BUFFER_ARG( buffer )
+    NO_MORE_ARGS( );
+    
+    mqo_integer linelen; 
+    const char* line = mqo_read_line_buffer( buffer, &linelen ); 
+    
+    MQO_RESULT( line ? mqo_vf_string( mqo_string_fm( line, linelen ) ) 
+                     : mqo_vf_false( ) );
+MQO_END_PRIM( read_buffer_line )
+
 MQO_BEGIN_PRIM( "write-buffer-word", write_buffer_word )
     REQ_BUFFER_ARG( buffer )
     REQ_INTEGER_ARG( word )
@@ -2254,6 +2265,7 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( write_buffer );
     MQO_BIND_PRIM( read_buffer );
     MQO_BIND_PRIM( buffer_to_string );
+    MQO_BIND_PRIM( read_buffer_line );
     MQO_BIND_PRIM( write_buffer_byte );
     MQO_BIND_PRIM( read_buffer_byte );
     MQO_BIND_PRIM( write_buffer_word );

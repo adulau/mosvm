@@ -85,6 +85,34 @@ void* mqo_read_buffer( mqo_buffer buffer, mqo_integer* r_count ){
     *r_count = count;
     return data;
 }
+void* mqo_read_line_buffer( mqo_buffer buffer, mqo_integer* r_count ){
+    char* line = mqo_buffer_head( buffer );
+    mqo_integer linelen = buffer->length;
+    mqo_integer seplen = 0;
+    mqo_integer index = 0;
+
+    while( index < linelen ){
+        if( line[ index ] == '\n' ){
+            linelen = index;
+            seplen = 1;
+            goto complete;
+        }else if( line[ index ] == '\r' ){
+            linelen = index;
+            seplen = ( line[ index + 1 ] == '\n' ) ? 2 : 1;
+            goto complete;
+        }else{
+            index ++;
+        }
+    }
+incomplete:
+    return NULL;
+complete:
+    //TODO: Adjust buffer length and origin.
+    buffer->origin += linelen + seplen;
+    buffer->length -= linelen + seplen;
+    *r_count = linelen;
+    return line;
+}
 void mqo_dump_buffer( mqo_buffer buffer ){
     mqo_write( "[" );
     if( mqo_buffer_empty( buffer ) ) mqo_write( "empty " );

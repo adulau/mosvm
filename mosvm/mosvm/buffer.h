@@ -51,6 +51,11 @@ void* mqo_read_buffer( mqo_buffer buffer, mqo_integer* count );
 // origin.  This pointer will be valid until the next buffer expansion or
 // write operation.
 
+void* mqo_read_line_buffer( mqo_buffer buffer, mqo_integer* count );
+// Reads data from the buffer up to the next '\n' or '\r\n' separator, then
+// advances the origin past the line and accompanying separator.  If a
+// separator cannot be found, returns NULL.
+
 static inline mqo_boolean mqo_buffer_empty( mqo_buffer buffer ){ 
     return buffer->length <= 0;
 }

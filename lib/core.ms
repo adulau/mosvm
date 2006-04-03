@@ -268,6 +268,13 @@
               descr-port?
               (descr port-descr))
 
+(define (read-line port)
+  (define line (read-descr-line (port-descr port)))
+  (unless line
+    (close port)
+    (set! line *eof*))
+  line)
+
 (define (descr-input-port? value)
   (and (descr-port? value) (port-read-fn value)))
 
@@ -275,7 +282,7 @@
   (and (descr-port? value) (port-write-fn value)))
 
 (export <descr-port> make-descr-port descr-port? port-descr descr-input-port? 
-        descr-output-port?)
+        descr-output-port? read-line)
 
 (define-class file-port <descr-port>
               (make-file-port read-fn write-fn close-fn descr)

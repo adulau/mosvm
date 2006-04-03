@@ -620,6 +620,18 @@ mqo_value mqo_read_word_mt( mqo_descr descr ){
     return mqo_make_void( );
 }
 
+mqo_value mqo_read_line_mt( mqo_descr descr ){
+    mqo_integer linelen;
+    const char* line = mqo_read_line_buffer( descr->read_data, &linelen );
+    if( line ){
+        return mqo_vf_string( mqo_string_fm( line, linelen ) );
+    }else if( descr->closed ){ 
+        return mqo_read_all_mt( descr );
+    }else{
+        return mqo_make_void( );
+    }
+}
+
 mqo_value mqo_read_quad_mt( mqo_descr descr ){
     if( mqo_buffer_length( descr->read_data ) >= 4 ){
         mqo_integer datalen = 4;
