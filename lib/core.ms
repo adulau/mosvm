@@ -390,6 +390,10 @@
   (or (read-buffer-quad (string-port-buffer port))
       *eof*))
 
+(define (read-line (<string-port> port))
+  (or (read-buffer-line (string-port-buffer port))
+      *eof*))
+
 (define (get-output-string (<string-port> port))
   (buffer->string (string-port-buffer port)))
 

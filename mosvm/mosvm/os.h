@@ -30,6 +30,7 @@ typedef struct mqo_descr_data* mqo_descr;
 typedef mqo_value (*mqo_read_mt) (mqo_descr);
 struct mqo_descr_data {
     unsigned int type:2;
+    unsigned int closing:1;
     unsigned int closed:1;
     unsigned int dispatch:1;
 
@@ -98,6 +99,7 @@ mqo_descr mqo_serve_tcp( mqo_integer port );
 mqo_descr mqo_accept( mqo_descr server );
 
 void mqo_close( mqo_descr descr );
+void mqo_complete_close( mqo_descr descr );
 
 extern mqo_console mqo_the_console;
 extern mqo_descr mqo_first_dispatching;

@@ -180,6 +180,7 @@ void mqo_stop_reading( mqo_descr descr ){
 }
 void mqo_stop_writing( mqo_descr descr ){
     // Should only be called via write_event
+    if( descr->closing ) mqo_complete_close( descr );
     if( ! mqo_is_reading( descr ) )mqo_stop_dispatching( descr );
 }
 
@@ -271,6 +272,44 @@ mqo_listener mqo_serve_tcp( mqo_integer port ){
 }
 
 mqo_descr mqo_first_dispatching = NULL;
+
+void mqo_complete_close( mqo_descr descr ){
+    descr->closed = 1;
+
+    if( descr->dispatch ){
+        mqo_stop_dispatching( descr );
+        
+        if( descr->monitor ){
+            mqo_value r = descr->read_mt( descr );
+            if( ! mqo_is_void( r ) ){ mqo_resume( descr->monitor, r ); }
+        }
+    }
+
+    descr->dispatch = 0;
+    descr->monitor = NULL;
+
+#ifdef _WIN32
+    if(( descr->type == MQO_SOCKET )||( descr->type == MQO_LISTENER )){
+        mqo_net_error( closesocket( descr->fd ) );
+        return;
+    }
+#endif    
+    mqo_os_error( close( descr->fd ) );
+}
+
+void mqo_close( mqo_descr descr ){
+    if( descr->closing )return;
+    if( descr->closed )return;
+    if( descr->type == MQO_CONSOLE )return;
+
+    if( mqo_is_writing( descr ) ){
+        descr->closing = 1;
+        return;
+    }else{
+        mqo_complete_close( descr );
+    }
+}
+
 
 void mqo_write_event( mqo_descr descr ){
     mqo_buffer buffer = descr->write_data;
@@ -441,33 +480,6 @@ int mqo_dispatch_monitors( ){
         if( mqo_first_process )return 1;
     }
     return 0;
-}
-
-void mqo_close( mqo_descr descr ){
-    if( descr->closed )return;
-    if( descr->type == MQO_CONSOLE )return;
-
-    descr->closed = 1;
-
-    if( descr->dispatch ){
-        mqo_stop_dispatching( descr );
-        
-        if( descr->monitor ){
-            mqo_value r = descr->read_mt( descr );
-            if( ! mqo_is_void( r ) ){ mqo_resume( descr->monitor, r ); }
-        }
-    }
-
-    descr->dispatch = 0;
-    descr->monitor = NULL;
-
-#ifdef _WIN32
-    if(( descr->type == MQO_SOCKET )||( descr->type == MQO_LISTENER )){
-        mqo_net_error( closesocket( descr->fd ) );
-        return;
-    }
-#endif    
-    mqo_os_error( close( descr->fd ) );
 }
 
 mqo_console mqo_the_console;

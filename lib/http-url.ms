@@ -15,6 +15,7 @@
 
 (module "lib/http")
 (import "lib/url")
+(import "lib/conn")
 
 (define-class http-url <object>
               (make-http-url user host portno path args frag)
@@ -91,7 +92,7 @@
       (write-buffer buf ":")
       (write-buffer buf (number->string portno))))
 
-  (buffer->string buf))
+  (if host (buffer->string buf) #f))
 
 (define (url-path (<http-url> url))
   (define path (http-url-path url))

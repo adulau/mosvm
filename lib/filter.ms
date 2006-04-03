@@ -18,7 +18,7 @@
 (export filter-output filter-input filter-port)
 
 (define (filter-output filter port)
-  (make-port (lambda (p) (read port))
+  (make-port (lambda (p c) (read port c))
              (lambda (p d) (write (filter d) port))
              (lambda (p) (close port))
              #f))
@@ -27,7 +27,7 @@
   (filter-output filter (current-output-port)))
 
 (define (filter-input filter port)
-  (make-port (lambda (p) (filter (read port)))
+  (make-port (lambda (p c) (filter (read port c)))
              (lambda (p d) (write d port))
              (lambda (p) (close port))
              #f))
@@ -36,7 +36,7 @@
   (filter-input filter (current-input-port)))
 
 (define (filter-port inf outf port)
-  (make-port (lambda (p) (inf (read port)))
+  (make-port (lambda (p c) (inf (read port c)))
              (lambda (p d) (write (outf d) port))
              (lambda (p) (close port))
              #f))
