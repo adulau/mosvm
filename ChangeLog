@@ -32,6 +32,8 @@
   * (spawn-http-server portno func)
   * Added test/http.ms
   * Revised lib/filter to work with counted read lengths.
+  * Added (string-replace src pat text) -> str
+  ! define's done within a macro don't seem to be bound
 
 - 4/2/2006, HTTP-URL
   * (register-url-parser scheme parser)

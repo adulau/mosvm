@@ -1663,6 +1663,46 @@ MQO_BEGIN_PRIM( "string-split", string_split )
     }
 MQO_END_PRIM( string_split )
 
+MQO_BEGIN_PRIM( "string-replace", string_replace )
+    REQ_STRING_ARG( string );
+    REQ_STRING_ARG( pattern );
+    REQ_STRING_ARG( replacement );
+    NO_MORE_ARGS( );
+    
+    const char* sp = mqo_sf_string( string );
+    mqo_integer sl = mqo_string_length( string );
+
+    const char* ip = mqo_sf_string( pattern );
+    mqo_integer il = mqo_string_length( pattern );
+    
+    const char* rp = mqo_sf_string( replacement );
+    mqo_integer rl = mqo_string_length( replacement );
+    
+    mqo_tc tc = mqo_make_tc( );
+    const char* pp;
+ 
+    mqo_buffer buf = mqo_make_buffer( sl );
+    while( pp = mqo_memmem( sp, sl, ip, il ) ){
+        mqo_integer pl = pp - sp;
+        mqo_expand_buffer( buf, pl + rl );
+        mqo_write_buffer( buf, sp, pl );
+        mqo_write_buffer( buf, rp, rl );
+        sl = sl - pl - il;
+        sp = sp + pl + il;
+    }
+   
+    mqo_expand_buffer( buf, sl );
+    mqo_write_buffer( buf, sp, sl );
+    
+    sl = mqo_buffer_length( buf );
+    sp = mqo_read_buffer( buf, &sl );
+    string = mqo_string_fm( sp, sl );
+    
+    GC_free( buf );
+
+    MQO_RESULT( mqo_vf_string( string ) );
+MQO_END_PRIM( string_replace )
+
 MQO_BEGIN_PRIM( "string-split*", string_splitm )
     REQ_STRING_ARG( string );
     REQ_STRING_ARG( item );
@@ -2280,6 +2320,7 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( string_tail );
 
     MQO_BIND_PRIM( string_to_integer )
+    MQO_BIND_PRIM( string_replace )
 
     mqo_symbol_fs( "quark" )->value = mqo_make_quark( );
 }

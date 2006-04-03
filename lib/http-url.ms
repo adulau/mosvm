@@ -66,7 +66,9 @@
                 (set! arg (match-regex *http-arg-regex* arg))
                 (dict-set! args
                            (percent-decode (or (car arg) ""))
-                           (percent-decode (or (cadr arg) ""))))
+                           (percent-decode 
+                             (string-replace (or (cadr (cdr arg)) "") 
+                                             "+" " "))))
               query))
   
   (make-http-url user host portno path args frag))
