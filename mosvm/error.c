@@ -72,24 +72,28 @@ void mqo_raise( mqo_symbol key, mqo_pair info ){
 
         MQO_CRASH_UNLESS( ri > 4 );
 
+        fn = mqo_vector_get( rv, --ri );
+        MQO_CRASH_UNLESS( mqo_is_function( fn ) );
+
         x = mqo_vector_get( rv, --ri );
         MQO_CRASH_UNLESS( mqo_is_integer( x ) );
         argc = mqo_integer_fv( x );
-
-        fn = mqo_vector_get( rv, --ri );
-        MQO_CRASH_UNLESS( mqo_is_function( fn ) );
 
         mqo_tc_append( frame, fn );
 
         if( mqo_is_closure( fn ) ){
             if( argc ){
-                argv = mqo_vector_ref( mqo_vector_fv( mqo_car( ep ) ), 0 );
+                argv = mqo_vector_fv( mqo_car( ep ) )->data;
             }else{
                 argv = NULL;
             }
-        }else if( argc ){
+        }else if( mqo_is_prim( fn ) ){
             si = si - argc - 1;
-            argv = mqo_vector_ref( sv, si );
+            if( argc ){
+                argv = mqo_vector_ref( sv, si );
+            }else{
+                argv = NULL;
+            }
         }else{
             argv = NULL;
         }

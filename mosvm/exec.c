@@ -245,6 +245,7 @@ void mqo_jump( mqo_value fn ){
     mqo_program p;
 
 again:
+    mqo_push_rs( fn );
 /*    if( mqo_trace_vm ){
         mqo_write( "JUMP" );
         mqo_dump_stack( MQO_RV, MQO_RI );
@@ -259,10 +260,7 @@ again:
     }; mqo_show( fn, 4 ); mqo_newline();
 
 */
-    mqo_push_rs( fn );
-
     if( mqo_is_prim( fn ) ){
-        mqo_push_int_rs( mqo_peek_int_ds() );
         mqo_prim_fv(fn)->fn();
     }else if( mqo_is_closure( fn ) ){
         c = mqo_closure_fv( fn );
@@ -275,14 +273,11 @@ again:
         MQO_IP = p->inst;
         MQO_EP = NULL;
     }else if( mqo_is_multimethod( fn ) ){
-        mqo_pop_rs();
         fn = mqo_resolve_method( mqo_multimethod_fv( fn ) );
+        mqo_pop_rs( );
         goto again;
     }else{
-		mqo_pop_rs();
-		mqo_pop_rs();
-		mqo_pop_rs();
-		mqo_pop_rs();
+        mqo_drop_rs(5);
         mqo_errf( mqo_es_vm, "sx", "could not execute value", fn );
     };
 }
@@ -291,6 +286,7 @@ void mqo_tail_call( mqo_value fn ){
     // Should not be used from prims other than the tail op or apply.
     
     mqo_drop_rs( 2 );
+    mqo_push_int_rs( mqo_peek_int_ds( ) );
     mqo_jump( fn );     
 }
 
@@ -298,6 +294,7 @@ void mqo_call( mqo_value fn ){
     mqo_push_rs( mqo_vf_program( MQO_CP ) );
     mqo_push_rs( mqo_vf_instruction( MQO_IP ) );
     mqo_push_pair_rs( MQO_EP );
+    mqo_push_int_rs( mqo_peek_int_ds( ) );
     mqo_jump( fn );
 }
 
@@ -309,8 +306,7 @@ void mqo_return( ){
     };
     */
     if( MQO_RI ){
-        mqo_pop_rs();
-        mqo_pop_rs();
+        mqo_drop_rs( 2);
         MQO_EP = mqo_pop_pair_rs(); 
         MQO_IP = mqo_instruction_fv( mqo_pop_rs() );
         MQO_CP = mqo_program_fv( mqo_pop_rs() );

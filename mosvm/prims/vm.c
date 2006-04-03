@@ -73,8 +73,6 @@ void mqo_prim_usea_op( ){
     mqo_integer ct = mqo_pop_int_ds();
     mqo_integer i = ct;
 
-    mqo_push_int_rs( a );
-
     if( a > ct ){
         mqo_vector e = mqo_make_vector( ct );
         while( i ){
@@ -85,9 +83,11 @@ void mqo_prim_usea_op( ){
             mqo_vf_vector( e ), 
             mqo_vf_pair( MQO_EP ) 
         );
-
+    
+        mqo_value i = mqo_pop_rs();
         mqo_pop_rs();
         mqo_push_int_rs( ct );
+        mqo_push_rs( i );
 
         mqo_errf( 
             mqo_es_vm, "si", 
@@ -117,7 +117,6 @@ void mqo_prim_usen_op( ){
     mqo_integer ct = mqo_pop_int_ds();
     mqo_integer i = ct;
     mqo_vector e;
-    mqo_push_int_rs( a );
 
     if( a != ct ){
         mqo_vector e = mqo_make_vector( ct );
@@ -130,8 +129,10 @@ void mqo_prim_usen_op( ){
             mqo_vf_pair( MQO_EP ) 
         );
 
+        mqo_value i = mqo_pop_rs();
         mqo_pop_rs();
         mqo_push_int_rs( ct );
+        mqo_push_rs( i );
 
         mqo_errf( 
             mqo_es_vm, "si", 
