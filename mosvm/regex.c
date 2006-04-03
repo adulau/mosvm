@@ -47,10 +47,6 @@ mqo_regex mqo_make_regex( mqo_string pattern, const char* flagstr ){
         case 'b':
             if( flags & REG_EXTENDED ) flags ^= REG_EXTENDED;
             break;
-        case 's':
-            if( flags & REG_EXTENDED ) flags ^= REG_EXTENDED;
-            flags |= REG_NOSPEC;
-            break;
         case 'i':
             flags |= REG_ICASE;
             break;
