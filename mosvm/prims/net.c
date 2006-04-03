@@ -18,6 +18,69 @@
 #include "../mosvm/prim.h"
 #include <ctype.h>
 
+MQO_BEGIN_PRIM( "xml-escape", xml_escape )
+    REQ_STRING_ARG( data );
+    NO_MORE_ARGS( );
+    
+    const char* src = mqo_sf_string( data );
+    int srclen = mqo_string_length( data );
+
+    int dstlen = 0;
+    int ix;
+
+    for( ix = 0; ix < srclen; ix ++ ){
+        char ch = src[ix];
+        switch( src[ix] ){
+        case '\'':
+        case '"':
+            dstlen += 6;
+            break;
+        case '&':
+            dstlen += 5;
+            break;
+        case '<':
+        case '>':
+            dstlen += 4;
+            break;
+        default:
+            dstlen ++;
+        }
+    }
+    
+    mqo_string result = mqo_make_string( dstlen );
+    char* dst = result->data;
+    
+    for( ix = 0; ix < srclen; ix ++ ){
+        char ch = src[ix];
+        switch( ch ){
+        case '\'':
+            strcpy( dst, "&apos;" );
+            dst += 6;
+            break;
+        case '"':
+            strcpy( dst, "&quot;" );
+            dst += 6;
+            break;
+        case '&':
+            strcpy( dst, "&amp;" );
+            dst += 5;
+            break;
+        case '<':
+            strcpy( dst, "&lt;" );
+            dst += 4;
+            break;
+        case '>':
+            strcpy( dst, "&gt;" );
+            dst += 4;
+            break;
+        default:
+            *( dst++ ) = ch;
+        };
+    }
+    
+    MQO_RESULT( mqo_vf_string( result ) );
+MQO_END_PRIM( xml_escape )
+
 MQO_BEGIN_PRIM( "percent-encode", percent_encode )
     REQ_STRING_ARG( data );
     REQ_STRING_ARG( mask );
@@ -134,4 +197,5 @@ void mqo_bind_net_prims( ){
 
     MQO_BIND_PRIM( percent_decode )
     MQO_BIND_PRIM( percent_encode )
+    MQO_BIND_PRIM( xml_escape )
 }
