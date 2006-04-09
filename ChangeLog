@@ -65,7 +65,7 @@
     for sorting collections of strings.
   * Added examples/modman.ms, a script to quickly analyze a module's imports
     and exports.
-  + Modified the Makefile to make package work.
+  * Modified the Makefile to make package work.
   ! define's done within a macro don't seem to be bound
 
 - 4/3/2006, HTTP Server Module
