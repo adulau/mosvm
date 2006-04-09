@@ -97,33 +97,8 @@
       data)
     (read-data-file module-object)))
 
-(define (determine-dependencies source)
-  (define deps (make-tc "lib/core"))
-  (define ignore (set "lib/core"))
-
-  (define (process-code code)
-    (for-each process-module 
-              (map cadr
-                   (filter (lambda (expr) (and (pair? expr)
-                                               (= (length expr) 2)
-                                               (eq? (car expr) 'import)
-                                               (string? (cadr expr))))
-                           code))))
-
-  (define (process-module module)
-    (unless (set-member? ignore module) 
-      (set-add! ignore module)
-      (process-code (read-module-source module))
-      (tc-append! deps module)))
-
-  (cond 
-    ((string? source) (process-module source))
-    ((pair? source) (process-code source))
-    (else (error 'args "expected module name or module code for source")))
-  (tc->list deps))
-
 (define (build-dependencies source)
-  (define dependencies (make-tc (determine-dependencies source)))
+  (define dependencies (make-tc (code-dependencies source)))
   (until (tc-empty? dependencies)
     (build-module (tc-next! dependencies))))
 
@@ -133,7 +108,7 @@
   (write-buffer buffer "mvf2")
   buffer)
 
-(export determine-dependencies read-module-source build-exe)
+(export read-module-source build-exe)
 
 (define (build-exe platform main)
   (define stub-path (path-join *stub-dir* 
@@ -146,7 +121,7 @@
   (define buffer (make-buffer))
   (write-buffer buffer (read-data-file stub-path))
   (for-each glue (circle buffer) 
-            (map build-module (determine-dependencies main)))
+            (map build-module (code-dependencies main)))
   (when (pair? main)
     (glue buffer (freeze (assemble (optimize (compile main))))))
   (buffer->string buffer))

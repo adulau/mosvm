@@ -54,12 +54,18 @@
   * Added site/config, which contains core/config instructions on where to 
     find external modules, and other site-specific parameters. 
   * Modified the Makefile to build site and core files.
-  + Consolidated parse-depencencies and parse-imports from lib/lib and 
-    lib/build to lib/module
-  + Modified build-exe to use lib/module for dependencies
+  * Modified lib/fakevm's implementation of make-tc to accept arguments.
+  * Renamed parse-imports to code-imports
+  * Moved determine-dependencies from lib/build to lib/module, and renamed 
+    to code-depenencies
+  * Deprecated parse-dependencies in lib/module for code-dependencies
+  * Modified build-exe to use lib/module for dependencies
+  * Modified mqo_string_compare to use dictionary order semantics when in
+    the presence of strings of inequal length; this makes set and dict usable
+    for sorting collections of strings.
+  * Added examples/modman.ms, a script to quickly analyze a module's imports
+    and exports.
   + Modified the Makefile to make package work.
-  ! site/config is not a core dep.. It's just required by every app before
-    the app itself loads..
   ! define's done within a macro don't seem to be bound
 
 - 4/3/2006, HTTP Server Module

@@ -579,7 +579,7 @@
 
   (define (compile-import expr) 
     (define id (cadr expr))
-    (for-each compile-dependency (parse-dependencies id)))
+    (for-each compile-dependency (code-dependencies id)))
     
   (for-each compile-import (filter is-import? code)))
 

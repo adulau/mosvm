@@ -20,6 +20,6 @@
   
 (define (main module)
   (for-each (lambda (x) (print x) (print " "))
-            (parse-dependencies module))
+            (code-dependencies module))
   (newline))
 

@@ -39,7 +39,10 @@
       (cons (car args) 
             (apply cons* (cdr args)))))          
 
-(define (make-tc) (cons '() '()))
+(define (make-tc . args) 
+  (define tc (cons '() '()))
+  (tc-splice! tc args)
+  tc)
 
 (define (tc-append! tc item)
   (set! item (cons item '()))

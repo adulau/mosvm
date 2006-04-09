@@ -15,6 +15,7 @@
 
 (module "lib/trace")
 (import "lib/format")
+(import "lib/port")
 
 (define (traceback error) 
   (begin;buffer-output 
