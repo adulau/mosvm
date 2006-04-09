@@ -15,7 +15,9 @@
 ;  
 
 (module "lib/assemble")
+(import "lib/record")
 (import "lib/lib")
+
 (export assemble)
 
 (define-record-type <assembler>

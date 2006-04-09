@@ -21,6 +21,7 @@
 (import "lib/assemble")
 (import "lib/compile")
 (import "lib/trace")
+(import "lib/eval")
 
 (define (repl)
   (define data #f)
@@ -33,11 +34,12 @@
       ((eof-object? data) (halt))
       ((> (string-length data) 0)
        (guard traceback
-              (set! data (string->exprs data))
+              (set! data (exec (string->exprs data)))
+              "(set! data (string->exprs data))
               (set! data (compile data))
               (set! data (optimize data))
               (set! data (assemble data))
-              (set! data (data))
+              (set! data (data))"
               (unless (closed?)
                 (write ":: ") 
                 (show data))))

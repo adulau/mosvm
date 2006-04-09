@@ -15,6 +15,8 @@
 
 (module "lib/url")
 
+(import "lib/object")
+
 (define-class url <object>
               (make-url scheme auth path query frag)
               url?
@@ -29,7 +31,6 @@
 
 (define *url-regex* 
   ;; This beast of a regex is courtesy of the W3C.  
-  ;; W3C -- We make simple things hard, and hard things ambiguous.
   (make-regex "^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)([?]([^#]*))?(#(.*))?"))
 
 (define *url-parsers* (dict))

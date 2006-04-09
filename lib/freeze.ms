@@ -16,6 +16,8 @@
 
 (module "lib/freeze")
 (import "lib/lib")
+(import "lib/file-port")
+(import "lib/iterate")
 
 (define (program-values program)
   (define inv '())

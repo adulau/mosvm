@@ -17,15 +17,16 @@
 ;; vector, and an encryption function.  
 
 (module "lib/cfb")
+(import "lib/object")
 
 (export <cfb> cfb? make-cfb cfb-encrypt cfb-decrypt key-size key-block-size)
 
-(define-record-type cfb
-                    (make-cfb-state key mask enc)
-                    cfb?
-                    (key cfb-key)
-                    (mask cfb-mask set-cfb-mask!)
-                    (enc cfb-enc))
+(define-class cfb <object>
+              (make-cfb-state key mask enc)
+              cfb?
+              (key cfb-key)
+              (mask cfb-mask set-cfb-mask!)
+              (enc cfb-enc))
 
 (define (make-cfb key iv enc)
   (make-cfb-state key iv enc))

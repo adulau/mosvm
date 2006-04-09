@@ -1,4 +1,4 @@
-- ?/??/????, Phase Five of the Module System
+- ?/??/????, Phase Seven of the Module System
   + (builtins) primitive added to core.
   + (builtins) added to lib/fakevm.scm.
   + Any reference to an identifier not bound in builtins, imports is identified
@@ -17,6 +17,51 @@
   + (write-http-request port http-request) 
   + (read-http-response port) -> http-response
 
+- ?/??/????, Phase Six of the Module System, p6ms
+  * Added the core subdirectory -- all modules in core should be 
+    embedded by MOSVM applications prior to any imported modules.
+  * Added core/file -- wraps file open and file read primitives to create
+    a simple API for reading and writing files.
+  * Moved read-lisp-file, read-data-file and write-data-file from lib/lib.ms 
+    to core/file.ms
+  * Added core/config --  provides a generic interface for storing site
+    configuration information, or the absence of site configuration.
+  * (site-config key) -> value
+  * (set-site-config! key value)
+  * Moved for-each, map, find-tail, list-index, find, any, fold, filter, 
+    filter! to lib/iterate
+  * Moved define-class from lib/compile to lib/object
+  * Moved define-record-type to lib/record from lib/compile
+  * Moved eval to lib/eval
+  * Moved all functions for constructing classes to lib/object.ms
+  * Moved define-class to lib/object.ms
+  * Moved define-record-type to lib/record.ms
+  * Added the site subdirectory -- all modules in site are considered to be
+    specific to a particular installation of mosvm.
+  * Added lib/module, which provides the ability to determine dependency
+    information about module source files.
+  * Modified bin/manifest.ms to use lib/module for dependencies
+  * Moved <port>, current-input-port current-output-port, input-port?, 
+    output-port?, closed?, close, (read <port>), (read <process>), 
+    *console-port*, (write <port>), (write <process>), newline, read-all,
+    read-exprs to lib/ports
+  * Added core/macro.ms
+  * Moved set-macro! and mosvm-syntax from lib/lib.ms to core/macro.ms  
+  * Added read-lisp-file, read-data-file and write-data-file wrappers to 
+    fakevm.scm
+  * Added read-module-source wrappers to fakevm.scm
+  * Added bin/situation, which generates site/config interactively.
+  * Added site/config, which contains core/config instructions on where to 
+    find external modules, and other site-specific parameters. 
+  * Modified the Makefile to build site and core files.
+  + Consolidated parse-depencencies and parse-imports from lib/lib and 
+    lib/build to lib/module
+  + Modified build-exe to use lib/module for dependencies
+  + Modified the Makefile to make package work.
+  ! site/config is not a core dep.. It's just required by every app before
+    the app itself loads..
+  ! define's done within a macro don't seem to be bound
+
 - 4/3/2006, HTTP Server Module
   * Altered descr closing to wait until the descr's write buffer clears.
   * (read-buffer-line buffer) -> str or #f
@@ -33,8 +78,7 @@
   * Added test/http.ms
   * Revised lib/filter to work with counted read lengths.
   * Added (string-replace src pat text) -> str
-  ! define's done within a macro don't seem to be bound
-  + Added (xml-escape src) -> dst
+  * Added (xml-escape src) -> dst
 
 - 4/2/2006, HTTP-URL
   * (register-url-parser scheme parser)

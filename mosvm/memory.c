@@ -89,6 +89,7 @@ mqo_boolean mqo_equal( mqo_value a, mqo_value b ){
     if( a.type != b.type )return 0;
     if( a.data == b.data )return 1;
     mqo_type at = mqo_value_type( a );
+
     if( at == mqo_vector_type ){
         return mqo_equalv( mqo_vector_fv( a ), mqo_vector_fv( b ) );
     }else if( at == mqo_pair_type ){

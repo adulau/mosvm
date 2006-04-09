@@ -15,6 +15,8 @@
 ;  
 
 (module "lib/lib")
+(import "lib/port")
+(import "lib/eval")
 
 (define make-procedure
   (if *mosvm?*
@@ -118,13 +120,6 @@
       (eq? (string-ref (symbol->string symbol) 0) 
            (integer->char char)))))
 
-(define *mosvm-syntax* (list))
-(define (mosvm-syntax) *mosvm-syntax*)
-(define (set-macro! key fn) 
-  (unless (assq key *mosvm-syntax*)
-    (set! *mosvm-syntax*
-      (cons (cons key fn) *mosvm-syntax*))))
-
 (define read-lisp-file
   (if *mosvm?*
     (lambda (path)
@@ -135,50 +130,8 @@
     (lambda (path)
       (read-all (open-input-file path)))))
 
-(define (read-module path)
-  (read-lisp-file (string-append path ".ms")))
-
 (export req-arg opt-arg reset-branch-index make-branch-symbol
         find-op-row-by-name find-op-row-by-code unkink make-symbol
         circle symbol-starts-with? write-data 
-        mosvm-syntax set-macro! 
-        read-lisp-file read-module)
+        read-lisp-file)
 
-(define (parse-imports module)
-  (define imports (make-tc))
-
-  (define (is-import? expr)
-    (and (pair? expr)
-         (= (length expr) 2)
-         (eq? (car expr) 'import)))
-
-  (define (add-import expr)
-    (define module (cadr expr))
-    (unless (memq module (tc->list imports))
-      (tc-append! imports module)))
-
-  (for-each 
-    add-import
-    (filter is-import? (if (string? module)
-                          (read-module module)
-                          module)))
-
-  (tc->list imports))
-
-(define (parse-dependencies module)
-  (define deps (make-tc))
-  (define ign (set))
-    
-  (define (gen-module-deps mod)
-    (unless (set-member? ign mod)
-      (set-add! ign mod)
-      (for-each (lambda (imp) (gen-module-deps imp))
-                (parse-imports mod))
-      (tc-append! deps mod)))
-
-  (tc-append! deps "lib/core")
-
-  (gen-module-deps module)
-  (tc->list deps))
-
-(export parse-imports parse-dependencies main)

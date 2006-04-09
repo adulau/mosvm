@@ -14,7 +14,14 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA  
 
 (module "lib/compile")
+
 (import "lib/lib")
+
+(import "lib/module")
+(import "lib/iterate")
+(import "lib/record")
+(import "lib/port")
+(import "lib/string-port")
 
 (export compile)
 
@@ -176,48 +183,6 @@
             (lambda (stmt . rest)
               `(if *spot-test?*
                  (do-t '(,stmt ,@rest) (lambda (_) ,stmt ,@rest)))))
-(set-macro! 'define-class
-            (lambda (class-tag super-class make-proto pred-name . class-fields)
-              (define class-name (make-symbol "<" class-tag ">"))
-              (define (bind-field-accessor access-name field-name)
-                `(define ,access-name 
-                   (make-multimethod 
-                     (list ,class-name) 
-                     (make-field-accessor ,class-name (quote ,field-name))
-                     (or (? ,access-name) refuse-method))))
-
-              (define (bind-field-modifier modif-name field-name)
-                `(define ,modif-name 
-                   (make-multimethod 
-                     (list ,class-name #t) 
-                     (make-field-modifier ,class-name (quote ,field-name))
-                     (or (? ,modif-name) refuse-method))))
-
-              `(begin 
-                 (define ,class-name  (make-class ',class-tag 
-                                                  ,super-class 
-                                                  ',(map-car class-fields)))
-                 (define (,pred-name %value) (isa? %value ,class-name))
-                 (define ,(car make-proto) (make-class-constructor 
-                                             ',class-name 
-                                             ,class-name
-                                             ',(cdr make-proto)))
-                 ,@(map (lambda (field) 
-                          (if (> (length field) 1)
-                            (bind-field-accessor (cadr field) (car field))
-                            '(begin)))
-                        class-fields)
-
-                 ,@(map (lambda (field) 
-                          (if (> (length field) 2)
-                            (bind-field-modifier (caddr field) (car field))
-                            '(begin)))
-                        class-fields))))
-
-(set-macro! 'define-record-type
-            (lambda (record-name make-proto pred-name . record-fields)
-              `(define-class ,record-name <record> ,make-proto ,pred-name 
-                             ,@record-fields)))
 (set-macro! 'guard
             (lambda (fn . rest)
               (let ((el (make-branch-symbol 'exit)))
@@ -589,7 +554,7 @@
 
 (define (compile-imports code env) 
   (define (compile-dependency path)
-    (define code (read-module path))
+    (define code (read-module-source path))
     (define exports (list))
     
     (define (compile-imported-export expr)

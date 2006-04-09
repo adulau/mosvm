@@ -14,29 +14,29 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA  
 ;  
 
-(require (lib "1.ss" "srfi"))
-(require (lib "9.ss" "srfi"))
+(define (read-data-file path)
+  (define file (open-file-descr path "r"))
+  (define data (read-descr-all file))
+  (close-descr file)
+  data)
 
-(define import #f)
-(define reload #f)
+(define (write-data-file path content)
+  (define file (open-file-descr path "wct"))
+  (write-descr file content)
+  (close-descr file))
 
-(let ((cwd (current-directory))
-      (cat '()))
- (set! import (lambda (key)
-               (if (not (assoc key cat))
-                (let ((path (string-append cwd "/" key ".ms")))
-                 (set! cat (cons (cons key path) cat))
-                 (reload key)))))
- (set! reload (lambda (key)
-   (load (cdr (assoc key cat))))))
+(define (read-lisp-file path)
+  (string->exprs (read-data-file path)))
 
-(define (dict . data) (cons data #f))
-(define (dict-set! d k v)
-  (unless (assq k (car d))
-    (set-car! d (cons (cons k v) (car d)))
-    d))
-(define (dict-ref d k)
-  (define p (assq k (car d)))
-  (if p (cdr p) p))
+(define (path-join . items)
+  (apply string-join *path-sep* items))
 
-(load "lib/fakevm.scm")
+(define (convert-path path)
+  (apply path-join (string-split* path "/")))
+
+(export path-join convert-path)
+
+;; "Keep a poor man alive at a job he hates.." -- Aimee Mann, "Put Me On Top"
+
+(export read-data-file write-data-file read-lisp-file path-join convert-path)
+

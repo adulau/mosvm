@@ -1,4 +1,5 @@
 #!/bin/sh
+
 BIN=`dirname $0`
 BASE=`dirname $BIN`
 LIB=$BASE/lib
@@ -16,7 +17,7 @@ else
     exit 1
 fi
 
-DEPS=`cd $BASE && $DO_SCHEME $BIN/manifest.ms $PROG`
+DEPS="`cd $BASE && $DO_SCHEME $BIN/manifest.ms $PROG`"
 echo $DEPS
 DEPS_MO=""
 RE_GLUE=""

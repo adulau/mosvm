@@ -26,6 +26,9 @@
 
 (module "lib/test")
 
+(import "lib/port")
+(import "lib/iterate")
+
 (define *spot-test?* #f)
 (define *spot-s* #f)
 (define *spot-v* #f)

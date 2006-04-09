@@ -2,7 +2,8 @@ ROOT=.
 include $(ROOT)/Makefile.cf
 
 # A list of unit test targets. All unit tests are to be compiled by MOSVM.
-TESTS=test-core test-quasi test-parse test-assemble test-compile test-freeze test-process test-buffer test-regex test-url
+TESTS=test-core test-quasi test-parse test-assemble test-freeze test-process test-buffer test-regex test-url
+# test-compile is bugged atm..
 
 all: $(MOSC) $(MOSVM) libs mosrefs $(MOSREF)
 test: $(TESTS)
@@ -23,8 +24,13 @@ $(PACKAGE): $(MOSC) $(MOSVM) $(MOSREF) libs mosrefs
 mosrefs: $(MOSVM) libs
 	sh bin/build-dir.sh mosref
 
-libs: $(MOSVM)
+site/config.ms: bin/situation.sh
+	sh bin/situation.sh
+
+libs: lib/*ms core/*ms site/*ms site/config.ms
+	sh bin/build-dir.sh core
 	sh bin/build-dir.sh lib
+	sh bin/build-dir.sh site
 
 clean:
 	cd $(ROOT)/mosvm && $(MAKE) clean
@@ -45,10 +51,10 @@ $(MOSVM_STUB): $(LIBTC) mosvm/*.[ch] mosvm/mosvm/*.[ch] mosvm/prims/*.[ch]
 $(GLUE): mosvm/glue.c mosvm/mosvm/*.[ch]
 	cd $(ROOT)/mosvm && $(MAKE)
 
-$(MOSC): $(MOSVM_STUB) $(GLUE) 
+$(MOSC): $(MOSVM_STUB) $(GLUE) libs
 	sh bin/build-app.sh $(MOSVM_STUB) bin/mosc $(MOSC)
 
-$(MOSVM): $(MOSC) $(GLUE) lib/*.ms
+$(MOSVM): $(MOSC) $(GLUE) site/config.ms libs
 	sh bin/build-app.sh $(MOSVM_STUB) bin/mosvm $(MOSVM)
 
 %.mo: %.ms $(MOSC) 

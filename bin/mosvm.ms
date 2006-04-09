@@ -15,6 +15,7 @@
 ;  
 
 (import "lib/repl")
+(import "lib/eval")
 
 (case (argc)
   ((0 1) (repl)(exit))

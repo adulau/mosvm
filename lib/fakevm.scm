@@ -168,6 +168,15 @@
 (define (read-all port)
   (read-all-loop port (make-tc)))
 
+(define (read-lisp-file path)
+  (let ((file (open-input-file path)))
+    (let ((data (read-all file)))
+      (close file)
+      data)))
+
+(define (read-module-source path)
+  (read-lisp-file (string-append path ".ms")))
+
 (define (string-ends-with? s1 s2)
   (string=? (substring s1 (- (string-length s1) (string-length s2)) 
                           (string-length s1))
@@ -175,9 +184,10 @@
 
 (define (string-head s i) (substring s 0 i))
  
-
 (define (module . dont-care) #f) ;This is used by MOSVM to ensure built-in
                                  ;modules are registered.
 
 (define-macro (export . don't-car) 1) ;This is used by MOSVM to identify
                                       ;exported identifiers.
+
+(load "../core/macro.ms")

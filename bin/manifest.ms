@@ -14,7 +14,7 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA  
 ;  
 
-(import "lib/lib")
+(import "lib/module")
 
 (define print (if *mosvm?* write display))
   
@@ -22,6 +22,4 @@
   (for-each (lambda (x) (print x) (print " "))
             (parse-dependencies module))
   (newline))
-
-;(when *mosvm?* (apply main (argv)))
 

@@ -130,8 +130,8 @@ mqo_boolean mqo_equalp( mqo_pair a, mqo_pair b ){
         av = mqo_cdr( a );
         bv = mqo_cdr( b );
 
-        if( av.type != bv.type )return 0;
         if( av.type != mqo_pair_type )return mqo_equal( av, bv );
+        if( av.type != bv.type )return 0;
 
         a = mqo_pair_fv( av );
         b = mqo_pair_fv( bv );

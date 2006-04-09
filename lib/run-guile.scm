@@ -18,17 +18,16 @@
              (srfi srfi-9))
 
 (define import #f)
-(define reload #f)
 
 (let ((cwd (getcwd))
-      (cat '()))
+      ; These entries are provided by scheme but not mosvm
+      (cat '("lib/iterate" "lib/record" "lib/port" "lib/string-port"
+             "lib/file-port")))
  (set! import (lambda (key)
-               (if (not (assoc key cat))
+               (if (not (member key cat))
                 (let ((path (string-append cwd "/" key ".ms")))
-                 (set! cat (cons (cons key path) cat))
-                 (reload key)))))
- (set! reload (lambda (key)
-   (load (cdr (assoc key cat))))))
+                 (set! cat (cons key cat))
+                 (load path))))))
 
 (define-macro (when test . stmt)
   `(if ,test (begin ,@stmt)))
