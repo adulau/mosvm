@@ -17,6 +17,12 @@
 (module "lib/queue")
 (import "lib/object")
 
+(define-class queue <object>
+              (make-queue-state tc ps)
+              queue?
+              (tc queue-tc)
+              (ps queue-ps set-queue-ps!))
+
 (define (make-queue . data)
   (define tc (make-tc))
   (unless (null? data)
@@ -59,6 +65,6 @@
              #f))
 
 (export <queue> make-queue read-queue write-queue read-queue-all make-queue
-        open-queue-port)
+        open-queue-port queue?)
 
 
