@@ -90,8 +90,8 @@
 #define mqo_nil_type NULL
 
 #define MQO_ALLOC( tn, ext ) ((tn)GC_malloc(sizeof( struct tn##_data ) + ext ))
-// GC_malloc_quarkic does not appear to work on OpenBSD, and is disabled.
-// #define MQO_AALLOC( tn, ext ) ((tn)GC_malloc_quarkic(sizeof( struct tn##_data ) + ext ))
+// GC_malloc_atomic does not appear to work on OpenBSD, and is disabled.
+#define MQO_AALLOC( tn, ext ) ((tn)GC_malloc_atomic(sizeof( struct tn##_data ) + ext ))
 
 #include <assert.h>
 #include <stdlib.h>

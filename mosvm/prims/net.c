@@ -54,6 +54,8 @@ MQO_BEGIN_PRIM( "xml-escape", xml_escape )
         char ch = src[ix];
         switch( ch ){
         case '\'':
+            // For your information, this is a valid use of strcpy; I am
+            // smarter than my compiler, thank you..
             strcpy( dst, "&apos;" );
             dst += 6;
             break;

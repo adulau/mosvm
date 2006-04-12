@@ -18,7 +18,7 @@ package: $(PACKAGE)
 $(PACKAGE): $(MOSC) $(MOSVM) $(MOSREF) libs mosrefs
 	rm -rf $(PACKAGEDIR) $(PACKAGE)
 	mkdir $(PACKAGEDIR)
-	cp -rf bin lib mosref stubs core site examples $(PACKAGEDIR)
+	cp -rf bin lib mosref stubs core site test examples $(PACKAGEDIR)
 	$(PACKAGECMD)
 
 mosrefs: $(MOSVM) libs

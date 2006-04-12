@@ -18,8 +18,6 @@
 
 (module "lib/crypto-port")
 
-(import "lib/trace")
-(import "lib/format")
 (import "lib/port")
 
 (export decrypt-input encrypt-output)

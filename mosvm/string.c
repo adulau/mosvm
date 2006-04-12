@@ -76,7 +76,7 @@ mqo_symbol mqo_symbol_fs( const char* s ){
     return mqo_symbol_fm( s, strlen( s ) );
 }
 mqo_string mqo_make_string( mqo_integer length ){
-    mqo_string s = MQO_ALLOC( mqo_string, length + 1 );
+    mqo_string s = MQO_AALLOC( mqo_string, length + 1 );
     s->length = length;
     return s;
 }
