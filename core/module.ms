@@ -24,8 +24,8 @@
     (define module-dir (tc-next! module-dirs))
     (define module-path (path-join module-dir filename))
     (when (file-path? module-path)
-      (set! module-found #t)))
-  module-path) 
+      (set! module-found module-path)))
+  module-found)
 
 (define (read-module-source path)
   (read-lisp-file (find-module-file (string-append (convert-path path) 

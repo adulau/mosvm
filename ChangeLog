@@ -4,11 +4,6 @@
   + Any reference to an identifier not bound in builtins, imports is identified
     during compilation as an error.
 
-- ?/??/????, Signals Added to Dispatch
-  + (schedule period repeat process message) -> signal
-  + (enable-signal signal)
-  + (disable-signal signal)
-
 - ?/??/????, HTTP Client
   + (http-get http-url) -> str ??? Headers
   + (http-post http-url) -> str
@@ -16,6 +11,18 @@
   + (http-options http-url) -> str
   + (write-http-request port http-request) 
   + (read-http-response port) -> http-response
+
+- ?/??/????, Signals Added to Dispatch
+  + (schedule period repeat process message) -> signal
+  + Renamed resume to signal
+  + (signal process value)
+    The supplied value is placed in the signal queue for the specified process
+  + (signal-pending? process)
+    Returns true if there is a signal pending for the specified process; the
+    process argument may be omitted.
+  + (read-signal)
+    If a signal is pending for the process, returns the next signal; otherwise
+    suspends the process until a signal is received.
 
 - ?/??/????, Phase Six of the Module System, p6ms
   * Added the core subdirectory -- all modules in core should be 
@@ -66,7 +73,6 @@
   * Added examples/modman.ms, a script to quickly analyze a module's imports
     and exports.
   * Modified the Makefile to make package work.
-  ! define's done within a macro don't seem to be bound
 
 - 4/3/2006, HTTP Server Module
   * Altered descr closing to wait until the descr's write buffer clears.

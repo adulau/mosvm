@@ -20,82 +20,49 @@
 (import "lib/optimize")
 (import "lib/freeze")
 
-(export add-module-dir! 
-        resolve-module-location resolve-module-source resolve-module-object
-        build-module build-dependencies)
+(export build-module build-dependencies build-exe replace-string-tail
+        read-platform-stub)
 
-(define *module-dirs* '("."))
-(define *stub-dir* "./stubs")
+(define (read-platform-stub platform)
+  (define path (path-join (or "./stubs" (site-config 'stub-path)) 
+                          (string-append "mosvm-stub-" platform)))
+  (if (file-path? path) (read-data-file path) #f))
 
-(define (add-module-dir! path)
-  (unless (member path *module-dirs*)
-    (when (dir-path? path)
-      (set! *module-dirs* (cons path *module-dirs*)))))
-
-(define (resolve-module-path module-name)
-  (define unchecked *module-dirs*)
-  (define module-dir #f)
-  (define module-path #f)
-  
-  (define (next-path)
-    (if (null? unchecked)
-      (set! module-path #f)
-      (begin
-        (set! module-dir (car unchecked))
-        (set! module-path (path-join module-dir module-name))
-        (set! unchecked (cdr unchecked))))
-    module-path)
-
-  (until (or (not (next-path))
-             (file-path? module-path)))
-  (and module-path module-dir))
-
-(define (resolve-module-source module)
-  (resolve-module-path (string-append module ".ms")))
-
-(define (resolve-module-object module)
-  (resolve-module-path (string-append module ".mo")))
-
-(define (resolve-module-location module)
-  (or (resolve-module-source module)
-      (resolve-module-object module)))
-
-(define (read-module-source module)
-  (set! module (convert-path module))
-  (define module-location (resolve-module-source module))
-  (define module-source (string-append (path-join module-location module)
-                                       ".ms"))
-  (read-lisp-file module-source))
+(define (replace-string-tail src tail)
+  (string-append (substring src 0 (- (string-length src)
+                                     (string-length tail)))
+                 tail))
 
 (define (build-module module)
+  (define (compile-module ms-path mo-path)
+    (define data (read-lisp-file ms-path))
+    (set! data (compile data))
+    (set! data (optimize data))
+    (set! data (assemble data))
+    (set! data (freeze data))
+    (write-data-file mo-path data)
+    data)
+
   (set! module (convert-path module))
-  (define module-location (resolve-module-location module))
-  (unless module-location
-    (error 'build "cannot find a source or object file for that module"))
-  (define module-source (string-append (path-join module-location 
-                                                  module)
-                                       ".ms"))
-  (define module-object (string-append (path-join module-location 
-                                                  module)
-                                       ".mo"))
-  (define needs-build
-    (if (file-path? module-source)
-      (if (file-path? module-object)
-        (> (path-mtime module-source) (path-mtime module-object))
-        #t)
-      #f))
-  (if needs-build 
-    (begin
-      (define data (read-lisp-file module-source))
-      (set! data (compile data))
-      (set! data (optimize data))
-      (set! data (assemble data))
-      (set! data (freeze data))
-      (define module-file (open-output-file module-object))
-      (write data module-file)
-      (close module-file)
-      data)
-    (read-data-file module-object)))
+
+  (define ms-path (find-module-file (string-append module ".ms")))
+  (define mo-path (if ms-path
+                    (replace-string-tail ms-path ".mo")
+                    (find-module-file (string-append module ".mo"))))
+  (define ms-exists (and ms-path (file-path? ms-path)))
+  (define mo-exists (and mo-path (file-path? mo-path)))
+  
+  (cond
+    ((and mo-exists ms-exists)
+     (when (> (path-mtime ms-path) (path-mtime mo-path))
+       (compile-module ms-path mo-path)))
+    (mo-exists #t) ;No source -- we'll assume the module is built.
+    (ms-exists
+      (compile-module ms-path mo-path))
+    (else
+      (error 'build "cannot find a source or object file")))
+ 
+  (read-data-file mo-path))
 
 (define (build-dependencies source)
   (define dependencies (make-tc (code-dependencies source)))
@@ -108,21 +75,16 @@
   (write-buffer buffer "mvf2")
   buffer)
 
-(export read-module-source build-exe)
-
 (define (build-exe platform main)
-  (define stub-path (path-join *stub-dir* 
-                               (if (string-begins-with? platform "win")
-                                 (string-append "mosvm-stub-" platform ".exe")
-                                 (string-append "mosvm-stub-" platform) )))
-  (unless (file-path? stub-path)
-    (error 'build "cannot find stub for platform"))
- 
   (define buffer (make-buffer))
-  (write-buffer buffer (read-data-file stub-path))
+  (write-buffer buffer (read-platform-stub platform))
+
   (for-each glue (circle buffer) 
             (map build-module (code-dependencies main)))
-  (when (pair? main)
-    (glue buffer (freeze (assemble (optimize (compile main))))))
+
+  (if (pair? main)
+    (glue buffer (freeze (assemble (optimize (compile main)))))
+    (glue buffer (build-module main)))
+
   (buffer->string buffer))
 

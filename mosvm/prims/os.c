@@ -54,9 +54,11 @@ MQO_BEGIN_PRIM( "open-file-descr", open_file_descr )
 #endif
 
     if( ! has_mode ){ mode = 0666; };
+    
+    int i, fl = mqo_string_length( flags );
 
-    while( *fp ){
-        switch( *(fp++) ){
+    for( i = 0; i < fl; i++ ){
+        switch( fp[i] ){
         case 'r':
             flag |= O_RDONLY;
             break;
@@ -110,6 +112,8 @@ MQO_BEGIN_PRIM( "open-file-descr", open_file_descr )
 #endif
         case 'e':
             flag |= O_EXCL;
+            break;
+        case 0:
             break;
         default:
             mqo_errf( 
