@@ -19,6 +19,7 @@
 (import "lib/assemble")
 (import "lib/optimize")
 (import "lib/freeze")
+(import "lib/eval")
 
 (export build-module build-dependencies build-exe read-platform-stub)
 

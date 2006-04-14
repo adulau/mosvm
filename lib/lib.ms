@@ -16,7 +16,8 @@
 
 (module "lib/lib")
 (import "lib/port")
-(import "lib/eval")
+
+;(import "lib/eval") Deferred due to cyclic dependencies.
 
 (define make-procedure
   (if *mosvm?*

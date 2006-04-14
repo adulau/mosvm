@@ -16,6 +16,7 @@
 (module "lib/format")
 
 (import "lib/port")
+(import "lib/string-port")
 
 (define (unknown->string unknown)
   (string-append "[" (symbol->string (type-name (type unknown))) "]"))
