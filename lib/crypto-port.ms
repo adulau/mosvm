@@ -42,7 +42,7 @@
   ;;;TODO: Needs to eof on eof.
   (define (read-header)
     (read-block)
-    (set! body-length (read-buffer-quad plaintext))
+    (set! body-length (read-buffer-word plaintext))
     (flush-plaintext))
 
   ;;;TODO: Needs to throw an exception on eof.
@@ -82,7 +82,7 @@
     (write-buffer ciphertext (encrypt key (read-buffer plaintext block-size))))
 
   (define (write-header)
-    (write-buffer-quad plaintext message-length)
+    (write-buffer-word plaintext message-length)
     (write-block))
 
   (define (write-body)

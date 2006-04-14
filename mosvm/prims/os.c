@@ -199,13 +199,79 @@ MQO_BEGIN_PRIM( "read-descr", read_descr )
     }
 MQO_END_PRIM( read_descr )
 
+mqo_value mqo_read_line( int fd ){
+    char block[ 256 ];
+
+    unsigned long fileofs = mqo_os_error( lseek( fd, 0, SEEK_CUR ) );
+    unsigned long filelen = mqo_os_error( lseek( fd, 0, SEEK_END ) - fileofs );
+    unsigned long blockofs = 0;
+    unsigned long blocklen = 0;
+    unsigned long sepofs = 0;
+    unsigned long seplen = 0;
+
+    mqo_os_error( lseek( fd, fileofs, SEEK_SET ) );
+    
+    void read_block( ){
+        blocklen = mqo_os_error( read( fd, block, 255 ) );
+        block[ blocklen ] = 0;
+    }
+   
+    void next_block( ){
+        blockofs += blocklen;
+        read_block( );
+    }
+  
+    int find_linesep( ){
+        int i;
+        for( i = 0; i < blocklen; i ++ )switch( block[i] ){
+        case '\r':
+            sepofs = i;
+            seplen = ( block[ i + 1 ] == '\n' ) ? 2 : 1;
+            return 1;
+        case '\n':
+            sepofs = i;
+            seplen = 1;
+            return 1;
+        }
+        return 0;
+    }
+
+    int file_remains( ){
+        return blockofs < filelen;
+    }
+
+    mqo_value read_string( unsigned long strlen, unsigned long seplen ){
+        mqo_string str = mqo_make_string( strlen );
+    
+        mqo_os_error( lseek( fd, fileofs, SEEK_SET ) );
+        str->length = mqo_os_error( read( fd, str->data, strlen ) );
+    
+        if( seplen )mqo_os_error( lseek( fd, seplen, SEEK_CUR ) );
+
+        return mqo_vf_string( str );
+    }
+
+    if( filelen == 0 ) return mqo_vf_false( );
+
+    for( read_block( ); file_remains( ); next_block( ) ){
+        if( find_linesep( ) ){
+            return read_string( blockofs + sepofs, seplen );
+        }
+    }
+
+    // If we have reached this point, no separator was found.
+    return read_string( filelen, 0 );
+}
+
 MQO_BEGIN_PRIM( "read-descr-line", read_descr_line )
     REQ_DESCR_ARG( descr );
     NO_MORE_ARGS( );
-    
-    if( descr->type != MQO_SOCKET){
-        //TODO: Implement for files.
-        mqo_errf( mqo_es_args, "s", "read-descr-line only accepts sockets" );
+   
+    if( descr->type == MQO_FILE ){
+        MQO_RESULT( mqo_read_line( descr->fd ) );
+    }else if( descr->type != MQO_SOCKET){
+        mqo_errf( mqo_es_args, "s", 
+                  "read-descr-line only accepts files and sockets" );
     }else if( mqo_is_reading( descr ) ){
         mqo_errf( mqo_es_vm, "s", 
                   "another object is waiting on descriptor" );

@@ -24,7 +24,25 @@
     If a signal is pending for the process, returns the next signal; otherwise
     suspends the process until a signal is received.
 
-- ?/??/????, Phase Six of the Module System, p6ms
+- ?/??/????, Hardening of lib/crypto-port.ms
+  + Added (md5-hash string) -> string to crypto prims.
+  + Modified lib/crypto-port to include an md5-hash in the header of the 
+    message content, and a md5-hash of the header and the content hash, for
+    message integrity validation.
+  + Altered header transmission to handle multi-block headers.
+
+- 4/14/2006, Miscellaneous Bug Fixes
+  * Overhauled lib/build to rely on core/module and lib/module
+  * Fixed build-exe when used to compile a module to a binary.
+  * Added (read-platform-stub platform)
+  * Added stub path configuration to bin/situation.sh
+  * Restored queue class definition to lib/queue
+  * Extended read-descr-line to support file descriptors.
+  * Altered lib/crypto-port to only operate on 64k messages at a time to
+    avoid the possibility of a garbled message header causing an absurdly
+    large buffer to be constructed.
+  
+- 4/10/2006, Phase Six of the Module System, p6ms
   * Added the core subdirectory -- all modules in core should be 
     embedded by MOSVM applications prior to any imported modules.
   * Added core/file -- wraps file open and file read primitives to create

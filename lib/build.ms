@@ -20,14 +20,14 @@
 (import "lib/optimize")
 (import "lib/freeze")
 
-(export build-module build-dependencies build-exe replace-string-tail
-        read-platform-stub)
+(export build-module build-dependencies build-exe read-platform-stub)
 
 (define (read-platform-stub platform)
   (define path (path-join (or "./stubs" (site-config 'stub-path)) 
                           (string-append "mosvm-stub-" platform)))
   (if (file-path? path) (read-data-file path) #f))
 
+;; TODO: Belongs in a string utility lib.
 (define (replace-string-tail src tail)
   (string-append (substring src 0 (- (string-length src)
                                      (string-length tail)))
