@@ -2,7 +2,7 @@ ROOT=.
 include $(ROOT)/Makefile.cf
 
 # A list of unit test targets. All unit tests are to be compiled by MOSVM.
-TESTS=test-core test-quasi test-parse test-assemble test-freeze test-process test-buffer test-regex test-url
+TESTS=test-core test-quasi test-parse test-assemble test-freeze test-process test-buffer test-regex test-url test-http
 # test-compile is bugged atm..
 
 all: $(MOSC) $(MOSVM) libs mosrefs $(MOSREF)
@@ -35,9 +35,10 @@ libs: lib/*ms core/*ms site/*ms site/config.ms
 clean:
 	cd $(ROOT)/mosvm && $(MAKE) clean
 	rm -f *.tar.gz *.zip *.core tags build/bin/* examples/*mo test/*mo 
+	rm -f $(MOSVM) $(MOSREF) $(MOSC)
 
 clean-seed:
-	rm -f lib/*mo bin/*mo
+	rm -f lib/*mo bin/*mo core/*mo site/*mo
 
 clean-stubs:
 	rm -f stubs/*

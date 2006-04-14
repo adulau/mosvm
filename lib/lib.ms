@@ -129,7 +129,10 @@
       (close-descr file)
       (string->exprs data))
     (lambda (path)
-      (read-all (open-input-file path)))))
+      (let ((f (open-input-file path)))
+        (let ((d (read-all f)))
+          (close-input-port f)
+          d)))))
 
 (export req-arg opt-arg reset-branch-index make-branch-symbol
         find-op-row-by-name find-op-row-by-code unkink make-symbol

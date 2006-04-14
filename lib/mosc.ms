@@ -22,6 +22,7 @@
 (import "lib/assemble")
 (import "lib/optimize")
 (import "lib/freeze")
+(import "lib/eval")
 
 (define (mosc module)
   (define src-file #f)

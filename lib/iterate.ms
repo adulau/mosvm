@@ -85,5 +85,7 @@
                  (set! lists (map-cdr lists)))))
   found)
 
-(export filter filter! fold for-each map find-tail list-index find any)
+(define (ignore-method . any))
+
+(export filter filter! fold for-each map find-tail list-index find any ignore-method)
 
