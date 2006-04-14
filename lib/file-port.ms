@@ -24,7 +24,7 @@
               descr-port?
               (descr port-descr))
 
-(define (read-line port)
+(define (read-line (<descr-port> port))
   (define line (read-descr-line (port-descr port)))
   (unless line
     (close port)

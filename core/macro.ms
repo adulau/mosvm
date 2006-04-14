@@ -21,4 +21,6 @@
     (set! *mosvm-syntax*
       (cons (cons key fn) *mosvm-syntax*))))
 
+(define (ignore-method . any))
+
 (export mosvm-syntax set-macro!)

@@ -74,5 +74,6 @@
 
 (export <string-port> open-input-string open-output-string string-port?
         read-byte read-word read-quad write-byte write-word write-quad
-        get-output-string string-input-port? string-output-port?)
+        get-output-string string-input-port? string-output-port?
+        read-line)
 
