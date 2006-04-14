@@ -26,6 +26,9 @@
 (define (read-platform-stub platform)
   (define path (path-join (or "./stubs" (site-config 'stub-path)) 
                           (string-append "mosvm-stub-" platform)))
+  (when (string-begins-with? platform "winnt")
+    (set! path (string-append path ".exe")))
+
   (if (file-path? path) (read-data-file path) #f))
 
 ;; TODO: Belongs in a string utility lib.

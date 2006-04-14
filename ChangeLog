@@ -54,7 +54,7 @@
   * Added import of lib/eval to lib/mosc.
   * Fixed bug when compiling under mosvm
   * Added export of read-line from lib/string-port
-
+  
 - 4/10/2006, Phase Six of the Module System, p6ms
   * Added the core subdirectory -- all modules in core should be 
     embedded by MOSVM applications prior to any imported modules.
