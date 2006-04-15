@@ -40,16 +40,16 @@
   + Fixed test-compile
 
 - ?/??/????, XML Parser
-  + t Added file-len, file-pos, file-seek and file-skip methods for file ports
-    to lib/file-port
-  + Added bin/incr-repl.ms, a REPL that logs each instruction to a file to
-    simplify the incremental creation of MOSVM applications and test suites.
-  + Added lib/xml.ms, a library that parses XML strings and files into S-XML
-    data structures.
   * Added lib/mailto-url.ms, support for mailto URLs that was written in 
     response to documentation's request for a simpler usage of 
     register-url-parser.
   * Fixed module header in lib/http-url.ms
+  * Added file-len, file-pos, file-seek and file-skip methods for file ports
+    to lib/file-port
+  * Added bin/incr-repl.ms, a REPL that logs each instruction to a file to
+    simplify the incremental creation of MOSVM applications and test suites.
+  + Added lib/xml.ms, a library that parses XML strings and files into S-XML
+    data structures. 
 
 - 4/14/2006, Miscellaneous Bug Fixes
   * Added test directory to package target.
