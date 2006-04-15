@@ -29,6 +29,8 @@
   + Modified lib/crypto-port to include an md5-hash in the header of the 
     message content, and a md5-hash of the header and the content hash, for
     message integrity validation.
+  + Altered string->exprs to report an incomplete expr as incomplete, with
+    what character is still expected.
   + Altered header transmission to handle multi-block headers.
 
 - ?/??/????, Broken lib/lib

@@ -26,43 +26,41 @@
 (import "lib/format")
 (import "lib/trace")
 (import "lib/eval")
+(import "lib/file-port")
+(import "lib/filter")
 
-(define (mux-output . ports)
-  (make-port #f
-             (lambda (p d) (for-each write (circle d) ports))
-             #f
-             #f))
-
-(define (join-lines head . lines)
-  (if (null? lines)
+;;; Belongs in a string library.
+(define (lead-lines lead src)
+  (if (string=? src "")
     ""
-    (string-append head (apply string-join (string-append *line-sep* head)
-                               lines))))
+    (string-append lead (apply string-join 
+                               (string-append *line-sep* lead)
+                               (split-lines src)))))
 
 (define (incr-repl file)
   (when (file-path? file) (load file))
 
-  (define file (open-output-file file))
-  (file-seek file (file-len file))
-  (define user-output (current-output-port))
-  (define succ-output (filter-output (lambda (data) 
-                                       (apply join-lines ";;;" 
-                                              (split-lines data)))
-                                     file))
-  (with-output (mux-output user-output succ-output)
-    (until (closed?)
-      (write "\n>> " user-output)
-      (define data (read))
-      (if (eof-object? data)
-        (halt)
-        (guard (lambda (e) (traceback e user-output))
-               (set! result (exec (string->exprs data)))
-               (write ":: ")
-               (show data)
-               (write "\n")))))
+  (define file-output (open-output-file file))
+  (file-seek file-output (file-len file-output))
+  
+  (until (closed?)
+     (write ">> ")
+     (define data (read))
+     (if (eof-object? data)
+       (halt)
+       (guard traceback
+          (set! result (exec (string->exprs data)))
+          (write data file-output)
+          (when result
+            (write ":: ")
+            (show result)
+            (newline)
+            (write (lead-lines ";; " (value->string result)) file-output)
+            (newline file-output)))))
+
   (close-output-port file))
 
 (define (main path)
   (incr-repl path))
 
-(export nothink)
+(export main)
