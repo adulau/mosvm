@@ -25,26 +25,17 @@
 
 (define (repl)
   (define data #f)
-  (define done #f)
 
   (until (closed?)
     (write "\n>> ")
     (set! data (read))
-    (cond 
-      ((eof-object? data) (halt))
-      ((> (string-length data) 0)
-       (guard traceback
-              (set! data (exec (string->exprs data)))
-              "(set! data (string->exprs data))
-              (set! data (compile data))
-              (set! data (optimize data))
-              (set! data (assemble data))
-              (set! data (data))"
-              (unless (closed?)
-                (write ":: ") 
-                (show data))))
-      (else
-        (set! done #t)))))
+    (if (eof-object? data) 
+      (halt)
+      (guard traceback
+             (set! data (exec (string->exprs data)))
+             (unless (closed?)
+               (write ":: ") 
+               (show data)))))
 
 (export repl)
 

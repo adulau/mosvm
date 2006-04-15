@@ -55,6 +55,20 @@
                   (lambda (p)   (close-descr descr))
                   descr))
 
+(define (file-seek (<file-port> port) posn)
+  (file-seek (port-descr port) posn))
+
+(define (file-skip (<file-port> port) skip)
+  (file-skip (port-descr port) skip))
+
+(define (file-pos (<file-port> port))
+  (file-pos (port-descr port)))
+
+(define (file-len (<file-port> port))
+  (file-len (port-descr port)))
+
+(export file-seek file-skip file-pos file-len)
+
 (define (file-input-port? value)
   (and (file-port? value) (port-read-fn value)))
 
