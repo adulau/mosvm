@@ -141,6 +141,71 @@
           (list-ref m 4))
     #f))
 
+(define-class xml-context <object>
+              (make-xml-context loc tag attrs inv)
+              xml-context?
+              (tag xml-context-tag)
+              (attrs xml-context-attrs)
+              (inv xml-context-inv)
+              (loc xml-context-loc))
+
+(define (make-sxml-parser)
+  (define context #f)
+
+  (define (new-context tag attrs)
+    (make-xml-context context tag attrs (make-tc)))
+
+  (define (new-sxml tag inv attrs)
+    (define sxml inv)
+    (when attrs (set! inv (cons (cons '@ attrs) inv)))
+    (cons tag inv))
+
+  (define (context->sxml)
+    (define sxml (new-sxml (xml-context-tag context)
+                           (tc->list (xml-context-inv context))
+                           (xml-context-attrs context)))
+    (set! context (xml-context-loc context))
+    new)
+
+  (define (add-sxml sxml)
+    (tc-append! (xml-context-inv context) sxml))
+
+  (define (add-text text)
+    (tc-append! (xml-context-inv context) text))
+
+  (define (on-tag-event tag attrs)
+    (add-sxml (new-sxml tag '() attrs)))
+
+  (define (on-begin-event tag attrs)
+    (new-context tag attrs))
+
+  (define (on-end-event tag)
+    ;;; TODO: assert that tag == xml-context-tag context.
+    (add-sxml (context->sxml)))
+  
+  (define (on-cdata-event data)
+    (add-text data))
+
+  (lambda (event)
+    (if (eq? event 'done)
+      (begin
+        (define sxml #f)
+        (until (not context)
+          (set! sxml (context->sxml))
+          (when context (add-sxml sxml)))
+        sxml)
+      (begin
+        (define event-key (car event))
+        (define event-data (cdr event))
+        (case event-key 
+          ((begin) (on-begin-event (car event-data) (cadr event-data)))
+          ((end)   (on-end-event   (car event-data)))
+          ((tag)   (on-tag-event   (car event-data) (cadr event-data))))))))
+
+;;; (define parser (make-sxml-parser))
+;;; (expat parser xml-source)
+;;; (parser 'done)
+;;;
 ;;; (define xml-info    (make-regex* "^<!(.*)>"))
 ;;; TODO: Doesn't handle quoted attrs.
 

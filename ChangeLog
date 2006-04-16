@@ -48,7 +48,7 @@
     to lib/file-port
   * Added bin/incr-repl.ms, a REPL that logs each instruction to a file to
     simplify the incremental creation of MOSVM applications and test suites.
-  + t Added assoc prim to core.
+  * Added assoc prim to core.
   + Added lib/xml.ms, a library that parses XML strings and files into S-XML
     data structures. 
 
