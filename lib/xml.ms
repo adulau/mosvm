@@ -20,12 +20,18 @@
 (define (make-regex* . rest)
   (make-regex (apply string-append rest)))
 
-(define attr-value "'[^']*'|\"[^\"]\"")
+(define attr-value "'[^']*'|\"[^\"]*\"")
 (define identifier "[[:alpha:]_:][[:alnum:]_:.-]*")
 (define req-space "[[:space:]]+")
 (define opt-space "[[:space:]]*")
 
-(define attr (string-append req-space "(" identifier ")=(" attr-value ")"))
+(define decl-value (string-append "(" identifier "|" attr-value ")" ))
+
+(define attr (string-append req-space 
+                            "(" identifier ")" 
+                            opt-space "=" opt-space 
+                            "(" attr-value ")"))
+
 (define attr-list  (string-append "(" attr ")*"))
 (define rest   ".*")
 
@@ -46,12 +52,20 @@
                 (parse-comment r)
                 (parse-decl r)
                 (parse-ver r)
-                (error 'xml "nonconformant < found" r))))
-    (list str #f #f)))
+                (error 'xml-inc "< unmatched or garbage" r))))
+    (list str #f "")))
 
-(define xml-cdata   (make-regex* "^<!\\[CDATA\\[(.*)\\]\\]>(.*)"))
-
-(define (parse-cdata str) (match-regex xml-cdata str))
+(define (parse-cdata str) 
+  (if (string-begins-with? str "<![CDATA[")
+    (begin 
+      (define cdata-len (string-find str "]]>"))
+      (if cdata-len
+        (set! cdata-len (- cdata-len 9))
+        (error 'xml-inc "CDATA section incomplete" str))
+      (list (substring str 9 cdata-len)
+            (substring str (+ 12 cdata-len) 
+                       (- (string-length str) 12 cdata-len))))
+    #f))
 
 (define xml-begin   (make-regex* "^<(" 
                                  identifier 
@@ -60,6 +74,7 @@
                                  ")"
                                  opt-space
                                  "(/)?"
+                                 opt-space
                                  ">(.*)"))
 (define (parse-begin str)
   (define m (match-regex xml-begin str))
@@ -88,7 +103,7 @@
           (cdr m))
     #f))
 
-(define xml-ver (make-regex* "<\\?xml(" attr-list ")" "\\?>(.*)"))
+(define xml-ver (make-regex* "<\\?xml(" attr-list ")" opt-space "\\?>(.*)"))
 
 (define xml-attr (make-regex* opt-space "(" identifier ")"
                               opt-space "=" opt-space
@@ -132,13 +147,16 @@
         (event-fn (list 'cdata item)))
       (event-fn item))))
 
-(define xml-decl (make-regex* "^<!" identifier "(" req-space identifier ")*>"))
+
+(define xml-decl (make-regex* "^<!" identifier 
+                              "((" req-space decl-value ")*)"
+                              opt-space ">(.*)"))
 
 (define (parse-decl str)
   (define m (match-regex xml-decl str))
   (if m
     (list (list 'decl (car m))
-          (list-ref m 4))
+          (list-ref m 3))
     #f))
 
 (define-class xml-context <object>
@@ -205,11 +223,10 @@
 ;;; (define parser (make-sxml-parser))
 ;;; (expat parser xml-source)
 ;;; (parser 'done)
-;;;
-;;; (define xml-info    (make-regex* "^<!(.*)>"))
-;;; TODO: Doesn't handle quoted attrs.
 
-;; Returns cdata leading up to a tag, the tag, then the unparsed data. 
-;; If the tag is false, no tag was found.
-;; If the tag is a string, the "tag", here, was character data.
+;;;TODO:
+;;; (define (port->sxml port) ...)
+;;; (define (string->sxml port) ...)
+;;; (define (sxml->string sxml) ...)
+;;; (define (write-sxml sxml port) ...)
 
