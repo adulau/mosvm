@@ -93,7 +93,7 @@
 (define (open-input-file path)
   (define descr (open-file-descr path "r"))
   (file-seek descr 0)
-  (make-file-port (lambda (p q) (read-descr descr q))
+  (make-file-port (lambda (p q) (or (read-descr descr q) *eof*))
                   #f
                   (lambda (p) (close-descr descr))
                   descr))

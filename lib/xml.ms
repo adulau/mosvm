@@ -17,6 +17,8 @@
 ;; <?xml ... ?>
 ;; <! ... >
 
+(import "lib/port")
+
 (define (make-regex* . rest)
   (make-regex (apply string-append rest)))
 
@@ -43,17 +45,23 @@
 
 (define (parse-tag str)
   (define m (match-regex xml-tag str))
-  (if m
-    (cons (car m) 
-          (let ((r (cadr m)))
-            (or (parse-cdata r)
-                (parse-begin r)
-                (parse-end r)
-                (parse-comment r)
-                (parse-decl r)
-                (parse-ver r)
-                (error 'xml-inc "< unmatched or garbage" r))))
-    (list str #f "")))
+  (guard (lambda (err)
+           (unless (eq? (error-key err) 'xml-inc)
+             (re-error err))
+           (define info (error-info err))
+           (error 'xml-inc (car info) (string-append (car m)
+                                                     (cadr info))))
+     (if m
+       (cons (car m) 
+             (let ((r (cadr m)))
+               (or (parse-cdata r)
+                   (parse-begin r)
+                   (parse-end r)
+                   (parse-comment r)
+                   (parse-decl r)
+                   (parse-ver r)
+                   (error 'xml-inc "< unmatched or garbage" r))))
+       (list str #f ""))))
 
 (define (parse-cdata str) 
   (if (string-begins-with? str "<![CDATA[")
@@ -219,6 +227,19 @@
           ((begin) (on-begin-event (car event-data) (cadr event-data)))
           ((end)   (on-end-event   (car event-data)))
           ((tag)   (on-tag-event   (car event-data) (cadr event-data))))))))
+
+;;TODO: parse-data needs to re-error xml-inc, adding the lead data.
+
+(define (expat-port func port)
+  (define data "")
+  (until (closed? port)
+    (define more (read 128 port)) ;;TODO: Take these 4's out. Merciless.
+    (unless (eof-object? more)
+      (set! data (string-append data more))
+      (guard (lambda (err)
+               (unless (eq? (error-key err) 'xml-inc))
+               (set! data (cadr (error-info err))))
+           (expat func data)))))
 
 ;;; (define parser (make-sxml-parser))
 ;;; (expat parser xml-source)

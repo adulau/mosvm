@@ -74,7 +74,8 @@
     ((closed? port) *eof*)
     (fn (define data (fn port q))
         (when (eq? data *eof*)
-          (set-port-closed! port #t))
+          (close port))
+          ;(set-port-closed! port #t))
         data)
     (else
       (error 'io "Only input-ports may be read from."))))
