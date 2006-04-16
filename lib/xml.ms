@@ -44,6 +44,8 @@
                 (parse-begin r)
                 (parse-end r)
                 (parse-comment r)
+                (parse-decl r)
+                (parse-ver r)
                 (error 'xml "nonconformant < found" r))))
     (list str #f #f)))
 
@@ -52,16 +54,20 @@
 (define (parse-cdata str) (match-regex xml-cdata str))
 
 (define xml-begin   (make-regex* "^<(" 
-                                        identifier 
-                                        attr-list 
-                                        opt-space
-                                        "/?"
-                                        ")>(.*)"))
+                                 identifier 
+                                 ")("
+                                 attr-list 
+                                 ")"
+                                 opt-space
+                                 "(/)?"
+                                 ">(.*)"))
 (define (parse-begin str)
   (define m (match-regex xml-begin str))
   (if m
-    (list (cons 'begin (car m))
-          (list-ref m 4))
+    (list (cons (if (list-ref m 5) 'tag 'begin)
+                (cons (car m)
+                      (parse-attrs (or (cadr m) ""))))
+          (list-ref m 6))
     #f))
 
 (define xml-end     (make-regex* "^</(" identifier ")>(.*)")) 
@@ -69,7 +75,7 @@
 (define (parse-end str)
   (define m (match-regex xml-end str))
   (if m
-    (cons (cons 'end (car m))
+    (cons (list 'end (car m))
           (cdr m))
     #f))
 
@@ -82,22 +88,59 @@
           (cdr m))
     #f))
 
-(define (expat data cdata-fn begin-fn end-fn)
+(define xml-ver (make-regex* "<\\?xml(" attr-list ")" "\\?>(.*)"))
+
+(define xml-attr (make-regex* opt-space "(" identifier ")"
+                              opt-space "=" opt-space
+                              "(" attr-value ")"))
+
+(define (parse-attrs str)
+  (map (lambda (p)
+         (define key (car p))
+         (define val (cadr p))
+         (cons key (substring val 1 (- (string-length val) 2))))
+       (or (match-regex* xml-attr str) '())))
+
+(define (parse-ver str)
+  (define m (match-regex xml-ver str))
+  (if m
+    (list (cons 'ver (parse-attrs (car m)))
+          (list-ref m 4))
+    #f))
+
+(define (expat event-fn data)
+;;; Anatomy of a BEGIN event: <a href='123'>
+;;; '(begin tag-name . tag-attrs)
+;;; Anatomy of a TAG event: <br />
+;;; '(begin tag-name . tag-attrs)
+;;; Anatomy of a END event: </a>
+;;; '(end tag-name)
+;;; Anatomy of a VER event: <?xml version="1.0"?>
+;;; '(ver . ver-attrs)
+;;; Anatomy of a DECL event: <!DOCTYPE who-really-cares>
+;;; '(decl . decl-frags)
+
   (until (string=? data "")
     (define r (parse-tag data))
     (define head (car r))
     (define item (cadr r))
     (define tail (cadr (cdr r)))
-    (unless (string=? head "") (cdata-fn head))
+    (unless (string=? head "") (event-fn (list 'cdata head)))
     (set! data tail)
     (if (string? item)
-      (cdata-fn item)
-      (case (car item)
-        ((begin) (begin-fn (cdr item)))
-        ((end) (end-fn (cdr item)))))))
+      (when (> (string-length item) 0)
+        (event-fn (list 'cdata item)))
+      (event-fn item))))
 
-;;; (define xml-header  (make-regex* "^<?xml(.*)?>"))
-;;; TODO: Doesn't handle quoted attrs.
+(define xml-decl (make-regex* "^<!" identifier "(" req-space identifier ")*>"))
+
+(define (parse-decl str)
+  (define m (match-regex xml-decl str))
+  (if m
+    (list (list 'decl (car m))
+          (list-ref m 4))
+    #f))
+
 ;;; (define xml-info    (make-regex* "^<!(.*)>"))
 ;;; TODO: Doesn't handle quoted attrs.
 
