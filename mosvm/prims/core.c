@@ -989,6 +989,30 @@ MQO_BEGIN_PRIM( "assq", assq )
     MQO_RESULT( mqo_vf_false() );
 MQO_END_PRIM( assq );
 
+MQO_BEGIN_PRIM( "assoc", assoc )
+    REQ_VALUE_ARG( key );
+    REQ_PAIR_ARG( list );
+    NO_MORE_ARGS( );
+    
+    mqo_value v;
+
+    while( list ){
+        v = mqo_car( list );
+        if( mqo_is_pair( v ) ){
+        //TODO: Should this be an error?
+            if( mqo_equal( mqo_car( mqo_pair_fv( v ) ), key ) ){
+                MQO_RESULT( v );
+            }
+        }
+        v = mqo_cdr( list );
+        if( ! mqo_is_pair( v ) )break;
+        //TODO: Should this be an error?
+        list = mqo_pair_fv( v );
+    }
+
+    MQO_RESULT( mqo_vf_false() );
+MQO_END_PRIM( assoc );
+
 MQO_BEGIN_PRIM( "getcwd", getcwd )
     static char buf[ MAXPATHLEN ];
     if( getcwd( buf, MAXPATHLEN ) ){
@@ -2154,6 +2178,7 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( memq );
     MQO_BIND_PRIM( member );
     MQO_BIND_PRIM( assq );
+    MQO_BIND_PRIM( assoc );
     MQO_BIND_PRIM( string_append );
     MQO_BIND_PRIM( string_length );
     MQO_BIND_PRIM( string_ref );

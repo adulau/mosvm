@@ -35,7 +35,7 @@
              (set! data (exec (string->exprs data)))
              (unless (closed?)
                (write ":: ") 
-               (show data)))))
+               (show data))))))
 
 (export repl)
 
