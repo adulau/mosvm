@@ -46,6 +46,7 @@
 (define (http-eval-session req)
   (define method (http-request-method req))
   
+  (show req *console-port*)(newline *console-port*)
   (unless (or (string=? method "GET")
               (string=? method "POST"))
 

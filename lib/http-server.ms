@@ -75,15 +75,20 @@
       
       (define body #f)
       (define content-length (dict-ref headers "Content-Length"))
+      (define content-type #f)
+
       (when content-length
         (guard (lambda (x) 
                  ;; Integer or die!
                  (error 'http "content length malformed" 400 line))
                (set! content-length (string->integer content-length)))
-        (set! body (read content-length port)))
+        (set! body (read content-length port))
+        (set! content-type (dict-ref headers "Content-Type"))
+        (when (equal? content-type "application/x-www-form-urlencoded")
+            (set! url (string-append url "?" body))))
 
       (define url (string->url url "http"))
-
+      
       (make-http-request method headers url version body port))))  
 
 (define *crlf* "\r\n")
