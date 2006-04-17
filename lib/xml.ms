@@ -30,6 +30,8 @@
 (define req-space "[[:space:]]+")
 (define opt-space "[[:space:]]*")
 
+(define all-space (make-regex "^[[:space:]]*$"))
+
 (define decl-value (string-append "(" identifier "|" attr-value ")" ))
 
 (define attr (string-append req-space 
@@ -205,7 +207,8 @@
     (tc-append! (xml-context-inv context) sxml))
 
   (define (add-text text)
-    (tc-append! (xml-context-inv context) text))
+    (unless (match-regex all-space text)
+        (tc-append! (xml-context-inv context) text)))
 
   (define (on-tag-event tag attrs)
     (add-sxml (new-sxml tag '() attrs)))
@@ -277,8 +280,43 @@
   (expat-port parser src)
   (parser 'done))
 
-(export make-sxml expat expat-port
-        make-sxml-parser parse-tag) 
+(define (get-sxml-items sxml)
+  (if (pair? sxml)
+    (begin
+      (define len (length sxml))
+      (if (< len 2)
+        '()
+        (begin
+          (define tag (cadr sxml))
+          (if (eq? (car tag) '@)
+            (cdr (cdr sxml))
+            (cdr sxml)))))
+    '()))
+
+(define (get-sxml-attrs sxml)
+  (if (pair? sxml)
+    (begin
+      (define len (length sxml))
+      (if (< len 2)
+        '()
+        (begin
+          (define tag (cadr sxml))
+          (if (eq? (car tag) '@)
+            (cdr tag)
+            '()))))
+    '()))
+
+(define (get-sxml-attr sxml key)
+  (define attr (assq key (get-sxml-attrs sxml)))
+  (if attr (cdr attr) #f))
+
+(define (get-sxml-item sxml index)
+  (if (integer? index)
+    (list-ref (get-sxml-items sxml) index)
+    (assq index (get-sxml-items sxml))))
+
+(export make-sxml get-sxml-items get-sxml-attrs
+        get-sxml-attr get-sxml-item)
 
 ;;; (define parser (make-sxml-parser))
 ;;; (expat parser xml-source)
