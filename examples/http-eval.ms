@@ -15,6 +15,7 @@
 
 (import "lib/http-server")
 (import "lib/format")
+(import "lib/eval")
 
 (define page-header
   (string-append "<html><head>"
@@ -25,7 +26,7 @@
   (string-append "</body></html>"))
 
 (define read-expr-form
-  (string-append "<form action='/' method='get'>"
+  (string-append "<form action='/' method='post'"
                  "<textarea name='q' rows='37' cols='72'></textarea>"
                  "<br />"
                  "<input type='submit' name='action' value='Eval' />"
@@ -45,7 +46,9 @@
 (define (http-eval-session req)
   (define method (http-request-method req))
   
-  (unless (string=? method "GET")
+  (unless (or (string=? method "GET")
+              (string=? method "POST"))
+
     (error 'http "Method not supported" 400))
   
   (define url (http-request-url req))

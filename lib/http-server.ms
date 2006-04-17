@@ -13,6 +13,8 @@
 ; along with this library; if not, write to the Free Software Foundation, 
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
+; TODO: Parse http-request-body into URL args.
+
 (module "lib/http-server")
 (import "lib/http-url")
 (import "lib/conn")
@@ -77,8 +79,8 @@
         (guard (lambda (x) 
                  ;; Integer or die!
                  (error 'http "content length malformed" 400 line))
-               (string->integer content-length))
-        (set! body (read port content-length)))
+               (set! content-length (string->integer content-length)))
+        (set! body (read content-length port)))
 
       (define url (string->url url "http"))
 
