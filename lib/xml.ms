@@ -17,7 +17,10 @@
 ;; <?xml ... ?>
 ;; <! ... >
 
+(module "lib/xml")
+
 (import "lib/port")
+(import "lib/trace")
 
 (define (make-regex* . rest)
   (make-regex (apply string-append rest)))
@@ -142,18 +145,18 @@
 ;;; '(ver . ver-attrs)
 ;;; Anatomy of a DECL event: <!DOCTYPE who-really-cares>
 ;;; '(decl . decl-frags)
-
   (until (string=? data "")
     (define r (parse-tag data))
     (define head (car r))
     (define item (cadr r))
     (define tail (cadr (cdr r)))
-    (unless (string=? head "") (event-fn (list 'cdata head)))
+    (unless (string=? head "") 
+      (event-fn (list 'cdata head)))
     (set! data tail)
-    (if (string? item)
-      (when (> (string-length item) 0)
-        (event-fn (list 'cdata item)))
-      (event-fn item))))
+    (cond
+      ((string? item) (when (> (string-length item) 0)
+                        (event-fn (list 'cdata item))))
+      ((pair? item) (set! report (event-fn item))))))
 
 
 (define xml-decl (make-regex* "^<!" identifier 
@@ -176,22 +179,27 @@
               (loc xml-context-loc))
 
 (define (make-sxml-parser)
-  (define context #f)
+  (define context (make-xml-context #f "*TOP*" '() (make-tc)))
 
   (define (new-context tag attrs)
     (make-xml-context context tag attrs (make-tc)))
 
   (define (new-sxml tag inv attrs)
     (define sxml inv)
-    (when attrs (set! inv (cons (cons '@ attrs) inv)))
-    (cons tag inv))
+    (unless (null? attrs)
+      (set! inv (cons (cons '@ (map (lambda (attr)
+                                      (cons (string->symbol (car attr))
+                                            (cdr attr)))
+                                      attrs) )
+                      inv)))
+    (cons (string->symbol tag) inv))
 
   (define (context->sxml)
     (define sxml (new-sxml (xml-context-tag context)
                            (tc->list (xml-context-inv context))
                            (xml-context-attrs context)))
     (set! context (xml-context-loc context))
-    new)
+    sxml)
 
   (define (add-sxml sxml)
     (tc-append! (xml-context-inv context) sxml))
@@ -202,10 +210,17 @@
   (define (on-tag-event tag attrs)
     (add-sxml (new-sxml tag '() attrs)))
 
+  (define (on-cdata-event text)
+    (add-text text))
+
   (define (on-begin-event tag attrs)
-    (new-context tag attrs))
+    ;(write "BEGIN: ")(show tag)(show attrs)(newline)
+    (set! context (new-context tag attrs)))
 
   (define (on-end-event tag)
+    ;(write "END:")(show tag)(newline)
+    (unless (string=? tag (xml-context-tag context))
+      (error 'xml-conform "Unmatched close tag." tag (xml-context-tag context)))
     ;;; TODO: assert that tag == xml-context-tag context.
     (add-sxml (context->sxml)))
   
@@ -215,6 +230,7 @@
   (lambda (event)
     (if (eq? event 'done)
       (begin
+        ;;TODO: Assert context is #f.
         (define sxml #f)
         (until (not context)
           (set! sxml (context->sxml))
@@ -223,23 +239,46 @@
       (begin
         (define event-key (car event))
         (define event-data (cdr event))
+        ;(write "EVENT: ")(show event)(newline)
         (case event-key 
-          ((begin) (on-begin-event (car event-data) (cadr event-data)))
+          ((begin) (on-begin-event (car event-data) (cdr event-data)))
           ((end)   (on-end-event   (car event-data)))
-          ((tag)   (on-tag-event   (car event-data) (cadr event-data))))))))
-
-;;TODO: parse-data needs to re-error xml-inc, adding the lead data.
+          ((cdata) (on-cdata-event (car event-data)))
+          ((tag)   (on-tag-event   (car event-data) (cdr event-data))))
+        ;(write "END-OF-EVENT\n")
+        ))))
 
 (define (expat-port func port)
   (define data "")
   (until (closed? port)
-    (define more (read 128 port)) ;;TODO: Take these 4's out. Merciless.
+    (define more (read 256 port)) ;;TODO: Take these 4's out. Merciless.
+    ;(write "MORE: ")(show more)(newline)
     (unless (eof-object? more)
       (set! data (string-append data more))
+      ;(write "DATA: ")(show data)(newline)
       (guard (lambda (err)
-               (unless (eq? (error-key err) 'xml-inc))
-               (set! data (cadr (error-info err))))
-           (expat func data)))))
+               (unless (eq? (error-key err) 'xml-inc)
+                 (re-error err))
+               ;(write "Re-reading for inc: ")(show (error-info err))(newline)
+               (set! data (cadr (error-info err)))
+               ;(write "ERROR-DATA: ")(show data)(newline)
+               )
+               
+           (expat func data)
+           (set! data "")))))
+
+(define (make-sxml (<string> src))
+  (define parser (make-sxml-parser))
+  (expat parser src)
+  (parser 'done))
+
+(define (make-sxml (<port> src))
+  (define parser (make-sxml-parser))
+  (expat-port parser src)
+  (parser 'done))
+
+(export make-sxml expat expat-port
+        make-sxml-parser parse-tag) 
 
 ;;; (define parser (make-sxml-parser))
 ;;; (expat parser xml-source)
