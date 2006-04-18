@@ -301,7 +301,7 @@
         '()
         (begin
           (define tag (cadr sxml))
-          (if (eq? (car tag) '@)
+          (if (and (pair? tag) (eq? (car tag) '@))
             (cdr tag)
             '()))))
     '()))
