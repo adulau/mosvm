@@ -18,7 +18,7 @@
 ;; <! ... >
 
 (module "lib/xml")
-
+(import "lib/iterate")
 (import "lib/port")
 (import "lib/trace")
 
@@ -304,8 +304,13 @@
     (list-ref (get-sxml-items sxml) index)
     (assq index (get-sxml-items sxml))))
 
+(define (get-sxml-item* sxml index)
+  (if (integer? index)
+    (list-ref (get-sxml-items sxml) index)
+    (filter (lambda (item) (eq? (car item) index)) (get-sxml-items sxml))))
+
 (export make-sxml get-sxml-items get-sxml-attrs
-        get-sxml-attr get-sxml-item)
+        get-sxml-attr get-sxml-item get-sxml-item*)
 
 ;;; (define (sxml->string sxml) ...)
 ;;; (define (write-sxml sxml port) ...)

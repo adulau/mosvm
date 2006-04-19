@@ -49,11 +49,11 @@
   * Added bin/incr-repl.ms, a REPL that logs each instruction to a file to
     simplify the incremental creation of MOSVM applications and test suites.
   * Added assoc prim to core.
-  + t Modified open-input-file to correctly return *eof* when read-descr yields
+  * Modified open-input-file to correctly return *eof* when read-descr yields
     #f to indicate end of the file.
-  + t Modified read <port> to correctly use the close method to close the port
+  * Modified read <port> to correctly use the close method to close the port
     instead of just marking it out of service.
-  + Added lib/xml.ms, a library that parses XML strings and files into S-XML
+  + t Added lib/xml.ms, a library that parses XML strings and files into S-XML
     data structures. 
 
 - 4/14/2006, Miscellaneous Bug Fixes
