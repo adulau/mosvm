@@ -217,14 +217,11 @@
     (add-text text))
 
   (define (on-begin-event tag attrs)
-    ;(write "BEGIN: ")(show tag)(show attrs)(newline)
     (set! context (new-context tag attrs)))
 
   (define (on-end-event tag)
-    ;(write "END:")(show tag)(newline)
     (unless (string=? tag (xml-context-tag context))
       (error 'xml-conform "Unmatched close tag." tag (xml-context-tag context)))
-    ;;; TODO: assert that tag == xml-context-tag context.
     (add-sxml (context->sxml)))
   
   (define (on-cdata-event data)
@@ -242,30 +239,22 @@
       (begin
         (define event-key (car event))
         (define event-data (cdr event))
-        ;(write "EVENT: ")(show event)(newline)
         (case event-key 
           ((begin) (on-begin-event (car event-data) (cdr event-data)))
           ((end)   (on-end-event   (car event-data)))
           ((cdata) (on-cdata-event (car event-data)))
-          ((tag)   (on-tag-event   (car event-data) (cdr event-data))))
-        ;(write "END-OF-EVENT\n")
-        ))))
+          ((tag)   (on-tag-event   (car event-data) (cdr event-data))))))))
 
 (define (expat-port func port)
   (define data "")
   (until (closed? port)
-    (define more (read 256 port)) ;;TODO: Take these 4's out. Merciless.
-    ;(write "MORE: ")(show more)(newline)
+    (define more (read 256 port))
     (unless (eof-object? more)
       (set! data (string-append data more))
-      ;(write "DATA: ")(show data)(newline)
       (guard (lambda (err)
                (unless (eq? (error-key err) 'xml-inc)
                  (re-error err))
-               ;(write "Re-reading for inc: ")(show (error-info err))(newline)
-               (set! data (cadr (error-info err)))
-               ;(write "ERROR-DATA: ")(show data)(newline)
-               )
+               (set! data (cadr (error-info err))))
                
            (expat func data)
            (set! data "")))))
@@ -318,13 +307,6 @@
 (export make-sxml get-sxml-items get-sxml-attrs
         get-sxml-attr get-sxml-item)
 
-;;; (define parser (make-sxml-parser))
-;;; (expat parser xml-source)
-;;; (parser 'done)
-
-;;;TODO:
-;;; (define (port->sxml port) ...)
-;;; (define (string->sxml port) ...)
 ;;; (define (sxml->string sxml) ...)
 ;;; (define (write-sxml sxml port) ...)
 
