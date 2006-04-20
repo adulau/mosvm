@@ -39,7 +39,7 @@
     reliance on lib/eval.
   + Fixed test-compile
 
-- ?/??/????, XML Parser
+- 4/18/2006, XML Parser
   * Added lib/mailto-url.ms, support for mailto URLs that was written in 
     response to documentation's request for a simpler usage of 
     register-url-parser.
@@ -55,7 +55,7 @@
     instead of just marking it out of service.
   * Added -g flag to the MOSVM stub; invoking the stub with -g will cause a 
     list of global variables to be displayed prior to exit.
-  + t Added lib/xml.ms, a library that parses XML strings and files into S-XML
+  * Added lib/xml.ms, a library that parses XML strings and files into S-XML
     data structures. 
 
 - 4/14/2006, Miscellaneous Bug Fixes
