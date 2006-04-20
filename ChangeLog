@@ -53,6 +53,8 @@
     #f to indicate end of the file.
   * Modified read <port> to correctly use the close method to close the port
     instead of just marking it out of service.
+  * Added -g flag to the MOSVM stub; invoking the stub with -g will cause a 
+    list of global variables to be displayed prior to exit.
   + t Added lib/xml.ms, a library that parses XML strings and files into S-XML
     data structures. 
 

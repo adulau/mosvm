@@ -41,4 +41,6 @@ void mqo_bind_progn_prims( );
 void mqo_bind_net_prims( );
 void mqo_bind_regex_prims( );
 
+mqo_set mqo_globals_set( );
+
 #endif

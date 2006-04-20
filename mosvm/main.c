@@ -65,6 +65,7 @@ int main( int argc, const char *argv[] ){
     mqo_pair ps, p;
     mqo_init_mosvm();
     int mqo_show_final = 0;
+    int mqo_show_globals = 0;
 	
 #ifdef _WIN32
     char name[MAX_PATH];
@@ -86,6 +87,8 @@ int main( int argc, const char *argv[] ){
             mqo_trace_vm = ! mqo_trace_vm;
         }else if( ! strcmp( argv[i], "-s" ) ){
             mqo_show_final = ! mqo_show_final;
+        }else if( ! strcmp( argv[i], "-g" ) ){
+            mqo_show_globals = ! mqo_show_globals;
         }else{
             ct++;
             mqo_tc_append( ps, mqo_vf_string( mqo_string_fs( argv[ i ] ) ) );
@@ -124,11 +127,18 @@ int main( int argc, const char *argv[] ){
         };
     }
 
+    if( mqo_show_globals ){
+        mqo_set globals = mqo_globals_set( );
+        MQO_ITER_TREE( globals, node ){
+            mqo_writesym( mqo_symbol_fv( node->data ) );
+            mqo_newline( );
+        }
+    }
 
     if( mqo_show_final ){
         mqo_word ct = 32; mqo_show( r, &ct );
         mqo_newline();
     } 
-    
+   
     return mqo_is_false( r ) ? EXIT_FAILURE : EXIT_SUCCESS;
 }

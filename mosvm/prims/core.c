@@ -1390,14 +1390,7 @@ MQO_END_PRIM( dump_program )
 
 MQO_BEGIN_PRIM( "globals", globals )
     NO_MORE_ARGS( );
-    mqo_set globals = mqo_make_tree( mqo_set_key );
-    MQO_ITER_TREE( mqo_lexicon, node ){
-        mqo_symbol key = mqo_symbol_fv( node->data );
-        if( ! mqo_is_void( key->value ) ){
-            mqo_tree_insert( globals, node->data );
-        }
-    }
-    MQO_RESULT( mqo_vf_set( globals ) );
+    MQO_RESULT( mqo_vf_set( mqo_globals_set( ) ) );
 MQO_END_PRIM( globals );
 
 MQO_BEGIN_PRIM( "set", set )

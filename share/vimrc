@@ -1,0 +1,2 @@
+au BufRead,BufNewFile *.ms setf scheme
+au BufRead,BufNewFile *.ms set complete=k./share/symbols

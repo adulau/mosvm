@@ -147,6 +147,16 @@ mqo_type mqo_void_type = &mqo_void_type_data;
 
 mqo_type mqo_default_type = &mqo_boolean_type_data;
 
+mqo_set mqo_globals_set( ){
+    mqo_set globals = mqo_make_tree( mqo_set_key );
+    MQO_ITER_TREE( mqo_lexicon, node ){
+        mqo_symbol key = mqo_symbol_fv( node->data );
+        if( ! mqo_is_void( key->value ) ){
+            mqo_tree_insert( globals, node->data );
+        }
+    }
+    return globals;
+}
 void mqo_init_memory_subsystem( ){
     mqo_symbol sym;
     

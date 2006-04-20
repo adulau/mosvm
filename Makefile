@@ -5,13 +5,24 @@ include $(ROOT)/Makefile.cf
 TESTS=test-core test-quasi test-parse test-assemble test-freeze test-process test-buffer test-regex test-url test-http
 # test-compile is bugged atm..
 
-all: $(MOSC) $(MOSVM) libs mosrefs $(MOSREF)
+all: $(MOSC) $(MOSVM) libs mosrefs $(MOSREF) share/symbols
 test: $(TESTS)
 test-%: test/%.mo $(MOSVM) libs mosrefs
 	$(MOSVM) $<
 
+import-all-lib.ms: $(MOSVM) lib/*.ms
+	echo '(import "lib/module")' >import-all-lib.ms
+	for x in `ls lib/*.ms | cut -d. -f 1`; do echo "(import \"$$x\")" >>import-all-lib.ms; done
+	echo '(define (main) (halt))' >>import-all-lib.ms
+
+share/symbols: $(MOSVM) import-all-lib.ms
+	$(MOSVM) -g import-all-lib.ms >share/symbols
+	
 $(MOSREF): $(MOSC) $(MOSVM) libs mosrefs
 	sh bin/build-app.sh $(MOSVM_STUB) bin/mosref $(MOSREF)
+
+repl: share/symbols
+	rlwrap -b"()" -f share/symbols $(MOSVM)
 
 package: $(PACKAGE)
 
