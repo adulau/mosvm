@@ -1245,14 +1245,11 @@ MQO_BEGIN_PRIM( "tc-splice!", tc_splice )
     REQ_PAIR_ARG( list );
     NO_MORE_ARGS( );
 
-    if( mqo_is_empty( v_list ) ){
-    }else if( mqo_is_empty( mqo_car( tc ) ) ){
-        mqo_set_car( tc, v_list );
-    }else{
-        mqo_set_cdr( mqo_pair_fv( mqo_cdr( tc ) ), v_list );
-    };
+    while( list ){
+        mqo_tc_append( tc, mqo_car( list ) );
+        list = mqo_req_pair( mqo_cdr( list ), "list" );
+    }
 
-    mqo_set_cdr( tc, mqo_vf_pair( mqo_last_pair( list ) ) );
     MQO_RESULT( mqo_vf_tc( tc ) );
 MQO_END_PRIM( tc_splice )
 

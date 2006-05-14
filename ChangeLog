@@ -39,6 +39,16 @@
     reliance on lib/eval.
   + Fixed test-compile
 
+- 5/14/2006, Bugfix for Tc-Splice!
+  * tc-splice will no longer cannibalize the supplied list's structure.
+  * Added (get-sxml-tag sxml) to lib/xml
+  * Added (has-sxml-tag? sxml tag) to lib/xml
+  * Added (has-sxml-attr? sxml key value) to lib/xml
+  * Added (sxml-drill sxml test ...) to lib/sxml; example: 
+    >> (define xml '(html (body (p "alpha" (a (@ (href . "a")) "aleph")) (p "beta"))))
+    >> (sxml-drill xml is-body? is-p? is-a?)
+    :: (a (@ (href . "a")) "aleph")
+
 - 4/18/2006, XML Parser
   * Added lib/mailto-url.ms, support for mailto URLs that was written in 
     response to documentation's request for a simpler usage of 

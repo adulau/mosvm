@@ -312,6 +312,40 @@
 (export make-sxml get-sxml-items get-sxml-attrs
         get-sxml-attr get-sxml-item get-sxml-item*)
 
+(define (get-sxml-tag sxml)
+  (if (pair? sxml)
+    (car sxml)
+    #f))
+
+(define (has-sxml-tag? sxml tag)
+  (eq? (get-sxml-tag sxml) tag))
+
+(define (has-sxml-attr? sxml key value)
+  (define x (get-sxml-attr sxml key))
+  (eqv? x value))
+
+(define (sxml-drill sxml . tests)
+  (define test #f)
+  (define items (get-sxml-items sxml))
+
+  (until (or (null? items)
+             (null? tests))
+
+    (set! test (car tests))
+    (set! tests (cdr tests))
+    (set! items (filter test items))
+
+    (unless (null? tests)
+      (define tc (make-tc))
+      (for-each (lambda (item)
+                  (tc-splice! tc (get-sxml-items item)))
+                items)
+      (set! items (tc->list tc))))
+
+  items)
+
+(export get-sxml-tag has-sxml-tag? has-sxml-attr? sxml-drill)
+
 ;;; (define (sxml->string sxml) ...)
 ;;; (define (write-sxml sxml port) ...)
 
