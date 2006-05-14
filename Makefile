@@ -21,7 +21,7 @@ share/symbols: $(MOSVM) import-all-lib.ms
 $(MOSREF): $(MOSC) $(MOSVM) libs mosrefs
 	sh bin/build-app.sh $(MOSVM_STUB) bin/mosref $(MOSREF)
 
-repl: share/symbols
+repl:
 	rlwrap -b"()" -f share/symbols $(MOSVM)
 
 package: $(PACKAGE)

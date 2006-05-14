@@ -22,13 +22,12 @@
 (import "lib/port")
 (import "lib/trace")
 
-(define (make-regex* . rest)
-  (make-regex (apply string-append rest)))
+(define (make-regex* . rest) (make-regex (apply string-append rest)))
+(define req-space "[[:space:]]+")
+(define opt-space "[[:space:]]*")
 
 (define attr-value "'[^']*'|\"[^\"]*\"")
 (define identifier "[[:alpha:]_:][[:alnum:]_:.-]*")
-(define req-space "[[:space:]]+")
-(define opt-space "[[:space:]]*")
 
 (define all-space (make-regex "^[[:space:]]*$"))
 
@@ -173,12 +172,13 @@
     #f))
 
 (define-class xml-context <object>
-              (make-xml-context loc tag attrs inv)
+              (make-xml-context loc tag attrs inv buf)
               xml-context?
               (tag xml-context-tag)
               (attrs xml-context-attrs)
               (inv xml-context-inv)
-              (loc xml-context-loc))
+              (loc xml-context-loc)
+              (buf xml-context-buf set-xml-context-buf!))
 
 (define (make-sxml-parser)
   (define context (make-xml-context #f "*TOP*" '() (make-tc)))
@@ -207,19 +207,33 @@
     (tc-append! (xml-context-inv context) sxml))
 
   (define (add-text text)
-    (unless (match-regex all-space text)
-        (tc-append! (xml-context-inv context) text)))
+    (define buf (xml-context-buf context))
+    (unless buf
+      (set! buf (make-buffer))
+      (set-xml-context-buf! context buf))
+    (write-buffer buf text))
+
+  (define (flush-buf)
+    (define buf (xml-context-buf context))
+    (when buf
+      (define text (strip (buffer->string buf)))
+      (unless (string=? text "")
+        (add-sxml (buffer->string buf)))
+      (set-xml-context-buf! context #f)))
 
   (define (on-tag-event tag attrs)
+    (flush-buf)
     (add-sxml (new-sxml tag '() attrs)))
 
   (define (on-cdata-event text)
     (add-text text))
 
   (define (on-begin-event tag attrs)
+    (flush-buf)
     (set! context (new-context tag attrs)))
 
   (define (on-end-event tag)
+    (flush-buf)
     (unless (string=? tag (xml-context-tag context))
       (error 'xml-conform "Unmatched close tag." tag (xml-context-tag context)))
     (add-sxml (context->sxml)))

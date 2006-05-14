@@ -49,7 +49,12 @@
     >> (sxml-drill xml is-body? is-p? is-a?)
     :: (a (@ (href . "a")) "aleph")
   * lib/xml's parser now handles sequential comments more reliably.
-
+  * Added (strip string) to core primitives; strip removes leading and trailing
+    whitespace from the string.
+  * Added (strip-head string) to core primitives.
+  * Added (strip-tail string) to core primitives.
+  * make-sxml is now more intelligent about character data blocks, concatenating contiguous blocks together
+    into a single sxml node.
 - 4/18/2006, XML Parser
   * Added lib/mailto-url.ms, support for mailto URLs that was written in 
     response to documentation's request for a simpler usage of 

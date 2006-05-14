@@ -18,6 +18,7 @@
 #include "../mosvm/prim.h"
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <sys/param.h>
 #include <errno.h>
 #ifndef _WIN32
@@ -1587,6 +1588,7 @@ MQO_END_PRIM( string_find )
 MQO_BEGIN_PRIM( "string-begins-with?", string_begins_with )
     REQ_STRING_ARG( string );
     REQ_STRING_ARG( item );
+    NO_MORE_ARGS( );
     
     mqo_integer sl = mqo_string_length( string );
     mqo_integer il = mqo_string_length( item );
@@ -1601,9 +1603,63 @@ MQO_BEGIN_PRIM( "string-begins-with?", string_begins_with )
     }
 MQO_END_PRIM( string_begins_with )
 
+MQO_BEGIN_PRIM( "strip", strip)
+    REQ_STRING_ARG( string );
+    NO_MORE_ARGS( );
+
+    mqo_integer i, j, sl = mqo_string_length( string );
+    const char* sp = mqo_sf_string( string );
+    
+    for( i = 0; i < sl; i ++ ){
+        if( ! isspace( sp[i] ) ) break;
+    }
+    
+    sp += i;
+    sl -= i;
+
+    while( sl ){
+        if( ! isspace( sp[ sl - 1 ] ) )break;
+        sl --;
+    }
+    
+    MQO_RESULT( mqo_vf_string( mqo_string_fm( sp, sl ) ) );
+MQO_END_PRIM( strip )
+
+MQO_BEGIN_PRIM( "strip-head", strip_head )
+    REQ_STRING_ARG( string );
+    NO_MORE_ARGS( );
+
+    mqo_integer i, sl = mqo_string_length( string );
+    const char* sp = mqo_sf_string( string );
+    
+    for( i = 0; i < sl; i ++ ){
+        if( ! isspace( sp[i] ) ) break;
+    }
+
+    MQO_RESULT( mqo_vf_string(
+        i ? mqo_string_fm( sp + i, sl - i ) : string
+    ) );
+MQO_END_PRIM( strip_head )
+
+MQO_BEGIN_PRIM( "strip-tail", strip_tail )
+    REQ_STRING_ARG( string );
+    NO_MORE_ARGS( );
+
+    mqo_integer sl = mqo_string_length( string );
+    const char* sp = mqo_sf_string( string );
+  
+    while( sl ){
+        if( ! isspace( sp[ sl - 1 ] ) )break;
+        sl --;
+    }
+    
+    MQO_RESULT( mqo_vf_string( mqo_string_fm( sp, sl ) ) );
+MQO_END_PRIM( strip_tail )
+
 MQO_BEGIN_PRIM( "string-ends-with?", string_ends_with )
     REQ_STRING_ARG( string );
     REQ_STRING_ARG( item );
+    NO_MORE_ARGS( );
     
     mqo_integer sl = mqo_string_length( string );
     mqo_integer il = mqo_string_length( item );
@@ -2336,6 +2392,10 @@ void mqo_bind_core_prims( ){
 
     MQO_BIND_PRIM( string_to_integer )
     MQO_BIND_PRIM( string_replace )
+    
+    MQO_BIND_PRIM( strip_head );
+    MQO_BIND_PRIM( strip_tail );
+    MQO_BIND_PRIM( strip );
 
     mqo_symbol_fs( "quark" )->value = mqo_make_quark( );
 }
