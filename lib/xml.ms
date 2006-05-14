@@ -107,13 +107,13 @@
           (cdr m))
     #f))
 
-(define xml-comment (make-regex* "^<!--(.*)-->(.*)"))
-
 (define (parse-comment str)
-  (define m (match-regex xml-comment str))
-  (if m
-    (cons (cons 'comment (car m))
-          (cdr m))
+  (if (string-begins-with? str "<!--")
+    (begin
+      (define end (string-find str "-->"))
+      (list (list 'comment (substring str 4 (- end 4)))
+            (substring str (+ end 3) 
+                       (- (string-length str) 3 end))))
     #f))
 
 (define xml-ver (make-regex* "<\\?xml(" attr-list ")" opt-space "\\?>(.*)"))

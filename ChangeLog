@@ -48,6 +48,7 @@
     >> (define xml '(html (body (p "alpha" (a (@ (href . "a")) "aleph")) (p "beta"))))
     >> (sxml-drill xml is-body? is-p? is-a?)
     :: (a (@ (href . "a")) "aleph")
+  * lib/xml's parser now handles sequential comments more reliably.
 
 - 4/18/2006, XML Parser
   * Added lib/mailto-url.ms, support for mailto URLs that was written in 
