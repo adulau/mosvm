@@ -314,7 +314,7 @@ void mqo_close( mqo_descr descr ){
 void mqo_write_event( mqo_descr descr ){
     mqo_buffer buffer = descr->write_data;
     const char* data = mqo_buffer_head( buffer );
-    mqo_word datalen = mqo_buffer_length( buffer );
+    mqo_long datalen = mqo_buffer_length( buffer );
 
     if( descr->type == MQO_SOCKET ){
         datalen = mqo_net_error( send( descr->fd, data, datalen, 0 ) );
