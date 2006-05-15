@@ -2200,24 +2200,44 @@ MQO_END_PRIM( string_alterd )
 
 MQO_BEGIN_PRIM( "string-prepend!", string_prependd )
     REQ_STRING_ARG( string )
-    REQ_STRING_ARG( data )
+    REQ_VALUE_ARG( data )
     NO_MORE_ARGS( )
     
-    mqo_string_prepend( 
-        string, mqo_sf_string( data ), mqo_string_length( data ) 
-    );
+    void* src; mqo_integer srclen;
+
+    if( mqo_is_string( data ) ){
+        mqo_string str = mqo_string_fv( data );
+        src = mqo_sf_string( str );
+        srclen = mqo_string_length( str );
+    }else if( mqo_is_integer( data ) ){
+        mqo_integer x = mqo_integer_fv( data );
+        src = &x;
+        srclen = 1;
+    }
+
+    mqo_string_prepend( string, src, srclen );
     
     MQO_NO_RESULT( );
 MQO_END_PRIM( string_prependd )
 
 MQO_BEGIN_PRIM( "string-append!", string_appendd )
     REQ_STRING_ARG( string )
-    REQ_STRING_ARG( data )
+    REQ_VALUE_ARG( data )
     NO_MORE_ARGS( )
     
-    mqo_string_append( 
-        string, mqo_sf_string( data ), mqo_string_length( data ) 
-    );
+    void* src; mqo_integer srclen;
+
+    if( mqo_is_string( data ) ){
+        mqo_string str = mqo_string_fv( data );
+        src = mqo_sf_string( str );
+        srclen = mqo_string_length( str );
+    }else if( mqo_is_integer( data ) ){
+        mqo_integer x = mqo_integer_fv( data );
+        src = &x;
+        srclen = 1;
+    }
+
+    mqo_string_append( string, src, srclen );
     
     MQO_NO_RESULT( );
 MQO_END_PRIM( string_appendd )
@@ -2240,16 +2260,26 @@ MQO_END_PRIM( string_erased )
 MQO_BEGIN_PRIM( "string-insert!", string_insertd )
     REQ_STRING_ARG( string )
     REQ_INTEGER_ARG( offset )
-    REQ_STRING_ARG( data )
+    REQ_VALUE_ARG( data )
     NO_MORE_ARGS( )
     
+    void* src; mqo_integer srclen;
+
+    if( mqo_is_string( data ) ){
+        mqo_string str = mqo_string_fv( data );
+        src = mqo_sf_string( str );
+        srclen = mqo_string_length( str );
+    }else if( mqo_is_integer( data ) ){
+        mqo_integer x = mqo_integer_fv( data );
+        src = &x;
+        srclen = 1;
+    }
+
     if( offset > mqo_string_length( string ) ){
         mqo_errf( mqo_es_args, "s", "insertion past end of string" );
     }
 
-    mqo_string_insert( 
-        string, offset, mqo_sf_string( data ), mqo_string_length( data ) 
-    );
+    mqo_string_insert( string, offset, src, srclen );
     
     MQO_NO_RESULT( );
 MQO_END_PRIM( string_insertd )
