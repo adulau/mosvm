@@ -46,9 +46,11 @@
     string-read, respectively.
   * Added string-alter!, string-prepend!, string-append!, string-erase!,
     string-insert!
-  + Added get-string-byte, get-string-word, get-string-quad
-  + Added set-string-byte!, set-string-word!, set-string-quad!
-  + Altered lib/scan to use the new string alteration capabilities.
+  * Replaced all uses of buffer-empty? to empty-string?
+  * Added copy-string
+  * Removed lib/scan, since strings with prepend can do the same, faster.
+  + Modified lib/xml to pass a single buffer around, instead of copying
+    and making buffers repeatedly.
 
 - 5/15/2006, Accelerated XML Parsing
   * All XML parser rules now use string-begins-with? to shortcut the regular

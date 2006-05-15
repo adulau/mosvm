@@ -2019,7 +2019,7 @@ MQO_BEGIN_PRIM( "flush-string", flush_string )
     MQO_NO_RESULT( );
 MQO_END_PRIM( flush_string )
 
-MQO_BEGIN_PRIM( "string-empty?", string_emptyq )
+MQO_BEGIN_PRIM( "empty-string?", empty_stringq )
     REQ_STRING_ARG( string )
     NO_MORE_ARGS( );
 
@@ -2284,6 +2284,16 @@ MQO_BEGIN_PRIM( "string-insert!", string_insertd )
     MQO_NO_RESULT( );
 MQO_END_PRIM( string_insertd )
 
+MQO_BEGIN_PRIM( "copy-string", copy_string )
+    REQ_STRING_ARG( string )
+    NO_MORE_ARGS( )
+
+    mqo_string new = mqo_string_fm( mqo_sf_string( string ),
+                                    mqo_string_length( string ) );
+
+    MQO_RESULT( mqo_vf_string( new ) );
+MQO_END_PRIM( copy_string )
+
 void mqo_bind_core_prims( ){
     // R5RS Standards
     MQO_BEGIN_PRIM_BINDS( );
@@ -2461,7 +2471,7 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( make_string );
     MQO_BIND_PRIM( flush_string );
     MQO_BIND_PRIM( stringq );
-    MQO_BIND_PRIM( string_emptyq );
+    MQO_BIND_PRIM( empty_stringq );
     MQO_BIND_PRIM( string_write );
     MQO_BIND_PRIM( string_read );
     MQO_BIND_PRIM( string_read_line );
@@ -2490,6 +2500,8 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( string_appendd );
     MQO_BIND_PRIM( string_insertd );
     MQO_BIND_PRIM( string_erased );
+    
+    MQO_BIND_PRIM( copy_string );
 
     mqo_symbol_fs( "quark" )->value = mqo_make_quark( );
 }

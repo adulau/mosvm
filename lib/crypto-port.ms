@@ -87,7 +87,7 @@
 
   (define (write-body)
     (string-write plaintext message-body)
-    (until (string-empty? plaintext) (write-block)))
+    (until (empty-string? plaintext) (write-block)))
 
   (define (write-message ignored message)
     (set! message-length (string-length message))

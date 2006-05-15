@@ -26,7 +26,6 @@
 (import "lib/iterate")
 (import "lib/port")
 (import "lib/trace")
-(import "lib/scan")
 
 ; All special XML syntaxes conveniently start with a <, or an &. Since we
 ; parse entities in a final pass, this means all interesting syntax starts
@@ -424,7 +423,7 @@
         (set! done #t)
         (scanner-drop scan ch))))
 
-  (if (string-empty? ident)
+  (if (empty-string? ident)
     #f
     (string->symbol ident)))
 
@@ -515,4 +514,20 @@
       (set! done #t)))
 
   (tc->list atoms))
+
+(define (scanner-empty? scanner) (empty-string? scanner))
+
+(define (scanner-next scanner)
+  (if (empty-string? scanner)
+    (error 'xml-inc "xml tag incomplete")
+    (string-read-byte scanner)))
+
+(define (scanner-strip scanner)
+  (string-skip-space scanner))
+
+(define (scanner->string scanner)
+  scanner)
+
+(define (scanner-drop scanner ch)
+  (string-prepend! scanner ch))
 
