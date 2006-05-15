@@ -59,9 +59,33 @@ void mqo_expand_string( mqo_string string, mqo_integer count ){
 void mqo_flush_string( mqo_string string ){
     string->pool[ string->origin = string->length = 0 ] = 0;
 }
-void mqo_string_write( mqo_string string, const void* src, mqo_integer srclen ){
+void mqo_string_write(
+    mqo_string string, const void* src, mqo_integer srclen 
+){
     memmove( string->pool + string->origin + string->length, src, srclen );
     string->length += srclen;
+    string->pool[ string->origin +  string->length ] = 0;
+}
+void mqo_string_alter( 
+    mqo_string string, mqo_integer dstofs, mqo_integer dstlen, 
+    const void* src, mqo_integer srclen
+){
+    mqo_integer newlen = string->length + srclen - dstlen;
+
+    mqo_expand_string( string, newlen );
+    
+    void* dst = string->pool + string->origin + dstofs;
+
+    void* tail = dst + dstlen;
+    mqo_integer taillen = string->length - dstlen - dstofs;
+
+    void* newtail = dst + srclen;
+    
+    if( taillen && ( tail != newtail ))memmove( dst + srclen, tail, taillen );
+    if( srclen ) memmove( dst, src, srclen );
+
+    string->length = newlen;
+    string->pool[ newlen ] = 0;
 }
 char* mqo_sf_string( mqo_string string ){
     string->pool[ string->origin + string->length ] = 0;

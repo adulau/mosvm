@@ -36,10 +36,6 @@ void mqo_expand_string( mqo_string string, mqo_integer data );
 // Ensures that the string's capacity is sufficient for data bytes to be
 // written to the string.
 
-void mqo_string_write( mqo_string string, const void* src, mqo_integer srclen );
-// Adds the supplied data to the string's tail. You should do an expansion 
-// prior to using write.
-
 void mqo_skip_string( mqo_string string, mqo_integer offset );
 // Advances the string head offset bytes, removing them from its current
 // length.
@@ -61,4 +57,27 @@ static inline mqo_boolean mqo_string_empty( mqo_string string ){
     return string->length <= 0;
 }
 
+void mqo_string_alter( 
+    mqo_string string, mqo_integer dstofs, mqo_integer dstlen,
+    const void* src, mqo_integer srclen 
+);
+// Replaces dstlen data at dstofs with srclen data from src; alters the
+// string memory pool to compensate if necessary.
+
+void mqo_string_write( mqo_string string, const void* src, mqo_integer srclen );
+static inline void mqo_string_insert( 
+    mqo_string string, mqo_integer offset, const void* src, mqo_integer srclen 
+){
+    mqo_string_alter( string, offset, 0, src, srclen );
+}
+static inline void mqo_string_append( 
+    mqo_string string, const void* src, mqo_integer srclen 
+){
+    mqo_string_insert( string, string->length, src, srclen );
+}
+static inline void mqo_string_prepend( 
+    mqo_string string, const void* src, mqo_integer srclen 
+){
+    mqo_string_insert( string, 0, src, srclen );
+}
 #endif

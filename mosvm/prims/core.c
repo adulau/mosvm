@@ -2181,6 +2181,79 @@ MQO_BEGIN_PRIM( "string-read-quad", string_read_quad )
     MQO_RESULT( mqo_vf_integer( ntohl( *data ) ) );
 MQO_END_PRIM( string_read_quad )
 
+MQO_BEGIN_PRIM( "string-alter!", string_alterd )
+    REQ_STRING_ARG( string )
+    REQ_INTEGER_ARG( offset )
+    REQ_INTEGER_ARG( length )
+    REQ_STRING_ARG( data )
+    NO_MORE_ARGS( )
+    
+    if(( offset + length ) > mqo_string_length( string ) ){
+        mqo_errf( mqo_es_args, "s", "replaced portion not within string" );
+    }
+
+    mqo_string_alter( string, offset, length, 
+                      mqo_sf_string( data ), mqo_string_length( data ) );
+    
+    MQO_NO_RESULT( );
+MQO_END_PRIM( string_alterd )
+
+MQO_BEGIN_PRIM( "string-prepend!", string_prependd )
+    REQ_STRING_ARG( string )
+    REQ_STRING_ARG( data )
+    NO_MORE_ARGS( )
+    
+    mqo_string_prepend( 
+        string, mqo_sf_string( data ), mqo_string_length( data ) 
+    );
+    
+    MQO_NO_RESULT( );
+MQO_END_PRIM( string_prependd )
+
+MQO_BEGIN_PRIM( "string-append!", string_appendd )
+    REQ_STRING_ARG( string )
+    REQ_STRING_ARG( data )
+    NO_MORE_ARGS( )
+    
+    mqo_string_append( 
+        string, mqo_sf_string( data ), mqo_string_length( data ) 
+    );
+    
+    MQO_NO_RESULT( );
+MQO_END_PRIM( string_appendd )
+
+MQO_BEGIN_PRIM( "string-erase!", string_erased )
+    REQ_STRING_ARG( string )
+    REQ_INTEGER_ARG( offset )
+    REQ_INTEGER_ARG( length )
+    NO_MORE_ARGS( )
+    
+    if(( offset + length ) > mqo_string_length( string ) ){
+        mqo_errf( mqo_es_args, "s", "erased portion not within string" );
+    }
+
+    mqo_string_alter( string, offset, length, NULL, 0 );
+    
+    MQO_NO_RESULT( );
+MQO_END_PRIM( string_erased )
+
+MQO_BEGIN_PRIM( "string-insert!", string_insertd )
+    REQ_STRING_ARG( string )
+    REQ_INTEGER_ARG( offset )
+    REQ_STRING_ARG( data )
+    NO_MORE_ARGS( )
+    
+    if( offset > mqo_string_length( string ) ){
+        mqo_errf( mqo_es_args, "s", "insertion past end of string" );
+    }
+
+    mqo_string_insert( 
+        string, offset, mqo_sf_string( data ), mqo_string_length( data ) 
+    );
+    
+    MQO_NO_RESULT( );
+MQO_END_PRIM( string_insertd )
+
 void mqo_bind_core_prims( ){
     // R5RS Standards
     MQO_BEGIN_PRIM_BINDS( );
@@ -2381,6 +2454,12 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( strip_tail );
     MQO_BIND_PRIM( strip );
     MQO_BIND_PRIM( string_skip_space );
+    
+    MQO_BIND_PRIM( string_alterd );
+    MQO_BIND_PRIM( string_prependd );
+    MQO_BIND_PRIM( string_appendd );
+    MQO_BIND_PRIM( string_insertd );
+    MQO_BIND_PRIM( string_erased );
 
     mqo_symbol_fs( "quark" )->value = mqo_make_quark( );
 }

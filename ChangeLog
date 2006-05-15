@@ -40,11 +40,13 @@
   + Fixed test-compile
 
 - ?/??/????, Buffer Merged With String
-  + Modified string to be internally identical to the buffer type.
-  + Removed the buffer type, and all functions matching *buffer*.
-  + Added string-replace!
-  + Renamed string-ref to get-string-byte, and aliased string-ref.
-  + Added get-string-word, get-string-quad
+  * Modified string to be internally identical to the buffer type.
+  * Removed the buffer type, and altered all functions matching *buffer* to 
+    *string*; note that write-buffer and read-buffer are now string-write and
+    string-read, respectively.
+  * Added string-alter!, string-prepend!, string-append!, string-erase!,
+    string-insert!
+  + Added get-string-byte, get-string-word, get-string-quad
   + Added set-string-byte!, set-string-word!, set-string-quad!
 
 - 5/15/2006, Accelerated XML Parsing
