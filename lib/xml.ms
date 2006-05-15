@@ -76,6 +76,8 @@
   (if (string-begins-with? str "<!--")
     (begin
       (define end (string-find str "-->"))
+      (unless end
+        (error 'xml-inc "Comment incomplete"))
       (list (list 'comment (substring str 4 (- end 4)))
             (substring str (+ end 3) 
                        (- (string-length str) 3 end))))
@@ -214,7 +216,7 @@
               (buf xml-context-buf set-xml-context-buf!))
 
 (define (make-sxml-parser)
-  (define context (make-xml-context #f "*TOP*" '() (make-tc)))
+  (define context (make-xml-context #f '*TOP* '() (make-tc)))
 
   (define (new-context tag attrs)
     (make-xml-context context tag attrs (make-tc)))

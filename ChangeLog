@@ -39,6 +39,11 @@
     reliance on lib/eval.
   + Fixed test-compile
 
+- ?/??/????, Buffer Prepend
+  + Added buffer-insert, buffer-prepend, and renamed buffer-write to 
+    buffer-append.
+  + Altered string-begins-with? and string-ends-with? to accept buffers.
+
 - 5/15/2006, Accelerated XML Parsing
   * All XML parser rules now use string-begins-with? to shortcut the regular
     expression parsing step.  This greatly accelerates XML parsing by reducing
