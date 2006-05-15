@@ -5,7 +5,7 @@ include $(ROOT)/Makefile.cf
 TESTS=test-core test-quasi test-parse test-assemble test-freeze test-process test-buffer test-regex test-url test-http
 # test-compile is bugged atm..
 
-all: $(MOSC) $(MOSVM) libs mosrefs $(MOSREF) share/symbols
+all: $(MOSC) $(MOSVM) libs mosrefs $(MOSREF) 
 test: $(TESTS)
 test-%: test/%.mo $(MOSVM) libs mosrefs
 	$(MOSVM) $<

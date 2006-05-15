@@ -17,57 +17,49 @@
 ;; <?xml ... ?>
 ;; <! ... >
 
-(module "lib/xml")
+;(module "lib/xml")
+
+;(export make-sxml get-sxml-items get-sxml-attrs
+;       get-sxml-attr get-sxml-item get-sxml-item* 
+;       get-sxml-tag has-sxml-tag? has-sxml-attr? sxml-drill)
+
 (import "lib/iterate")
 (import "lib/port")
 (import "lib/trace")
-
-(define (make-regex* . rest) (make-regex (apply string-append rest)))
-(define req-space "[[:space:]]+")
-(define opt-space "[[:space:]]*")
-
-(define attr-value "'[^']*'|\"[^\"]*\"")
-(define identifier "[[:alpha:]_:][[:alnum:]_:.-]*")
-
-(define all-space (make-regex "^[[:space:]]*$"))
-
-(define decl-value (string-append "(" identifier "|" attr-value ")" ))
-
-(define attr (string-append req-space 
-                            "(" identifier ")" 
-                            opt-space "=" opt-space 
-                            "(" attr-value ")"))
-
-(define attr-list  (string-append "(" attr ")*"))
-(define rest   ".*")
+(import "lib/scan")
 
 ; All special XML syntaxes conveniently start with a <, or an &. Since we
 ; parse entities in a final pass, this means all interesting syntax starts
 ; with a <..
 
-(define xml-tag     (make-regex* "([^<]*)(<.*)"))
+(define (parse-data data)
+  ;;; (write "Parsing DATA: ")
+  ;;; (write (string-head data 16))
+  ;;; (newline)
 
-(define (parse-tag str)
-  (define m (match-regex xml-tag str))
+  (define tag-ix (string-find data "<" ))
+  (if tag-ix 
+    (parse-tag (string-head data tag-ix)
+               (string-tail data tag-ix))
+    (list data #f "")))
+
+(define (parse-tag pre tag)
   (guard (lambda (err)
            (unless (eq? (error-key err) 'xml-inc)
              (re-error err))
            (define info (error-info err))
-           (error 'xml-inc (car info) (string-append (car m)
-                                                     (cadr info))))
-     (if m
-       (cons (car m) 
-             (let ((r (cadr m)))
-               (or (parse-cdata r)
-                   (parse-begin r)
-                   (parse-end r)
-                   (parse-comment r)
-                   (parse-decl r)
-                   (parse-ver r)
-                   (error 'xml-inc "< unmatched or garbage" r))))
-       (list str #f ""))))
+           (error 'xml-inc (car info) (string-append pre (cadr info))))
+    (cons pre
+          (or (parse-cdata tag)
+              (parse-comment tag)
+              (parse-decl tag)
+              (parse-pi tag)
+              (parse-end tag)
+              (parse-begin tag)
+              (error 'xml-inc "< unmatched or garbage" tag)))))
 
 (define (parse-cdata str) 
+  (step "CDATA" str)
   (if (string-begins-with? str "<![CDATA[")
     (begin 
       (define cdata-len (string-find str "]]>"))
@@ -79,34 +71,8 @@
                        (- (string-length str) 12 cdata-len))))
     #f))
 
-(define xml-begin   (make-regex* "^<(" 
-                                 identifier 
-                                 ")("
-                                 attr-list 
-                                 ")"
-                                 opt-space
-                                 "(/)?"
-                                 opt-space
-                                 ">(.*)"))
-(define (parse-begin str)
-  (define m (match-regex xml-begin str))
-  (if m
-    (list (cons (if (list-ref m 5) 'tag 'begin)
-                (cons (car m)
-                      (parse-attrs (or (cadr m) ""))))
-          (list-ref m 6))
-    #f))
-
-(define xml-end     (make-regex* "^</(" identifier ")>(.*)")) 
-
-(define (parse-end str)
-  (define m (match-regex xml-end str))
-  (if m
-    (cons (list 'end (car m))
-          (cdr m))
-    #f))
-
 (define (parse-comment str)
+  (step "COMMENT" str)
   (if (string-begins-with? str "<!--")
     (begin
       (define end (string-find str "-->"))
@@ -115,26 +81,99 @@
                        (- (string-length str) 3 end))))
     #f))
 
-(define xml-ver (make-regex* "<\\?xml(" attr-list ")" opt-space "\\?>(.*)"))
+(define-macro (step . rest) '(begin))
 
-(define xml-attr (make-regex* opt-space "(" identifier ")"
-                              opt-space "=" opt-space
-                              "(" attr-value ")"))
+;;; (define (step tag str)
+;;;   (write "    Trying ")
+;;;   (write tag)
+;;;   (write ": ")
+;;;   (write (string-head str 16))
+;;;   (newline))
 
-(define (parse-attrs str)
-  (map (lambda (p)
-         (define key (car p))
-         (define val (cadr p))
-         (cons key (substring val 1 (- (string-length val) 2))))
-       (or (match-regex* xml-attr str) '())))
+(define (parse-question scan)
+  (define ch (scanner-next scan))
+  (unless (= ch *qm-char*)
+    (error 'xml "expected '?' to complete tag" ch)))
 
-(define (parse-ver str)
-  (define m (match-regex xml-ver str))
-  (if m
-    (list (cons 'ver (parse-attrs (car m)))
-          (list-ref m 4))
+(define (parse-completion scan)
+  (define ch (scanner-next scan))
+  (unless (= ch *gt-char*)
+    (error 'xml "expected '>' to complete tag" ch)))
+
+(define (parse-decl str)
+  ; This does not correctly handle nested attributes.  Thank you, W3C, for
+  ; introducing seventeen different syntaxes in your simple document format.
+  (step "DECL" str)
+  
+  (if (string-begins-with? str "<!")
+    (begin
+      (define scan (make-scanner (string-tail str 2)))
+      (define tag  (parse-ident scan))
+      (scanner-strip scan)
+      (define atoms (parse-atoms scan))
+      (scanner-strip scan)
+      (parse-completion scan)
+      (list (cons 'decl (cons tag atoms))
+            (scanner->string scan)))
     #f))
 
+(define (parse-pi str)
+  (step "PI" str)
+
+  (if (string-begins-with? str "<?")
+    (begin
+      (define scan (make-scanner (string-tail str 2)))
+      (define tag  (parse-ident scan))
+      (scanner-strip scan)
+      (define attrs (parse-attrs scan))
+      (scanner-strip scan)
+      (parse-question scan)
+      (parse-completion scan)
+      (list (cons 'pi (cons tag attrs))
+            (scanner->string scan)))
+    #f))
+
+(define (parse-end str)
+  (step "END" str)
+
+  (if (string-begins-with? str "</")
+    (begin
+      (define scan (make-scanner (string-tail str 2)))
+      (define tag  (parse-ident scan))
+      (scanner-strip scan)
+      (parse-completion scan)
+      (list (list 'end tag)
+            (scanner->string scan)))
+    #f))
+
+(define (parse-begin str)
+  (step "BEGIN" str)
+  
+  (define scan (make-scanner str))
+  (scanner-next scan) ;; Drop that <..
+
+  (define tag  (parse-ident scan))
+
+  (scanner-strip scan)
+  (define attrs (parse-attrs scan))
+  
+  (scanner-strip scan)
+  (define stroke (parse-stroke scan))
+
+  (parse-completion scan)
+
+  (list (cons (if stroke 'tag 'begin)
+              (cons tag attrs))
+        (scanner->string scan)))
+
+(define (parse-stroke scan)
+  (define ch (scanner-next scan))
+  (if (= ch *stroke-char*)
+    #t
+    (begin
+      (scanner-drop scan ch)
+      #f)))
+    
 (define (expat event-fn data)
 ;;; Anatomy of a BEGIN event: <a href='123'>
 ;;; '(begin tag-name . tag-attrs)
@@ -147,7 +186,7 @@
 ;;; Anatomy of a DECL event: <!DOCTYPE who-really-cares>
 ;;; '(decl . decl-frags)
   (until (string=? data "")
-    (define r (parse-tag data))
+    (define r (parse-data data))
     (define head (car r))
     (define item (cadr r))
     (define tail (cadr (cdr r)))
@@ -159,17 +198,6 @@
                         (event-fn (list 'cdata item))))
       ((pair? item) (set! report (event-fn item))))))
 
-
-(define xml-decl (make-regex* "^<!" identifier 
-                              "((" req-space decl-value ")*)"
-                              opt-space ">(.*)"))
-
-(define (parse-decl str)
-  (define m (match-regex xml-decl str))
-  (if m
-    (list (list 'decl (car m))
-          (list-ref m 3))
-    #f))
 
 (define-class xml-context <object>
               (make-xml-context loc tag attrs inv buf)
@@ -187,14 +215,10 @@
     (make-xml-context context tag attrs (make-tc)))
 
   (define (new-sxml tag inv attrs)
-    (define sxml inv)
     (unless (null? attrs)
-      (set! inv (cons (cons '@ (map (lambda (attr)
-                                      (cons (string->symbol (car attr))
-                                            (cdr attr)))
-                                      attrs) )
+      (set! inv (cons (cons '@ attrs)
                       inv)))
-    (cons (string->symbol tag) inv))
+    (cons tag inv))
 
   (define (context->sxml)
     (define sxml (new-sxml (xml-context-tag context)
@@ -234,7 +258,7 @@
 
   (define (on-end-event tag)
     (flush-buf)
-    (unless (string=? tag (xml-context-tag context))
+    (unless (eq? tag (xml-context-tag context))
       (error 'xml-conform "Unmatched close tag." tag (xml-context-tag context)))
     (add-sxml (context->sxml)))
   
@@ -323,9 +347,6 @@
     (list-ref (get-sxml-items sxml) index)
     (filter (lambda (item) (eq? (car item) index)) (get-sxml-items sxml))))
 
-(export make-sxml get-sxml-items get-sxml-attrs
-        get-sxml-attr get-sxml-item get-sxml-item*)
-
 (define (get-sxml-tag sxml)
   (if (pair? sxml)
     (car sxml)
@@ -358,8 +379,134 @@
 
   items)
 
-(export get-sxml-tag has-sxml-tag? has-sxml-attr? sxml-drill)
-
 ;;; (define (sxml->string sxml) ...)
 ;;; (define (write-sxml sxml port) ...)
+
+(define *qm-char* 63)
+(define *ident-chars* (dict))
+(define *lt-char* 60)
+(define *gt-char* 62)
+(define *apos-char* 39)
+(define *quot-char* 34)
+(define *stroke-char* 47)
+(define *equal-char* 61)
+
+(define (add-ident-char st) (dict-set! *ident-chars* (string-ref st 0) #t))
+(define (add-ident-range a b)
+  (set! a (string-ref a 0))
+  (set! b (string-ref b 0))
+  (while (<= a b)
+    (dict-set! *ident-chars* a #t)
+    (set! a (+ a 1))))
+
+(add-ident-char "-")
+(add-ident-char "_")
+(add-ident-range "a" "z")
+(add-ident-range "A" "Z")
+(add-ident-range "0" "9")
+
+(define (parse-ident scan)
+  (define ident (make-buffer))
+  (define done #f)
+
+  (until done
+    (define ch (scanner-next scan))
+    (if (dict-ref *ident-chars* ch)
+      (write-buffer-byte ident ch)
+      (begin 
+        (set! done #t)
+        (scanner-drop scan ch))))
+
+  (if (buffer-empty? ident)
+    #f
+    (string->symbol (buffer->string ident))))
+
+(define (parse-idents scan)
+  (define idents (make-tc))
+  (define done #f)
+  (until done
+    (scanner-strip scan)
+    (define ident (parse-ident scan))
+    (if ident
+      (tc-append! idents ident)
+      (set! done #t)))
+  (tc->list idents))
+
+(define (parse-value scan)
+  (define quot (scanner-next scan))
+
+  (if (or (= quot *apos-char*)
+          (= quot *quot-char*))
+    (begin
+      (define done #f)
+      (define value (make-buffer))
+      (until done
+         (define ch (scanner-next scan))
+         (if (= ch quot)
+           (set! done #t)
+           (write-buffer-byte value ch)))
+      (buffer->string value))
+    (begin
+      (scanner-drop scan quot)
+      #f)))
+
+(define (parse-values scan)
+  (define values (make-tc))
+  (define done #f)
+  (until done
+    (scanner-strip scan)
+    (define value (parse-value scan))
+    (if value
+      (tc-append! values value)
+      (set! done #t)))
+  (tc->list values))
+
+(define (parse-attr scan)
+  (define key (parse-ident scan))
+  (if key 
+    (begin
+      (scanner-strip scan)
+
+      (define ch (scanner-next scan))
+      (unless (= *equal-char* ch)
+        (error 'xml "expected = in attribute, got" ch))
+
+      (scanner-strip scan)
+      (define value (parse-value scan))
+      (unless value 
+        (error 'xml "expected quoted value after = in attribute"))
+      (cons key value))
+    #f))
+
+(define (parse-attrs scan)
+  (define attrs (make-tc))
+  (define done #f)
+
+  (until done
+    (scanner-strip scan)
+    (define attr (parse-attr scan))
+    (if attr
+      (tc-append! attrs attr)
+      (set! done #t)))
+
+  (tc->list attrs))
+
+(define (parse-atom scan)
+  ; Would it have killed <!...> to use one or the other?
+  (or (parse-value scan)
+      (parse-ident scan)))
+
+(define (parse-atoms scan)
+  (define atoms (make-tc))
+  (define done #f)
+
+  (until done
+    (scanner-strip scan)
+    (define atom (parse-atom scan))
+    (if atom
+      (tc-append! atoms atom)
+      (set! done #t)))
+
+  (tc->list atoms))
+
 

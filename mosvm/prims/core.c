@@ -613,9 +613,7 @@ MQO_BEGIN_PRIM( "string-head", string_head )
     
     if( length < 0 ) mqo_errf( mqo_es_args, "s", 
                                "length must not be negative" );
-    if( length > datalen ) mqo_errf( mqo_es_args, "s", 
-                                    "length must be not exceed the string"
-                                    " length" );
+    if( length > datalen ) length = datalen;
     MQO_RESULT( mqo_vf_string( mqo_string_fm( data, length ) ) );
 MQO_END_PRIM( string_head )
 
@@ -630,9 +628,7 @@ MQO_BEGIN_PRIM( "string-tail", string_tail )
 
     if( index < 0 ) mqo_errf( mqo_es_args, "s", 
                                "index must not be negative" );
-    if( index > datalen ) mqo_errf( mqo_es_args, "s", 
-                                    "index must be not exceed the string"
-                                    " length" );
+    if( length > datalen ) length = datalen;
     MQO_RESULT( mqo_vf_string( mqo_string_fm( data + index, length ) ) );
 MQO_END_PRIM( string_tail )
 
@@ -2053,6 +2049,22 @@ MQO_BEGIN_PRIM( "write-buffer", write_buffer )
     MQO_NO_RESULT( );
 MQO_END_PRIM( write_buffer )
 
+MQO_BEGIN_PRIM( "buffer-skip-space", buffer_skip_space )
+    REQ_BUFFER_ARG( buffer );
+    NO_MORE_ARGS( );
+    
+    mqo_long ix, len = mqo_buffer_length( buffer );
+    const char* str = mqo_buffer_head( buffer );
+   
+    for( ix = 0; ix < len; ix ++ ){
+        if( ! isspace( str[ix] ) )break;
+    }
+    
+    if( ix )mqo_skip_buffer( buffer, ix );
+    
+    MQO_NO_RESULT( );
+MQO_END_PRIM( buffer_skip_space );
+
 MQO_BEGIN_PRIM( "buffer-skip", buffer_skip )
     REQ_BUFFER_ARG( buffer );
     REQ_INTEGER_ARG( offset );
@@ -2396,6 +2408,7 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( strip_head );
     MQO_BIND_PRIM( strip_tail );
     MQO_BIND_PRIM( strip );
+    MQO_BIND_PRIM( buffer_skip_space );
 
     mqo_symbol_fs( "quark" )->value = mqo_make_quark( );
 }

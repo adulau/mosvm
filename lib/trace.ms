@@ -17,6 +17,18 @@
 (import "lib/format")
 (import "lib/port")
 
+(define (crop item)
+  (define str (value->string item))
+  (if (> (string-length str) 32)
+    (string-append (string-head str 32)
+                   "..."
+                   (cond ((string-begins-with? str "(") ")")
+                         ((string-begins-with? str "\"") "\"")
+                         ((string-begins-with? str "<") ">")
+                         ((string-begins-with? str "[") "]")
+                         (else "")))
+    str))
+
 (define (traceback error) 
   (begin;buffer-output 
     (write "ERROR: ")
@@ -33,7 +45,7 @@
       (write "INFO: ")
       (for-each (lambda (item)
                   (write " ")
-                  (show item))
+                  (write (crop item)))
                 info)
       (newline))
     (write "TRACE: ")
@@ -45,7 +57,7 @@
                 (show (function-name (car frame)))
                 (for-each (lambda (arg)
                             (write " ")
-                            (show arg))
+                            (write (crop arg)))
                           (cdr frame))
                 (write ")")
                 (newline))
@@ -62,4 +74,7 @@
               (disable-trace)
               %x)))
 
-(export traceback trace)
+(define-macro (trap . stmts)
+    `(guard (lambda (err) err) ,@stmts))
+
+(export traceback trace trap)
