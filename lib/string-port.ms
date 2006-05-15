@@ -20,19 +20,19 @@
 
 ;;; SRFI-6 String Port Emulation
 (define-class string-port <port>
-              (make-string-port read-fn write-fn close-fn buffer)
+              (make-string-port read-fn write-fn close-fn string)
               string-port?
-              (buffer string-port-buffer))
+              (string string-port-string))
 
 (define (open-output-string)
-  (define buf (make-buffer 256))
+  (define buf (make-string 256))
   (make-string-port (lambda (p q) (or (string-read buf (or q 256)) *eof*))
                     (lambda (p d) (string-write buf d))
                     #f
                     buf))
 
 (define (open-input-string data)
-  (define buf (make-buffer (string-length data)))
+  (define buf (make-string (string-length data)))
   (string-write buf data)
   (make-string-port (lambda (p q) (or (string-read buf (or q 256)) *eof*))
                     (lambda (p d) (string-write buf d))
@@ -46,31 +46,31 @@
   (and (string-port? value) (port-write-fn value)))
 
 (define (write-byte byte (<string-port> port))
-  (string-write-byte (string-port-buffer port) byte))
+  (string-write-byte (string-port-string port) byte))
 
 (define (write-word word (<string-port> port))
-  (string-write-word (string-port-buffer port) word))
+  (string-write-word (string-port-string port) word))
 
 (define (write-quad quad (<string-port> port))
-  (string-write-quad (string-port-buffer port) quad))
+  (string-write-quad (string-port-string port) quad))
 
 (define (read-byte (<string-port> port))
-  (string-read-byte (string-port-buffer port)))
+  (string-read-byte (string-port-string port)))
 
 (define (read-word (<string-port> port))
-  (or (string-read-word (string-port-buffer port))
+  (or (string-read-word (string-port-string port))
       *eof*))
 
 (define (read-quad (<string-port> port))
-  (or (string-read-quad (string-port-buffer port))
+  (or (string-read-quad (string-port-string port))
       *eof*))
 
 (define (read-line (<string-port> port))
-  (or (string-read-line (string-port-buffer port))
+  (or (string-read-line (string-port-string port))
       *eof*))
 
 (define (get-output-string (<string-port> port))
-  (buffer->string (string-port-buffer port)))
+  (string-port-string port))
 
 (export <string-port> open-input-string open-output-string string-port?
         read-byte read-word read-quad write-byte write-word write-quad

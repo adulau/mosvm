@@ -56,7 +56,7 @@
   (fuse-ports console-port drone-port))
 
 (define (drone-repl port)
-  (define result (make-buffer))
+  (define result (make-string))
   (define (format-context context)
     (string-append "("
                    (apply string-join 

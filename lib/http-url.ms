@@ -78,7 +78,7 @@
 (define (url-scheme (<http-url> url)) "http")
 
 (define (url-auth (<http-url> url))
-  (define buf (make-buffer))
+  (define buf (make-string))
   (define user (http-url-user url))
   (define host (http-url-host url))
   (define portno (http-url-portno url))
@@ -94,7 +94,7 @@
       (string-write buf ":")
       (string-write buf (number->string portno))))
 
-  (if host (buffer->string buf) #f))
+  (if host buf #f))
 
 (define (url-path (<http-url> url))
   (define path (http-url-path url))

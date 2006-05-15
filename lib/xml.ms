@@ -240,16 +240,16 @@
   (define (add-text text)
     (define buf (xml-context-buf context))
     (unless buf
-      (set! buf (make-buffer))
+      (set! buf (make-string))
       (set-xml-context-buf! context buf))
     (string-write buf text))
 
   (define (flush-buf)
     (define buf (xml-context-buf context))
     (when buf
-      (define text (strip (buffer->string buf)))
+      (define text (strip buf))
       (unless (string=? text "")
-        (add-sxml (buffer->string buf)))
+        (add-sxml buf))
       (set-xml-context-buf! context #f)))
 
   (define (on-tag-event tag attrs)
@@ -413,7 +413,7 @@
 (add-ident-range "0" "9")
 
 (define (parse-ident scan)
-  (define ident (make-buffer))
+  (define ident (make-string))
   (define done #f)
 
   (until done
@@ -424,9 +424,9 @@
         (set! done #t)
         (scanner-drop scan ch))))
 
-  (if (buffer-empty? ident)
+  (if (string-empty? ident)
     #f
-    (string->symbol (buffer->string ident))))
+    (string->symbol ident)))
 
 (define (parse-idents scan)
   (define idents (make-tc))
@@ -446,13 +446,13 @@
           (= quot *quot-char*))
     (begin
       (define done #f)
-      (define value (make-buffer))
+      (define value (make-string))
       (until done
          (define ch (scanner-next scan))
          (if (= ch quot)
            (set! done #t)
            (string-write-byte value ch)))
-      (buffer->string value))
+      value)
     (begin
       (scanner-drop scan quot)
       #f)))

@@ -111,7 +111,8 @@ void mqo_writehex( mqo_long number ){
     write( STDOUT_FILENO, buf + i, 255 - i ); 
 };
 void mqo_writestr( mqo_string s ){
-    if( s )mqo_write( mqo_sf_string( s ) );
+    if( s )mqo_writemem( mqo_sf_string( s ),
+                         mqo_string_length( s ) );
 }
 void mqo_writesym( mqo_symbol s ){
     if( s )mqo_writestr( s->string );

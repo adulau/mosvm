@@ -30,7 +30,7 @@
     str))
 
 (define (traceback error) 
-  (begin;buffer-output 
+  (begin;string-output 
     (write "ERROR: ")
     (write (symbol->string (error-key error)))
     (define info (error-info error))

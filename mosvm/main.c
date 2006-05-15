@@ -103,7 +103,7 @@ int main( int argc, const char *argv[] ){
     strcat( buf, ".exe" );
     argv[0] = buf;
 #endif
-
+    
     ps = mqo_thaw_tail( argv[0] );
     p = NULL;
 

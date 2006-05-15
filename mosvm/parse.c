@@ -79,9 +79,9 @@ mqo_string mqo_parse_string( const char** pt ){
     }
    
     mqo_integer ln = ct;
-    mqo_string str = mqo_make_string( ct );
+    mqo_string str = mqo_make_string( ln );
+    char* ptr = mqo_sf_string( str ); char* so = ptr; ct = 0;
 
-    char* ptr = mqo_sf_string( str ); ct = 0;
     for(;;){
         ch = og[ct++];
         if( ch == '\\' ){
@@ -95,8 +95,8 @@ mqo_string mqo_parse_string( const char** pt ){
         }
         *(ptr++) = ch;
     }
-    *ptr = 0;
-    str->length = ln;
+
+    str->length = ptr - so;
     return str;
 }
 mqo_symbol mqo_parse_symbol( const char** pt ){

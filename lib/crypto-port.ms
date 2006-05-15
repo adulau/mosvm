@@ -26,7 +26,7 @@
 
 (define (decrypt-input port key decrypt)
   (define block-size (key-block-size key))
-  (define plaintext (make-buffer))
+  (define plaintext (make-string))
   (define body-length #f)
   (define message-body #f)
 
@@ -37,7 +37,7 @@
       (string-write plaintext (decrypt key data))))
 
   (define (flush-plaintext)
-    (flush-buffer plaintext))
+    (flush-string plaintext))
  
   ;;;TODO: Needs to eof on eof.
   (define (read-header)
@@ -47,10 +47,10 @@
 
   ;;;TODO: Needs to throw an exception on eof.
   (define (read-body)
-    (until (>= (buffer-length plaintext) body-length)
+    (until (>= (string-length plaintext) body-length)
       (read-block))
     (set! message-body (string-read plaintext body-length))
-    (flush-buffer plaintext))
+    (flush-string plaintext))
 
   ;;;TODO: Needs checksums.
   (define (check-body) #t)
@@ -72,8 +72,8 @@
 
 (define (encrypt-output port key encrypt)
   (define block-size (key-block-size key))
-  (define plaintext (make-buffer))
-  (define ciphertext (make-buffer))
+  (define plaintext (make-string))
+  (define ciphertext (make-string))
 
   (define message-body #f)
   (define message-length #f)
@@ -87,7 +87,7 @@
 
   (define (write-body)
     (string-write plaintext message-body)
-    (until (buffer-empty? plaintext) (write-block)))
+    (until (string-empty? plaintext) (write-block)))
 
   (define (write-message ignored message)
     (set! message-length (string-length message))

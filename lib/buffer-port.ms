@@ -14,18 +14,18 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA  
 ;  
 
-(module "lib/buffer-port")
+(module "lib/string-port")
 (import "lib/object")
 (import "lib/port")
 
-(define (open-buffer-port)
-  (define buf (make-buffer))
+(define (open-string-port)
+  (define buf (make-string))
   (define ps  #f)
   (make-port (lambda (p q)
                (cond
-                 (ps (error 'buffer
+                 (ps (error 'string
                             "A process is already waiting on this port"))
-                 ((and q (< (buffer-length buf) q))
+                 ((and q (< (string-length buf) q))
                   (set! ps (active-process))
                   (suspend)))
                (if q
@@ -39,5 +39,5 @@
              #f
              #f))
 
-(export open-buffer-port)
+(export open-string-port)
 

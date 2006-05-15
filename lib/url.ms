@@ -60,7 +60,7 @@
    (apply adapt-results-to-parser parser result))
 
 (define (url->string url)
-   (define buf (make-buffer))
+   (define buf (make-string))
    (define scheme (url-scheme url))
    (define auth (url-auth url))
    (define path (url-path url))
@@ -86,6 +86,6 @@
      (string-write buf "#")
      (string-write buf frag))
    
-   (buffer->string buf))
+   buf)
 
 (export string->url url->string)

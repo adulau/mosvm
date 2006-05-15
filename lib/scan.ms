@@ -16,13 +16,13 @@
 (module "lib/scan")
 
 (define (make-scanner str)
-  (define buf (make-buffer))
+  (define buf (make-string))
   (string-write buf str)
   (cons #f buf))
 
 (define (scanner-empty? scanner)
   (and (not (car scanner)) 
-       (buffer-empty? (cdr scanner))))
+       (string-empty? (cdr scanner))))
 
 (define (scanner-next scanner)
   (define pre (car scanner))
@@ -31,7 +31,7 @@
     (begin 
       (set-car! scanner #f)
       pre)
-    (if (buffer-empty? buf)
+    (if (string-empty? buf)
       (error 'xml-inc "xml tag incomplete")
       (string-read-byte buf))))
 
@@ -41,12 +41,12 @@
   (if pre
     (when (memq pre '(32 10 13 9 11))
       (set-car! scanner #f)
-      (buffer-skip-space buf))
-    (buffer-skip-space buf)))
+      (string-skip-space buf))
+    (string-skip-space buf)))
 
 (define (scanner->string scanner)
   (define pre (car scanner))
-  (define str (buffer->string (cdr scanner)))
+  (define str (cdr scanner))
   (if pre (string-append pre str)
           str))
 

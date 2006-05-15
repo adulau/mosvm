@@ -20,7 +20,7 @@
   (define exports (code-exports module))
 
   (define (wikify-list data)
-    (define output (make-buffer))
+    (define output (make-string))
 
     (define (wikify-list-item item)
       (string-write output "* {")
@@ -29,7 +29,7 @@
       (string-write output *line-sep*))
      
     (for-each wikify-list-item data)
-    (buffer->string output))
+    output)
 
   (define (sort-list data)
     (set->list (apply set data)))

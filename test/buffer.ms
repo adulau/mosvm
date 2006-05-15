@@ -19,11 +19,11 @@
 
 (enable-spot-tests)
 
-(s: (make-buffer 1024))
-(t: (buffer? _))
-(t: (eq? (buffer-length _) 0))
+(s: (make-string 1024))
+(t: (string? _))
+(t: (eq? (string-length _) 0))
 
-(define b (make-buffer 1024))
+(define b (make-string 1024))
 
 (s: (string-read b))
 (r: #f)
@@ -76,20 +76,14 @@
 (s: (string-write b "hello"))
 (r: #f)
 
-(s: (buffer->string b))
+(s: b)
 (r: "hello")
 
-(s: (buffer->string b))
-(r: "hello")
-
-(define b (make-buffer 1))
+(define b (make-string 1))
 
 (s: (string-write b "hello"))
 (r: #f)
 
-(s: (buffer->string b))
-(r: "hello")
-
-(s: (buffer->string b))
+(s: b)
 (r: "hello")
 

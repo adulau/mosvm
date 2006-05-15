@@ -159,18 +159,18 @@
                         (define %result (begin ,@rest))
                         (set-process-output! %old-output)
                         %result))))
-(set-macro! 'buffer-output
+(set-macro! 'string-output
             (lambda rest
               `(let ((%old-output (current-output-port))
-                     (%buffer (open-output-string)))
-                 (set-process-output! %buffer)
+                     (%string (open-output-string)))
+                 (set-process-output! %string)
                  (guard (lambda (%e)
                           (set-process-output! %old-output)
-                          (write (get-output-string %buffer))
+                          (write (get-output-string %string))
                           (re-error %e))
                         (define %result (begin ,@rest))
                         (set-process-output! %old-output)
-                        (write (get-output-string %buffer))))))
+                        (write (get-output-string %string))))))
 (set-macro! 's:
             (lambda (stmt . rest)
               `(if *spot-test?*

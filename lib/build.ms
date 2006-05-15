@@ -73,22 +73,22 @@
   (until (tc-empty? dependencies)
     (build-module (tc-next! dependencies))))
 
-(define (glue buffer data)
-  (string-write buffer data)
-  (string-write-word buffer (string-length data))
-  (string-write buffer "mvf2")
-  buffer)
+(define (glue string data)
+  (string-write string data)
+  (string-write-word string (string-length data))
+  (string-write string "mvf2")
+  string)
 
 (define (build-exe platform main)
-  (define buffer (make-buffer))
-  (string-write buffer (read-platform-stub platform))
+  (define string (make-string))
+  (string-write string (read-platform-stub platform))
 
-  (for-each glue (circle buffer) 
+  (for-each glue (circle string) 
             (map build-module (code-dependencies main)))
 
   (if (pair? main)
-    (glue buffer (freeze (assemble (optimize (compile main)))))
-    (glue buffer (build-module main)))
+    (glue string (freeze (assemble (optimize (compile main)))))
+    (glue string (build-module main)))
 
-  (buffer->string buffer))
+  string)
 

@@ -18,7 +18,8 @@
 
 mqo_string mqo_make_string( mqo_integer capacity ){
     mqo_string string = MQO_ALLOC( mqo_string, 0 );
-    string->pool = GC_malloc_atomic( capacity + 1 );
+    // string->pool = GC_malloc_atomic( capacity + 1 );
+    string->pool = GC_malloc( capacity + 1 );
     string->capacity = capacity;
     string->length = string->origin = 0;
     return string;
@@ -63,6 +64,7 @@ void mqo_string_write( mqo_string string, const void* src, mqo_integer srclen ){
     string->length += srclen;
 }
 char* mqo_sf_string( mqo_string string ){
+    string->pool[ string->origin + string->length ] = 0;
     return string->pool + string->origin;
 }
 

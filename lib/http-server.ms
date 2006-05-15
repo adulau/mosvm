@@ -96,7 +96,7 @@
 (define (write-http-response port code reason headers body)
   (if (http-request? port)
     (set! port (http-request-port port)))
-  (define buf (make-buffer))
+  (define buf (make-string))
   (string-write buf "HTTP/1.1 ")
   (string-write buf (number->string code))
   (string-write buf " ")
@@ -107,7 +107,7 @@
             headers)
   (string-write buf *crlf*)
   (string-write buf body)
-  (write (buffer->string buf) port))
+  (write buf port))
 
 (define (spawn-http-server portno http-responder)
   (define (serve-http-session)
