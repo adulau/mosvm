@@ -244,7 +244,7 @@ mqo_value mqo_read_line( int fd ){
         mqo_string str = mqo_make_string( strlen );
     
         mqo_os_error( lseek( fd, fileofs, SEEK_SET ) );
-        str->length = mqo_os_error( read( fd, str->data, strlen ) );
+        str->length = mqo_os_error( read( fd, mqo_sf_string( str ), strlen ) );
     
         if( seplen )mqo_os_error( lseek( fd, seplen, SEEK_CUR ) );
 
@@ -294,10 +294,12 @@ MQO_BEGIN_PRIM( "read-descr-all", read_descr_all )
             MQO_RESULT( mqo_vf_false( ) );
         };
         mqo_string data = mqo_make_string( len );
-        len = mqo_os_error( read( descr->fd, data->data, len ) );
+        char* d = mqo_sf_string( data );
+        len = mqo_os_error( read( descr->fd, d, len ) );
     
-        data->data[len] = 0;
+        d[len] = 0;
         data->length = len;
+
         MQO_RESULT( mqo_vf_string( data ) );
     }else if( descr->type == MQO_SOCKET ){
         mqo_async_read( descr, mqo_read_all_mt );

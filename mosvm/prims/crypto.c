@@ -223,7 +223,8 @@ MQO_BEGIN_PRIM( "random-string", random_string )
 
     mqo_string entropy = mqo_make_string( amount );
 
-    mqo_read_random( random, entropy->data, amount );
+    mqo_read_random( random, mqo_sf_string( entropy ), amount );
+    entropy->length = amount;
 
     MQO_RESULT( mqo_vf_string( entropy ) );
 MQO_END_PRIM( random_string )
@@ -396,13 +397,19 @@ MQO_BEGIN_PRIM( "xor-string", xor_string )
     mqo_string dst = mqo_make_string( masklen );
     mqo_integer i;
 
+    char* ds = mqo_sf_string( dst );
+    char* ss = mqo_sf_string( string );
+    char* ms = mqo_sf_string( mask );
+
     for( i = 0; i < strlen; i ++ ){
-        dst->data[ i ] = string->data[ i ] ^ mask->data[ i ];    
+        ds[ i ] = ss[ i ] ^ ms[ i ];    
     }
     for( ; i < masklen; i ++ ){
-        dst->data[ i ] = mask->data[ i ];
+        ds[ i ] = ms[ i ];
     }
+    dst->length = masklen;
 
+    //TODO: An xor-string!.
     MQO_RESULT( mqo_vf_string( dst ) );
 MQO_END_PRIM( xor_string )
 
@@ -414,7 +421,7 @@ MQO_BEGIN_PRIM( "base64-encode", base64_encode )
     unsigned long cslen = ( pslen << 2 ) / 3 + 5; 
     mqo_string ciphertext = mqo_make_string( cslen );
     mqo_crypto_err( base64_encode( mqo_sf_string( plaintext ), pslen,
-                                   ciphertext->data, &cslen ) );
+                                   mqo_sf_string( ciphertext ), &cslen ) );
     ciphertext->length = cslen; 
 
     MQO_RESULT( mqo_vf_string( ciphertext ) );
@@ -428,7 +435,7 @@ MQO_BEGIN_PRIM( "base64-decode", base64_decode )
     unsigned long pslen = ( cslen * 3 ) >> 2; 
     mqo_string plaintext = mqo_make_string( pslen );
     mqo_crypto_err( base64_decode( mqo_sf_string( ciphertext ), cslen,
-                                   plaintext->data, &pslen ) );
+                                   mqo_sf_string( plaintext ), &pslen ) );
     plaintext->length = pslen; 
 
     MQO_RESULT( mqo_vf_string( plaintext ) );

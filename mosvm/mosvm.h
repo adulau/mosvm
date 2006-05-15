@@ -18,7 +18,6 @@
 #define MQO_MOSVM_H 1
 
 #include "mosvm/memory.h"
-#include "mosvm/buffer.h"
 #include "mosvm/exec.h"
 #include "mosvm/parse.h"
 #include "mosvm/show.h"

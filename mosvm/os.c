@@ -103,7 +103,7 @@ int mqo_is_reading( mqo_descr descr ){
 int mqo_is_writing( mqo_descr descr ){
     return ( mqo_in_dispatch( descr )
              &&( descr->write_data )
-             &&( ! mqo_buffer_empty( descr->write_data ) ) );
+             &&( ! mqo_string_empty( descr->write_data ) ) );
 }
 int mqo_is_listening( mqo_descr descr ){
     return ( mqo_in_dispatch( descr )
@@ -136,8 +136,8 @@ mqo_value mqo_start_reading( mqo_descr descr, mqo_process monitor,
 
     if( ( descr->type == MQO_LISTENER ) ){
     }else if( descr->read_data == NULL ){
-        descr->read_data = mqo_make_buffer( BUFSIZ );
-    }else if( ! mqo_buffer_empty( descr->read_data ) ){
+        descr->read_data = mqo_make_string( BUFSIZ );
+    }else if( ! mqo_string_empty( descr->read_data ) ){
         r = read_mt( descr );
     }
 
@@ -160,11 +160,11 @@ void mqo_start_writing( mqo_descr descr, const char* data,
     assert( descr->type != MQO_LISTENER );
     
     if( descr->write_data == NULL ){
-        descr->write_data = mqo_make_buffer( BUFSIZ );
+        descr->write_data = mqo_make_string( BUFSIZ );
     }
 
-    mqo_expand_buffer( descr->write_data, datalen );
-    mqo_write_buffer( descr->write_data, data, datalen );
+    mqo_expand_string( descr->write_data, datalen );
+    mqo_string_write( descr->write_data, data, datalen );
 
     if( ! mqo_in_dispatch( descr ) )mqo_start_dispatching( descr );
 }
@@ -312,9 +312,9 @@ void mqo_close( mqo_descr descr ){
 
 
 void mqo_write_event( mqo_descr descr ){
-    mqo_buffer buffer = descr->write_data;
-    const char* data = mqo_buffer_head( buffer );
-    mqo_long datalen = mqo_buffer_length( buffer );
+    mqo_string string = descr->write_data;
+    const char* data = mqo_sf_string( string );
+    mqo_long datalen = mqo_string_length( string );
 
     if( descr->type == MQO_SOCKET ){
         datalen = mqo_net_error( send( descr->fd, data, datalen, 0 ) );
@@ -322,10 +322,10 @@ void mqo_write_event( mqo_descr descr ){
         datalen = mqo_net_error( write( descr->fd, data, datalen ) );
     }
 
-    mqo_skip_buffer( buffer, datalen );
+    mqo_skip_string( string, datalen );
 
     /* Death is slow, but death is sure.. */
-    if( mqo_buffer_empty( buffer ) )mqo_stop_writing( descr );
+    if( mqo_string_empty( string ) )mqo_stop_writing( descr );
 }
 void mqo_read_descr_event( mqo_descr descr ){
     static char data[ BUFSIZ ];
@@ -341,8 +341,8 @@ void mqo_read_descr_event( mqo_descr descr ){
         if( datalen == 0 ){
             descr->closed = 1;
         }else{
-            mqo_expand_buffer( descr->read_data, datalen );
-            mqo_write_buffer( descr->read_data, data, datalen );
+            mqo_expand_string( descr->read_data, datalen );
+            mqo_string_write( descr->read_data, data, datalen );
         };
 
         if( descr->monitor ){ 
@@ -587,11 +587,11 @@ mqo_value mqo_read_data_mt( mqo_descr descr ){
     mqo_integer datalen;
     char* data;
 
-    if( mqo_buffer_empty( descr->read_data ) ){
+    if( mqo_string_empty( descr->read_data ) ){
         return descr->closed ? mqo_vf_false( )
                              : mqo_make_void( );
     }else if( descr->quantity ){
-        if( mqo_buffer_length( descr->read_data ) < descr->quantity ){
+        if( mqo_string_length( descr->read_data ) < descr->quantity ){
             return mqo_make_void( );
         } 
         datalen = descr->quantity;
@@ -599,7 +599,7 @@ mqo_value mqo_read_data_mt( mqo_descr descr ){
         datalen = BUFSIZ;
     }
 
-    data = mqo_read_buffer( descr->read_data, &datalen );
+    data = mqo_string_read( descr->read_data, &datalen );
     return mqo_vf_string( mqo_string_fm( data, datalen ) );
 }
 mqo_value mqo_read_all_mt( mqo_descr descr ){
@@ -607,15 +607,15 @@ mqo_value mqo_read_all_mt( mqo_descr descr ){
         return mqo_make_void( );
     }else{
         mqo_integer datalen = 1 << 30;
-        char *data = mqo_read_buffer( descr->read_data, &datalen );
+        char *data = mqo_string_read( descr->read_data, &datalen );
 
         return mqo_vf_string( mqo_string_fm( data, datalen ) );
     }
 }
 mqo_value mqo_read_byte_mt( mqo_descr descr ){
-    if( mqo_buffer_length( descr->read_data ) >= 1 ){
+    if( mqo_string_length( descr->read_data ) >= 1 ){
         mqo_integer datalen = 1;
-        mqo_byte *data = mqo_read_buffer( descr->read_data, &datalen );
+        mqo_byte *data = mqo_string_read( descr->read_data, &datalen );
         return mqo_vf_integer( *data );
     }
     if( descr->closed )return mqo_vf_false( );
@@ -623,9 +623,9 @@ mqo_value mqo_read_byte_mt( mqo_descr descr ){
 }
 
 mqo_value mqo_read_word_mt( mqo_descr descr ){
-    if( mqo_buffer_length( descr->read_data ) >= 2 ){
+    if( mqo_string_length( descr->read_data ) >= 2 ){
         mqo_integer datalen = 2;
-        mqo_word *data = mqo_read_buffer( descr->read_data, &datalen );
+        mqo_word *data = mqo_string_read( descr->read_data, &datalen );
         return mqo_vf_integer( ntohs( *data ) );
     }
     if( descr->closed )return mqo_vf_false( );
@@ -634,7 +634,7 @@ mqo_value mqo_read_word_mt( mqo_descr descr ){
 
 mqo_value mqo_read_line_mt( mqo_descr descr ){
     mqo_integer linelen;
-    const char* line = mqo_read_line_buffer( descr->read_data, &linelen );
+    const char* line = mqo_read_line_string( descr->read_data, &linelen );
     if( line ){
         return mqo_vf_string( mqo_string_fm( line, linelen ) );
     }else if( descr->closed ){ 
@@ -645,9 +645,9 @@ mqo_value mqo_read_line_mt( mqo_descr descr ){
 }
 
 mqo_value mqo_read_quad_mt( mqo_descr descr ){
-    if( mqo_buffer_length( descr->read_data ) >= 4 ){
+    if( mqo_string_length( descr->read_data ) >= 4 ){
         mqo_integer datalen = 4;
-        mqo_long *data = mqo_read_buffer( descr->read_data, &datalen );
+        mqo_long *data = mqo_string_read( descr->read_data, &datalen );
         return mqo_vf_integer( ntohl( *data ) );
     }
     if( descr->closed )return mqo_vf_false( );

@@ -46,7 +46,7 @@ void mqo_skip_junk( const char** pt ){
     }
 }
 
-mqo_integer mqo_read_integer( const char** pt ){
+mqo_integer mqo_parse_integer( const char** pt ){
     const char* og = *pt;
     mqo_integer r = strtol( og, (char**)pt, 10 );
     if( og == *pt ){
@@ -56,7 +56,7 @@ mqo_integer mqo_read_integer( const char** pt ){
     }
 }
 
-mqo_string mqo_read_string( const char** pt ){
+mqo_string mqo_parse_string( const char** pt ){
     //PT should point to the leading '"'.
 
     (*pt)++;
@@ -77,10 +77,11 @@ mqo_string mqo_read_string( const char** pt ){
         }
         ct += 1;
     }
-    
+   
+    mqo_integer ln = ct;
     mqo_string str = mqo_make_string( ct );
 
-    char* ptr = str->data; ct = 0;
+    char* ptr = mqo_sf_string( str ); ct = 0;
     for(;;){
         ch = og[ct++];
         if( ch == '\\' ){
@@ -95,9 +96,10 @@ mqo_string mqo_read_string( const char** pt ){
         *(ptr++) = ch;
     }
     *ptr = 0;
+    str->length = ln;
     return str;
 }
-mqo_symbol mqo_read_symbol( const char** pt ){
+mqo_symbol mqo_parse_symbol( const char** pt ){
     const char* og = *pt;
     char ch;
     mqo_integer ix, len = 0;
@@ -107,7 +109,7 @@ mqo_symbol mqo_read_symbol( const char** pt ){
    
     return mqo_symbol_fm( og, len );
 }
-mqo_pair mqo_read_list( const char** pt ){
+mqo_pair mqo_parse_list( const char** pt ){
     //PT should point to the leading '('.
     const char* og = *pt;
     char ch;
@@ -126,7 +128,7 @@ mqo_pair mqo_read_list( const char** pt ){
                 (*pt)++;
                 mqo_skip_junk( pt );
                 mqo_set_cdr( mqo_pair_fv( mqo_cdr( tc ) ), 
-                             mqo_read_value( pt ) );
+                             mqo_parse_value( pt ) );
                 for(;;){
                     mqo_skip_junk( pt );
                     ch = **pt;
@@ -147,13 +149,13 @@ mqo_pair mqo_read_list( const char** pt ){
             (*pt)++;
             break;
         }else{
-            mqo_tc_append( tc, mqo_read_value( pt ) );
+            mqo_tc_append( tc, mqo_parse_value( pt ) );
         }    
     }
     return mqo_pair_fv( mqo_car( tc ) );
 }
 
-mqo_value mqo_read_value( const char** pt ){
+mqo_value mqo_parse_value( const char** pt ){
     const char* og = *pt;
     char ch;
     
@@ -162,22 +164,22 @@ mqo_value mqo_read_value( const char** pt ){
 
     switch( ch ){
     case '"':
-        return mqo_vf_string( mqo_read_string( pt ) );
+        return mqo_vf_string( mqo_parse_string( pt ) );
     case '\'':
         (*pt)++;
-        return mqo_make_2list( mqo_sym_quote, mqo_read_value( pt ) );
+        return mqo_make_2list( mqo_sym_quote, mqo_parse_value( pt ) );
     case '`':
         (*pt)++;
-        return mqo_make_2list( mqo_sym_quasiquote, mqo_read_value( pt ) ) ;
+        return mqo_make_2list( mqo_sym_quasiquote, mqo_parse_value( pt ) ) ;
     case ',':
         (*pt)++;
         ch = **pt;
         if( ch == '@' ){
             (*pt)++;
             return mqo_make_2list( mqo_sym_unquote_splicing, 
-                                   mqo_read_value( pt ) );
+                                   mqo_parse_value( pt ) );
         }else{
-            return mqo_make_2list( mqo_sym_unquote, mqo_read_value( pt ) );
+            return mqo_make_2list( mqo_sym_unquote, mqo_parse_value( pt ) );
         }
     case '#':
         (*pt)++;
@@ -196,13 +198,13 @@ mqo_value mqo_read_value( const char** pt ){
                     " are #t and #f", og );
         }
     case '(':
-        return mqo_vf_pair( mqo_read_list( pt ) );
+        return mqo_vf_pair( mqo_parse_list( pt ) );
     case '+':
     case '-':
         if( isdigit( *((*pt)+1) ) ){
-            return mqo_vf_integer( mqo_read_integer( pt ) );
+            return mqo_vf_integer( mqo_parse_integer( pt ) );
         }else{
-            return mqo_vf_symbol( mqo_read_symbol( pt ) );
+            return mqo_vf_symbol( mqo_parse_symbol( pt ) );
         }
     case '\0':
         mqo_errf( mqo_es_vm, "ss", "no value found in", og );
@@ -210,14 +212,14 @@ mqo_value mqo_read_value( const char** pt ){
         mqo_errf( mqo_es_vm, "ss", "unmatched ) found in", og );
     default:
         if( isdigit( *((*pt)) ) ){
-            return mqo_vf_integer( mqo_read_integer( pt ) );
+            return mqo_vf_integer( mqo_parse_integer( pt ) );
         }else{
-            return mqo_vf_symbol( mqo_read_symbol( pt ) );
+            return mqo_vf_symbol( mqo_parse_symbol( pt ) );
         }
     }
 }
 
-mqo_pair mqo_read_exprs( const char* og ){
+mqo_pair mqo_parse_exprs( const char* og ){
     const char** pt = &og;
     mqo_tc tc = mqo_make_tc( );
 
@@ -227,7 +229,7 @@ mqo_pair mqo_read_exprs( const char* og ){
         if( (**pt) == '\0' ){
             return mqo_pair_fv( mqo_car( tc ) );
         }else{
-            mqo_tc_append( tc, mqo_read_value( pt ) );
+            mqo_tc_append( tc, mqo_parse_value( pt ) );
         };
     }
 }

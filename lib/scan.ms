@@ -17,7 +17,7 @@
 
 (define (make-scanner str)
   (define buf (make-buffer))
-  (write-buffer buf str)
+  (string-write buf str)
   (cons #f buf))
 
 (define (scanner-empty? scanner)
@@ -33,7 +33,7 @@
       pre)
     (if (buffer-empty? buf)
       (error 'xml-inc "xml tag incomplete")
-      (read-buffer-byte buf))))
+      (string-read-byte buf))))
 
 (define (scanner-strip scanner)
   (define pre (car scanner))

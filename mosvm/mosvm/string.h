@@ -29,5 +29,36 @@ mqo_symbol mqo_symbol_fs( const char* s );
 mqo_string mqo_make_string( mqo_integer length );
 mqo_integer mqo_string_compare( mqo_string a, mqo_string b );
 mqo_boolean mqo_eqvs( mqo_string a, mqo_string b );
+char* mqo_sf_string( mqo_string a );
+static inline mqo_integer mqo_string_length( mqo_string s ){ return s->length; }
+
+void mqo_expand_string( mqo_string string, mqo_integer data );
+// Ensures that the string's capacity is sufficient for data bytes to be
+// written to the string.
+
+void mqo_string_write( mqo_string string, const void* src, mqo_integer srclen );
+// Adds the supplied data to the string's tail. You should do an expansion 
+// prior to using write.
+
+void mqo_skip_string( mqo_string string, mqo_integer offset );
+// Advances the string head offset bytes, removing them from its current
+// length.
+
+void* mqo_string_read( mqo_string string, mqo_integer* count );
+// Reads data from the string up to *count.  *count is updated with the
+// actual number of bytes read, and the pointer returned points to the
+// origin.  This pointer will be valid until the next string expansion or
+// write operation.
+
+void* mqo_read_line_string( mqo_string string, mqo_integer* count );
+// Reads data from the string up to the next '\n' or '\r\n' separator, then
+// advances the origin past the line and accompanying separator.  If a
+// separator cannot be found, returns NULL.
+
+void mqo_flush_string( mqo_string string );
+
+static inline mqo_boolean mqo_string_empty( mqo_string string ){ 
+    return string->length <= 0;
+}
 
 #endif

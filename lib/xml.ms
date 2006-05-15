@@ -242,7 +242,7 @@
     (unless buf
       (set! buf (make-buffer))
       (set-xml-context-buf! context buf))
-    (write-buffer buf text))
+    (string-write buf text))
 
   (define (flush-buf)
     (define buf (xml-context-buf context))
@@ -419,7 +419,7 @@
   (until done
     (define ch (scanner-next scan))
     (if (dict-ref *ident-chars* ch)
-      (write-buffer-byte ident ch)
+      (string-write-byte ident ch)
       (begin 
         (set! done #t)
         (scanner-drop scan ch))))
@@ -451,7 +451,7 @@
          (define ch (scanner-next scan))
          (if (= ch quot)
            (set! done #t)
-           (write-buffer-byte value ch)))
+           (string-write-byte value ch)))
       (buffer->string value))
     (begin
       (scanner-drop scan quot)

@@ -48,7 +48,7 @@ MQO_BEGIN_PRIM( "xml-escape", xml_escape )
     }
     
     mqo_string result = mqo_make_string( dstlen );
-    char* dst = result->data;
+    char* dst = mqo_sf_string( result );
     
     for( ix = 0; ix < srclen; ix ++ ){
         char ch = src[ix];
@@ -80,6 +80,8 @@ MQO_BEGIN_PRIM( "xml-escape", xml_escape )
         };
     }
     
+    result->length = dstlen;
+
     MQO_RESULT( mqo_vf_string( result ) );
 MQO_END_PRIM( xml_escape )
 
@@ -106,7 +108,7 @@ MQO_BEGIN_PRIM( "percent-encode", percent_encode )
     }
     
     mqo_string result = mqo_make_string( dstlen );
-    char* dst = result->data;
+    char* dst = mqo_sf_string( result );
 
     for( ix = 0; ix < srclen; ix ++ ){
         char ch = src[ix];
@@ -119,6 +121,8 @@ MQO_BEGIN_PRIM( "percent-encode", percent_encode )
         }
     }
     
+    result->length = dstlen;
+
     MQO_RESULT( mqo_vf_string( result ) );
 MQO_END_PRIM( percent_encode )
 
@@ -143,7 +147,7 @@ MQO_BEGIN_PRIM( "percent-decode", percent_decode )
     }
     
     mqo_string result = mqo_make_string( dstlen );
-    char* dst = result->data;
+    char* dst = mqo_sf_string( result );
 
     for( ix = 0; ix < srclen; ix ++ ){
         char ch = src[ix];
@@ -154,6 +158,8 @@ MQO_BEGIN_PRIM( "percent-decode", percent_decode )
         *( dst ++ ) = ch;
     }
     
+    result->length = dstlen;
+
     MQO_RESULT( mqo_vf_string( result ) );
 MQO_END_PRIM( percent_decode )
 

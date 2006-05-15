@@ -74,14 +74,14 @@
     (build-module (tc-next! dependencies))))
 
 (define (glue buffer data)
-  (write-buffer buffer data)
-  (write-buffer-word buffer (string-length data))
-  (write-buffer buffer "mvf2")
+  (string-write buffer data)
+  (string-write-word buffer (string-length data))
+  (string-write buffer "mvf2")
   buffer)
 
 (define (build-exe platform main)
   (define buffer (make-buffer))
-  (write-buffer buffer (read-platform-stub platform))
+  (string-write buffer (read-platform-stub platform))
 
   (for-each glue (circle buffer) 
             (map build-module (code-dependencies main)))

@@ -85,14 +85,14 @@
 
   (when host
     (when user
-      (write-buffer buf (percent-encode user "@/:"))
-      (write-buffer buf "@"))
+      (string-write buf (percent-encode user "@/:"))
+      (string-write buf "@"))
 
-    (write-buffer buf host)    
+    (string-write buf host)    
     
     (when portno
-      (write-buffer buf ":")
-      (write-buffer buf (number->string portno))))
+      (string-write buf ":")
+      (string-write buf (number->string portno))))
 
   (if host (buffer->string buf) #f))
 

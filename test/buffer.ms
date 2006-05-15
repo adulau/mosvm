@@ -25,55 +25,55 @@
 
 (define b (make-buffer 1024))
 
-(s: (read-buffer b))
+(s: (string-read b))
 (r: #f)
 
-(s: (write-buffer b "hello"))
+(s: (string-write b "hello"))
 (r: #f)
 
-(s: (read-buffer b))
+(s: (string-read b))
 (r: "hello")
 
-(s: (read-buffer b))
+(s: (string-read b))
 (r: #f)
 
-(s: (write-buffer-byte b 42))
+(s: (string-write-byte b 42))
 (r: #f)
 
-(s: (read-buffer-byte b))
+(s: (string-read-byte b))
 (r: 42)
 
-(s: (read-buffer-byte b))
+(s: (string-read-byte b))
 (r: #f)
 
-(s: (write-buffer-word b 1042))
+(s: (string-write-word b 1042))
 (r: #f)
 
-(s: (read-buffer-word b))
+(s: (string-read-word b))
 (r: 1042)
 
-(s: (read-buffer-word b))
+(s: (string-read-word b))
 (r: #f)
 
-(s: (write-buffer-quad b -1))
+(s: (string-write-quad b -1))
 (r: #f)
 
-(s: (read-buffer-quad b))
+(s: (string-read-quad b))
 (r: -1)
 
-(s: (read-buffer-quad b))
+(s: (string-read-quad b))
 (r: #f)
 
-(s: (write-buffer b "hello"))
+(s: (string-write b "hello"))
 (r: #f)
 
-(s: (write-buffer b ", world"))
+(s: (string-write b ", world"))
 (r: #f)
 
-(s: (read-buffer b))
+(s: (string-read b))
 (r: "hello, world")
 
-(s: (write-buffer b "hello"))
+(s: (string-write b "hello"))
 (r: #f)
 
 (s: (buffer->string b))
@@ -84,7 +84,7 @@
 
 (define b (make-buffer 1))
 
-(s: (write-buffer b "hello"))
+(s: (string-write b "hello"))
 (r: #f)
 
 (s: (buffer->string b))

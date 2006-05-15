@@ -24,12 +24,12 @@ extern mqo_symbol mqo_sym_quasiquote;
 extern mqo_symbol mqo_sym_unquote;
 extern mqo_symbol mqo_sym_unquote_splicing;
 
-mqo_integer mqo_read_integer( const char** pt );
-mqo_string mqo_read_string( const char** pt );
-mqo_symbol mqo_read_symbol( const char** pt );
-mqo_pair mqo_read_list( const char** pt );
-mqo_value mqo_read_value( const char** pt );
-mqo_pair mqo_read_exprs( const char* og );
+mqo_integer mqo_parse_integer( const char** pt );
+mqo_string mqo_parse_string( const char** pt );
+mqo_symbol mqo_parse_symbol( const char** pt );
+mqo_pair mqo_parse_list( const char** pt );
+mqo_value mqo_parse_value( const char** pt );
+mqo_pair mqo_parse_exprs( const char* og );
 
 void mqo_init_parse_subsystem();
 

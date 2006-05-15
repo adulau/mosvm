@@ -137,7 +137,6 @@ MQO_DEFN_TYPE2( "file-descr", file );
 MQO_DEFN_TYPE( socket );
 MQO_DEFN_TYPE( console );
 MQO_DEFN_TYPE( listener);
-MQO_DEFN_TYPE( buffer );
 
 struct mqo_type_data mqo_quark_type_data = { NULL, NULL, NULL, NULL }; 
 mqo_type mqo_quark_type = &mqo_quark_type_data; 
@@ -193,5 +192,4 @@ void mqo_init_memory_subsystem( ){
     MQO_BIND_TYPE( console, descr );
     MQO_BIND_TYPE( listener, descr );
     
-    MQO_BIND_TYPE( buffer, nil );                            
 }

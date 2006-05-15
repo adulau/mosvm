@@ -39,10 +39,13 @@
     reliance on lib/eval.
   + Fixed test-compile
 
-- ?/??/????, Buffer Prepend
-  + Added buffer-insert, buffer-prepend, and renamed buffer-write to 
-    buffer-append.
-  + Altered string-begins-with? and string-ends-with? to accept buffers.
+- ?/??/????, Buffer Merged With String
+  + Modified string to be internally identical to the buffer type.
+  + Removed the buffer type, and all functions matching *buffer*.
+  + Added string-replace!
+  + Renamed string-ref to get-string-byte, and aliased string-ref.
+  + Added get-string-word, get-string-quad
+  + Added set-string-byte!, set-string-word!, set-string-quad!
 
 - 5/15/2006, Accelerated XML Parsing
   * All XML parser rules now use string-begins-with? to shortcut the regular

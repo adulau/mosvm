@@ -1,18 +1,18 @@
 /* Copyright (C) 2006, Ephemeral Security, LLC 
-* 
-* This library is free software; you can redistribute it and/or modify it  
-* under the terms of the GNU Lesser General Public License, version 2.1
-* as published by the Free Software Foundation.
-* 
-* This library is distributed in the hope that it will be useful, but WITHOUT 
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License 
-* for more details. 
-* 
-* You should have received a copy of the GNU Lesser General Public License 
-* along with this library; if not, write to the Free Software Foundation, 
-* Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
-*/ 
+ * 
+ * This library is free software; you can redistribute it and/or modify it  
+ * under the terms of the GNU Lesser General Public License, version 2.1
+ * as published by the Free Software Foundation.
+ * 
+ * This library is distributed in the hope that it will be useful, but WITHOUT 
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License 
+ * for more details. 
+ * 
+ * You should have received a copy of the GNU Lesser General Public License 
+ * along with this library; if not, write to the Free Software Foundation, 
+ * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
+ */ 
 
 #ifndef MQO_MEMORY_H
 #define MQO_MEMORY_H 1
@@ -141,9 +141,11 @@ static inline mqo_type mqo_direct_type( mqo_value value ){
 MQO_TYPE_INLINES( type );
 MQO_TYPE_INLINES( pair );
 
+// The string Type provides a expansible memory object that works well
+// for I/O buffers, and strings.
 MQO_BEGIN_TYPE( string )
-    mqo_integer length;
-    char data[1];
+    mqo_integer origin, length, capacity;
+    char* pool;
 MQO_END_TYPE( string )
 
 extern mqo_type mqo_symbol_type;
@@ -310,7 +312,6 @@ mqo_type mqo_make_type( mqo_symbol name, mqo_type super,
                         mqo_pair info );
 mqo_error mqo_make_error( mqo_symbol key, mqo_pair info, mqo_pair context );
 mqo_process mqo_make_process( );
-mqo_string mqo_make_string( mqo_integer length );
 mqo_guard mqo_make_guard( mqo_value fn, mqo_integer ri, mqo_integer si, mqo_program cp, mqo_instruction ip, mqo_pair ep );
 mqo_closure mqo_make_closure( mqo_program cp, mqo_instruction ip, mqo_pair ep );
 mqo_vector mqo_make_vector( mqo_integer length );
@@ -337,11 +338,6 @@ mqo_vector mqo_copy_vector( mqo_vector vo, mqo_integer ln );
 mqo_pair mqo_list_ref( mqo_pair p, mqo_integer offset );
 
 mqo_pair mqo_cons( mqo_value a, mqo_value b );
-
-mqo_string mqo_string_fm( const void* s, mqo_integer length );
-mqo_string mqo_string_fs( const char* s );
-static inline const char* mqo_sf_string( mqo_string a ){ assert( a ); return a->data; }
-static inline mqo_integer mqo_string_length( mqo_string s ){ assert( s ); return s->length; }
 
 mqo_symbol mqo_symbol_fm( const void* s, mqo_integer length );
 mqo_symbol mqo_symbol_fs( const char* s );

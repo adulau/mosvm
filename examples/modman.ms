@@ -23,10 +23,10 @@
     (define output (make-buffer))
 
     (define (wikify-list-item item)
-      (write-buffer output "* {")
-      (write-buffer output item)
-      (write-buffer output "}")
-      (write-buffer output *line-sep*))
+      (string-write output "* {")
+      (string-write output item)
+      (string-write output "}")
+      (string-write output *line-sep*))
      
     (for-each wikify-list-item data)
     (buffer->string output))

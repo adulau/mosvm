@@ -34,7 +34,7 @@
     (define data (read block-size port))
     (if (eof-object? data)
       (error 'eof)
-      (write-buffer plaintext (decrypt key data))))
+      (string-write plaintext (decrypt key data))))
 
   (define (flush-plaintext)
     (flush-buffer plaintext))
@@ -42,14 +42,14 @@
   ;;;TODO: Needs to eof on eof.
   (define (read-header)
     (read-block)
-    (set! body-length (read-buffer-word plaintext))
+    (set! body-length (string-read-word plaintext))
     (flush-plaintext))
 
   ;;;TODO: Needs to throw an exception on eof.
   (define (read-body)
     (until (>= (buffer-length plaintext) body-length)
       (read-block))
-    (set! message-body (read-buffer plaintext body-length))
+    (set! message-body (string-read plaintext body-length))
     (flush-buffer plaintext))
 
   ;;;TODO: Needs checksums.
@@ -79,14 +79,14 @@
   (define message-length #f)
 
   (define (write-block)
-    (write-buffer ciphertext (encrypt key (read-buffer plaintext block-size))))
+    (string-write ciphertext (encrypt key (string-read plaintext block-size))))
 
   (define (write-header)
-    (write-buffer-word plaintext message-length)
+    (string-write-word plaintext message-length)
     (write-block))
 
   (define (write-body)
-    (write-buffer plaintext message-body)
+    (string-write plaintext message-body)
     (until (buffer-empty? plaintext) (write-block)))
 
   (define (write-message ignored message)
@@ -94,7 +94,7 @@
     (set! message-body message)
     (write-header)
     (write-body)
-    (write (read-buffer ciphertext) port))
+    (write (string-read ciphertext) port))
 
   (make-port (and (input-port? port) (lambda (p) (read p)))
              write-message

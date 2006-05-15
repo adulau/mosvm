@@ -26,16 +26,16 @@
 
 (define (open-output-string)
   (define buf (make-buffer 256))
-  (make-string-port (lambda (p q) (or (read-buffer buf (or q 256)) *eof*))
-                    (lambda (p d) (write-buffer buf d))
+  (make-string-port (lambda (p q) (or (string-read buf (or q 256)) *eof*))
+                    (lambda (p d) (string-write buf d))
                     #f
                     buf))
 
 (define (open-input-string data)
   (define buf (make-buffer (string-length data)))
-  (write-buffer buf data)
-  (make-string-port (lambda (p q) (or (read-buffer buf (or q 256)) *eof*))
-                    (lambda (p d) (write-buffer buf d))
+  (string-write buf data)
+  (make-string-port (lambda (p q) (or (string-read buf (or q 256)) *eof*))
+                    (lambda (p d) (string-write buf d))
                     #f
                     buf))
 
@@ -46,27 +46,27 @@
   (and (string-port? value) (port-write-fn value)))
 
 (define (write-byte byte (<string-port> port))
-  (write-buffer-byte (string-port-buffer port) byte))
+  (string-write-byte (string-port-buffer port) byte))
 
 (define (write-word word (<string-port> port))
-  (write-buffer-word (string-port-buffer port) word))
+  (string-write-word (string-port-buffer port) word))
 
 (define (write-quad quad (<string-port> port))
-  (write-buffer-quad (string-port-buffer port) quad))
+  (string-write-quad (string-port-buffer port) quad))
 
 (define (read-byte (<string-port> port))
-  (read-buffer-byte (string-port-buffer port)))
+  (string-read-byte (string-port-buffer port)))
 
 (define (read-word (<string-port> port))
-  (or (read-buffer-word (string-port-buffer port))
+  (or (string-read-word (string-port-buffer port))
       *eof*))
 
 (define (read-quad (<string-port> port))
-  (or (read-buffer-quad (string-port-buffer port))
+  (or (string-read-quad (string-port-buffer port))
       *eof*))
 
 (define (read-line (<string-port> port))
-  (or (read-buffer-line (string-port-buffer port))
+  (or (string-read-line (string-port-buffer port))
       *eof*))
 
 (define (get-output-string (<string-port> port))

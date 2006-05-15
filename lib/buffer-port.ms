@@ -29,10 +29,10 @@
                   (set! ps (active-process))
                   (suspend)))
                (if q
-                 (read-buffer buf q)
-                 (read-buffer buf)))
+                 (string-read buf q)
+                 (string-read buf)))
              (lambda (p d)
-               (write-buffer buf d)
+               (string-write buf d)
                (when ps
                  (resume ps)
                  (set! ps #f)))
