@@ -17,11 +17,11 @@
 ;; <?xml ... ?>
 ;; <! ... >
 
-;(module "lib/xml")
+(module "lib/xml")
 
-;(export make-sxml get-sxml-items get-sxml-attrs
-;       get-sxml-attr get-sxml-item get-sxml-item* 
-;       get-sxml-tag has-sxml-tag? has-sxml-attr? sxml-drill)
+(export make-sxml get-sxml-items get-sxml-attrs
+       get-sxml-attr get-sxml-item get-sxml-item* 
+       get-sxml-tag has-sxml-tag? has-sxml-attr? sxml-drill)
 
 (import "lib/iterate")
 (import "lib/port")
@@ -39,16 +39,16 @@
 
   (define tag-ix (string-find data "<" ))
   (if tag-ix 
-    (parse-tag (string-head data tag-ix)
-               (string-tail data tag-ix))
+    (guard (lambda (err)
+             (unless (eq? (error-key err) 'xml-inc)
+               (re-error err))
+             (define info (error-info err))
+             (error 'xml-inc (car info) data))
+           (parse-tag (string-head data tag-ix)
+                      (string-tail data tag-ix)))
     (list data #f "")))
 
 (define (parse-tag pre tag)
-  (guard (lambda (err)
-           (unless (eq? (error-key err) 'xml-inc)
-             (re-error err))
-           (define info (error-info err))
-           (error 'xml-inc (car info) (string-append pre (cadr info))))
     (cons pre
           (or (parse-cdata tag)
               (parse-comment tag)
@@ -56,7 +56,7 @@
               (parse-pi tag)
               (parse-end tag)
               (parse-begin tag)
-              (error 'xml-inc "< unmatched or garbage" tag)))))
+              (error 'xml-inc "< unmatched or garbage"))))
 
 (define (parse-cdata str) 
   (step "CDATA" str)
@@ -65,7 +65,7 @@
       (define cdata-len (string-find str "]]>"))
       (if cdata-len
         (set! cdata-len (- cdata-len 9))
-        (error 'xml-inc "CDATA section incomplete" str))
+        (error 'xml-inc "CDATA section incomplete"))
       (list (substring str 9 cdata-len)
             (substring str (+ 12 cdata-len) 
                        (- (string-length str) 12 cdata-len))))
@@ -508,5 +508,4 @@
       (set! done #t)))
 
   (tc->list atoms))
-
 
