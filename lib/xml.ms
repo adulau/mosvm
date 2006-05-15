@@ -104,18 +104,23 @@
   ; This does not correctly handle nested attributes.  Thank you, W3C, for
   ; introducing seventeen different syntaxes in your simple document format.
   (step "DECL" str)
-  
-  (if (string-begins-with? str "<!")
-    (begin
-      (define scan (make-scanner (string-tail str 2)))
-      (define tag  (parse-ident scan))
-      (scanner-strip scan)
-      (define atoms (parse-atoms scan))
-      (scanner-strip scan)
-      (parse-completion scan)
-      (list (cons 'decl (cons tag atoms))
-            (scanner->string scan)))
-    #f))
+  ;;; Any error we encounter may be because of an incomplete read. We 
+  ;;; make all xml errors xml-inc errors.
+  (guard (lambda (e) 
+           (if (eq? 'xml (error-key e))
+             (apply error 'xml-inc (error-info e))
+             (re-error e)))
+     (if (string-begins-with? str "<!")
+       (begin
+         (define scan (make-scanner (string-tail str 2)))
+         (define tag  (parse-ident scan))
+         (scanner-strip scan)
+         (define atoms (parse-atoms scan))
+         (scanner-strip scan)
+         (parse-completion scan)
+         (list (cons 'decl (cons tag atoms))
+               (scanner->string scan)))
+       #f)))
 
 (define (parse-pi str)
   (step "PI" str)
