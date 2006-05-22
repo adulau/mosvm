@@ -17,10 +17,8 @@
 ; Given a source file, or the input port, and a target file, or the output
 ; port, compiles and outputs a frozen file.
 
-(import "lib/lib")
 (import "lib/compile")
 (import "lib/optimize")
-(import "lib/eval")
 
 (define (mosc module)
   (define src-file #f)
@@ -35,16 +33,24 @@
      (set! module (string-head module (- (string-length module) 4))))
     (else
       (set! src-file (string-append module ".ms"))))
-
-  (set! dst-file (string-append module ".mo"))
+  
+  (if *mosvm?*
+    (set! dst-file (string-append module ".mo"))
+    (set! dst-file (string-append module ".ma")))
 
   (let ((data (read-lisp-file src-file)))
     (set! data (compile data))
-    (set! data (optimize data))
-    (set! data (assemble data))
-    (set! data (freeze data))
+    (when *mosvm?*
+      (set! data (optimize data))
+      (set! data (assemble data))
+      (set! data (freeze data)))
     (set! dst-file (open-output-file dst-file))
-    (write-data data dst-file)
+    (if *mosvm?*
+      (write-data data dst-file)
+      (for-each (lambda (item)
+                  (write item dst-file)
+                  (newline dst-file))
+                data))
     (close-output-port dst-file)))
 
 (export mosc)

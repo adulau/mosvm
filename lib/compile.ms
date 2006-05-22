@@ -664,13 +664,9 @@
                               (context-slot-count env))))
 
 (define (compile-call block env expr) 
-  (compile-args block (cdr expr) env)
-  (compile-expr block (car expr) env)
+  (block-append! block '(newf))
+  (for-each (lambda (term) (compile-expr block term env)
+                           (block-append! block '(arg)))
+            expr)
   (block-append! block '(call)))
-
-(define (compile-args block args env)
-  (for-each (lambda (arg) 
-              (compile-expr block arg env))
-            args)
-  (block-append! block (list 'ldc (length args))))
 

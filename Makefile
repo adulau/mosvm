@@ -69,6 +69,12 @@ $(MOSC): $(MOSVM_STUB) $(GLUE) libs
 $(MOSVM): $(MOSC) $(GLUE) site/config.ms libs
 	sh bin/build-app.sh $(MOSVM_STUB) bin/mosvm $(MOSVM)
 
+%.ma: %.ms  bin/seed-mosc.sh lib/compile.ms lib/lib.ms lib/mosc.ms
+	sh bin/seed-mosc.sh $<
+
+%.mo: %ma $(MOSASM)
+	$(MOSASM) $< $@
+
 %.mo: %.ms $(MOSC) 
 	$(MOSC) $<
 
