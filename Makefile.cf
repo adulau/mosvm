@@ -57,17 +57,14 @@ endif
 
 ifeq ($(OS),Linux)
 # Tested on Debian.
-LIBGC=/usr/lib/libgc.a
-CFLAGS += -I/usr/local/include -I/usr/include/gc -D_GNU_SOURCE -DLINUX
-CFLAGS += -pthread
+CFLAGS += -DLINUX
 PLATFORM = linux-$(ARCH)
 PKG=.tar.gz
 endif
 
 ifeq ($(OS),MinGW)
-CFLAGS += -I/mingw/include -DGC_WIN32_THREADS=1
 PLATFORM = winnt-$(ARCH)
-LIBGC=/mingw/lib/libgc.a 
+CFLAGS += -I/mingw/include
 LIBRX=/mingw/lib/libregex.a
 EXE=.exe
 HAS_DEVRANDOM=no
@@ -76,8 +73,7 @@ endif
 
 ifeq ($(OS),Cygwin)
 CFLAGS += -mno-cygwin
-CFLAGS += -I/mingw/include -I/usr/local/include
-LIBGC=/usr/local/lib/libgc.a
+CFLAGS += -I/mingw/include
 LIBRX=/mingw/lib/libregex.a
 LIBS += -lwsock32
 PLATFORM = winnt-$(ARCH)
@@ -87,15 +83,11 @@ PKG=.zip
 endif
 
 ifeq ($(OS),OpenBSD)
-CFLAGS += -fno-stack-protector -I/usr/local/include
-LIBGC=/usr/local/lib/libgc.a
 PLATFORM = openbsd-$(ARCH)
 PKG=.tar.gz
 endif
 
 ifeq ($(OS),Darwin)
-CFLAGS += -I/opt/local/include -DNO_PARALLEL_GC
-LIBGC=/opt/local/lib/libgc.a
 PLATFORM = darwin-$(ARCH)
 PKG=.tar.gz
 endif
@@ -110,8 +102,9 @@ LIBTC=$(ROOT)/crypt/libtomcrypt.a
 MOSVM=$(BIN)/mosvm$(EXE)
 MOSREF=$(BIN)/mosref$(EXE)
 MOSVM_STUB=$(STUBS)/mosvm-stub-$(PLATFORM)$(EXE)
-GLUE=$(BIN)/glue$(EXE)
 MOSC=$(BIN)/mosc$(EXE)
+MOSASM=$(BIN)/mosasm$(EXE)
+MOSLD=$(BIN)/mosld$(EXE)
 PACKAGENAME=mosref-2.0-$(PLATFORM)
 PACKAGEDIR=$(PACKAGENAME)
 PACKAGE=$(PACKAGEDIR)$(PKG) 

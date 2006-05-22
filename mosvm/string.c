@@ -1,8 +1,8 @@
 /* Copyright (C) 2006, Ephemeral Security, LLC
  *
  * This library is free software; you can redistribute it and/or modify it 
-* under the terms of the GNU Lesser General Public License, version 2.1
-* as published by the Free Software Foundation.
+ * under the terms of the GNU Lesser General Public License, version 2.1
+ * as published by the Free Software Foundation.
  * 
  * This library is distributed in the hope that it will be useful, but WITHOUT 
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
@@ -15,16 +15,138 @@
  */
 
 #include "mosvm.h"
+#include <string.h>
+
+mqo_value mqo_lexicon_key( mqo_value item ){
+    return mqo_vf_string( mqo_symbol_fv( item )->string );
+}
+
+extern struct mqo_type_data mqo_tree_type_data;
+
+struct mqo_tree_data mqo_lexicon_data = { 
+    { &mqo_tree_type_data },
+    (mqo_node)NULL, 
+    mqo_lexicon_key 
+};
+
+mqo_tree mqo_lexicon = &mqo_lexicon_data;
+
+mqo_symbol mqo_symbol_fm( const void* s, mqo_integer sl ){
+    mqo_symbol sym;
+    mqo_string str;
+    mqo_node node; 
+
+    str = mqo_string_fm( s, sl );
+    
+    node = mqo_tree_lookup( mqo_lexicon, mqo_vf_string( str ) );
+
+    if( node ){ 
+        mqo_objfree( str );
+        return mqo_symbol_fv( node->data ); 
+    }else{
+        sym = MQO_OBJALLOC( symbol );
+        sym->string = str;
+        sym->global = 0;
+        sym->value = mqo_vf_null();
+        //TODO: ldg and stg must respect global.
+        mqo_tree_insert( mqo_lexicon, mqo_vf_symbol( sym ) );
+        return sym;
+    }
+}
+mqo_symbol mqo_symbol_fs( const char* s ){
+    return mqo_symbol_fm( s, strlen( s ) );
+}
 
 mqo_string mqo_make_string( mqo_integer capacity ){
-    mqo_string string = MQO_ALLOC( mqo_string, 0 );
-    // string->pool = GC_malloc_atomic( capacity + 1 );
-    string->pool = GC_malloc( capacity + 1 );
+    mqo_string string = MQO_OBJALLOC( string );
+    string->pool = malloc( capacity + 1 );
     string->capacity = capacity;
     string->length = string->origin = 0;
     return string;
 }
 
+mqo_integer mqo_string_compare( mqo_string a, mqo_string b ){
+    //This will result in dictionary-style ordering of strings,
+    //with case sensitivity.
+    //
+    //NOTE: Ideally, we would also use a string hash here to
+    //      give us a second form of equality testing prior
+    //      to degenerating into memcmp, but there's a point
+    //      where performance optimizations must give way to
+    //      code complexity.
+
+    mqo_quad al = mqo_string_length( a );
+    mqo_quad bl = mqo_string_length( b );
+    mqo_integer d = memcmp( mqo_sf_string( a ), 
+                            mqo_sf_string( b ),
+                            al < bl ? al : bl );
+
+    return d ? d : ( al - bl );
+}
+
+mqo_boolean mqo_eqvs( mqo_string a, mqo_string b ){
+    mqo_integer l = mqo_string_length( a );
+    if( l != mqo_string_length( b ) )return 0;
+    return ! memcmp( mqo_sf_string( a ), mqo_sf_string( b ), l );
+}
+
+mqo_boolean mqo_has_global( mqo_symbol name ){
+    return name->global;    
+}
+
+void mqo_set_global( mqo_symbol name, mqo_value value ){
+    name->value = value;
+    name->global = 1;
+}
+
+mqo_value mqo_get_global( mqo_symbol name ){
+    return mqo_has_global( name ) ? name->value : mqo_vf_null();
+}
+
+void mqo_show_string( mqo_string str, mqo_word* ct ){
+    //TODO: Improve with ellision, scored length, escaping unprintables.
+    mqo_printch( '"' );
+    mqo_printstr( str );
+    mqo_printch( '"' );
+    (*ct) --;
+}
+
+MQO_GENERIC_TRACE( string );
+void mqo_free_string( mqo_string str ){
+    free( str->pool );
+    mqo_objfree( (mqo_object) str );
+}
+MQO_C_TYPE( string );
+
+void mqo_trace_symbol( mqo_symbol symbol ){
+    if( symbol->global )mqo_grey_val( symbol->value );    
+}
+void mqo_show_symbol( mqo_symbol sym, mqo_word* ct ){
+    mqo_printsym( sym );
+    (*ct) --;
+}
+
+MQO_GENERIC_FREE( symbol);
+MQO_GENERIC_COMPARE( symbol);
+MQO_C_TYPE( symbol );
+
+void mqo_globals_iter( mqo_value data, mqo_pair tc ){
+    mqo_symbol sym = mqo_symbol_fv( data );
+    if( mqo_has_global( sym ) ){ 
+        mqo_tc_append( tc, mqo_vf_pair( mqo_cons( mqo_vf_symbol( sym ),
+                                                  mqo_get_global( sym ) ) ) );
+    }
+}
+mqo_list mqo_get_globals( ){
+    mqo_pair tc = mqo_make_tc( );
+    mqo_iter_tree( mqo_lexicon, (mqo_iter_mt)mqo_globals_iter, tc );
+    return mqo_list_fv( mqo_car( tc ) );
+}
+void mqo_init_string_subsystem( ){
+    mqo_root_obj( (mqo_object)mqo_lexicon );
+    MQO_I_TYPE( string );
+    MQO_I_TYPE( symbol );
+}
 void mqo_compact_string( mqo_string string ){
     if( string->origin ){
         if( string->length ){
@@ -36,7 +158,7 @@ void mqo_compact_string( mqo_string string ){
         string->origin = 0;
     }
 }
-void mqo_expand_string( mqo_string string, mqo_integer count ){
+void mqo_string_expand( mqo_string string, mqo_integer count ){
     mqo_integer space = (
         string->capacity - string->origin - string->length - count 
     );
@@ -52,16 +174,17 @@ void mqo_expand_string( mqo_string string, mqo_integer count ){
         mqo_integer new_capacity = string->capacity << 1 - space + 1;
         mqo_compact_string( string );
 
-        string->pool = GC_realloc( string->pool, new_capacity );
+        string->pool = realloc( string->pool, new_capacity );
         string->capacity = new_capacity;
     }
 }
-void mqo_flush_string( mqo_string string ){
+void mqo_string_flush( mqo_string string ){
     string->pool[ string->origin = string->length = 0 ] = 0;
 }
 void mqo_string_write(
     mqo_string string, const void* src, mqo_integer srclen 
 ){
+    mqo_string_expand( string, srclen );
     memmove( string->pool + string->origin + string->length, src, srclen );
     string->length += srclen;
     string->pool[ string->origin +  string->length ] = 0;
@@ -72,7 +195,7 @@ void mqo_string_alter(
 ){
     mqo_integer newlen = string->length + srclen - dstlen;
 
-    mqo_expand_string( string, newlen );
+    mqo_string_expand( string, newlen );
     
     void* dst = string->pool + string->origin + dstofs;
 
@@ -91,14 +214,12 @@ char* mqo_sf_string( mqo_string string ){
     string->pool[ string->origin + string->length ] = 0;
     return string->pool + string->origin;
 }
-
-void mqo_skip_string( mqo_string string, mqo_integer offset ){
+void mqo_string_skip( mqo_string string, mqo_integer offset ){
     assert( string->length >= offset );
     
     string->length -= offset;
     string->origin += offset;
 }
-
 void* mqo_string_read( mqo_string string, mqo_integer* r_count ){
     mqo_integer count = *r_count;
     void* pool = mqo_sf_string( string );
@@ -109,7 +230,7 @@ void* mqo_string_read( mqo_string string, mqo_integer* r_count ){
     *r_count = count;
     return pool;
 }
-void* mqo_read_line_string( mqo_string string, mqo_integer* r_count ){
+void* mqo_string_read_line( mqo_string string, mqo_integer* r_count ){
     char* line = mqo_sf_string( string );
     mqo_integer linelen = string->length;
     mqo_integer seplen = 0;
@@ -131,36 +252,11 @@ void* mqo_read_line_string( mqo_string string, mqo_integer* r_count ){
 incomplete:
     return NULL;
 complete:
-    //TODO: Adjust string length and origin.
     string->origin += linelen + seplen;
     string->length -= linelen + seplen;
     *r_count = linelen;
     return line;
 }
-
-void mqo_show_string( mqo_string a, mqo_word* ct ){
-    //TODO: Escape.
-    mqo_writech( '"' );
-    mqo_integer ln = mqo_string_length( a );
-    if( ct ){
-        if( *ct <( ln / 8 ) ){
-            ln = ( *ct ) * 8;
-            *ct = 0;
-        }else{
-            *ct -= ln / 8;
-        }
-    }
-    mqo_writemem( a->pool, ln );
-    mqo_writech( '"' );
-}
-void mqo_show_symbol( mqo_symbol s, mqo_word* ct ){
-    mqo_writesym( s );
-}
-
-mqo_tree mqo_lexicon = NULL;
-// When new symbols are created from strings, a search is made of the lexicon
-// for an equivalent string.
-
 mqo_string mqo_string_fm( const void* s, mqo_integer sl ){
     mqo_string a = mqo_make_string( sl );
     memcpy( a->pool, s, sl );
@@ -171,51 +267,27 @@ mqo_string mqo_string_fm( const void* s, mqo_integer sl ){
 mqo_string mqo_string_fs( const char* s ){
     return mqo_string_fm( (const void*)s, strlen( s ) );
 }
-mqo_value mqo_symbol_key( mqo_value item ){
-    return mqo_vf_string( mqo_symbol_fv( item )->string );
+void mqo_string_write_byte( mqo_string string, mqo_byte x ){
+    mqo_string_write( string, &x, 1 );
 }
-mqo_symbol mqo_symbol_fm( const void* s, mqo_integer sl ){
-    mqo_pair lx;
-    mqo_symbol sym;
-    mqo_string str;
-    mqo_node node; 
-
-    str = mqo_string_fm( s, sl );
-    
-    node = mqo_tree_lookup( mqo_lexicon, mqo_vf_string( str ) );
-    if( node ){ 
-        GC_free( str );
-        return mqo_symbol_fv( node->data ); 
-    }else{
-    
-        sym = MQO_ALLOC( mqo_symbol, 0 );
-        sym->string = str;
-        sym->value = mqo_make_void();
-        mqo_tree_insert( mqo_lexicon, mqo_vf_symbol( sym ) );
-        return sym;
-    }
+void mqo_string_write_word( mqo_string string, mqo_word x ){
+    x = htons( x );
+    mqo_string_write( string, &x, 2 );
 }
-mqo_symbol mqo_symbol_fs( const char* s ){
-    return mqo_symbol_fm( s, strlen( s ) );
+void mqo_string_write_quad( mqo_string string, mqo_quad x ){
+    x = htonl( x );
+    mqo_string_write( string, &x, 4 );
 }
-mqo_integer mqo_string_compare( mqo_string a, mqo_string b ){
-    //This will result in dictionary-style ordering of strings,
-    //with case sensitivity.
-    //
-    //NOTE: Ideally, we would also use a string hash here to
-    //      give us a second form of equality testing prior
-    //      to degenerating into memcmp, but there's a point
-    //      where performance optimizations must give way.
-
-    mqo_integer al = mqo_string_length( a );
-    mqo_integer bl = mqo_string_length( b );
-    mqo_integer d = memcmp( mqo_sf_string( a ), 
-                            mqo_sf_string( b ),
-                            al < bl ? al : bl );
-
-    return d ? d : ( al - bl );
+void* mqo_string_head( mqo_string head ){
+    return head->pool + head->origin;
+}
+void* mqo_string_tail( mqo_string string ){
+    return string->pool + string->origin + string->length;
+}
+void mqo_string_wrote( mqo_string string, mqo_integer len ){
+    string->length += len;
+}
+mqo_boolean mqo_string_empty( mqo_string str ){
+    return ! str->length;
 }
 
-mqo_boolean mqo_eqvs( mqo_string a, mqo_string b ){
-    return ! mqo_string_compare( a, b );
-}

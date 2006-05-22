@@ -57,7 +57,7 @@ clean-stubs:
 $(LIBTC): crypt/src/* crypt/src/*/* crypt/src/*/*/*
 	cd $(ROOT)/crypt && $(MAKE)
 
-$(MOSVM_STUB): $(LIBTC) mosvm/*.[ch] mosvm/mosvm/*.[ch] mosvm/prims/*.[ch]
+$(MOSVM_STUB): $(LIBTC) mosvm/*.[ch] mosvm/mosvm/*.[ch]
 	cd $(ROOT)/mosvm && $(MAKE)
 
 $(GLUE): mosvm/glue.c mosvm/mosvm/*.[ch]

@@ -15,37 +15,32 @@
  */
 
 #include "mosvm.h"
+#include <string.h>
 
-void mqo_show_vector( mqo_vector v, mqo_word* ct ){
-    if( ! v )return mqo_show_unknown( mqo_vector_type, 0 );
-
+void mqo_show_vector_contents( mqo_vector v, mqo_word* ct ){
     mqo_integer ln = mqo_vector_length( v );
     mqo_integer ix = 0;
-    
-    mqo_writech( '#' );
-    mqo_writeint( ln );
-    mqo_writech( '(' );
-    
-    for( ix = 0; ix < ln; ix ++ ){
-        if( ct ){
-	    if( ! *ct ){
-	        mqo_write( " ..." ); 
-                goto done;
-	    }
-	
-            (*ct)--;
-        }
 
-        mqo_space();
-        mqo_show( mqo_vector_get( v, ix), ct );
+    for( ix = 0; ix < ln; ix ++ ){
+        if( ! *ct ){
+            mqo_print( " ..." ); 
+            return;
+        }else{
+            mqo_space();
+            mqo_show( mqo_vector_get( v, ix ), ct );
+        }
     }
     
-done:
-    mqo_write( " )" );
-} 
+}
+void mqo_show_vector( mqo_vector v, mqo_word* ct ){
+    mqo_begin_showtag( mqo_vf_vector( v ) );
+    mqo_show_vector_contents( v, ct ); 
+    mqo_end_showtag( );
+}
+
 mqo_vector mqo_make_vector( mqo_integer length ){
     size_t tail = sizeof( mqo_value ) * length;
-    mqo_vector v = MQO_ALLOC( mqo_vector, tail );
+    mqo_vector v = MQO_OBJALLOC2( vector, tail );
 
     v->length = length;
     memset( v->data, 0,  tail );
@@ -58,24 +53,31 @@ mqo_vector mqo_copy_vector( mqo_vector vo, mqo_integer ln ){
     }
     return vn;
 }
-mqo_boolean mqo_eqvv( mqo_vector a, mqo_vector b ){
-    mqo_integer i;
-    mqo_integer l = mqo_vector_length( a );
-    if( l != mqo_vector_length( b ) )return 0;
-    for( i = 0; i < l; i++ ){
-        if( ! mqo_eq( mqo_vector_get( a, i ),
-                      mqo_vector_get( b, i ) ) )return 0;
+mqo_integer mqo_vector_compare( mqo_vector a, mqo_vector b ){
+    mqo_integer al = mqo_vector_length( a );
+    mqo_integer bl = mqo_vector_length( b );
+    mqo_integer i, l = ( al > bl )? bl : al;
+
+    for( i = 0; i < l; i ++ ){
+        mqo_integer d = mqo_cmp_eq( mqo_vector_get( a, i ),
+                                    mqo_vector_get( b, i ) );
+        if( d )return d;
+    };
+
+    return bl - al;
+}
+void mqo_trace_vector( mqo_vector v ){
+    int i, l = mqo_vector_length( v );
+
+    for( i = 0; i < l; i ++ ){
+        mqo_grey_val( mqo_vector_get( v, i ) );
     }
-    return 1;
 }
 
-mqo_boolean mqo_equalv( mqo_vector a, mqo_vector b ){
-    mqo_integer i;
-    mqo_integer l = mqo_vector_length( a );
-    if( l != mqo_vector_length( b ) )return 0;
-    for( i = 0; i < l; i++ ){
-        if( ! mqo_equal( mqo_vector_get( a, i ),
-                         mqo_vector_get( b, i ) ) )return 0;
-    }
-    return 1;
+MQO_GENERIC_FREE( vector );
+MQO_C_TYPE( vector );
+
+void mqo_init_vector_subsystem( ){
+    MQO_I_TYPE( vector );
 }
+

@@ -1,27 +1,22 @@
 ROOT=..
 include $(ROOT)/Makefile.cf
 
-OBJECTS=memory.o error.o exec.o main.o show.o thaw.o parse.o tree.o list.o string.o vector.o os.o program.o regex.o prims/core.o prims/vm.o prims/os.o prims/progn.o prims/net.o prims/crypto.o prims/regex.o
+OBJECTS=memory.o number.o boolean.o list.o string.o tree.o vector.o regex.o package.o primitive.o procedure.o parse.o print.o closure.o vm.o file.o error.o process.o crypto.o channel.o net.o init.o
 
-build: $(MOSVM_STUB) $(GLUE)
+TOOLS=$(MOSASM) $(MOSVM_STUB) $(MOSLD)
 
-ifeq ($(OS),Darwin)
-# Mac OS X Tiger's linker is partially broken; we have to do something nasty..
-$(MOSVM_STUB): $(OBJECTS)
-	rm -rf cryptlib
-	mkdir cryptlib
-	cd cryptlib && ar x ../../crypt/libtomcrypt.a
-	$(DO_CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBGC) $(LIBRX) cryptlib/*.o $(LIBS) -o $(MOSVM_STUB)
+LIBS=$(LIBTC)
 
+all: $(TOOLS)
 
-else
-$(MOSVM_STUB): $(OBJECTS)
-	$(DO_CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) $(LIBGC) $(LIBRX) $(LIBTC) $(LIBS) -o $(MOSVM_STUB)
-
-endif
-$(GLUE): glue.o
-	$(DO_CC) $(CFLAGS) $(LDFLAGS) glue.o $(LIBGC) $(LIBS) -o $(GLUE)
-
+$(MOSASM): mosvm/*.h mosvm.h $(OBJECTS) mosasm.o
+	gcc $(CFLAGS) $(LDFLAGS) $(OBJECTS) mosasm.o $(LIBS) -o $(MOSASM)
+	
+$(MOSVM_STUB): mosvm/*.h mosvm.h $(OBJECTS) mosvm.o
+	gcc $(CFLAGS) $(LDFLAGS) $(OBJECTS) mosvm.o $(LIBS) -o $(MOSVM_STUB)
+	
+$(MOSLD): mosvm/*.h mosvm.h $(OBJECTS) mosld.o
+	gcc $(CFLAGS) $(LDFLAGS) $(OBJECTS) mosld.o $(LIBS) -o $(MOSLD)
+	
 clean:
-	rm -f *.o */*.o $(MOSVM) $(GLUE) *.core
-
+	rm -f $(TOOLS) *.o *.core

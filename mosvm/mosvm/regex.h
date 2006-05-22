@@ -22,14 +22,16 @@
 MQO_BEGIN_TYPE( regex )
     regex_t rx;
 MQO_END_TYPE( regex )
+#define REQ_REGEX_ARG( vn ) REQ_TYPED_ARG( vn, regex )
+#define REGEX_RESULT( vn ) TYPED_RESULT( vn, regex )
+#define OPT_REGEX_ARG( vn ) OPT_TYPED_ARG( vn, regex )
 
 extern mqo_symbol mqo_es_rx;
 
-void mqo_init_regex_subsystem( );
 mqo_regex mqo_make_regex( mqo_string pattern, const char* flagstr );
 mqo_value  mqo_match_regex( mqo_regex regex, 
                             const char* str, const char* flagstr,
                             const char** head, const char** tail );
-void mqo_show_regex( mqo_regex regex, mqo_word* ct );
 
+void mqo_init_regex_subsystem( );
 #endif

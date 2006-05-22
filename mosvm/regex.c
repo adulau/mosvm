@@ -19,13 +19,6 @@
 
 mqo_symbol mqo_es_rx;
 
-MQO_DEFN_TYPE( regex );
-
-void mqo_init_regex_subsystem( ){
-    MQO_BIND_TYPE( regex, nil );
-    mqo_es_rx = mqo_symbol_fs( "regex" );
-}
-
 int mqo_regex_error( mqo_regex regex, int code ){
     if( ! code )return 0;
 
@@ -34,10 +27,6 @@ int mqo_regex_error( mqo_regex regex, int code ){
     mqo_errf( mqo_es_rx, "s", errbuf );
 
     return code;
-}
-
-void mqo_regex_finalizer( void* regex, void* huh ){
-    regfree( & ((mqo_regex)regex)->rx );
 }
 
 mqo_regex mqo_make_regex( mqo_string pattern, const char* flagstr ){
@@ -61,8 +50,7 @@ mqo_regex mqo_make_regex( mqo_string pattern, const char* flagstr ){
         }
     }
 
-    mqo_regex regex = MQO_ALLOC( mqo_regex, 0 );
-    GC_register_finalizer( regex, mqo_regex_finalizer, NULL, NULL, NULL );
+    mqo_regex regex = MQO_OBJALLOC( regex );
     mqo_regex_error( regex, regcomp( &( regex->rx ), 
                      mqo_sf_string( pattern ), flags ) );
     return regex;
@@ -118,7 +106,19 @@ mqo_value  mqo_match_regex( mqo_regex regex,
     }
 }
 
-void mqo_show_regex( mqo_regex regex, mqo_word* ct ){
-    mqo_write( "[regex]" );
+
+void mqo_free_regex( mqo_regex regex ){
+    regfree( &( regex->rx ) );
+    mqo_objfree( regex );
+}
+
+MQO_GENERIC_TRACE( regex );
+MQO_GENERIC_COMPARE( regex );
+MQO_GENERIC_SHOW( regex );
+MQO_C_TYPE( regex );
+
+void mqo_init_regex_subsystem( ){
+    MQO_I_TYPE( regex );
+    mqo_es_rx = mqo_symbol_fs( mqo_regex_name );
 }
 

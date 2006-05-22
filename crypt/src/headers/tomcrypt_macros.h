@@ -1,8 +1,3 @@
-#ifdef __OpenBSD__
-// OpenBSD does not agree with LTC's ROLC
-#define LTC_NO_ROLC
-#endif
-
 /* fix for MSVC ...evil! */
 #ifdef _MSC_VER
 # define CONST64(n) n ## ui64

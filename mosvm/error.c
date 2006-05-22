@@ -15,171 +15,104 @@
  */
 
 #include "mosvm.h"
-#include "mosvm/prim.h"
-#include <stdlib.h>
 #include <stdarg.h>
-#include <errno.h>
 
-#define MQO_CRASH_UNLESS( cond ) (cond)||mqo_crash( NULL );
-int mqo_crash( const char* msg ){
-    mqo_newline( );
-    if( msg ){
-        mqo_write( msg );
-    }else{
-        mqo_write(
-            "A fatal error has occurred in a place that"
-            " MOSVM cannot explain."
-        );
-    };
-    mqo_newline( );
-    abort( );
-    return 0;
+void mqo_show_error( mqo_error e, mqo_word* ct ){
+    mqo_print( "[error " );
+    mqo_printsym( e->key );
+    mqo_show_list_contents( e->info, ct );
+    mqo_print( "]" );
 }
-void mqo_dump_error( mqo_error e ){
-    mqo_write( "Error: " );
-    mqo_writesym( e->key );
-    MQO_FOREACH( e->info, item ){
-        mqo_writech( ' ' );
-        mqo_word ct = 16; mqo_show( mqo_car( item ), &ct );
-    }
-    mqo_newline( );
-    MQO_FOREACH( e->context, frame ){
-        mqo_write( "       "  );
-        mqo_word ct = 16; mqo_show( mqo_car( frame ), &ct );
-        mqo_newline( );
-    }
-}
-void mqo_raise( mqo_symbol key, mqo_pair info ){
-    mqo_vector  rv = MQO_RV;
-    mqo_vector  sv = MQO_SV;
-    mqo_integer ri = MQO_RI;
-    mqo_integer si = MQO_SI;
-    mqo_pair    ep = MQO_EP;
 
-    mqo_value*  argv;
-    mqo_integer i, argc = 0;
-
-    mqo_value fn, x;
+int mqo_traceback_frame( mqo_list context  ){
+    if( context == NULL )return 0; 
     
-    mqo_pair frame;
-    mqo_pair frames = NULL;
+    if( mqo_traceback_frame( mqo_list_fv( mqo_cdr( context ) ) ) ){ 
+        mqo_indent( 11 ); 
+    }else{ 
+        mqo_print( "TRACEBACK: " ); 
+    };
+    
+    mqo_word ll = 64; mqo_show( mqo_car( context ), &ll );
+    mqo_newline( );
 
-    MQO_CRASH_UNLESS( ( ri <= 1 )||( ri > 4 ) );
+    return 1;
+}
+void mqo_traceback( mqo_error e ){
+    mqo_pair p;
 
-    while( ri > 1 ){ //Note, there's always one base RI from the executing
-                     //program.
-        frame = mqo_make_tc( );
-
-        MQO_CRASH_UNLESS( ri > 4 );
-
-        fn = mqo_vector_get( rv, --ri );
-        MQO_CRASH_UNLESS( mqo_is_function( fn ) );
-
-        x = mqo_vector_get( rv, --ri );
-        MQO_CRASH_UNLESS( mqo_is_integer( x ) );
-        argc = mqo_integer_fv( x );
-
-        mqo_tc_append( frame, fn );
-
-        if( mqo_is_closure( fn ) ){
-            if( argc ){
-                argv = mqo_vector_fv( mqo_car( ep ) )->data;
+    mqo_print( "ERROR: " );
+    mqo_printsym( e->key );
+    p = e->info;
+    if( p ){
+        mqo_value v = mqo_car( e->info );
+        if( mqo_is_string( v ) ){
+            mqo_print( " -- " );
+            mqo_printstr( mqo_string_fv( v ) );
+            mqo_newline();
+            mqo_print( "       " );
+            
+            if( mqo_is_list( mqo_cdr( p ) ) ){
+                p = mqo_list_fv( mqo_cdr( p ) );
             }else{
-                argv = NULL;
-            }
-        }else if( mqo_is_prim( fn ) ){
-            si = si - argc - 1;
-            if( argc ){
-                argv = mqo_vector_ref( sv, si );
-            }else{
-                argv = NULL;
+                p = NULL;
             }
         }else{
-            argv = NULL;
-        }
+            mqo_print( " :: " );
+        };
 
-        for( int i = 0; i < argc; i ++ ){
-            mqo_tc_append( frame, argv[i] );
-        }
+        mqo_word ct = 64; mqo_show_list_contents( p, &ct );
+    };
 
-        frames = mqo_cons( mqo_car( frame ), mqo_vf_pair( frames ) );
-        
-        x = mqo_vector_get( rv,  --ri );
-        MQO_CRASH_UNLESS( mqo_is_pair( x ) );
-        ep = mqo_pair_fv( x );
-
-        ri -= 2;
-    }
-    
-    mqo_error err = mqo_make_error( key, info, frames );
-    mqo_throw( err );
+    mqo_newline( );
+    mqo_traceback_frame( e->context );
 }
 
-void mqo_throw( mqo_error err ){
-    if( MQO_GP ){
-        mqo_guard g = mqo_guard_fv( mqo_car( MQO_GP ) );
-
-        MQO_GP = mqo_pair_fv( mqo_cdr( MQO_GP ) );
-        MQO_SI = g->si;
-        MQO_RI = g->ri;
-        MQO_CP = g->cp;
-        MQO_IP = g->ip;
-        MQO_EP = g->ep;
-
-        mqo_push_ds( mqo_vf_error( err ) );
-        mqo_push_int_ds( 1 );
-
-        mqo_call( g->fn );
-        
-        MQO_CONTINUE( );
-    }else{
-        //mqo_dump_stack( MQO_SV, MQO_SI );
-        //mqo_dump_stack( MQO_RV, MQO_RI );
-        mqo_dump_error( err );
-        MQO_IP = NULL;
-        MQO_EP = NULL;
-        MQO_SI = MQO_RI = 0;
-        MQO_HALT( );
-    }
-}
-
-mqo_error mqo_make_error( mqo_symbol key, mqo_pair info, mqo_pair context ){
-    mqo_error e = MQO_ALLOC( mqo_error, 0 );
-
+mqo_error mqo_make_error( mqo_symbol key, mqo_list info, mqo_list context ){
+    mqo_error e = MQO_OBJALLOC( error );
     e->key = key;
     e->info = info;
     e->context = context;
-
     return e;
 }
-mqo_guard mqo_make_guard( 
-    mqo_value fn, mqo_integer ri, mqo_integer si, 
-    mqo_program cp,  mqo_instruction ip, mqo_pair ep
-){
-    mqo_guard e = MQO_ALLOC( mqo_guard, 0 );
 
-    e->fn = fn;
-    e->ri = ri;
-    e->si = si;
-    e->cp = cp;
-    e->ip = ip;
-    e->ep = ep;
+mqo_list mqo_frame_context( mqo_callframe cp ){
+    mqo_pair t1 = mqo_make_tc( );
 
-    return e;
+    while( cp ){
+        mqo_tc_append( t1, mqo_vf_pair( cp->head ) );
+        cp = cp->cp;
+    }
+
+    return mqo_list_fv( mqo_car( t1 ) );
 }
-void mqo_show_error( mqo_error e, mqo_word* ct ){
-    if( ! e ){ mqo_show_unknown( mqo_error_type, 0 ); return; }
-    mqo_write( "[error " );
-    mqo_writesym( e->key );
-    mqo_show_pair_contents( e->info, ct );
-    mqo_write( "]" );
+
+void mqo_trace_error( mqo_error e ){
+    mqo_grey_obj( (mqo_object) e->key );
+    mqo_grey_obj( (mqo_object) e->info );
+    mqo_grey_obj( (mqo_object) e->context );
 }
+
+void mqo_throw_error( mqo_error e ){
+    if( MQO_GP ){
+        mqo_guard g = mqo_guard_fv( mqo_car( MQO_GP ) );
+        MQO_GP = mqo_list_fv( mqo_cdr( MQO_GP ) );
+        MQO_AP = g->ap;
+        MQO_CP = g->cp;
+        MQO_EP = g->ep;
+        MQO_IP = g->ip;
+        mqo_chainf( g->fn, 1, e );
+    }else{
+        mqo_traceback( e ); exit( 1 );
+    }
+}
+
 void mqo_errf( mqo_symbol key, const char* fmt, ... ){
     va_list ap;
     mqo_pair head = NULL;
     mqo_pair tail = NULL;
     mqo_pair item = NULL;
-    
+   
     const char* ptr = fmt;
     va_start( ap, fmt );
     for(;;){
@@ -189,43 +122,100 @@ void mqo_errf( mqo_symbol key, const char* fmt, ... ){
         case 'x':
             value = va_arg( ap, mqo_value );
             break;
-        case 's': 
-            value = mqo_vf_string( 
-                mqo_string_fs( va_arg( ap, const char* ) ) );
+        case 's':
+            value = mqo_vf_string( mqo_string_fs( va_arg( ap, const char* ) ) );
             break;
-        case 'S': 
-            value = mqo_vf_string( va_arg( ap, mqo_string ) );
-            break;
-        case 'i': 
+        case 'i':
             value = mqo_vf_integer( va_arg( ap, mqo_integer ) );
             break;
         case 0:
             goto done;
         default:
             va_end( ap );
-            mqo_errf( mqo_es_vm, "ss", 
+            mqo_errf( mqo_es_vm, "ss",
                 "mqo_errf cannot process format string", fmt );
-        }
+        };
 
-        item = mqo_cons( value, mqo_vf_empty( ) );
-        if( tail ){ 
+        item = mqo_cons( value, mqo_vf_null( ) );
+        if( tail ){
             mqo_set_cdr( tail, mqo_vf_pair( item ) );
-        }else{ 
+        }else{
             head = item;
         };
         tail = item;
     }
 done:
     va_end( ap );
-    mqo_raise( key, head );
+    mqo_throw_error( mqo_make_error( key, head, mqo_frame_context( MQO_CP ) ) );
 }
-void mqo_report_os_error( ){
-    mqo_errf( mqo_es_os, "s", strerror( errno ) );
+
+MQO_GENERIC_COMPARE( error );
+MQO_GENERIC_FREE( error );
+MQO_C_TYPE( error );
+
+mqo_guard mqo_make_guard( 
+    mqo_value fn, mqo_callframe cp, mqo_callframe ap, mqo_pair ep, 
+    mqo_instruction ip
+){
+    mqo_guard g = MQO_OBJALLOC( guard );
+
+    g->fn = fn;
+    g->ap = ap;
+    g->cp = cp;
+    g->ip = ip;
+    g->ep = ep;
+
+    return g;
 }
-int mqo_os_error( int code ){
-    if( code == -1 ){
-        mqo_report_os_error( );
-    }else{
-        return code;
-    }
+void mqo_show_guard( mqo_guard guard, mqo_word* ct ){
+    mqo_print( "[guard " );
+    mqo_show( guard->fn, ct );
+    mqo_print( "]" );
 }
+void mqo_trace_guard( mqo_guard guard ){
+    mqo_grey_val( guard->fn );
+    mqo_grey_obj( (mqo_object) guard->cp );
+    mqo_grey_obj( (mqo_object) guard->ap );
+    mqo_grey_obj( (mqo_object) guard->ep );
+    if( guard->ip )mqo_grey_obj( (mqo_object) guard->ip->proc );
+}
+MQO_GENERIC_FREE( guard );
+MQO_GENERIC_COMPARE( guard );
+MQO_C_TYPE( guard );
+
+MQO_BEGIN_PRIM( "error", error )
+    REQ_SYMBOL_ARG( key );
+    REST_ARGS( info );
+    
+    mqo_error err = mqo_make_error( key, info, 
+                                    mqo_frame_context( MQO_CP ) );
+
+    mqo_throw_error( err );
+MQO_END_PRIM( error )
+
+MQO_BEGIN_PRIM( "traceback", traceback )
+    REQ_ERROR_ARG( error );
+    NO_REST_ARGS( );
+    
+    mqo_traceback( error );
+
+    NO_RESULT( );
+MQO_END_PRIM( error )
+
+MQO_BEGIN_PRIM( "re-error", re_error )
+    REQ_ERROR_ARG( error );
+    NO_REST_ARGS( );
+    
+    mqo_throw_error( error );
+
+    NO_RESULT( );
+MQO_END_PRIM( re_error )
+
+void mqo_init_error_subsystem( ){
+    MQO_I_TYPE( error );
+    MQO_I_TYPE( guard );
+    MQO_BIND_PRIM( error );
+    MQO_BIND_PRIM( traceback );
+    MQO_BIND_PRIM( re_error );
+}
+

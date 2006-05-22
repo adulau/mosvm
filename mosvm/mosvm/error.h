@@ -19,15 +19,38 @@
 
 #include "memory.h"
 
-void mqo_raise( mqo_symbol key, mqo_pair info );
-void mqo_throw( mqo_error err );
+MQO_BEGIN_TYPE( error )
+    mqo_symbol key;
+    mqo_pair   info, context;
+MQO_END_TYPE( error )
+
+MQO_BEGIN_TYPE( guard )
+    mqo_value fn;
+    mqo_callframe ap, cp;
+    mqo_instruction ip;
+    mqo_pair ep;
+MQO_END_TYPE( guard )
+
+#define REQ_ERROR_ARG( vn ) REQ_TYPED_ARG( vn, error )
+#define ERROR_RESULT( vn ) TYPED_RESULT( vn, error )
+#define OPT_ERROR_ARG( vn ) OPT_TYPED_ARG( vn, error )
+
+#define REQ_GUARD_ARG( vn ) REQ_TYPED_ARG( vn, guard )
+#define GUARD_RESULT( vn ) TYPED_RESULT( vn, guard )
+#define OPT_GUARD_ARG( vn ) OPT_TYPED_ARG( vn, guard )
+
 void mqo_errf( mqo_symbol key, const char* fmt, ... );
-
-void mqo_report_os_error( );
-int mqo_os_error( int code );
-void mqo_dump_error( mqo_error e );
-
 void mqo_show_error( mqo_error e, mqo_word* ct );
-#define mqo_show_guard NULL;
+void mqo_traceback( mqo_error e );
+mqo_error mqo_make_error( mqo_symbol key, mqo_list info, mqo_list context );
+mqo_pair mqo_frame_context( mqo_callframe callframe );
+void mqo_throw_error( mqo_error e );
+
+mqo_guard mqo_make_guard( 
+    mqo_value fn, mqo_callframe cp, mqo_callframe ap, mqo_pair ep, 
+    mqo_instruction ip
+);
+
+void mqo_init_error_subsystem( );
 
 #endif
