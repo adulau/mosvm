@@ -41,15 +41,6 @@
   (define (more?)
     (not (tc-empty? pending)))
 
-  ;;; Note that optimizations deliberately do not optimize against the
-  ;;; 
-  (define (optimize-push)
-    (cond
-      ((not (more?)) (pass))
-      ((symbol? (next)) (rewind) (pass))
-      ((eq? (car instr) 'drop)) ; Our optimization for push;drop is do nothing
-      (else (rewind) (pass))))
-
   (define (optimize-call)
     (cond 
       ((not (more?)) (pass))
@@ -67,7 +58,6 @@
       ((not (symbol? (next))) (rewind) (pass))
       ((not (eq? instr branch)) (rewind) (pass))
       (else
-        (yield '(drop))
         (yield branch))))
 
   (define (optimize-one-jump)
@@ -87,7 +77,6 @@
          (if (symbol? instr) 
            (pass)
            (case (car instr)
-             ((ldu ldc ldf ldg ldb copy) (optimize-push))
              ((jf jt) (optimize-dead-branch))
              ((jmp) (optimize-one-jump))
              ((call) (optimize-call))

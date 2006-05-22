@@ -33,58 +33,12 @@
 
 (define *branch-index* 0)
 
-(define (req-arg args index message)
-  (if (< index (length args)) (list-ref args index)
-    (error message)))
-
-(define (opt-arg args index default)
-  (if (< index (length args)) (list-ref args index)
-    default))
-
 (define (reset-branch-index)
   (set! *branch-index* 0))
 
 (define (make-branch-symbol root) 
   (set! *branch-index* (+ *branch-index* 1))
   (string->symbol (string-append (symbol->string root) "-" (number->string *branch-index*))))
-
-(define *op-table*
-  (list (vector 'stop  0 'none)
-        (vector 'ldc   1 'value)
-        (vector 'ldg   2 'symbol)
-        (vector 'ldb   3 'env)
-        (vector 'ldf   4 'addr)
-        (vector 'stg   5 'symbol)
-        (vector 'stb   6 'env)
-        (vector 'jmp   7 'addr)
-        (vector 'jf    8 'addr) 
-        (vector 'call  9 'none)
-        (vector 'tail 10 'none) 
-        (vector 'retn 11 'none) 
-        (vector 'usen 12 'env)
-        (vector 'usea 13 'env)
-        (vector 'ldu  14 'none) 
-        (vector 'drop 15 'none)
-        (vector 'gar  16 'addr)
-        (vector 'rag  17 'none)
-        (vector 'jt   18 'addr)
-        (vector 'copy 19 'none)))
-
-(define *ops-by-name* (dict))
-(for-each (lambda (row) (dict-set! *ops-by-name* (vector-ref row 0) row))
-          *op-table*)
-
-(define *ops-by-code* (dict))
-(for-each (lambda (row) (dict-set! *ops-by-code* (vector-ref row 1) row))
-          *op-table*)
-
-(define *op-count* (length *op-table*))
-
-(define (find-op-row-by-name name)
-  (dict-ref *ops-by-name* name))
-
-(define (find-op-row-by-code code)
-  (dict-ref *ops-by-code* code))
 
 (define (unkink l)
   (cond 
@@ -134,8 +88,8 @@
           (close-input-port f)
           d)))))
 
-(export req-arg opt-arg reset-branch-index make-branch-symbol
-        find-op-row-by-name find-op-row-by-code unkink make-symbol
+(export reset-branch-index make-branch-symbol
+        unkink make-symbol
         circle symbol-starts-with? write-data 
         read-lisp-file)
 

@@ -193,44 +193,17 @@
                       ,el))))
 (set-macro! 'case 
             (lambda (expr . branches)
-              (let ((tc (make-tc))
-                    (done (make-branch-symbol 'done))
-                    (next #f))
-                (tc-append! tc `(mos ,expr))
-                (for-each (lambda (branch)
-                            (when next (tc-append! tc next))
-                            (set! next #f)
-                            (let ((test (car branch))
-                                  (body (cdr branch)))
-                              (if (eq? test 'else)
-                                (begin 
-                                  (tc-append! tc '(drop))
-                                  (tc-append! tc `(mos ,@body))
-                                  (tc-append! tc `(jmp ,done)))
-                                (let ((case-branch (make-branch-symbol 'case)))
-                                  (set! next (make-branch-symbol 'next))
-                                  (for-each (lambda (value)
-                                              (tc-append! tc '(copy)) 
-                                              (tc-append! tc `(ldc ,value))
-                                              (tc-append! tc '(ldc 2))
-                                              (tc-append! tc '(ldg eq?))
-                                              (tc-append! tc '(call))
-                                              (tc-append! tc `(jt ,case-branch)))
-                                            test)
-                                  (tc-append! tc `(jmp ,next))
-                                  (tc-append! tc case-branch)
-                                  (tc-append! tc '(drop))
-                                  (tc-append! tc `(mos ,@body))
-                                  (tc-append! tc `(jmp ,done))))))
-                          branches)
-                (when next
-                  (tc-append! tc next)
-                  (tc-append! tc '(drop))
-                  (tc-append! tc '(ldu)))
-                (tc-append! tc done)
-                `(asm ,@(tc->list tc)))))
+               (define var (make-branch-symbol 'key))
+               `(let ((,var ,expr))
+                  (cond
+                    ,@(for-each (lambda (branch)
+                                  (if (eq? (car branch) 'else)
+                                    branch
+                                    `((memq ,var (quote ,(car branch)))
+                                      ,@(cdr branch))))
+                                branches)))))
+
 (set-macro! 'cond (lambda clauses 
-                    ;TODO: Should raise an error if there is rest with else.
                     (if (null? clauses) 
                       #f
                       (let ((clause (car clauses))
@@ -240,10 +213,13 @@
                           `(if ,(car clause)
                              (begin ,@(cdr clause))
                              (cond ,@rest)))))))
+
 (set-macro! 'when 
             (lambda (test . rest)   `(if ,test (begin ,@rest))))
+
 (set-macro! 'unless 
             (lambda (test . rest) `(if ,test (begin) (begin ,@rest))))
+
 (set-macro! 'while (lambda (test . rest)  
                      (let ((enter (make-branch-symbol 'enter))
                            (exit  (make-branch-symbol 'exit)))
@@ -251,7 +227,6 @@
                              ,enter
                              (mos ,test) 
                              (jf ,exit) 
-                             (drop)
                              (mos ,@rest)
                              (jmp ,enter)
                              ,exit))))
@@ -263,109 +238,67 @@
                       ,enter
                       (mos ,test) 
                       (jt ,exit) 
-                      (drop)
                       (mos ,@rest)
                       (jmp ,enter)
                       ,exit))))
+
+(set-macro! 'forever
+            (lambda (test . rest)  
+              (let ((enter (make-branch-symbol 'enter))
+                    (exit  (make-branch-symbol 'exit)))
+                `(asm (ldc #f)
+                      ,more
+                      (mos ,test) 
+                      (jmp ,more)))))
+
 (set-macro! 'or (lambda (test . rest)  
                   (if (null? rest)
                     test
                     (let ((done (make-branch-symbol 'done)))
                       `(asm (mos ,test)
-                            (copy)
                             (jt ,done)
-                            (drop)
                             (mos (or ,@rest))
                             ,done)))))
+
 (set-macro! 'and (lambda (test . rest)  
                    (if (null? rest)
                      test
                      (let ((done (make-branch-symbol 'done)))
                        `(asm (mos ,test)
-                             (copy)
                              (jf ,done)
-                             (drop)
                              (mos (and ,@rest))
                              ,done)))))
 
+(set-macro! 'if (lambda (test t-expr . rest)
+                  (define f-expr 
+                    (case (length rest)
+                      ((0) '(begin))
+                      ((1) (car rest))
+                      (else 
+                        (error "if only accepts a test, and two branches."))))
+                  (define done-branch (make-branch-symbol 'done))
+                  (define false-branch (make-branch-symbol 'false))
+                  `(asm (mos ,test)
+                        (jf ,false-branch)
+                        (mos ,t-expr)
+                        ,false-branch
+                        (jmp ,done-branch)
+                        ,done-branch)))
+
+(set-macro! 'return (lambda (expr)
+                      `(asm (mos ,expr)
+                            (retn))))
+
+(set-macro! 'quote (lambda (value)
+                     `(asm (ldc ,value))))
+
+(set-macro! 'begin (lambda stmts
+                     `(asm (mos ,@stmts))))
+
+; (set-macro! 'quasiquote ...)
+
 (define *mosvm-specials*
   (list
-    (cons 'quasiquote
-      (lambda (block env terms)
-        (define temps '())
-        (define (add-temp sym)
-          (let ((r (make-branch-symbol sym)))
-            (set! temps (cons (cons sym r)
-                              temps))
-            r))
-        (define (get-temp sym) (let ((r (assq sym temps)))
-                                 (if r (cdr r)
-                                   (add-temp sym))))
-        (define (inner-qq terms)
-          (unless (or (pair? terms) (null? terms))
-            (error 'compile 
-                   "quasiquote requires a list argument for its template"
-                   terms))
-          ;Emit a call to make-tc
-          (block-append! block '(ldc 0))
-          (block-append! block '(ldg make-tc))
-          (block-append! block '(call))
-          ;For each term:
-          (for-each (lambda (term)
-                      (cond 
-                        ;If the term isn't a pair:
-                        ((and (symbol? term) (symbol-starts-with? term 37))
-                         (block-append! block (list 'ldc (get-temp term)))
-                         (block-append! block '(ldc 2))
-                         (block-append! block '(ldg tc-append!))
-                         (block-append! block '(call)))
-
-                        ((or (null? term) (not (pair? term)))
-                         ;Emit an LDC, followed by a call to tc-append!    
-                         (block-append! block (list 'ldc term))
-                         (block-append! block '(ldc 2))
-                         (block-append! block '(ldg tc-append!))
-                         (block-append! block '(call)))
-
-                        ;Or, if the start of the term is UNQUOTE:
-                        ((eq? (car term) 'unquote)
-                         ;Compile the unquoted expression, call tc-append!
-                         (unless (= (length term) 2)
-                           (error 'compile
-                                  "unquote requires one argument" term))
-                         (compile-expr block (cadr term) env)
-                         (block-append! block '(ldc 2))
-                         (block-append! block '(ldg tc-append!))
-                         (block-append! block '(call)))
-
-                        ;Or, if the start of the term is UNQUOTE-SPLICING:
-                        ((eq? (car term) 'unquote-splicing)
-                         ;Compile the unquoted expression, call tc-splice!
-                         (unless (= (length term) 2)
-                           (error 'compile 
-                                  "unquote-splice requires one argument" 
-                                  term))
-                         (compile-expr block (cadr term) env)
-                         (block-append! block '(ldc 2))
-                         (block-append! block '(ldg tc-splice!))
-                         (block-append! block '(call)))
-
-                        ;Otherwise:
-                        (else
-                          ;Begin a new instance of QQ-LIST
-                          ;Emit an LDC, followed by a call to tc-append!
-                          (inner-qq term)
-                          (block-append! block '(ldc 2))
-                          (block-append! block '(ldg tc-append!))
-                          (block-append! block '(call)))))
-                    terms)
-          ;Emit a call to tc->list!
-          (block-append! block '(ldc 1))
-          (block-append! block '(ldg tc->list))
-          (block-append! block '(call)))
-        (inner-qq terms)))
-    (cons 'quote (lambda (block env value) 
-                   (block-append! block `(ldc ,value))))
     (cons 'asm (lambda (block env . stmts)
                  (for-each 
                    (lambda (stmt) 
@@ -373,24 +306,6 @@
                        (compile-block block (cdr stmt) env)
                        (block-append! block stmt)))
                    stmts)))
-    (cons 'begin (lambda (block env . stmts)
-                   (compile-block block stmts env)))
-    (cons 'if (lambda (block env test t-expr . rest)
-                (define f-expr 
-                  (case (length rest)
-                    ((0) '(begin))
-                    ((1) (car rest))
-                    (else 
-                      (error "if only accepts a test, and two branches."))))
-                (let ((done-branch (make-branch-symbol 'done))
-                      (false-branch (make-branch-symbol 'false)))
-                  (compile-expr block test env)
-                  (block-append! block (list 'jf false-branch))
-                  (compile-expr block t-expr env)
-                  (block-append! block (list 'jmp done-branch))
-                  (block-append! block false-branch)
-                  (compile-expr block f-expr env)
-                  (block-append! block done-branch))))
     (cons 'let (lambda (block env defns . body)
                  (let ((n-env (make-virtual-context env (map car defns))))
                    (for-each 
@@ -631,11 +546,9 @@
 (define (compile-block block code env)
   ;; This will produce an extra ldu/drop at the beginning of any non-null
   ;; block, but the optimizer will detect and remove it.
-  (block-append! block '(ldu))
   (set! code (compile-macros code env))
   (set! code (compile-defines code env))
   (until (null? code)
-    (block-append! block '(drop))
     (compile-expr block (car code) env)
     (set! code (cdr code))))
 
@@ -717,7 +630,7 @@
                                   (context-slot-count env))))
     (block-prepend! inner label)
 
-    (block-append! outer (list 'ldf label))))
+    (block-append! outer (list 'clos label))))
 
 (define (compile-load block sym env) 
   ;TODO Test for is-imported?

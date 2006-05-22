@@ -19,9 +19,7 @@
 
 (import "lib/lib")
 (import "lib/compile")
-(import "lib/assemble")
 (import "lib/optimize")
-(import "lib/freeze")
 (import "lib/eval")
 
 (define (mosc module)
