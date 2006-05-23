@@ -35,5 +35,6 @@ mqo_value  mqo_parse_value( char** r_str, mqo_boolean* r_succ );
 mqo_list mqo_parse_document( char* doc, mqo_boolean* r_succ );
 
 extern const char* mqo_parse_errmsg;
+void mqo_init_parse_subsystem( );
 
 #endif

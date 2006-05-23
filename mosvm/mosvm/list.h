@@ -45,7 +45,7 @@ static inline mqo_list mqo_req_list( mqo_value v ){
 
 #define mqo_vf_list mqo_vf_pair
 #define REQ_LIST_ARG( vn ) REQ_TYPED_ARG( vn, list )
-#define LIST_RESULT( vn ) TYPED_RESULT( vn, list )
+#define LIST_RESULT( vn ) TYPED_RESULT( list, vn )
 #define OPT_CLOSURE_ARG( vn ) OPT_TYPED_ARG( vn, closure )
 
 static inline mqo_value mqo_car( mqo_pair pair ){ 
@@ -82,4 +82,5 @@ void mqo_show_pair( mqo_pair x, mqo_word* c );
 void mqo_init_list_subsystem( );
 mqo_integer mqo_list_length( mqo_list p );
 
+mqo_pair mqo_listf( mqo_integer ct, ... );
 #endif

@@ -289,14 +289,55 @@
                       `(asm (mos ,expr)
                             (retn))))
 
-(set-macro! 'quote (lambda (value)
-                     `(asm (ldc ,value))))
-
 (set-macro! 'begin (lambda stmts
                      `(asm (mos ,@stmts))))
 
-; (set-macro! 'quasiquote ...)
+(set-macro! 'quote (lambda (value)
+                     `(asm (ldc ,value))))
 
+(set-macro! 'quasiquote (lambda (form)
+                         (define temps '())
+
+                         (define (is-temp? x)
+                           (and (symbol? x)
+                                (symbol-starts-with? x 37)))
+
+                         (define (add-temp sym)
+                           (let ((temp (make-branch-symbol sym)))
+                             (set! temps (cons (cons sym temp) temps))
+                             temp))
+
+                         (define (find-temp sym)
+                           (define p (assq sym temps))
+                           (if p (cdr p) #f))
+                           
+                         (define (parse-temp sym)
+                           (or  (find-temp sym) 
+                                (add-temp sym)))
+                                             
+                         (define (parse-imm form)
+                           (car form))
+                          
+                         (define (parse-qq-term form)
+                           (cond ((is-temp? form)      
+                                    (list 'quote (parse-temp form)))
+                                 ((not (pair? form))   
+                                    (list 'quote form))
+                                 ((eq? (car form) 'unquote)  
+                                    (parse-imm (cdr form)))
+                                 (else                
+                                    (parse-qq form))))
+                                 
+                         (define (parse-qq form)
+                           (cons 'list (map parse-qq-term form)))
+                         
+                         (define f #f)
+                         (set! f (parse-qq form))
+                         (write f)(newline)
+                         f))
+                         ;;(parse-qq form)))
+                    
+  
 (define *mosvm-specials*
   (list
     (cons 'asm (lambda (block env . stmts)
@@ -665,8 +706,14 @@
 
 (define (compile-call block env expr) 
   (block-append! block '(newf))
-  (for-each (lambda (term) (compile-expr block term env)
-                           (block-append! block '(arg)))
+  (for-each (lambda (term) (if (and (pair? term)
+                                    (eq? (car term) 'scatter))
+                             (begin
+                               (compile-expr block (cadr term) env)
+                               (block-append! block '(scat)))
+                             (begin
+                               (compile-expr block term env)
+                               (block-append! block '(arg)))))
             expr)
   (block-append! block '(call)))
 

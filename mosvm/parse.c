@@ -105,39 +105,26 @@ mqo_integer mqo_parse_int( char** r_str, mqo_boolean* r_succ ){
     }
 }
 
-const char* sym_lead_chars = "*<>=!";
-
 mqo_symbol mqo_parse_sym( char** r_str, mqo_boolean* r_succ ){
     char* str = *r_str;
     char* sym = str;
     
     char ch = *str;
-
+    int any = 0;
     // Only alphabetics and *<>=! lead multi-character symbols.  Everything
     // else is treated like a special operator, like "'", "`", ",", "#", 
     // or "@" 
 
-    if(!( isalpha( ch ) || strchr( sym_lead_chars, ch ) )){
-        if( isprint( ch ) ){
-            (*r_str)++;
-            *r_succ = 1;
-            return mqo_symbol_fm( sym, 1 );
-        }else{
-            mqo_parse_errmsg = mqo_em_noprint;
-            *r_succ = 0; 
-            return NULL;
-        }
-    }
-
     for(;;){
         ch = *str;
-        if( isspace( ch ) || (ch == '.') || (ch == ')') || 
-            ( ! isprint( ch ) ) ) break;
+        if( isspace( ch )||(ch == '.')||(ch == ')')||( ! isprint( ch ))) break;
+        any = 1;
         str ++;
     }
-    *r_succ = 1;
+
+    *r_succ = any;
     *r_str = str;
-    return mqo_symbol_fm( sym, str - sym );
+    return any ? mqo_symbol_fm( sym, str - sym ) : NULL;
 }
 
 mqo_string mqo_parse_str( char** r_str, mqo_boolean* r_succ ){
@@ -275,6 +262,11 @@ fail:
     return NULL;
 }
 
+mqo_symbol mqo_sym_splice = NULL;
+mqo_symbol mqo_sym_quote = NULL;
+mqo_symbol mqo_sym_unquote = NULL;
+mqo_symbol mqo_sym_quasiquote = NULL;
+
 mqo_value mqo_parse_value( char** r_str, mqo_boolean* r_succ ){
     char* str = mqo_skip_space( *r_str );
     char ch = *str;
@@ -285,6 +277,22 @@ mqo_value mqo_parse_value( char** r_str, mqo_boolean* r_succ ){
         mqo_parse_errmsg = mqo_em_more;
     }else if( isdigit( ch )  || ch == '$' ){
         x = mqo_vf_integer( mqo_parse_int( &str, r_succ ) );
+    }else if( ch == '@' ){
+        str ++;
+        x = mqo_vf_pair( mqo_listf( 2, mqo_sym_splice,
+                                       mqo_parse_value( &str, r_succ ) ) );
+    }else if( ch == '`' ){
+        str ++;
+        x = mqo_vf_pair( mqo_listf( 2, mqo_sym_quasiquote,
+                                       mqo_parse_value( &str, r_succ ) ) );
+    }else if( ch == ',' ){
+        str ++;
+        x = mqo_vf_pair( mqo_listf( 2, mqo_sym_unquote,
+                                       mqo_parse_value( &str, r_succ ) ) );
+    }else if( ch == '\'' ){
+        str ++;
+        x = mqo_vf_pair( mqo_listf( 2, mqo_sym_quote,
+                                       mqo_parse_value( &str, r_succ ) ) );
     }else if( ch == '-'|| ch == '+' ){
         if( isdigit( *( str + 1 ) ) ){
             x = mqo_vf_integer( mqo_parse_int( &str, r_succ ) );
@@ -330,4 +338,11 @@ succ:
 fail:
     *r_succ = 0;
     return NULL;
+}
+
+void mqo_init_parse_subsystem( ){
+    mqo_sym_splice = mqo_symbol_fs( "splice" );
+    mqo_sym_quote = mqo_symbol_fs( "quote" );
+    mqo_sym_unquote = mqo_symbol_fs( "unquote" );
+    mqo_sym_quasiquote = mqo_symbol_fs( "quasiquote" );
 }

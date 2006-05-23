@@ -15,6 +15,7 @@
  */
 
 #include "mosvm.h"
+#include <stdarg.h>
 
 mqo_pair mqo_make_pair( ){
     return MQO_OBJALLOC( pair );
@@ -104,6 +105,29 @@ void mqo_show_list_contents( mqo_pair p, mqo_word* ct ){
         }
     }
 }
+mqo_pair mqo_listf( mqo_integer ct, ... ){
+    va_list ap;
+    mqo_pair head = NULL;
+    mqo_pair tail = NULL;
+    mqo_pair item = NULL;
+
+    va_start( ap, ct );
+    while( ct -- ){
+        mqo_value value = va_arg( ap, mqo_value );
+                
+        item = mqo_cons( value, mqo_vf_null( ) );
+
+        if( tail ){
+            mqo_set_cdr( tail, mqo_vf_pair( item ) );
+        }else{
+            head = item;
+        };
+        tail = item;
+    }
+done:
+    va_end( ap );
+    return head;
+}
 
 void mqo_show_pair( mqo_pair p, mqo_word* ct ){
     mqo_print( "(" );
@@ -115,6 +139,13 @@ MQO_GENERIC_FREE( pair );
 MQO_GENERIC_COMPARE( pair );
 MQO_C_TYPE( pair );
 
+// A very complicated and sophisticated primitive..
+MQO_BEGIN_PRIM( "list", list )
+    REST_ARGS( items )
+    LIST_RESULT( items )
+MQO_END_PRIM( list )
+
 void mqo_init_list_subsystem( ){
     MQO_I_TYPE( pair );
+    MQO_BIND_PRIM( list );
 }
