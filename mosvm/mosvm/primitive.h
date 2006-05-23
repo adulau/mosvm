@@ -42,6 +42,7 @@ mqo_primitive mqo_make_primitive( const char* name, mqo_prim_fn impl );
 void mqo_bind_primitive( const char* name, mqo_prim_fn impl );
 
 extern mqo_pair mqo_arg_ptr;
+extern mqo_integer mqo_arg_ct;
 
 #define MQO_BIND_PRIM( pn ) \
     mqo_bind_primitive( mqo_prim_##pn##_name, mqo_prim_##pn );

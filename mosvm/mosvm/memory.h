@@ -98,7 +98,7 @@ typedef int mqo_boolean;
 
 #define TYPED_RESULT( tn, x ) RESULT( mqo_vf_##tn( x ) );
 #define NO_RESULT( ) RESULT( mqo_vf_null() );
-#define RESULT( x )  MQO_RX = (x); return;
+#define RESULT( x )  { MQO_RX = (x); return; }
 
 #define MQO_C_TP2( tn, ts ) \
     const char* mqo_##tn##_name = ts; \

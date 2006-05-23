@@ -151,6 +151,7 @@ void mqo_instr_scat( ){
 void mqo_jump( ){
     mqo_value fn = mqo_car( MQO_CP->head );
     mqo_pair  args = mqo_list_fv( mqo_cdr( MQO_CP->head ) );
+    mqo_integer ct = MQO_CP->count;
 
     fn = mqo_reduce_fn( fn, args );
     
@@ -162,6 +163,7 @@ void mqo_jump( ){
     }else if( mqo_is_primitive( fn ) ){
         mqo_next_instr( );
         mqo_arg_ptr = args;
+        mqo_arg_ct = ct;
         MQO_AP = MQO_CP->ap;
         MQO_CP = MQO_CP->cp;
         mqo_primitive_fv( fn )->impl();

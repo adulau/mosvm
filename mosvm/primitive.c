@@ -38,6 +38,7 @@ void mqo_show_primitive( mqo_primitive prim, mqo_word* ct ){
 }
 
 mqo_pair mqo_arg_ptr = NULL;
+mqo_integer mqo_arg_ct = NULL;
 
 void mqo_no_more_args( ){
     if( mqo_arg_ptr != NULL ){
