@@ -333,17 +333,17 @@
                          
                          (parse-qq form)))
                     
-(define 'apply (lambda (fn . terms)
-                 (define tc (make-tc))
-                 (tc-append! tc fn)
-                 (until (null? terms)
-                    (let ((term (car terms)))
-                      (set! terms (cdr terms))
-                      (tc-append! tc 
-                                  (if (null? terms)
-                                    (list 'scatter term)
-                                    term))))
-                 (tc->list terms)))
+(set-macro! 'apply (lambda (fn . terms)
+                     (define tc (make-tc))
+                     (tc-append! tc fn)
+                     (until (null? terms)
+                            (let ((term (car terms)))
+                              (set! terms (cdr terms))
+                              (tc-append! tc 
+                                          (if (null? terms)
+                                            (list 'scatter term)
+                                            term))))
+                     (tc->list terms)))
 
 (define *mosvm-specials*
   (list
