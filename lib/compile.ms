@@ -196,12 +196,12 @@
                (define var (make-branch-symbol 'key))
                `(let ((,var ,expr))
                   (cond
-                    ,@(for-each (lambda (branch)
-                                  (if (eq? (car branch) 'else)
-                                    branch
-                                    `((memq ,var (quote ,(car branch)))
-                                      ,@(cdr branch))))
-                                branches)))))
+                    ,@(map (lambda (branch)
+                             (if (eq? (car branch) 'else)
+                               branch
+                               `((memq ,var (quote ,(car branch)))
+                                 ,@(cdr branch))))
+                           branches)))))
 
 (set-macro! 'cond (lambda clauses 
                     (if (null? clauses) 
@@ -331,11 +331,7 @@
                          (define (parse-qq form)
                            (cons 'list (map parse-qq-term form)))
                          
-                         (define f #f)
-                         (set! f (parse-qq form))
-                         (write f)(newline)
-                         f))
-                         ;;(parse-qq form)))
+                         (parse-qq form)))
                     
   
 (define *mosvm-specials*
@@ -358,8 +354,7 @@
                        defns)
                    (compile-block block body n-env))))
     (cons 'set!  (lambda (block env . expr)
-                   (compile-store block expr env)
-                   (block-append! block '(ldu))))
+                   (compile-store block expr env)))
     (cons 'lambda (lambda (block env formals . body)
                     (compile-function block
                                       (parse-formals formals)
@@ -585,8 +580,6 @@
       (scheme-program->list program))))
 
 (define (compile-block block code env)
-  ;; This will produce an extra ldu/drop at the beginning of any non-null
-  ;; block, but the optimizer will detect and remove it.
   (set! code (compile-macros code env))
   (set! code (compile-defines code env))
   (until (null? code)

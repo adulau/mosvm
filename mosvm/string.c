@@ -174,7 +174,7 @@ void mqo_string_expand( mqo_string string, mqo_integer count ){
         mqo_integer new_capacity = string->capacity << 1 - space + 1;
         mqo_compact_string( string );
 
-        string->pool = realloc( string->pool, new_capacity );
+        string->pool = realloc( string->pool, new_capacity + 1 );
         string->capacity = new_capacity;
     }
 }
