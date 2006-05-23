@@ -248,15 +248,15 @@ mqo_string mqo_freeze( mqo_value root ){
     mqo_value item;
 
     void write_ii( mqo_string buf, mqo_word x ){
-        mqo_string_write_word( buf, x | 0x8000 );
+        mqo_string_append_word( buf, x | 0x8000 );
     }
     void write_value( mqo_string buf, mqo_value v ){
         if( mqo_is_null( v ) ){
-            return mqo_string_write_word( buf, 0x7FFF );
+            return mqo_string_append_word( buf, 0x7FFF );
         }else if( mqo_is_true( v ) ){
-            return mqo_string_write_word( buf, 0x7FFC );
+            return mqo_string_append_word( buf, 0x7FFC );
         }else if( mqo_is_false( v ) ){
-            return mqo_string_write_word( buf, 0x7FFD );
+            return mqo_string_append_word( buf, 0x7FFD );
         }else if( mqo_is_integer( v ) ){
             int x = mqo_integer_fv( v );
             if(( x >= 0 ) && ( x < 0x8000 )){
@@ -264,7 +264,7 @@ mqo_string mqo_freeze( mqo_value root ){
             }
         };
 
-        mqo_string_write_word( buf, mqo_integer_fv( 
+        mqo_string_append_word( buf, mqo_integer_fv( 
             mqo_cdr( mqo_pair_fv( mqo_tree_lookup( index, v )->data ) )
         ) );
     }
@@ -274,17 +274,17 @@ mqo_string mqo_freeze( mqo_value root ){
     if( inlineq( root ) ){ 
         write_value( pkg, root ); 
     }else{
-        mqo_string_write_word( pkg, item_ct );
+        mqo_string_append_word( pkg, item_ct );
 
         for( i = 0; i < item_ct; i ++ ){
             item = mqo_car( items );
             items = mqo_list_fv( mqo_cdr( items ) );
             if( mqo_is_integer( item ) ){
-                mqo_string_write_byte( pkg, PKG_IOBJ );
-                mqo_string_write_quad( pkg, mqo_integer_fv( item ) );
+                mqo_string_append_byte( pkg, PKG_IOBJ );
+                mqo_string_append_quad( pkg, mqo_integer_fv( item ) );
             }else if( mqo_is_pair( item ) ){
                 //TODO: Detect Lists.
-                mqo_string_write_byte( pkg, PKG_PAIR );
+                mqo_string_append_byte( pkg, PKG_PAIR );
                 write_value( pkg, mqo_car( mqo_pair_fv( item ) ) );
                 write_value( pkg, mqo_cdr( mqo_pair_fv( item ) ) );
             }else if( mqo_is_procedure( item ) ){ 
@@ -293,25 +293,25 @@ mqo_string mqo_freeze( mqo_value root ){
                 int j, m = proc->length;
                 for( j = 0; j < m; j ++ ){
                     mqo_primitive prim = proc->inst[j].prim;
-                    mqo_string_write_byte( field, prim->code );
+                    mqo_string_append_byte( field, prim->code );
                     if( prim->a ) write_value( field, proc->inst[j].a );
                     if( prim->b ) write_value( field, proc->inst[j].b );
                 }
-                mqo_string_write_byte( pkg, PKG_PROC );
-                mqo_string_write_word( pkg, mqo_string_length( field ) );
-                mqo_string_write( pkg, mqo_string_head( field ), 
+                mqo_string_append_byte( pkg, PKG_PROC );
+                mqo_string_append_word( pkg, mqo_string_length( field ) );
+                mqo_string_append( pkg, mqo_string_head( field ), 
                                        mqo_string_length( field ) );
             }else if( mqo_is_string( item ) ){
-                mqo_string_write_byte( pkg, PKG_STR );
+                mqo_string_append_byte( pkg, PKG_STR );
                 mqo_string s = mqo_string_fv( item );
-                mqo_string_write_word( pkg, mqo_string_length( s ) );
-                mqo_string_write( pkg, 
+                mqo_string_append_word( pkg, mqo_string_length( s ) );
+                mqo_string_append( pkg, 
                                   mqo_sf_string( s ), mqo_string_length( s ) );
             }else if( mqo_is_symbol( item ) ){
-                mqo_string_write_byte( pkg, PKG_SYM );
+                mqo_string_append_byte( pkg, PKG_SYM );
                 mqo_string s = mqo_symbol_fv( item )->string;
-                mqo_string_write_word( pkg, mqo_string_length( s ) );
-                mqo_string_write( pkg, 
+                mqo_string_append_word( pkg, mqo_string_length( s ) );
+                mqo_string_append( pkg, 
                                   mqo_sf_string( s ), mqo_string_length( s ) );
             }
         }

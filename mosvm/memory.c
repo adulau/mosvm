@@ -188,6 +188,25 @@ void mqo_root_object( mqo_object obj ){
     mqo_unpool_obj( obj );
 }
 
+mqo_type mqo_make_type( mqo_value name, mqo_type parent, mqo_value info ){
+    mqo_type direct, type = MQO_OBJALLOC( type );
+
+    if(! parent ){
+        direct = NULL;
+    }else if(! parent->direct ){
+        direct = parent;
+    }else{
+        direct = parent->direct;
+    }
+
+    type->direct = direct;
+    type->name = name;
+    type->parent = parent;
+    type->info = info;
+
+    return type;
+}
+
 void mqo_trace_type( mqo_type type ){
     mqo_grey_obj( (mqo_object) type->parent );
     mqo_grey_obj( (mqo_object) type->direct );
@@ -336,3 +355,7 @@ mqo_value mqo_opt_arg( mqo_type type, mqo_boolean* found ){
     }
 }
 
+mqo_type mqo_direct_type( mqo_value value ){
+    mqo_type type = mqo_value_type( value );
+    return type->direct ? type->direct : type;
+}

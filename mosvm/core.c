@@ -14,8 +14,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */ 
 
-#include "../mosvm.h"
-#include "../mosvm/prim.h"
+#include "mosvm.h"
+
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
@@ -24,76 +24,69 @@
 #ifndef _WIN32
 #include <arpa/inet.h>
 #endif
+
 MQO_BEGIN_PRIM( "string->integer", string_to_integer )
     REQ_STRING_ARG( string )
     NO_REST_ARGS( )
     
-    const char* hd = mqo_sf_string( string );
-    const char* pt = hd;
+    char* hd = mqo_sf_string( string );
+    char* pt = hd;
+    int ok = 0;
 
-    mqo_integer i = mqo_parse_integer( &pt );
-    if( ( pt - hd )!= mqo_string_length( string ) ){
+    mqo_integer i = mqo_parse_int( &pt, &ok );
+
+    if( ! ok ){
+        mqo_errf( mqo_es_vm, "s", "could not parse integer" );
+    }else if( ( pt - hd ) != mqo_string_length( string ) ){
         mqo_errf( mqo_es_vm, "ss", "garbage trails integer", hd );
     }
     RESULT( mqo_vf_integer( i ) );
 MQO_END_PRIM( string_to_integer )
 
 MQO_BEGIN_PRIM( "cadr", cadr )
-    REQ_LIST_ARG( list )
+    REQ_PAIR_ARG( pair )
     NO_REST_ARGS( )
     
-    list = mqo_req_list( mqo_cdr( list ), "list" );
+    pair = mqo_req_pair( mqo_cdr( pair ) );
 
-    RESULT( mqo_car(  list ) );
+    RESULT( mqo_car( pair ) );
 MQO_END_PRIM( cadr );
 
 MQO_BEGIN_PRIM( "reverse", reverse )
-    REQ_PAIR_ARG( pair );
+    REQ_LIST_ARG( pair );
     NO_REST_ARGS( )
     
     mqo_pair ep = NULL;
-    mqo_pair next;
     while( pair ){
-        ep = mqo_cons( mqo_car( pair ), mqo_vf_pair( ep ) );
-        pair = mqo_req_pair( mqo_cdr( pair ), "pair-cdr" );
+        ep = mqo_cons( mqo_car( pair ), mqo_vf_list( ep ) );
+        pair = mqo_req_pair( mqo_cdr( pair ) );
     }
-    RESULT( mqo_vf_pair( ep ) );
+    RESULT( mqo_vf_list( ep ) );
 MQO_END_PRIM( reverse );
 
 MQO_BEGIN_PRIM( "reverse!", reversed )
-    REQ_PAIR_ARG( pair );
+    REQ_LIST_ARG( pair );
     NO_REST_ARGS( )
     
     mqo_pair ep = NULL;
     mqo_pair next;
     while( pair ){
-        next = mqo_req_pair( mqo_cdr( pair ), "pair-cdr" );
+        next = mqo_req_list( mqo_cdr( pair ) );
         mqo_set_cdr( pair, mqo_vf_pair( ep ) );
         ep = pair;
         pair = next;
     }
-    RESULT( mqo_vf_pair( ep ) );
+    RESULT( mqo_vf_list( ep ) );
 MQO_END_PRIM( reversed );
 
 MQO_BEGIN_PRIM( "caddr", caddr )
     REQ_PAIR_ARG( pair )
     NO_REST_ARGS( )
     
-    v_pair = mqo_cdr( pair );
-    if(! mqo_is_pair( v_pair ) ){
-        mqo_errf( mqo_es_vm, "sx", "expected pair", v_pair );
-    };
-    if( mqo_is_empty( v_pair ) ){
-        mqo_errf( mqo_es_vm, "sx", "expected non-empty", v_pair );
-    };
-    v_pair = mqo_cdr( mqo_pair_fv( v_pair ) );
-    if(! mqo_is_pair( v_pair ) ){
-        mqo_errf( mqo_es_vm, "sx", "expected pair", v_pair );
-    };
-    if( mqo_is_empty( v_pair ) ){
-        mqo_errf( mqo_es_vm, "sx", "expected non-empty", v_pair );
-    };
-    RESULT( mqo_car( mqo_pair_fv( v_pair ) ) );
+    pair = mqo_req_pair( mqo_cdr( pair ) );
+    pair = mqo_req_pair( mqo_cdr( pair ) );
+
+    RESULT( mqo_car( pair ) );
 MQO_END_PRIM( caddr );
 
 MQO_BEGIN_PRIM( "equal?", equalq )
@@ -147,9 +140,9 @@ MQO_BEGIN_PRIM( "list-ref", list_ref )
     NO_REST_ARGS( );
 
     while( list && index > 0 ){
-        index --; list = mqo_req_list( mqo_cdr( list ), "list" );
+        index --; list = mqo_req_list( mqo_cdr( list ));
     }
-    if( list == NULL )mqo_errf( mqo_es_vm, "sx", "index past end of list", v_list );
+    if( list == NULL )mqo_errf( mqo_es_vm, "s", "index past end of list" );
     RESULT( mqo_car( list ) );
 MQO_END_PRIM( list_ref )
 
@@ -268,8 +261,8 @@ MQO_BEGIN_PRIM( "make-vector", make_vector )
     OPT_ANY_ARG( init );
     NO_REST_ARGS( );
     
-    if( length < 0 )mqo_errf( mqo_es_vm, "sx", "expected non-negative",
-                                v_length );
+    if( length < 0 )mqo_errf( mqo_es_vm, "si", "expected non-negative",
+                                length );
 
     mqo_vector v = mqo_make_vector( length );
 
@@ -366,7 +359,7 @@ MQO_END_PRIM( pairq )
 MQO_BEGIN_PRIM( "null?", nullq )
     REQ_ANY_ARG( v );
     NO_REST_ARGS( );
-    RESULT( mqo_vf_boolean( ( mqo_is_empty( v ) ) ) );
+    RESULT( mqo_vf_boolean( ( mqo_is_null( v ) ) ) );
 MQO_END_PRIM( nullq )
 
 MQO_BEGIN_PRIM( "cons", cons )
@@ -558,7 +551,7 @@ MQO_BEGIN_PRIM( "<", m_lt )
     RESULT( mqo_vf_true( ) );
 MQO_END_PRIM( m_lt )
 
-MQO_BEGIN_PRIM( ">", m_lt )
+MQO_BEGIN_PRIM( ">", m_gt )
     REQ_INTEGER_ARG( v0 );
    
     for(;;){
@@ -569,7 +562,7 @@ MQO_BEGIN_PRIM( ">", m_lt )
     };
 
     RESULT( mqo_vf_true( ) );
-MQO_END_PRIM( m_lt )
+MQO_END_PRIM( m_gt )
 
 MQO_BEGIN_PRIM( "<=", m_lte )
     REQ_INTEGER_ARG( v0 );
@@ -582,7 +575,7 @@ MQO_BEGIN_PRIM( "<=", m_lte )
     };
 
     RESULT( mqo_vf_true( ) );
-MQO_END_PRIM( m_lt )
+MQO_END_PRIM( m_lte )
 
 MQO_BEGIN_PRIM( ">=", m_gte )
     REQ_INTEGER_ARG( v0 );
@@ -614,7 +607,7 @@ MQO_BEGIN_PRIM( "string=?", string_eqq )
     REQ_STRING_ARG( s0 );
     
     for(;;){
-        OPT_INTEGER_ARG( sN );
+        OPT_STRING_ARG( sN );
         if( ! has_sN )break;
         if( mqo_string_compare( s0, sN ) ){ RESULT( mqo_vf_false( ) ); };
     };
@@ -632,18 +625,7 @@ MQO_END_PRIM( vectorq )
 MQO_BEGIN_PRIM( "length", length )
     REQ_LIST_ARG( pair );
     NO_REST_ARGS( );
-    ai = 0;
-    while( pair ){
-        ai++;
-        v_pair = mqo_cdr( pair );
-        if( mqo_is_pair( v_pair ) ){
-            pair = mqo_pair_fv( v_pair );
-        }else{
-            goto done;
-        }
-    }
-done:
-    RESULT( mqo_vf_integer( ai )  );
+    INTEGER_RESULT( mqo_list_length( pair ) );
 MQO_END_PRIM( length )
 
 MQO_BEGIN_PRIM( "error?", errorq )
@@ -679,9 +661,9 @@ MQO_BEGIN_PRIM( "map-car", map_car )
     NO_REST_ARGS( );
     mqo_tc tc = mqo_make_tc();
     while( src ){
-        mqo_pair p = mqo_req_pair( src );
-        mqo_tc_append( tc, mqo_car( mqo_pair_fv( v  ) ) );
-        src = mqo_req_list( mqo_cdr( p ) );
+        mqo_pair p = mqo_req_pair( mqo_car( src ) );
+        mqo_tc_append( tc, mqo_car( p ) );
+        src = mqo_req_list( mqo_cdr( src ) );
     }
     RESULT( mqo_car( tc ) );
 MQO_END_PRIM( map_car );
@@ -691,9 +673,9 @@ MQO_BEGIN_PRIM( "map-cdr", map_cdr )
     NO_REST_ARGS( );
     mqo_tc tc = mqo_make_tc();
     while( src ){
-        mqo_pair p = mqo_req_pair( src );
-        mqo_tc_append( tc, mqo_cdr( mqo_pair_fv( v  ) ) );
-        src = mqo_req_list( mqo_cdr( p ) );
+        mqo_pair p = mqo_req_pair( mqo_car( src ) );
+        mqo_tc_append( tc, mqo_cdr( p ) );
+        src = mqo_req_list( mqo_cdr( src ) );
     }
     RESULT( mqo_car( tc ) );
 MQO_END_PRIM( map_cdr );
@@ -719,16 +701,6 @@ MQO_BEGIN_PRIM( "string-append", string_append )
     }
     STRING_RESULT( s0 );
 MQO_END_PRIM( string_append );
-
-MQO_BEGIN_PRIM( "string-append!", string_appendd )
-    REQ_STRING_ARG( s0 );
-    for(;;){
-        OPT_STRING_ARG( sN );
-        if(! has_sN ) break;
-        mqo_string_append( s0, mqo_sf_string( sN ), mqo_string_length( sN ) );
-    }
-    STRING_RESULT( s0 );
-MQO_END_PRIM( string_appendd );
 
 MQO_BEGIN_PRIM( "string-prepend!", string_appendd )
     REQ_STRING_ARG( s0 );
@@ -802,94 +774,6 @@ MQO_BEGIN_PRIM( "argc", argc )
     RESULT( mqo_vf_integer( mqo_argc ) );
 MQO_END_PRIM( argc )
 
-MQO_BEGIN_PRIM( "make-type", make_type )
-    REQ_SYMBOL_ARG( name );
-    REQ_TYPE_ARG( super );
-    REST_ARGS( info );
-    RESULT( 
-        mqo_vf_type( 
-            mqo_make_type( 
-                name, 
-                super,
-                NULL,
-                info
-            )
-        )
-    );
-MQO_END_PRIM( make_type );
-
-MQO_BEGIN_PRIM( "parent-type", parent_type )
-    REQ_TYPE_ARG( type );
-    NO_REST_ARGS( );
-    if( type->direct ){
-        RESULT( mqo_vf_type( type->super ) );
-    }else{
-        RESULT( mqo_vf_false( ) );
-    }
-MQO_END_PRIM( parent_type )
-
-MQO_BEGIN_PRIM( "base-type", base_type )
-    REQ_TYPE_ARG( type );
-    NO_REST_ARGS( );
-    if( type->direct ){
-        RESULT( mqo_vf_type( type->direct ) );
-    }else{
-        RESULT( mqo_vf_type( type ) );
-    }
-MQO_END_PRIM( base_type )
-
-MQO_BEGIN_PRIM( "type-name", type_name )
-    REQ_TYPE_ARG( type );
-    NO_REST_ARGS( );
-    RESULT( mqo_vf_symbol( type->name ) );
-MQO_END_PRIM( type_name )
-
-MQO_BEGIN_PRIM( "type-info", type_info )
-    REQ_TYPE_ARG( type );
-    NO_REST_ARGS( );
-    RESULT( mqo_vf_pair( type->info ) );
-MQO_END_PRIM( type_info );
-
-MQO_BEGIN_PRIM( "tag", tag )
-    REQ_TYPE_ARG( type );
-    REQ_ANY_ARG( repr );
-    NO_REST_ARGS( );
-
-    mqo_type direct = mqo_type_direct( type );
-
-    if( direct != mqo_direct_type( repr ) ){
-        mqo_errf( 
-            mqo_es_vm,
-            "sxsx", 
-            "tag expected",
-            mqo_vf_type( type ),
-            "to be derived from",
-            mqo_vf_type( direct )
-        );
-    }else{
-        RESULT( mqo_make_value( type, repr.data ) );
-    };
-MQO_END_PRIM( tag );
-
-MQO_BEGIN_PRIM( "type", xtype )
-    REQ_ANY_ARG( value );
-    NO_REST_ARGS( );
-    RESULT( mqo_vf_type( mqo_value_type( value ) ) );
-MQO_END_PRIM( xtype );
-
-MQO_BEGIN_PRIM( "repr", repr )
-    REQ_ANY_ARG( value );
-    NO_REST_ARGS( );
-    RESULT( mqo_make_value( mqo_direct_type( value ), value.data ) );
-MQO_END_PRIM( repr );
-
-MQO_BEGIN_PRIM( "isa?", isaq )
-    REQ_ANY_ARG( value );
-    REQ_TYPE_ARG( type );
-    NO_REST_ARGS( );
-   
-    RESULT( mqo_vf_boolean( mqo_isa( value, type ) ) );
-MQO_END_PRIM( isaq );
 
 MQO_BEGIN_PRIM( "make-multimethod", make_multimethod )
     REQ_ANY_ARG( sig );
@@ -960,8 +844,8 @@ MQO_END_PRIM( make_tc )
 MQO_BEGIN_PRIM( "tc-clear!", tc_clear )
     REQ_TC_ARG( tc );
     NO_REST_ARGS( );
-    mqo_set_car( tc, mqo_vf_empty() );
-    mqo_set_cdr( tc, mqo_vf_empty() );
+    mqo_set_car( tc, mqo_vf_null() );
+    mqo_set_cdr( tc, mqo_vf_null() );
     TC_RESULT( tc );
 MQO_END_PRIM( tc_clear )
 
@@ -993,7 +877,7 @@ MQO_END_PRIM( programq )
 MQO_BEGIN_PRIM( "tc-next!", tc_next )
     REQ_TC_ARG( tc );
     NO_REST_ARGS( );
-    if( mqo_is_empty( mqo_car( tc ) ) ){
+    if( mqo_is_null( mqo_car( tc ) ) ){
         mqo_errf( mqo_es_vm, "s", "tconc out of items" );
     }
     mqo_pair next = mqo_pair_fv( mqo_car( tc ) );
@@ -1001,8 +885,8 @@ MQO_BEGIN_PRIM( "tc-next!", tc_next )
     if( lead ){
         mqo_set_car( tc, mqo_vf_pair( lead ) );
     }else{
-        mqo_set_car( tc, mqo_vf_empty() );
-        mqo_set_cdr( tc, mqo_vf_empty() );
+        mqo_set_car( tc, mqo_vf_null() );
+        mqo_set_cdr( tc, mqo_vf_null() );
     }
     RESULT( mqo_car( next ) );
 MQO_END_PRIM( tc_next );
@@ -1010,7 +894,7 @@ MQO_END_PRIM( tc_next );
 MQO_BEGIN_PRIM( "tc-empty?", tc_emptyq )
     REQ_TC_ARG( tc );
     NO_REST_ARGS( );
-    RESULT( mqo_vf_boolean( mqo_is_empty( mqo_car( tc ) ) ) );
+    RESULT( mqo_vf_boolean( mqo_is_null( mqo_car( tc ) ) ) );
 MQO_END_PRIM( tc_emptyq );
 
 MQO_BEGIN_PRIM( "tc-append!", tc_append )
@@ -1018,9 +902,9 @@ MQO_BEGIN_PRIM( "tc-append!", tc_append )
     REQ_ANY_ARG( item );
     NO_REST_ARGS( );
 
-    item = mqo_vf_pair( mqo_cons( item, mqo_vf_empty() ) );
+    item = mqo_vf_pair( mqo_cons( item, mqo_vf_null() ) );
 
-    if( mqo_is_empty( mqo_car( tc ) ) ){
+    if( mqo_is_null( mqo_car( tc ) ) ){
         mqo_set_car( tc, item );
     }else{
         mqo_set_cdr( mqo_pair_fv( mqo_cdr( tc ) ), item );
@@ -1036,7 +920,7 @@ MQO_BEGIN_PRIM( "tc-prepend!", tc_prepend )
     NO_REST_ARGS( );
     item = mqo_vf_pair( mqo_cons( item, mqo_car( tc ) ) );
 
-    if( mqo_is_empty( mqo_car( tc ) ) ){
+    if( mqo_is_null( mqo_car( tc ) ) ){
         mqo_set_cdr( tc, item );
     };
     mqo_set_car( tc, item );
@@ -1118,10 +1002,8 @@ MQO_BEGIN_PRIM( "set->list", set_to_list )
 
     mqo_tc tc = mqo_make_tc( );
     
-    MQO_ITER_TREE( set, node ){
-        mqo_tc_append( tc, node->data );
-    }
-    
+    mqo_iter_tree( set, mqo_untree_cb, tc );
+
     RESULT( mqo_car( tc ) );
 MQO_END_PRIM( set_to_list )
 
@@ -1416,10 +1298,10 @@ MQO_BEGIN_PRIM( "string-split", string_split )
                 mqo_vf_pair( mqo_cons( mqo_vf_string( item ),
                              mqo_vf_pair( 
                                  mqo_cons( mqo_vf_string( string ),
-                                           mqo_vf_empty( ) ) ) ) ) );
+                                           mqo_vf_null( ) ) ) ) ) );
     }else{
         RESULT( mqo_vf_pair( mqo_cons( mqo_vf_string( string ),
-                                           mqo_vf_empty( ) ) ) );
+                                           mqo_vf_null( ) ) ) );
     }
 MQO_END_PRIM( string_split )
 
@@ -1959,17 +1841,6 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( chdir );
     MQO_BIND_PRIM( argv );
     MQO_BIND_PRIM( argc );
-
-    MQO_BIND_PRIM( make_type );
-    MQO_BIND_PRIM( tag );
-    MQO_BIND_PRIM( xtype );
-    MQO_BIND_PRIM( repr );
-    MQO_BIND_PRIM( isaq );
-    
-    MQO_BIND_PRIM( type_info );
-    MQO_BIND_PRIM( type_name );
-    MQO_BIND_PRIM( base_type );
-    MQO_BIND_PRIM( parent_type );
 
     MQO_BIND_PRIM( make_multimethod );
     MQO_BIND_PRIM( refuse_method );

@@ -23,9 +23,11 @@ MQO_BEGIN_TYPE( pair )
     mqo_value car, cdr;
 MQO_END_TYPE( pair )
 
+MQO_H_SUBTYPE( tc, pair );
+
 #define REQ_PAIR_ARG( vn ) REQ_TYPED_ARG( vn, pair )
 #define PAIR_RESULT( vn ) TYPED_RESULT( vn, pair )
-#define OPT_CLOSURE_ARG( vn ) OPT_TYPED_ARG( vn, closure )
+#define OPT_PAIR_ARG( vn ) OPT_TYPED_ARG( vn, pair )
 
 #define mqo_list mqo_pair
 #define mqo_list_type mqo_pair_type
@@ -46,7 +48,7 @@ static inline mqo_list mqo_req_list( mqo_value v ){
 #define mqo_vf_list mqo_vf_pair
 #define REQ_LIST_ARG( vn ) REQ_TYPED_ARG( vn, list )
 #define LIST_RESULT( vn ) TYPED_RESULT( list, vn )
-#define OPT_CLOSURE_ARG( vn ) OPT_TYPED_ARG( vn, closure )
+#define OPT_LIST_ARG( vn ) OPT_TYPED_ARG( vn, list )
 
 static inline mqo_value mqo_car( mqo_pair pair ){ 
     assert( pair );
@@ -57,12 +59,10 @@ static inline mqo_value mqo_cdr( mqo_pair pair ){
     return pair->cdr;
 }
 static inline mqo_value mqo_set_car( mqo_pair pair, mqo_value x ){ 
-    //TODO: Guard against modification of the_empty.
     assert( pair );
     pair->car = x; 
 }
 static inline mqo_value mqo_set_cdr( mqo_pair pair, mqo_value x ){ 
-    //TODO: Guard against modification of the_empty.
     assert( pair );
     pair->cdr = x; 
 }
@@ -71,8 +71,8 @@ void mqo_show_list_contents( mqo_pair p, mqo_word* ct );
 mqo_pair mqo_cons( mqo_value car, mqo_value cdr );
 mqo_list mqo_list_ref( mqo_list p, mqo_integer ofs );
 
-mqo_pair mqo_make_tc( );
-void mqo_tc_append( mqo_pair tc, mqo_value v );
+mqo_tc mqo_make_tc( );
+void mqo_tc_append( mqo_tc tc, mqo_value v );
 
 mqo_boolean mqo_eqvp( mqo_pair a, mqo_pair b );
 mqo_boolean mqo_equalp( mqo_pair a, mqo_pair b );

@@ -1,7 +1,7 @@
 ROOT=..
 include $(ROOT)/Makefile.cf
 
-OBJECTS=memory.o number.o boolean.o list.o string.o tree.o vector.o regex.o package.o primitive.o procedure.o parse.o print.o closure.o vm.o file.o error.o process.o crypto.o channel.o net.o init.o
+OBJECTS=memory.o number.o boolean.o list.o string.o tree.o vector.o regex.o package.o primitive.o procedure.o parse.o print.o closure.o vm.o file.o error.o process.o crypto.o channel.o net.o core.o tag.o init.o
 
 TOOLS=$(MOSASM) $(MOSVM_STUB) $(MOSLD)
 

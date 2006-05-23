@@ -181,7 +181,7 @@ void mqo_string_expand( mqo_string string, mqo_integer count ){
 void mqo_string_flush( mqo_string string ){
     string->pool[ string->origin = string->length = 0 ] = 0;
 }
-void mqo_string_write(
+void mqo_string_append(
     mqo_string string, const void* src, mqo_integer srclen 
 ){
     mqo_string_expand( string, srclen );
@@ -267,16 +267,16 @@ mqo_string mqo_string_fm( const void* s, mqo_integer sl ){
 mqo_string mqo_string_fs( const char* s ){
     return mqo_string_fm( (const void*)s, strlen( s ) );
 }
-void mqo_string_write_byte( mqo_string string, mqo_byte x ){
-    mqo_string_write( string, &x, 1 );
+void mqo_string_append_byte( mqo_string string, mqo_byte x ){
+    mqo_string_append( string, &x, 1 );
 }
-void mqo_string_write_word( mqo_string string, mqo_word x ){
+void mqo_string_append_word( mqo_string string, mqo_word x ){
     x = htons( x );
-    mqo_string_write( string, &x, 2 );
+    mqo_string_append( string, &x, 2 );
 }
-void mqo_string_write_quad( mqo_string string, mqo_quad x ){
+void mqo_string_append_quad( mqo_string string, mqo_quad x ){
     x = htonl( x );
-    mqo_string_write( string, &x, 4 );
+    mqo_string_append( string, &x, 4 );
 }
 void* mqo_string_head( mqo_string head ){
     return head->pool + head->origin;

@@ -42,6 +42,8 @@ static inline mqo_pair mqo_clos_env( mqo_closure clos ){
 
 mqo_closure mqo_make_closure( mqo_instruction inst, mqo_pair env );
 
+mqo_value mqo_reduce_fn( mqo_value func, mqo_list args );
+
 void mqo_init_closure_subsystem( );
 
 #endif

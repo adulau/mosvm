@@ -59,7 +59,7 @@ void mqo_init_string_subsystem( );
 void mqo_compact_string( mqo_string string );
 void mqo_string_expand( mqo_string string, mqo_integer count );
 void mqo_string_flush( mqo_string string );
-void mqo_string_write( mqo_string string, const void* src, mqo_integer srclen );
+void mqo_string_append( mqo_string string, const void* src, mqo_integer srclen );
 void mqo_string_alter( 
     mqo_string string, mqo_integer dstofs, mqo_integer dstlen, 
     const void* src, mqo_integer srclen
@@ -70,10 +70,10 @@ void* mqo_string_read( mqo_string string, mqo_integer* r_count );
 void* mqo_string_read_line( mqo_string string, mqo_integer* r_count );
 mqo_string mqo_string_fm( const void* s, mqo_integer sl );
 mqo_string mqo_string_fs( const char* s );
-void mqo_string_write( mqo_string string, const void* src, mqo_integer srclen );
-void mqo_string_write_byte( mqo_string string, mqo_byte x );
-void mqo_string_write_word( mqo_string string, mqo_word x );
-void mqo_string_write_quad( mqo_string string, mqo_quad x );
+void mqo_string_append( mqo_string string, const void* src, mqo_integer srclen );
+void mqo_string_append_byte( mqo_string string, mqo_byte x );
+void mqo_string_append_word( mqo_string string, mqo_word x );
+void mqo_string_append_quad( mqo_string string, mqo_quad x );
 void* mqo_string_head( mqo_string head );
 void* mqo_string_tail( mqo_string head );
 void mqo_string_wrote( mqo_string string, mqo_integer len );

@@ -80,6 +80,10 @@ typedef int mqo_boolean;
     mqo_boolean has_##vn; \
     mqo_value vn = mqo_opt_any( &has_##vn );
 
+#define MQO_H_SUBTYPE( st, dt ) \
+    typedef mqo_##dt mqo_##st; \
+    MQO_H_TYPE( st ) \
+
 #ifdef NDEBUG
 
 #define OPT_TYPED_ARG( vn, tn ) \
@@ -130,10 +134,17 @@ typedef int mqo_boolean;
     mqo_##tn##_type->direct = mqo_##tn##_type; \
     MQO_I_TYPE_( tn );
 
+#define MQO_C_SUBTYPE( chil, pare ) \
+    MQO_C_TYPE( chil );
+
 #define MQO_I_SUBTYPE( child, pare ) \
+    mqo_##child##_type->show = (mqo_show_mt)mqo_show_##pare; \
+    mqo_##child##_type->trace = (mqo_gc_mt)mqo_trace_##pare; \
+    mqo_##child##_type->free = (mqo_gc_mt)mqo_free_##pare; \
+    mqo_##child##_type->compare = (mqo_cmp_mt)mqo_##pare##_compare; \
     mqo_##child##_type->direct = mqo_##pare##_type->direct; \
     mqo_##child##_type->parent = mqo_##pare##_type; \
-    MQO_I_TYPE_( child ); \
+    mqo_root_obj( (mqo_object)mqo_##child##_type ); \
 
 #define MQO_H_TYPE( tn ) \
     MQO_H_TP( tn ); \
@@ -343,4 +354,6 @@ mqo_value mqo_opt_arg( mqo_type type, mqo_boolean* found );
 
 void mqo_no_more_args( );
 
+mqo_type mqo_make_type( mqo_value name, mqo_type parent, mqo_value info );
+mqo_type mqo_direct_type( mqo_value value );
 #endif

@@ -19,7 +19,7 @@
 
 #include "memory.h"
 
-int mqo_os_error( const char* what, int code );
+int mqo_os_error( int code );
 mqo_string mqo_read_file( const char* path );
 void mqo_write_file( const char* path, mqo_string data );
 

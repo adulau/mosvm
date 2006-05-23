@@ -37,5 +37,6 @@ void mqo_init_mosvm( ){
     mqo_init_net_subsystem( );
     mqo_init_crypto_subsystem( );
     mqo_init_parse_subsystem( );
+    mqo_init_tag_subsystem( );
 }
 

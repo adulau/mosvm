@@ -20,6 +20,12 @@
 mqo_pair mqo_make_pair( ){
     return MQO_OBJALLOC( pair );
 }
+mqo_tc mqo_make_tc( ){
+    mqo_tc tc = (mqo_tc)mqo_objalloc( mqo_tc_type,
+                                      sizeof( struct mqo_pair_data ) );
+    tc->car = mqo_vf_null();
+    tc->cdr = mqo_vf_null();
+}
 mqo_pair mqo_cons( mqo_value car, mqo_value cdr ){
     mqo_pair c = mqo_make_pair( );
     mqo_set_car( c, car );
@@ -44,9 +50,6 @@ mqo_pair mqo_list_ref( mqo_pair p, mqo_integer offset ){
         p = mqo_req_list( mqo_cdr( p ) );
     }
     return p;
-}
-mqo_pair mqo_make_tc( ){
-    return mqo_cons( mqo_vf_null(), mqo_vf_null() );
 }
 
 mqo_integer mqo_list_length( mqo_list p ){
@@ -138,6 +141,7 @@ void mqo_show_pair( mqo_pair p, mqo_word* ct ){
 MQO_GENERIC_FREE( pair );
 MQO_GENERIC_COMPARE( pair );
 MQO_C_TYPE( pair );
+MQO_C_SUBTYPE( tc, pair );
 
 // A very complicated and sophisticated primitive..
 MQO_BEGIN_PRIM( "list", list )
@@ -147,5 +151,6 @@ MQO_END_PRIM( list )
 
 void mqo_init_list_subsystem( ){
     MQO_I_TYPE( pair );
+    MQO_I_SUBTYPE( tc, pair );
     MQO_BIND_PRIM( list );
 }

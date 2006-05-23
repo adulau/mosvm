@@ -165,10 +165,10 @@ mqo_string mqo_parse_str( char** r_str, mqo_boolean* r_succ ){
                 };
                 str ++;
             };
-            mqo_string_write( buf, &ch, 1 );
+            mqo_string_append( buf, &ch, 1 );
             break;
         default:
-            mqo_string_write( buf, &ch, 1 );
+            mqo_string_append( buf, &ch, 1 );
             str ++;
         }
     }
