@@ -78,7 +78,7 @@ void mqo_objfree( void* obj ){
 
 void mqo_root_obj( mqo_object obj ){
     if( obj == NULL )return;
-
+    assert( obj->type );
     //TODO: Assertions against rooting during garbage collection.
     mqo_unpool_obj( obj );
     mqo_pool_obj( obj, mqo_roots );

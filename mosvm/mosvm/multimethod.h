@@ -14,35 +14,26 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
 
-#ifndef MQO_MOSVM_H
-#define MQO_MOSVM_H 1
+#ifndef MQO_MULTIMETHOD_H
+#define MQO_MULTIMETHOD_H 1
 
-#include "mosvm/memory.h"
-#include "mosvm/number.h"
-#include "mosvm/boolean.h"
-#include "mosvm/list.h"
-#include "mosvm/tree.h"
-#include "mosvm/string.h"
-#include "mosvm/vector.h"
-#include "mosvm/primitive.h"
-#include "mosvm/procedure.h"
-#include "mosvm/closure.h"
-#include "mosvm/parse.h"
-#include "mosvm/print.h"
-#include "mosvm/regex.h"
-#include "mosvm/file.h"
-#include "mosvm/package.h"
-#include "mosvm/vm.h"
-#include "mosvm/process.h"
-#include "mosvm/channel.h"
-#include "mosvm/net.h"
-#include "mosvm/error.h"
-#include "mosvm/tag.h"
-#include "mosvm/multimethod.h"
+#include "memory.h"
 
-void mqo_init_mosvm( );
-void mqo_init_crypto_subsystem( );
-int mqo_argc;
-mqo_list mqo_argv;
+MQO_BEGIN_TYPE( multimethod )
+    mqo_value     signature;
+    mqo_value     func;
+    mqo_value     next;
+MQO_END_TYPE( multimethod )
+
+#define REQ_MULTIMETHOD_ARG( vn ) REQ_TYPED_ARG( vn, multimethod )
+#define MULTIMETHOD_RESULT( vn ) TYPED_RESULT( vn, multimethod )
+#define OPT_MULTIMETHOD_ARG( vn ) OPT_TYPED_ARG( vn, multimethod )
+
+mqo_multimethod mqo_make_multimethod( 
+    mqo_value signature, mqo_value func, mqo_value next
+);
+mqo_value mqo_reduce_function( mqo_value func, mqo_list args );
+
+void mqo_init_multimethod_subsystem( );
 
 #endif

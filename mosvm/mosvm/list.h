@@ -23,11 +23,15 @@ MQO_BEGIN_TYPE( pair )
     mqo_value car, cdr;
 MQO_END_TYPE( pair )
 
-MQO_H_SUBTYPE( tc, pair );
-
 #define REQ_PAIR_ARG( vn ) REQ_TYPED_ARG( vn, pair )
 #define PAIR_RESULT( vn ) TYPED_RESULT( vn, pair )
 #define OPT_PAIR_ARG( vn ) OPT_TYPED_ARG( vn, pair )
+
+MQO_H_SUBTYPE( tc, pair );
+
+#define REQ_TC_ARG( vn ) REQ_TYPED_ARG( vn, tc )
+#define TC_RESULT( vn ) TYPED_RESULT( vn, tc )
+#define OPT_TC_ARG( vn ) OPT_TYPED_ARG( vn, tc )
 
 #define mqo_list mqo_pair
 #define mqo_list_type mqo_pair_type

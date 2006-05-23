@@ -37,7 +37,7 @@ extern mqo_pair        MQO_EP;
 extern mqo_pair        MQO_GP;
 extern mqo_instruction MQO_IP;
 extern mqo_value       MQO_RX;
-extern mqo_boolean     mqo_trace_flag;
+extern mqo_integer mqo_trace_flag;
 
 extern mqo_primitive mqo_instr_table[];
 extern mqo_boolean mqo_uses_a[];

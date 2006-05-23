@@ -15,6 +15,7 @@
  */
 
 #include "mosvm.h"
+#include <string.h>
 
 void mqo_run( mqo_value func ){
     // TODO: Retire when process is back in.

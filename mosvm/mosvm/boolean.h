@@ -27,6 +27,8 @@ MQO_H_IS( boolean );
 #define REQ_BOOLEAN_ARG( vn ) REQ_TYPED_ARG( vn, boolean )
 #define BOOLEAN_RESULT( vn ) TYPED_RESULT( boolean, vn )
 #define OPT_TYPE_ARG( vn ) OPT_TYPED_ARG( vn, type )
+#define TRUE_RESULT( ) RESULT( mqo_vf_true( ) );
+#define FALSE_RESULT( ) RESULT( mqo_vf_false( ) );
 
 static inline mqo_value mqo_vf_false( ){ return mqo_the_false; }
 static inline mqo_value mqo_vf_true( ){ return mqo_the_true; }

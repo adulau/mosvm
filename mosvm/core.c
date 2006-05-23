@@ -25,6 +25,10 @@
 #include <arpa/inet.h>
 #endif
 
+void mqo_untree_cb( mqo_value value, mqo_tc tc ){
+    mqo_tc_append( tc, value );
+}
+
 MQO_BEGIN_PRIM( "string->integer", string_to_integer )
     REQ_STRING_ARG( string )
     NO_REST_ARGS( )
@@ -94,7 +98,7 @@ MQO_BEGIN_PRIM( "equal?", equalq )
     for(;;){
         OPT_ANY_ARG( vN );
         if( ! has_vN )break;
-        if( ! mqo_equal( v0, vN ) ){
+        if( mqo_cmp_eq( v0, vN ) ){
             RESULT( mqo_vf_false( ) );
         }
     }
@@ -312,7 +316,7 @@ MQO_BEGIN_PRIM( "member", member )
     REQ_PAIR_ARG( list );
     NO_REST_ARGS( );
     while( list ){
-        if( mqo_equal( item, mqo_car( list ) ) ){
+        if( ! mqo_cmp_eq( item, mqo_car( list ) ) ){
             RESULT( mqo_vf_pair( list ) );
         }
         list = mqo_pair_fv( mqo_cdr( list ) );
@@ -396,11 +400,6 @@ MQO_BEGIN_PRIM( "set-cdr!", set_cdr )
     mqo_set_cdr( p, cdr );
     NO_RESULT( );
 MQO_END_PRIM( set_cdr )
-
-MQO_BEGIN_PRIM( "list", list )
-    REST_ARGS( l );
-    RESULT( mqo_vf_pair( l ) );
-MQO_END_PRIM( list )
 
 MQO_BEGIN_PRIM( "vector", vector )
     mqo_vector vt = mqo_make_vector( mqo_arg_ct );
@@ -702,17 +701,7 @@ MQO_BEGIN_PRIM( "string-append", string_append )
     STRING_RESULT( s0 );
 MQO_END_PRIM( string_append );
 
-MQO_BEGIN_PRIM( "string-prepend!", string_appendd )
-    REQ_STRING_ARG( s0 );
-    for(;;){
-        OPT_STRING_ARG( sN );
-        if(! has_sN ) break;
-        mqo_string_append( s0, mqo_sf_string( sN ), mqo_string_length( sN ) );
-    }
-    STRING_RESULT( s0 );
-MQO_END_PRIM( string_appendd );
-
-MQO_BEGIN_PRIM( "assoc", assq )
+MQO_BEGIN_PRIM( "assoc", assoc )
     REQ_ANY_ARG( key );
     REQ_LIST_ARG( list );
     NO_REST_ARGS( );
@@ -774,30 +763,6 @@ MQO_BEGIN_PRIM( "argc", argc )
     RESULT( mqo_vf_integer( mqo_argc ) );
 MQO_END_PRIM( argc )
 
-
-MQO_BEGIN_PRIM( "make-multimethod", make_multimethod )
-    REQ_ANY_ARG( sig );
-    REQ_ANY_ARG( pass );
-    REQ_ANY_ARG( fail );
-    NO_REST_ARGS( );
-
-    if((! mqo_is_true( sig ))&&(! mqo_is_pair( sig ) )){
-        mqo_errf( mqo_es_vm, "sx", "expected list or #t", sig );
-    }
-
-    if(! mqo_is_function( fail ) ){
-        mqo_errf( mqo_es_vm, "sx", "expected function for fail", fail );
-    }
-
-    if(! mqo_is_function( pass ) ){
-        mqo_errf( mqo_es_vm, "sx", "expected function for pass", pass );
-    }
-
-    RESULT( 
-        mqo_vf_multimethod( mqo_make_multimethod( sig, pass, fail ) ) 
-    );
-MQO_END_PRIM( make_multimethod )
-
 MQO_BEGIN_PRIM( "refuse-method", refuse_method )
     mqo_errf( mqo_es_vm, "method not found");
 MQO_END_PRIM( refuse_method )
@@ -818,13 +783,13 @@ MQO_END_PRIM( get_global )
 
 MQO_BEGIN_PRIM( "enable-trace", enable_trace )
     NO_REST_ARGS( );
-    if( mqo_trace_vm < 1000 )mqo_trace_vm += 1;
+    if( mqo_trace_flag < 1000 )mqo_trace_flag += 1;
     NO_RESULT();
 MQO_END_PRIM( enable_trace )
 
 MQO_BEGIN_PRIM( "disable-trace", disable_trace )
     NO_REST_ARGS( );
-    if( mqo_trace_vm )mqo_trace_vm -= 1;
+    if( mqo_trace_flag )mqo_trace_flag -= 1;
     NO_RESULT();
 MQO_END_PRIM( disable_trace )
 
@@ -856,7 +821,7 @@ MQO_BEGIN_PRIM( "tc-splice!", tc_splice )
 
     while( list ){
         mqo_tc_append( tc, mqo_car( list ) );
-        list = mqo_req_pair( mqo_cdr( list ), "list" );
+        list = mqo_req_pair( mqo_cdr( list ) );
     }
 
     RESULT( mqo_vf_tc( tc ) );
@@ -868,11 +833,11 @@ MQO_BEGIN_PRIM( "tc?", tcq )
     RESULT( mqo_vf_boolean( mqo_is_tc( value ) ) );
 MQO_END_PRIM( tcq )
 
-MQO_BEGIN_PRIM( "program?", programq )
+MQO_BEGIN_PRIM( "procedure?", procedureq )
     REQ_ANY_ARG( value )
     NO_REST_ARGS( );
-    RESULT( mqo_vf_boolean( mqo_is_program( value ) ) );
-MQO_END_PRIM( programq )
+    RESULT( mqo_vf_boolean( mqo_is_procedure( value ) ) );
+MQO_END_PRIM( procedureq )
 
 MQO_BEGIN_PRIM( "tc-next!", tc_next )
     REQ_TC_ARG( tc );
@@ -940,7 +905,11 @@ MQO_BEGIN_PRIM( "string->exprs", string_to_exprs )
     
     mqo_boolean ok = 0;
     mqo_list v = mqo_parse_document( mqo_sf_string( src ), &ok );
-    RESULT( mqo_vf_list( doc ) );
+    if( ok ){
+        RESULT( mqo_vf_list( v ) );
+    }else{
+        mqo_errf( mqo_es_vm, "si", mqo_parse_errmsg, mqo_parse_incomplete );
+    }
 MQO_END_PRIM( string_to_exprs )
 
 MQO_BEGIN_PRIM( "globals", globals )
@@ -1002,7 +971,7 @@ MQO_BEGIN_PRIM( "set->list", set_to_list )
 
     mqo_tc tc = mqo_make_tc( );
     
-    mqo_iter_tree( set, mqo_untree_cb, tc );
+    mqo_iter_tree( set, (mqo_iter_mt)mqo_untree_cb, tc );
 
     RESULT( mqo_car( tc ) );
 MQO_END_PRIM( set_to_list )
@@ -1033,21 +1002,17 @@ MQO_BEGIN_PRIM( "dict?", dictq )
     RESULT( mqo_vf_boolean( mqo_is_dict( value ) ) );
 MQO_END_PRIM( dictq )
 
-mqo_untree_cb( mqo_value value, mqo_tc tc ){
-    mqo_tc_append( tc, value );
-}
-
 MQO_BEGIN_PRIM( "dict->list", dict_to_list )
     REQ_DICT_ARG( dict );
     NO_REST_ARGS( );
 
     mqo_tc tc = mqo_make_tc( );
-    mqo_iter_tree( dict, mqo_untree_cb, tc );
+    mqo_iter_tree( dict, (mqo_iter_mt)mqo_untree_cb, tc );
     
     RESULT( mqo_car( tc ) );
 MQO_END_PRIM( dict_to_list )
 
-mqo_dict_keys_cb( mqo_value value, mqo_tc tc ){
+void mqo_dict_keys_cb( mqo_value value, mqo_tc tc ){
     mqo_pair p = mqo_pair_fv( value );
     mqo_tc_append( tc, mqo_car( p ) );
 }
@@ -1058,12 +1023,12 @@ MQO_BEGIN_PRIM( "dict-keys", dict_keys )
 
     mqo_tc tc = mqo_make_tc( );
 
-    mqo_iter_tree( dict, mqo_keys_cb, tc );
+    mqo_iter_tree( dict, (mqo_iter_mt)mqo_dict_keys_cb, tc );
     
     RESULT( mqo_car( tc ) );
 MQO_END_PRIM( dict_keys )
 
-mqo_dict_values_cb( mqo_value value, mqo_tc tc ){
+void mqo_dict_values_cb( mqo_value value, mqo_tc tc ){
     mqo_pair p = mqo_pair_fv( value );
     mqo_tc_append( tc, mqo_cdr( p ) );
 }
@@ -1074,7 +1039,7 @@ MQO_BEGIN_PRIM( "dict-values", dict_values )
 
     mqo_tc tc = mqo_make_tc( );
     
-    mqo_iter_tree( dict, mqo_values_cb, tc );
+    mqo_iter_tree( dict, (mqo_iter_mt)mqo_dict_values_cb, tc );
     
     RESULT( mqo_car( tc ) );
 MQO_END_PRIM( dict_values )
@@ -1326,23 +1291,15 @@ MQO_BEGIN_PRIM( "string-replace", string_replace )
     mqo_string buf = mqo_make_string( sl );
     while( pp = mqo_memmem( sp, sl, ip, il ) ){
         mqo_integer pl = pp - sp;
-        mqo_expand_string( buf, pl + rl );
         mqo_string_append( buf, sp, pl );
         mqo_string_append( buf, rp, rl );
         sl = sl - pl - il;
         sp = sp + pl + il;
     }
    
-    mqo_expand_string( buf, sl );
     mqo_string_append( buf, sp, sl );
     
-    sl = mqo_string_length( buf );
-    sp = mqo_string_read( buf, &sl );
-    string = mqo_string_fm( sp, sl );
-    
-    GC_free( buf );
-
-    RESULT( mqo_vf_string( string ) );
+    STRING_RESULT( buf );
 MQO_END_PRIM( string_replace )
 
 MQO_BEGIN_PRIM( "string-split*", string_splitm )
@@ -1388,86 +1345,21 @@ MQO_BEGIN_PRIM( "string-join", string_join )
         OPT_STRING_ARG( item );
         if( ! has_item ) break;
         if( any ){
-            mqo_string_append( res, mqo_sf_string( sep, ), 
+            mqo_string_append( res, mqo_sf_string( sep ), 
                                     mqo_string_length( sep ) );
         }
-        mqo_string_append( res, mqo_sf_string( item, ), 
+        mqo_string_append( res, mqo_sf_string( item ), 
                                 mqo_string_length( item ) );
     }
     
     RESULT( mqo_vf_string( res ) );
 MQO_END_PRIM( string_join )
 
-MQO_BEGIN_PRIM( "active-process", active_process )
-    NO_REST_ARGS( );
-    
-    RESULT( mqo_vf_process( mqo_active_process ) );
-MQO_END_PRIM( active_process )
-
-MQO_BEGIN_PRIM( "process-input", process_input )
-    OPT_PROCESS_ARG( process )
-    NO_REST_ARGS( );
-    if( ! has_process ) process = MQO_PP;
-    RESULT( process->input );
-MQO_END_PRIM( process_input )
-
-MQO_BEGIN_PRIM( "set-process-input!", set_process_input )
-    REQ_ANY_ARG( input );
-    OPT_ANY_ARG( process );
-    NO_REST_ARGS( );
-
-    if( has_process ){
-        mqo_req_process( input, "process" )->input = process;
-    }else{
-        MQO_PP->input = input;
-    }
-    
-    NO_RESULT( );
-MQO_END_PRIM( set_process_input )
-
-MQO_BEGIN_PRIM( "process-output", process_output )
-    OPT_PROCESS_ARG( process )
-    NO_REST_ARGS( );
-    if( ! has_process ) process = MQO_PP;
-    RESULT( process->output );
-MQO_END_PRIM( process_output )
-
-MQO_BEGIN_PRIM( "set-process-output!", set_process_output )
-    REQ_ANY_ARG( output );
-    OPT_ANY_ARG( process );
-    NO_REST_ARGS( );
-
-    if( has_process ){
-        mqo_req_process( output, "process" )->output = process;
-    }else{
-        MQO_PP->output = output;
-    }
-    
-    NO_RESULT( );
-MQO_END_PRIM( set_process_output )
-
 MQO_BEGIN_PRIM( "function-name", function_name )
     REQ_ANY_ARG( function )
     NO_REST_ARGS( );
 
-    mqo_symbol result;
-again:
-
-    if( mqo_is_closure( function ) ){
-        result = mqo_closure_fv( function )->name;
-        if( ! result ) result = mqo_symbol_fs( "<unknown>" );
-    }else if( mqo_is_program( function ) ){
-        result = mqo_symbol_fs( "<program>" );
-    }else if( mqo_is_multimethod( function ) ){
-        function = mqo_multimethod_fv( function )->func;
-        goto again;
-    }else if( mqo_is_prim( function ) ){
-        result = mqo_prim_fv( function )->name;
-    }else{
-        mqo_errf( mqo_es_vm, "sx", "expected function", function );
-    }
-
-    RESULT( mqo_vf_symbol( result ) );
+    RESULT( mqo_function_name( function ) );
 MQO_END_PRIM( function_name )
 
 MQO_BEGIN_PRIM( "make-string", make_string )
@@ -1477,8 +1369,7 @@ MQO_BEGIN_PRIM( "make-string", make_string )
     if( ! has_capacity ){ 
         capacity = 1024; 
     }else if( capacity < 0 ){
-        mqo_errf( mqo_es_vm, "sx", "expected non-negative",
-                                     v_capacity );
+        mqo_errf( mqo_es_vm, "sx", "expected non-negative", capacity );
     }
 
     mqo_string string = mqo_make_string( capacity );
@@ -1490,7 +1381,7 @@ MQO_BEGIN_PRIM( "flush-string", flush_string )
     REQ_STRING_ARG( string );
     NO_REST_ARGS( );
 
-    mqo_flush_string( string );
+    mqo_string_flush( string );
     NO_RESULT( );
 MQO_END_PRIM( flush_string )
 
@@ -1505,14 +1396,14 @@ MQO_BEGIN_PRIM( "string-skip-space", string_skip_space )
     REQ_STRING_ARG( string );
     NO_REST_ARGS( );
     
-    mqo_long ix, len = mqo_string_length( string );
+    mqo_quad ix, len = mqo_string_length( string );
     const char* str = mqo_sf_string( string );
    
     for( ix = 0; ix < len; ix ++ ){
         if( ! isspace( str[ix] ) )break;
     }
     
-    if( ix )mqo_skip_string( string, ix );
+    if( ix )mqo_string_skip( string, ix );
     
     NO_RESULT( );
 MQO_END_PRIM( string_skip_space );
@@ -1524,7 +1415,7 @@ MQO_BEGIN_PRIM( "string-skip", string_skip )
     if( offset > mqo_string_length( string ) ){
         mqo_errf( mqo_es_vm, "s", "skip past end of string" );
     }
-    mqo_skip_string( string, offset );
+    mqo_string_skip( string, offset );
     NO_RESULT( );
 MQO_END_PRIM( string_skip );
 
@@ -1548,10 +1439,9 @@ MQO_BEGIN_PRIM( "string-append-byte!", string_append_byte )
     
     if(!( 0<= byte <= 255 )){
         mqo_errf( mqo_es_vm, "sx", "expected data to be in [0,255]",
-                  v_byte );
+                  byte );
     }
     mqo_byte data = byte;
-    mqo_expand_string( string, sizeof( mqo_byte ) );
     mqo_string_append( string, &data, sizeof( mqo_byte ) );
 
     NO_RESULT( );
@@ -1577,7 +1467,7 @@ MQO_BEGIN_PRIM( "string-read-line!", string_read_line )
     NO_REST_ARGS( );
     
     mqo_integer linelen; 
-    const char* line = mqo_read_line_string( string, &linelen ); 
+    const char* line = mqo_string_read_line( string, &linelen ); 
     
     RESULT( line ? mqo_vf_string( mqo_string_fm( line, linelen ) ) 
                      : mqo_vf_false( ) );
@@ -1590,13 +1480,10 @@ MQO_BEGIN_PRIM( "string-append-word!", string_append_word )
     
     if(!( 0<= word <= 65535 )){
         mqo_errf( mqo_es_vm, "sx", "expected data to be in [0,65535]",
-                  v_word );
+                  word );
     }
     
-    mqo_word data = htons( word );
-
-    mqo_expand_string( string, sizeof( mqo_word ) );
-    mqo_string_append( string, &data, sizeof( mqo_word ) );
+    mqo_string_append_word( string, word );
 
     NO_RESULT( );
 MQO_END_PRIM( string_append_word )
@@ -1621,10 +1508,7 @@ MQO_BEGIN_PRIM( "string-append-quad!", string_append_quad )
     REQ_INTEGER_ARG( quad )
     NO_REST_ARGS( );
     
-    mqo_long data = htonl( quad );
-
-    mqo_expand_string( string, sizeof( mqo_long ) );
-    mqo_string_append( string, &data, sizeof( mqo_long ) );
+    mqo_string_append_quad( string, quad );
 
     NO_RESULT( );
 MQO_END_PRIM( string_append_quad )
@@ -1633,13 +1517,13 @@ MQO_BEGIN_PRIM( "string-read-quad!", string_read_quad )
     REQ_STRING_ARG( string )
     NO_REST_ARGS( );
     
-    mqo_integer read = sizeof( mqo_long );
+    mqo_integer read = sizeof( mqo_quad );
 
     if( mqo_string_length( string ) < read ){
         RESULT( mqo_vf_false( ) );
     }
     
-    mqo_long* data = mqo_string_read( string, &read ); 
+    mqo_quad* data = mqo_string_read( string, &read ); 
 
     RESULT( mqo_vf_integer( ntohl( *data ) ) );
 MQO_END_PRIM( string_read_quad )
@@ -1742,7 +1626,7 @@ MQO_BEGIN_PRIM( "string-insert!", string_insertd )
         mqo_errf( mqo_es_vm, "s", "insertion past end of string" );
     }
 
-    mqo_string_insert( string, offset, src, srclen );
+    mqo_string_alter( string, offset, 0, src, srclen );
     
     NO_RESULT( );
 MQO_END_PRIM( string_insertd )
@@ -1772,7 +1656,6 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( set_car );
     MQO_BIND_PRIM( set_cdr );
     MQO_BIND_PRIM( length );
-    MQO_BIND_PRIM( list );
     MQO_BIND_PRIM( make_vector );
     MQO_BIND_PRIM( vector );
     MQO_BIND_PRIM( vector_set );
@@ -1782,7 +1665,6 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( eq );
     MQO_BIND_PRIM( memq );
     MQO_BIND_PRIM( member );
-    MQO_BIND_PRIM( assq );
     MQO_BIND_PRIM( assoc );
     MQO_BIND_PRIM( string_append );
     MQO_BIND_PRIM( string_length );
@@ -1811,27 +1693,10 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( last_pair );
     MQO_BIND_PRIM( not );
     MQO_BIND_PRIM( equalq );    
-    MQO_BIND_PRIM( eqvq );    
     MQO_BIND_PRIM( reverse );    
     MQO_BIND_PRIM( reversed );    
 
     // Extensions to R5RS
-    MQO_BIND_PRIM( show );
-    MQO_BIND_PRIM( errorq );
-    MQO_BIND_PRIM( error );
-    MQO_BIND_PRIM( re_error );
-    MQO_BIND_PRIM( error_key );
-    MQO_BIND_PRIM( error_info );
-    MQO_BIND_PRIM( error_context );
-    MQO_BIND_PRIM( dump_error );
-
-    MQO_BIND_PRIM( vmstate_ip );
-    MQO_BIND_PRIM( vmstate_cp );
-    MQO_BIND_PRIM( vmstate_sv );
-    MQO_BIND_PRIM( vmstate_rv );
-    MQO_BIND_PRIM( vmstate_ep );
-    MQO_BIND_PRIM( vmstate_gp );
-    
     MQO_BIND_PRIM( map_car );
     MQO_BIND_PRIM( map_cdr );
 
@@ -1842,13 +1707,9 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( argv );
     MQO_BIND_PRIM( argc );
 
-    MQO_BIND_PRIM( make_multimethod );
     MQO_BIND_PRIM( refuse_method );
 
-    MQO_BIND_PRIM( gc_now );
     MQO_BIND_PRIM( get_global );
-    
-    MQO_BIND_PRIM( consx );
     
     MQO_BIND_PRIM( enable_trace );
     MQO_BIND_PRIM( disable_trace );
@@ -1863,16 +1724,10 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( tcq );
     MQO_BIND_PRIM( tc_clear );
 
-    MQO_BIND_PRIM( programq );
+    MQO_BIND_PRIM( procedureq );
 
     MQO_BIND_PRIM( string_to_exprs );
 
-    MQO_BIND_PRIM( dump_lexicon );
-    MQO_BIND_PRIM( dump_set );
-    MQO_BIND_PRIM( dump_dict );
-    MQO_BIND_PRIM( dump_program );
-    MQO_BIND_PRIM( dump_multimethod );
-    
     MQO_BIND_PRIM( set );
     MQO_BIND_PRIM( setq );
     MQO_BIND_PRIM( set_addd );
@@ -1899,19 +1754,6 @@ void mqo_bind_core_prims( ){
 
     MQO_BIND_PRIM( split_lines );
     
-    MQO_BIND_PRIM( spawn );
-    MQO_BIND_PRIM( pause );
-    MQO_BIND_PRIM( halt );
-    MQO_BIND_PRIM( suspend );
-    MQO_BIND_PRIM( resume );
-    MQO_BIND_PRIM( process_status );
-    MQO_BIND_PRIM( active_process );
-    MQO_BIND_PRIM( processq );
-    MQO_BIND_PRIM( process_input );
-    MQO_BIND_PRIM( set_process_input );
-    MQO_BIND_PRIM( process_output );
-    MQO_BIND_PRIM( set_process_output );
-
     MQO_BIND_PRIM( globals );
     MQO_BIND_PRIM( function_name );
 
@@ -1949,6 +1791,4 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( string_erased );
     
     MQO_BIND_PRIM( copy_string );
-
-    mqo_symbol_fs( "quark" )->value = mqo_make_quark( );
 }

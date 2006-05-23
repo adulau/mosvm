@@ -14,35 +14,25 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
 
-#ifndef MQO_MOSVM_H
-#define MQO_MOSVM_H 1
+#ifndef MQO_TAG_H
+#define MQO_TAG_H
 
-#include "mosvm/memory.h"
-#include "mosvm/number.h"
-#include "mosvm/boolean.h"
-#include "mosvm/list.h"
-#include "mosvm/tree.h"
-#include "mosvm/string.h"
-#include "mosvm/vector.h"
-#include "mosvm/primitive.h"
-#include "mosvm/procedure.h"
-#include "mosvm/closure.h"
-#include "mosvm/parse.h"
-#include "mosvm/print.h"
-#include "mosvm/regex.h"
-#include "mosvm/file.h"
-#include "mosvm/package.h"
-#include "mosvm/vm.h"
-#include "mosvm/process.h"
-#include "mosvm/channel.h"
-#include "mosvm/net.h"
-#include "mosvm/error.h"
-#include "mosvm/tag.h"
-#include "mosvm/multimethod.h"
+#include "memory.h"
 
-void mqo_init_mosvm( );
-void mqo_init_crypto_subsystem( );
-int mqo_argc;
-mqo_list mqo_argv;
+MQO_BEGIN_TYPE( tag )
+    mqo_symbol name;
+    mqo_value info;
+MQO_END_TYPE( tag )
 
+MQO_BEGIN_TYPE( cell )
+    mqo_tag tag;
+    mqo_value repr;
+MQO_END_TYPE( cell )
+
+#define REQ_TAG_ARG( vn ) REQ_TYPED_ARG( vn, tag )
+#define TAG_RESULT( vn ) TYPED_RESULT( tag, vn )
+#define OPT_TAG_ARG( vn ) OPT_TYPED_ARG( vn, tag )
+
+void mqo_init_tag_subsystem( );
+mqo_boolean mqo_isaq( mqo_value x, mqo_value t );
 #endif

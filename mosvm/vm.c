@@ -33,7 +33,7 @@ mqo_pair        MQO_GP;
 mqo_instruction MQO_IP;
 mqo_value       MQO_RX;
 
-mqo_boolean     mqo_trace_flag = 0;
+mqo_integer mqo_trace_flag = 0;
 
 mqo_callframe mqo_make_callframe( ){
     mqo_callframe frame = MQO_OBJALLOC( callframe );
@@ -110,26 +110,6 @@ void mqo_add_call_arg( mqo_value x ){
 
 void mqo_next_instr( ){ MQO_IP ++; }
 
-mqo_value mqo_reduce_fn( mqo_value fn, mqo_pair args ){
-    // ;; Multimethods require thrashing to find first fit method.
-    // (while (is-multimethod? fn)
-    //   (if (multimethod-accepts? fn args)
-    //     (set! fn (multimethod-impl fn))
-    //     (set! fn (multimethod-reject fn))))
-    //
-    /*
-    while( mqo_is_multimethod( fn ) ){
-        mqo_multimethod mm = mqo_multimethod_fv( fn );
-        if( mqo_multimethod_accepts( mm, args ) ){
-            fn = mqo_multimethod_impl( mm );
-        }else{
-            fn = mqo_multimethod_next( mm );
-        }
-    }
-    */
-    return fn;
-}
-
 void mqo_instr_arg( ){
   // (call-add-item! ap rx)
   // (set! ip (next-instr ip)) 
@@ -153,7 +133,7 @@ void mqo_jump( ){
     mqo_pair  args = mqo_list_fv( mqo_cdr( MQO_CP->head ) );
     mqo_integer ct = MQO_CP->count;
 
-    fn = mqo_reduce_fn( fn, args );
+    fn = mqo_reduce_function( fn, args );
     
     if( mqo_is_closure( fn ) ){
         mqo_closure clos = mqo_closure_fv( fn );
@@ -341,7 +321,7 @@ void mqo_instr_tail( ){
     mqo_value fn = mqo_car( MQO_AP->head );
     mqo_pair  args = mqo_list_fv( mqo_cdr( MQO_AP->head ) );
 
-    fn = mqo_reduce_fn( fn, args );
+    fn = mqo_reduce_function( fn, args );
     
     // (if (is-closure? fn) 
     //   (begin (set-call-data! cp (call-data ap)) 

@@ -16,68 +16,62 @@
 
 #include "mosvm.h"
 
-MQO_BEGIN_TYPE( cell )
-    mqo_type  tag;
-    mqo_value repr;
-MQO_END_TYPE( cell )
-
-mqo_cell mqo_make_cell( mqo_type tag, mqo_value repr ){
-    mqo_cell cell = MQO_OBJALLOC( tag );
-    tag->repr = repr;
-    return cell;
-}
-void mqo_show_cell( mqo_cell c, mqo_word* ct ){
-    mqo_printch( '[' );
-    mqo_printsym( mqo_symbol_fv( c->type->name ) );
-    mqo_space( );
-    mqo_show( c->repr, ct );
-    mqo_printch( ']' );
-}
-void mqo_trace_cell( mqo_cell c ){
-    mqo_grey_obj( tag );
-    mqo_grey_val( repr );
-}
-mqo_integer mqo_cell_compare( mqo_cell c, mqo_cell c ){
-    mqo_integer d = a->type - b->type;
-    if( d )return d;
-    return mqo_compare( a, b ); 
-}
-MQO_GENERIC_FREE( cell );
-MQO_C_TYPE( cell );
-
-MQO_BEGIN_TYPE( tag )
-    mqo_symbol name;
-    mqo_value info;
-MQO_END_TYPE( tag )
-
-mqo_cell mqo_make_tag( mqo_symbol name, mqo_value info ){
+mqo_tag mqo_make_tag( mqo_symbol name, mqo_value info ){
     mqo_tag tag = MQO_OBJALLOC( tag );
     tag->name = name;
     tag->info = info;
     return tag;
 }
 void mqo_trace_tag( mqo_tag t ){
-    mqo_grey_obj( t->name );
+    mqo_grey_obj( (mqo_object)t->name );
     mqo_grey_val( t->info );
 }
 void mqo_show_tag( mqo_tag t, mqo_word* ct ){
-    mqo_printch( "[" );
+    mqo_printch( '[' );
     mqo_printsym( t->name );
-    if( t->info ){
+    if( mqo_is_pair( t->info ) ){
         mqo_space( );
-        mqo_show_list_contents( t->info, ct );
+        mqo_show_list_contents( mqo_pair_fv( t->info ), ct );
+    }else if( t->info ){
+        mqo_print( " . " );
+        mqo_show( t->info, ct );
     }
-    mqo_printch( "]" );
+    mqo_printch( ']' );
 }
 MQO_GENERIC_COMPARE( tag );
 MQO_GENERIC_FREE( tag );
 MQO_C_TYPE( tag );
 
+mqo_cell mqo_make_cell( mqo_tag tag, mqo_value repr ){
+    mqo_cell cell = MQO_OBJALLOC( cell );
+    cell->tag = tag;
+    cell->repr = repr;
+    return cell;
+}
+void mqo_show_cell( mqo_cell c, mqo_word* ct ){
+    mqo_printch( '[' );
+    mqo_printsym( c->tag->name );
+    mqo_space( );
+    mqo_show( c->repr, ct );
+    mqo_printch( ']' );
+}
+void mqo_trace_cell( mqo_cell c ){
+    mqo_grey_obj( (mqo_object) c->tag );
+    mqo_grey_val( c->repr );
+}
+mqo_integer mqo_cell_compare( mqo_cell a, mqo_cell b ){
+    mqo_integer d = a->tag - b->tag;
+    if( d )return d;
+    return mqo_cmp_eqv( a->repr, b->repr ); 
+}
+MQO_GENERIC_FREE( cell );
+MQO_C_TYPE( cell );
+
 MQO_BEGIN_PRIM( "type-name", type_name )
     REQ_ANY_ARG( value );
     NO_REST_ARGS( );
     
-    RESULT( mqo_is_tag( value ) ? mqo_tag_fv( value )->name 
+    RESULT( mqo_is_tag( value ) ? mqo_vf_symbol( mqo_tag_fv( value )->name )
                                 : mqo_req_type( value )->name );
 MQO_END_PRIM( type_name )
 

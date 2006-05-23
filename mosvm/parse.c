@@ -22,6 +22,7 @@
 #include <ctype.h>
 #include "mosvm.h"
 
+mqo_integer mqo_parse_incomplete = 0;
 const char* mqo_parse_errmsg = NULL;
 const char* mqo_em_nodigits = "expected digits";
 const char* mqo_em_noprint = "illegal character";
@@ -52,6 +53,7 @@ mqo_quad mqo_parse_dec( char** r_str, mqo_boolean* r_succ ){
         *r_str = str; 
     }else{
         mqo_parse_errmsg = mqo_em_nodigits;
+        mqo_parse_incomplete = 1;
         *r_succ = 0; 
     }
     
@@ -85,6 +87,7 @@ mqo_quad mqo_parse_hex( char** r_str, mqo_boolean* r_succ ){
         *r_str = str; 
     }else{
         mqo_parse_errmsg = mqo_em_nodigits;
+        mqo_parse_incomplete = 1;
         *r_succ = 0; 
     }
     
@@ -140,6 +143,7 @@ mqo_string mqo_parse_str( char** r_str, mqo_boolean* r_succ ){
         switch( ch = *str ){ 
         case 0: 
             mqo_parse_errmsg = mqo_em_endq;
+        mqo_parse_incomplete = 1;
             goto fail;
         case '"': goto succ;
         case '\\':
@@ -242,6 +246,7 @@ mqo_list mqo_parse_list( char** r_str, mqo_boolean* r_succ ){
             goto succ;
         case 0:
             mqo_parse_errmsg = mqo_em_endp;
+        mqo_parse_incomplete = 1;
             goto fail;
         default:
             x = mqo_parse_value( &str, r_succ );
@@ -275,6 +280,7 @@ mqo_value mqo_parse_value( char** r_str, mqo_boolean* r_succ ){
     if( ch == 0 ){
         *r_succ = 0;
         mqo_parse_errmsg = mqo_em_more;
+        mqo_parse_incomplete = 1;
     }else if( isdigit( ch )  || ch == '$' ){
         x = mqo_vf_integer( mqo_parse_int( &str, r_succ ) );
     }else if( ch == '@' ){
@@ -320,7 +326,8 @@ mqo_value mqo_parse_value( char** r_str, mqo_boolean* r_succ ){
 
 mqo_list mqo_parse_document( char* doc, mqo_boolean* r_succ ){
     mqo_pair tc = mqo_make_tc( );
-    
+    mqo_parse_errmsg = NULL;
+    mqo_parse_incomplete = 0;
     for(;;){
         doc = mqo_skip_space( doc );
         if( *doc ){

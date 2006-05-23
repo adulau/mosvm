@@ -25,6 +25,7 @@ MQO_BEGIN_TYPE( process )
     mqo_value context;
     mqo_boolean enabled;
     mqo_object monitoring; //TODO: This is a channel..
+    mqo_value input, output;
 MQO_END_TYPE( process )
 
 MQO_BEGIN_TYPE( vm )

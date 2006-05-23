@@ -18,7 +18,7 @@
 
 int main( int argc, const char* argv[] ){
     if( argc != 3 ){
-        printf( 
+        mqo_print( 
 "mosasm src-file dst-file\n\n" 
 "Used to construct Mosquito Object Package files from Mosquito Assembler "
 "files.  Primarily employed by the Mosquito Lisp compiler in seed mode, and "
@@ -31,7 +31,9 @@ int main( int argc, const char* argv[] ){
         mqo_boolean ok = 1;
         mqo_pair   dta = mqo_parse_document( mqo_sf_string( src ), &ok );
         if(! ok ){
-            printf( "PARSE: %s\n", mqo_parse_errmsg );
+            mqo_print( "PARSE: ");
+            mqo_print( mqo_parse_errmsg );
+            mqo_newline();
             return 2;
         }
         mqo_procedure proc = mqo_assemble( dta );

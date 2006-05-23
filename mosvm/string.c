@@ -210,6 +210,11 @@ void mqo_string_alter(
     string->length = newlen;
     string->pool[ newlen ] = 0;
 }
+void mqo_string_prepend( 
+    mqo_string string, const void* src, mqo_integer srclen
+){
+    mqo_string_alter( string, 0, 0, src, srclen );
+}
 char* mqo_sf_string( mqo_string string ){
     string->pool[ string->origin + string->length ] = 0;
     return string->pool + string->origin;
