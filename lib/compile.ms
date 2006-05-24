@@ -223,8 +223,7 @@
 (set-macro! 'while (lambda (test . rest)  
                      (let ((enter (make-branch-symbol 'enter))
                            (exit  (make-branch-symbol 'exit)))
-                       `(asm (ldc #f)
-                             ,enter
+                       `(asm ,enter
                              (mos ,test) 
                              (jf ,exit) 
                              (mos ,@rest)
@@ -234,8 +233,7 @@
             (lambda (test . rest)  
               (let ((enter (make-branch-symbol 'enter))
                     (exit  (make-branch-symbol 'exit)))
-                `(asm (ldc #f)
-                      ,enter
+                `(asm ,enter
                       (mos ,test) 
                       (jt ,exit) 
                       (mos ,@rest)
@@ -243,13 +241,11 @@
                       ,exit))))
 
 (set-macro! 'forever
-            (lambda (test . rest)  
-              (let ((enter (make-branch-symbol 'enter))
-                    (exit  (make-branch-symbol 'exit)))
-                `(asm (ldc #f)
-                      ,more
-                      (mos ,test) 
-                      (jmp ,more)))))
+            (lambda rest  
+              (let ((again (make-branch-symbol 'again)))
+                `(asm ,again
+                      (mos ,@rest) 
+                      (jmp ,again)))))
 
 (set-macro! 'or (lambda (test . rest)  
                   (if (null? rest)

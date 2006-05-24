@@ -492,6 +492,15 @@ MQO_BEGIN_PRIM( "tcp-connect", tcp_connect )
     LISTENER_RESULT( mqo_make_listener( server_fd ) );
 MQO_END_PRIM( tcp_connect )
 
+MQO_BEGIN_PRIM( "stream-closed?", stream_closedq )
+    REST_ARGS( s );
+    while ( s ){
+        if( mqo_req_stream( mqo_car( s ) )->closed ) TRUE_RESULT( );
+        s = mqo_req_list( mqo_cdr( s ) );
+    }
+    FALSE_RESULT( );
+MQO_END_PRIM( stream_closedq );
+
 MQO_BEGIN_PRIM( "resolve-addr", resolve_addr )
     REQ_STRING_ARG( addr )
     NO_REST_ARGS( )
@@ -506,6 +515,7 @@ void mqo_init_stream_subsystem( ){
     MQO_BIND_PRIM( tcp_listen );
     MQO_BIND_PRIM( tcp_connect );
     MQO_BIND_PRIM( resolve_addr );
+    MQO_BIND_PRIM( stream_closedq );
 
     mqo_stream_monitor = mqo_make_process( 
         (mqo_proc_fn) mqo_activate_netmon, 
