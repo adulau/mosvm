@@ -331,6 +331,8 @@ void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
         int use = 0;
 
         FD_SET( fd, &reads );
+        FD_SET( fd, &errors );
+
         if( mqo_is_stream_reading( stream ) ){
             use = 1;
         };
@@ -341,7 +343,6 @@ void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
             use = 1;
         };
 
-        FD_SET( fd, &errors );
         if( fd > maxfd ) maxfd = fd;
 
         if( ! use ){
