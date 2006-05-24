@@ -43,6 +43,7 @@
 
 void mqo_init_mosvm( );
 void mqo_init_crypto_subsystem( );
+void mqo_bind_core_prims( );
 int mqo_argc;
 mqo_list mqo_argv;
 

@@ -17,6 +17,21 @@
 #include "mosvm.h"
 #include <string.h>
 
+#ifdef _WIN32
+#else
+#include <signal.h>
+
+//TODO: Add (disable-sigint) so the drone can block this.
+void mqo_handle_sigint( int sig ){
+    mqo_newline( );
+    mqo_print( "Interrupted by user." );
+    mqo_newline( );
+    mqo_traceback_frame( mqo_frame_context( MQO_CP ) );
+    mqo_newline( );
+    exit(909);
+}
+#endif
+
 void mqo_run( mqo_value func ){
     // TODO: Retire when process is back in.
     mqo_spawn_func( func );
@@ -24,8 +39,21 @@ void mqo_run( mqo_value func ){
 }
 
 int main( int argc, const char** argv ){
-    mqo_init_mosvm( );
+#ifdef _WIN32
+    char name[MAX_PATH];
+    if (GetModuleFileName(NULL,name,sizeof(name))==0){
+        mqo_errf(
+            mqo_es_vm, "s", "windows cannot identify the location of mosvm"
+        );
+        return EXIT_FAILURE;
+    }
+    argv[0]=name;
+#else
+    signal( SIGINT, mqo_handle_sigint );
+#endif
 
+    mqo_init_mosvm( );
+/*
     if( argc > 1 ){ 
         int i;
         for( i = 1; i < argc; i ++ ){
@@ -51,6 +79,41 @@ int main( int argc, const char** argv ){
         mqo_print( " objfile1 objfile2 ...\n" );
         mqo_print( "Executes each object file in turn.\n" );
     }
+*/
+    mqo_argv = mqo_make_tc( );
+    mqo_argc = 0;
+    int i, mqo_show_globals = 0;
+    for( i = 1; i < argc; i ++ ){
+        if( ! strcmp( argv[i], "-d" ) ){
+            mqo_trace_flag ++;
+        }else if( ! strcmp( argv[i], "-g" ) ){
+            mqo_show_globals = 1;
+        }else{
+            mqo_tc_append( mqo_argv, mqo_vf_string( mqo_string_fs( argv[i] ) ) );
+            mqo_argc ++;
+        }
+    };
+
+    mqo_argv = mqo_list_fv( mqo_car( mqo_argv ) );
+
+    mqo_list linked = mqo_thaw_tail( argv[0] );
+
+    while( linked ){
+        mqo_run( mqo_car( linked ) );
+        linked = mqo_list_fv( mqo_cdr( linked ) );
+    }
+
+    if( mqo_show_globals ){
+        mqo_list globals = mqo_get_globals( );
+        while( globals ){
+            mqo_printsym( mqo_symbol_fv( mqo_car( mqo_pair_fv( mqo_car( globals ) ) ) ) );
+            mqo_print( " -- " );
+            mqo_word ct = 64; 
+            mqo_show( mqo_value_type( mqo_cdr( mqo_pair_fv( mqo_car( globals ) ) ) )->name, &ct );
+            mqo_newline( );
+            globals = mqo_list_fv( mqo_cdr( globals ) );
+        }
+    };
 
     mqo_collect_garbage( );
     return 0;

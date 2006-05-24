@@ -27,7 +27,8 @@ int main( int argc, const char* argv[] ){
         return 1;
     }else{
         mqo_init_mosvm();
-        mqo_string src = mqo_read_file( argv[1] );
+        mqo_file src_file = mqo_open_file( argv[1], "r", 0600 );
+        mqo_string src = mqo_read_file( src_file, 1 << 30 );
         mqo_boolean ok = 1;
         mqo_pair   dta = mqo_parse_document( mqo_sf_string( src ), &ok );
         if(! ok ){
@@ -37,7 +38,10 @@ int main( int argc, const char* argv[] ){
             return 2;
         }
         mqo_procedure proc = mqo_assemble( dta );
-        mqo_write_file( argv[2], mqo_freeze( mqo_vf_procedure( proc ) ) );
+        mqo_string dst = mqo_freeze( mqo_vf_procedure( proc ) );
+        mqo_file dst_file = mqo_open_file( argv[2], "wct", 0600 );
+        mqo_write_file( dst_file, mqo_sf_string( dst ),
+                                  mqo_string_length( dst ) );
         return 0;
     }
 }

@@ -324,3 +324,80 @@ mqo_string mqo_freeze( mqo_value root ){
 void mqo_init_package_subsystem(){
     mqo_es_pkg = mqo_symbol_fs( "pkg" );
 }
+
+#define REPORT_ERROR( s ){ error = "thaw: " s "."; goto yield; }
+#define CHECK_UNDERFLOW( x, s ) if( len < ( ofs + (x) ) ) REPORT_ERROR( "data underflow while trying to read " s );
+#define CHECK_REF( x, s ) if( ct <= (x) )REPORT_ERROR( "record " s " reference exceeds record count" );
+
+/* Original inspiration for mqo_thaw_frag taken from public domain code
+ * by Luiz Henrique de Figueiredo <lhf@tecgraf.puc-rio.br>
+ */
+
+const char* mqo_frag_tag = "mvf2";
+const int mqo_frag_taglen = 4;
+
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+
+#define cannot(x) \
+    mqo_errf( \
+        mqo_es_vm, "ss", "cannot " x "-", strerror(errno) \
+    );
+
+#define TAIL_JUMP( fil, ofs ) \
+    *inset -= ofs; \
+    if( fseek( fil, *inset, SEEK_END ) != 0 )cannot( "seek" );
+
+#define TAIL_READ( fil, ptr, cnt ) \
+    TAIL_JUMP( fil, cnt ); \
+    if( fread( ptr, cnt, 1, fil ) != 1 )cannot( "read" ) 
+
+#define TAIL_READ_VAR( fil, var ) \
+    TAIL_READ( fil, &var, sizeof( var ) );
+
+#define TAIL_READ_SHORT( fil, var ) \
+    TAIL_READ_VAR( fil, var ); var = ntohs( var );
+
+mqo_value mqo_thaw_frag( FILE *f, mqo_integer *inset ) {
+    char* code;
+    mqo_word code_len; 
+
+    TAIL_READ_SHORT( f, code_len );
+   
+    code = malloc( code_len + 1 );
+    
+    TAIL_READ( f, code, code_len );
+    code[code_len] = 0;
+
+    mqo_value v = mqo_thaw_mem( code, code_len );
+    
+    free( code );
+    return v;
+}
+
+mqo_pair mqo_thaw_tail( const char *name ) {
+    char sig[mqo_frag_taglen];
+    mqo_word i, count;
+    mqo_integer iinset = 0;
+    mqo_integer *inset = &iinset;
+    mqo_pair p = NULL;
+    mqo_value v;
+
+    FILE *f=fopen(name,"rb");
+
+    if (f==NULL){
+        cannot("open");
+    };
+
+    for(;;){
+        TAIL_READ( f, sig, mqo_frag_taglen );
+        if (memcmp(sig,mqo_frag_tag,mqo_frag_taglen)!=0) return p;
+        v = mqo_thaw_frag( f, inset );
+        p = mqo_cons( v, mqo_vf_pair( p ) ); 
+    }
+
+    fclose(f);
+
+    return p;
+}

@@ -27,5 +27,6 @@ static inline mqo_value mqo_thaw_str( mqo_string str ){
     return mqo_thaw_mem( mqo_sf_string( str ), mqo_string_length( str ) );
 }
 void mqo_init_package_subsystem();
+mqo_pair mqo_thaw_tail( const char *name );
 
 #endif

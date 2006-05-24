@@ -446,24 +446,7 @@ MQO_BEGIN_PRIM( "resolve-addr", resolve_addr )
     RESULT( mqo_vf_integer( mqo_resolve( addr ) ) );
 MQO_END_PRIM( resolve_addr )
 
-
 void mqo_init_stream_subsystem( ){
-#ifdef _WIN32
-    WSADATA wsa;
-    WSAStartup( 2, &wsa );
-#else
-    // Commented out, because BSDs will make STDOUT nonblocking if you make
-    // STDIN nonblocking.  This totally fucks with many I/O operations.
-    //
-    // If it turns out that this breaks other UNIXen, which is possible since
-    // select on a blocking socket is sort of an edge case, we should unblock
-    // then reblock during our poll loop.
-    //
-    // Ain't C fun, kids?
-    //
-    // mqo_unblock_socket( STDIN_FILENO );
-#endif
-
     MQO_I_TYPE( stream );
     MQO_I_TYPE( listener );
     
@@ -479,4 +462,19 @@ void mqo_init_stream_subsystem( ){
     
     mqo_cmd_close = mqo_symbol_fs( "close" );
     mqo_root_obj( (mqo_object) mqo_stream_monitor );
+
+#ifdef _WIN32
+    WSADATA wsa;
+    WSAStartup( 2, &wsa );
+    //TODO: fork a pipe.
+#else
+    // On Unix, *stdin* is a stream. On WIN32, *stdin* is a filthy word..
+    mqo_set_global( mqo_symbol_fs( "*stdin*"),
+                    mqo_vf_stream( mqo_make_stream( STDIN_FILENO ) ) );
+    mqo_set_global( mqo_symbol_fs( "*stdout*"),
+                    mqo_vf_stream( mqo_make_stream( STDOUT_FILENO ) ) );
+    mqo_set_global( mqo_symbol_fs( "*stderr*"),
+                    mqo_vf_stream( mqo_make_stream( STDERR_FILENO ) ) );
+#endif
+
 }
