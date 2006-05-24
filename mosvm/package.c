@@ -394,7 +394,7 @@ mqo_pair mqo_thaw_tail( const char *name ) {
         TAIL_READ( f, sig, mqo_frag_taglen );
         if (memcmp(sig,mqo_frag_tag,mqo_frag_taglen)!=0) return p;
         v = mqo_thaw_frag( f, inset );
-        p = mqo_cons( v, mqo_vf_pair( p ) ); 
+        p = mqo_cons( v, mqo_vf_list( p ) ); 
     }
 
     fclose(f);

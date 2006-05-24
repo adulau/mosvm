@@ -97,8 +97,15 @@ int main( int argc, const char** argv ){
     mqo_argv = mqo_list_fv( mqo_car( mqo_argv ) );
 
     mqo_list linked = mqo_thaw_tail( argv[0] );
-
-    while( linked ){
+    
+    if( ! linked ){
+        if( mqo_argv ){
+            mqo_string src_path = mqo_string_fv( mqo_car( mqo_argv ) );
+            mqo_file src_file = mqo_open_file( mqo_sf_string( src_path ),
+                                               "r", 0600 );
+            mqo_run( mqo_thaw_str( mqo_read_file( src_file, 1 << 30 ) ) );
+        }
+    }else while( linked ){
         mqo_run( mqo_car( linked ) );
         linked = mqo_list_fv( mqo_cdr( linked ) );
     }
