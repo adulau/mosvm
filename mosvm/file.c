@@ -36,6 +36,7 @@ void mqo_trace_file( mqo_file file ){
 }
 void mqo_free_file( mqo_file file ){
     if( ! file->closed )close( file->fd );
+    mqo_objfree( file );
 }
 void mqo_show_file( mqo_file file, mqo_word* ct ){
     if( file->closed ){

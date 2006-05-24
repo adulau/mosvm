@@ -54,7 +54,6 @@ mqo_stream mqo_last_stream = NULL;
 
 mqo_symbol mqo_cmd_close = NULL;
 
-
 void mqo_report_host_error( ){
 #if defined(_WIN32)||defined(__CYGWIN__)
     mqo_errf( mqo_es_vm, "s", strerror( WSAGetLastError() ) );
@@ -74,6 +73,14 @@ void mqo_report_net_error( ){
 mqo_integer mqo_net_error( mqo_integer k ){
     if( k == -1 )mqo_report_net_error( );
     return k;
+}
+
+mqo_boolean mqo_is_stream_writing( mqo_stream s ){
+    return ! mqo_channel_empty( s->cmd );
+}
+
+mqo_boolean mqo_is_stream_reading( mqo_stream s ){
+    return (mqo_boolean) s->evt->monitor;
 }
 
 int mqo_parse_dotted_quad( mqo_string quad, mqo_integer* addr ){
@@ -121,6 +128,7 @@ mqo_integer mqo_resolve( mqo_string name ){
 
     return addr;
 }
+
 mqo_stream mqo_make_stream( mqo_integer fd ){
     mqo_stream s = MQO_OBJALLOC( stream );
     s->fd = fd;
@@ -129,6 +137,8 @@ mqo_stream mqo_make_stream( mqo_integer fd ){
     s->next = NULL;
     s->prev = mqo_last_stream;
     s->error = 0;
+    s->closed = 0;
+    s->enabled = 0;
 
 #if defined( _WIN32 )||defined( __CYGWIN__ )
     unsigned long unblocking = 1;
@@ -137,16 +147,6 @@ mqo_stream mqo_make_stream( mqo_integer fd ){
     mqo_net_error( fcntl( s->fd, F_SETFL, O_NONBLOCK ) );
 #endif
 
-    if( mqo_last_stream ){
-        mqo_last_stream->next = s;
-    }else{
-        mqo_first_stream = s;    
-        mqo_enable_process( mqo_stream_monitor );
-    };
-    
-    s->prev = mqo_last_stream;
-    mqo_last_stream = s;
-    
     return s;
 }
 
@@ -171,18 +171,41 @@ mqo_listener mqo_make_listener( mqo_integer fd ){
     return l;
 }
 
-void mqo_kill_stream( mqo_stream stream ){
-    mqo_stream prev = stream->prev;
-    mqo_stream next = stream->next;
+void mqo_enable_stream( mqo_stream stream ){
+    if( stream->enabled ) return;
+    if( stream->closed ) return;
+    stream->enabled = 1;
+
+    mqo_stream prev = mqo_last_stream;
 
     if( prev ){
+        stream->prev = prev;
+        prev->next = stream;
+    }else{
+        mqo_first_stream = stream;
+        mqo_enable_process( mqo_stream_monitor );
+    }
+
+    mqo_last_stream = stream;
+}
+
+void mqo_disable_stream( mqo_stream stream ){
+    if( ! stream->enabled ) return;
+    stream->enabled = 0;
+
+    mqo_stream prev = stream->prev;
+    mqo_stream next = stream->next;
+    
+    if( prev ){
         prev->next = next;
+        stream->prev = NULL;
     }else if( mqo_first_stream == stream ){
         mqo_first_stream = next;
     }
 
     if( next ){
         next->prev = prev;
+        stream->next = NULL;
     }else if( mqo_last_stream == stream ){
         mqo_last_stream = prev;
     }
@@ -192,6 +215,13 @@ void mqo_kill_stream( mqo_stream stream ){
     }
 }
 
+void mqo_close_stream( mqo_stream stream ){
+    mqo_disable_stream( stream );
+    if( stream->closed )return;
+    mqo_channel_append( stream->evt, mqo_vf_symbol( mqo_cmd_close ) );
+    stream->closed = 1;
+    close( stream->fd );
+}
 void mqo_stream_read_evt( mqo_stream stream ){
     mqo_string buf;
     mqo_boolean put;
@@ -204,8 +234,10 @@ void mqo_stream_read_evt( mqo_stream stream ){
         buf = mqo_string_fv( mqo_channel_tail( stream->evt ) );
         mqo_string_expand( buf, 1024 );
     }
-   
-    int rs = recv( stream->fd, mqo_string_tail( buf ), 1024, 0 );
+    
+    int rs = stream->fd ? recv( stream->fd, mqo_string_tail( buf ), 1024, 0 )
+                        : read( stream->fd, mqo_string_tail( buf ), 1024 );
+    
 
     if( rs > 0 ){
         mqo_string_wrote( buf, rs );
@@ -220,12 +252,9 @@ void mqo_stream_read_evt( mqo_stream stream ){
         stream->error = errno;
         
         // No patience for badly behaved connections..
-        close( stream->fd );
-        mqo_channel_append( stream->evt, mqo_vf_symbol( mqo_cmd_close ) );
-        mqo_kill_stream( stream );
+        mqo_close_stream( stream );
     }else if( rs == 0 ){
-        mqo_channel_append( stream->evt, mqo_vf_symbol( mqo_cmd_close ) );
-        mqo_kill_stream( stream );
+        mqo_close_stream( stream );
     }
 }
 
@@ -251,12 +280,13 @@ void mqo_stream_write_evt( mqo_stream stream ){
 
     if( mqo_is_symbol( cmd ) && ( mqo_symbol_fv( cmd ) == mqo_cmd_close ) ){
         mqo_read_channel( stream->cmd );
-        close( stream->fd );
-        mqo_kill_stream( stream );
+        mqo_close_stream( stream );
     }else if( mqo_is_string( cmd ) ){
         mqo_string buf = mqo_string_fv( cmd );
-        int rs = send( stream->fd, mqo_string_head( buf ), 
-                        mqo_string_length( buf ), 0 );
+        int rs = stream->fd ? send( stream->fd, mqo_string_head( buf ), 
+                                    mqo_string_length( buf ), 0 )
+                            : write( stream->fd, mqo_string_head( buf ), 
+                                     mqo_string_length( buf ) );
         if( rs > 0 ){
             mqo_string_skip( buf, rs );
             if( mqo_string_empty( buf ) ){
@@ -274,7 +304,7 @@ void mqo_stream_write_evt( mqo_stream stream ){
 }
 
 void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
-    mqo_stream stream;
+    mqo_stream next, stream;
     mqo_listener listener;
     struct fd_set reads, errors, writes;
     int fd, maxfd = 0;
@@ -283,27 +313,53 @@ void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
     FD_ZERO( &writes );
     FD_ZERO( &errors );
 
-    for( stream = mqo_first_stream; stream; stream = stream->next ){
-        fd = stream->fd;
+    for( stream = mqo_first_stream; stream; stream = next ){
+        // Okay.. Here we go:
+        //     If a stream is in the active set, we know it's got to be
+        //     open, and something recently tried to check its command or
+        //     event channels.
+        //
+        //     That's worth a read -- just in case something looks again; but
+        //     if nothing is actively watching this stream, it's not worth
+        //     checking twice.
+        //
+        //     If the event channel is being actively monitored, or if there
+        //     are commands, we will keep it in the active list.
+
+        next = stream->next; fd = stream->fd;
+
+        int use = 0;
+
+        FD_SET( fd, &reads );
+        if( mqo_is_stream_reading( stream ) ){
+            use = 1;
+        };
+
+        if( mqo_is_stream_writing( stream ) ){
+            fd = fd ? fd : STDOUT_FILENO;
+            FD_SET( fd, &writes );
+            use = 1;
+        };
+
+        FD_SET( fd, &errors );
         if( fd > maxfd ) maxfd = fd;
-        FD_SET( stream->fd, &reads );
-        if( ! mqo_channel_empty( stream->cmd ) ){
-            FD_SET( stream->fd, &writes );
+
+        if( ! use ){
+            mqo_disable_stream( stream );
         }
-        FD_SET( stream->fd, &errors );
     }
     
     for( listener = mqo_first_listener; listener; listener = listener->next ){
         fd = listener->fd;
         if( fd > maxfd ) maxfd = fd;
-        FD_SET( listener->fd, &reads );
-        FD_SET( listener->fd, &errors );
+        FD_SET( fd, &reads );
+        FD_SET( fd, &errors );
     }
-    
-    if( ! maxfd ){
+   
+    if(!( mqo_first_stream || mqo_first_listener )){
         mqo_disable_process( mqo_stream_monitor );
         return;
-    }
+    };
 
     struct timeval timeout = { 0, 0 };
     select( maxfd + 1,
@@ -311,8 +367,9 @@ void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
             //&timeout );
             mqo_can_be_only_one( ) ? (struct timeval*) NULL 
                                    : &timeout  );
-    
-    for( stream = mqo_first_stream; stream; stream = stream->next ){
+   
+    for( stream = mqo_first_stream; stream; stream = next ){
+        next = stream->next;
         fd = stream->fd;
         if( fd > maxfd ) maxfd = fd;
         if( FD_ISSET( stream->fd, &reads ) || FD_ISSET( stream->fd, &errors ) ){
@@ -346,7 +403,6 @@ void mqo_trace_stream( mqo_stream stream ){
     mqo_grey_obj( (mqo_object) stream->next );
 }
 void mqo_free_stream( mqo_stream stream ){
-    mqo_kill_stream( stream );
     mqo_objfree( stream );
 }
 MQO_GENERIC_SHOW( stream );
@@ -356,10 +412,6 @@ MQO_C_TYPE( stream );
 void mqo_trace_listener( mqo_listener listener ){
     mqo_grey_obj( (mqo_object) listener->conns );
     
-    //TODO: This means that any open stream persists until it
-    //      crashes.  Ideally, we should be killing them when there
-    //      are no more references to the stream object..
-
     mqo_grey_obj( (mqo_object) listener->prev );
     mqo_grey_obj( (mqo_object) listener->next );
 }
@@ -468,13 +520,14 @@ void mqo_init_stream_subsystem( ){
     WSAStartup( 2, &wsa );
     //TODO: fork a pipe.
 #else
-    // On Unix, *stdin* is a stream. On WIN32, *stdin* is a filthy word..
-    mqo_set_global( mqo_symbol_fs( "*stdin*"),
-                    mqo_vf_stream( mqo_make_stream( STDIN_FILENO ) ) );
-    mqo_set_global( mqo_symbol_fs( "*stdout*"),
-                    mqo_vf_stream( mqo_make_stream( STDOUT_FILENO ) ) );
-    mqo_set_global( mqo_symbol_fs( "*stderr*"),
-                    mqo_vf_stream( mqo_make_stream( STDERR_FILENO ) ) );
+    // On Unix, *stdin* is a stream. On WIN32, *stdio* is a filthy word..
+    mqo_set_global( mqo_symbol_fs( "*stdio*"), 
+                    mqo_vf_stream( mqo_make_stream( 0 ) ) );
 #endif
-
 }
+
+mqo_channel mqo_stream_input( mqo_stream s ){ mqo_enable_stream( s );
+                                              return s->cmd; }
+mqo_channel mqo_stream_output( mqo_stream s ){ mqo_enable_stream( s );
+                                              return s->evt; }
+//TODO: Ensure stdio remaps for output.
