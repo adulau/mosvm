@@ -181,7 +181,8 @@ void mqo_instr_clos( ){
     // (set! ip (next-instr ip))
 
     MQO_RX = mqo_vf_closure( mqo_make_closure( 
-        MQO_IP->proc->inst + mqo_imm_fv( MQO_AX ),
+        MQO_AX,
+        MQO_IP->proc->inst + mqo_imm_fv( MQO_BX ),
         MQO_EP
     ) );
     mqo_next_instr();
@@ -446,7 +447,7 @@ void mqo_init_vm_subsystem( ){
 
     MQO_BIND_OP( arg,  0, 0); //00
     MQO_BIND_OP( call, 0, 0); //01
-    MQO_BIND_OP( clos, 1, 0); //02
+    MQO_BIND_OP( clos, 1, 1); //02
     MQO_BIND_OP( gar,  1, 0); //03
     MQO_BIND_OP( jf,   1, 0); //04
     MQO_BIND_OP( jmp,  1, 0); //05

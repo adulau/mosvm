@@ -32,9 +32,9 @@ void mqo_trace_primitive( mqo_primitive prim ){
     mqo_grey_obj( (mqo_object) mqo_prim_name( prim ) );
 }
 void mqo_show_primitive( mqo_primitive prim, mqo_word* ct ){
-    mqo_print( "[prim " );
+    //mqo_print( "[prim " );
     mqo_printsym( mqo_prim_name( prim ) );
-    mqo_print( "]" );
+    //mqo_print( "]" );
 }
 
 mqo_pair mqo_arg_ptr = NULL;

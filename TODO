@@ -44,16 +44,3 @@
   Only lists need to be decorated by line during read.
   Likewise, only calls need to be decorated by line.
 
-+ Expand freeze/thaw to add a list type.
-  Encodes a sequence of pairs as list, for compression.
-
-+ Expand freeze/thaw to use 1, 2 or 4 bytes for numbers, according to types.
-  String, List and Integer types have 1, 2 or 4 byte variants.
-
-+ Expand freeze/thaw/exec/assemble to hard-encode numbers, and booleans.
-  ...
-
-+ Expand freeze/thaw to pack symbol data.
-  Make symbols case-insensitive restricted to the printable range.
-  6 bits per character; is it worth it?
-

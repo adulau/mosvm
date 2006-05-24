@@ -16,11 +16,11 @@
 
 #include "mosvm.h"
 
-mqo_closure mqo_make_closure( mqo_instruction inst, mqo_pair env ){
+mqo_closure mqo_make_closure( mqo_value name, mqo_instruction inst, mqo_pair env ){
     mqo_closure clos = MQO_OBJALLOC( closure );
     clos->inst = inst;
     clos->env = env;
-    clos->name = mqo_vf_null();
+    clos->name = name;
     return clos;
 }
 
@@ -31,6 +31,10 @@ void mqo_trace_closure( mqo_closure clos ){
 }
 
 void mqo_show_closure( mqo_closure clos, mqo_word* ct ){
+    if( clos->name &&( ! mqo_is_false( clos->name ) ) ){
+        return mqo_show( clos->name, ct );
+    }
+
     mqo_print( "[closure" );
     mqo_value name = mqo_clos_name( clos );
     if( mqo_is_symbol( name ) ){

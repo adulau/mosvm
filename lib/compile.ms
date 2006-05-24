@@ -366,8 +366,15 @@
                    (compile-block block body n-env))))
     (cons 'set!  (lambda (block env . expr)
                    (compile-store block expr env)))
+    (cons 'function (lambda (block env formals . body)
+                    (compile-function block
+                                      (car formals)
+                                      (parse-formals (cdr formals))
+                                      body
+                                      env)))
     (cons 'lambda (lambda (block env formals . body)
                     (compile-function block
+                                      #f
                                       (parse-formals formals)
                                       body
                                       env)))
@@ -478,9 +485,9 @@
                 (is-exported? sym env)) 
            #f)
           (else 
-           (add-context-binding! env sym)
-           #t)))
-           
+            (add-context-binding! env sym)
+            #t)))
+
   (define (compile-define expr)
     (when (< (length expr) 2)
       (error 'compile 
@@ -488,18 +495,17 @@
              expr))
     (let ((term (cadr expr))
           (body (cdr (cdr expr))))
-    
+
       (if (pair? term)
         (let ((args (cdr term)))
           (set! term (car term))
 
           (if (and (pair? args) (any pair? (unkink args)))
-            ;;;TODO: These should be named-lambda's.
             (set! body `(make-multimethod (list ,@(parse-signature args))
-                                          (lambda ,(parse-slots args)
-                                            ,@body)
+                                          (function (,term ,@(parse-slots args))
+                                                    ,@body)
                                           (or (?? ,term) refuse-method)))
-            (set! body `(lambda ,args ,@body))))
+            (set! body `(function (,term ,@args) ,@body))))
         (if (= (length body) 1)
           (set! body (car body))
           (error 'compile "variable definitions should be one expression"
@@ -507,7 +513,7 @@
 
       (compile-decl term env)
       (list 'set! term body)))
-    
+
   (map (lambda (stmt)
          (if (is-define? stmt)
            (compile-define stmt)
@@ -658,7 +664,7 @@
      (make-formals #t (parse-signature formals) (parse-slots formals)))
     (else (make-formals #f (parse-signature formals) (parse-slots formals)))))
 
-(define (compile-function outer formals body env)
+(define (compile-function outer name formals body env)
   (set! env (make-actual-context env (formal-slots formals)))
   (let ((label (make-branch-symbol 'lambda))
         (inner (make-block (block-scheme-program outer)))
@@ -675,7 +681,7 @@
                                   (context-slot-count env))))
     (block-prepend! inner label)
 
-    (block-append! outer (list 'clos label))))
+    (block-append! outer (list 'clos name label))))
 
 (define (compile-load block sym env) 
   ;TODO Test for is-imported?
