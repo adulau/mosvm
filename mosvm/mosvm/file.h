@@ -14,13 +14,28 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
 
+#include "memory.h"
 #ifndef MQO_FILE_H
 #define MQO_FILE_H 1
 
-#include "memory.h"
+MQO_BEGIN_TYPE( file );
+    mqo_string path;
+    mqo_integer fd;
+    mqo_boolean closed;
+MQO_END_TYPE( file );
+
+mqo_file mqo_make_file( mqo_string path, int fd );
+
+void mqo_init_file_subsystem( );
 
 int mqo_os_error( int code );
-mqo_string mqo_read_file( const char* path );
-void mqo_write_file( const char* path, mqo_string data );
+mqo_string mqo_read_file( mqo_file file, mqo_quad max );
+void mqo_write_file( mqo_file file, const void* data, mqo_integer datalen );
+void mqo_close_file( mqo_file file );
+mqo_file mqo_open_file( const char* path, const char* flags, mqo_integer mode );
+
+#define REQ_FILE_ARG( vn  ) REQ_TYPED_ARG( vn, file );
+#define OPT_FILE_ARG( vn  ) OPT_TYPED_ARG( vn, file );
+#define FILE_RESULT( x  ) TYPED_RESULT( file, x );
 
 #endif

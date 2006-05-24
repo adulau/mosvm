@@ -39,6 +39,7 @@
 #include "mosvm/error.h"
 #include "mosvm/tag.h"
 #include "mosvm/multimethod.h"
+#include "mosvm/file.h"
 
 void mqo_init_mosvm( );
 void mqo_init_crypto_subsystem( );

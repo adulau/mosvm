@@ -54,6 +54,15 @@ mqo_stream mqo_last_stream = NULL;
 
 mqo_symbol mqo_cmd_close = NULL;
 
+
+void mqo_report_host_error( ){
+#if defined(_WIN32)||defined(__CYGWIN__)
+    mqo_errf( mqo_es_vm, "s", strerror( WSAGetLastError() ) );
+#else
+    mqo_errf( mqo_es_vm, "s", hstrerror( h_errno ) );
+#endif
+}
+
 void mqo_report_net_error( ){
 #if defined(_WIN32)||defined(__CYGWIN__)
     mqo_errf( mqo_es_vm, "s", strerror( WSAGetLastError() ) );
@@ -67,6 +76,51 @@ mqo_integer mqo_net_error( mqo_integer k ){
     return k;
 }
 
+int mqo_parse_dotted_quad( mqo_string quad, mqo_integer* addr ){
+    mqo_byte* bytes = (mqo_byte*)addr;
+
+    int ct = 0;
+    const char* ptr = mqo_sf_string( quad );
+    const char* tail = ptr + mqo_string_length( quad );
+    char* next; 
+
+    while(( ct < 4 )&&( ptr != tail )){
+        mqo_quad x = strtoul( ptr, &next, 10 );  
+        if( ptr == next ) break; // *ptr wasn't a digit
+        if(( x > 255 )||( x < 0 )) return 0; // Not a byte.
+        bytes[ ct ++ ] = (mqo_byte)x; // Otherwise, we've got one more byte.
+        ptr = next;              // Advance our base-pointer.
+        if( *ptr != '.' ) break; // A dot indicates we've got another quad
+        ptr ++;
+    }
+    
+    if( ct != 4 ) return 0;        // Not enough bytes were found.
+    if( ptr != tail ) return 0; // Not all of the string was parsed.
+
+    *addr = ntohl( *addr );
+    return 1;
+}
+
+mqo_integer mqo_resolve( mqo_string name ){
+    mqo_integer addr;
+
+    if( ! mqo_parse_dotted_quad( name, &addr ) ){
+        struct hostent *entry = gethostbyname( mqo_sf_string( name ) );
+        if( !entry ){
+            mqo_report_host_error( );
+            //TODO }else if( entry->h_addrtype != ... ){
+            //TODO: Signal an error.
+        }else if( entry->h_length != 4 ){
+            //TODO: Signal an error.
+        }else{
+            //TODO: A better version of resolve would return a list of
+            //      addresses..
+            addr = ntohl( *(mqo_integer*)(entry->h_addr) );
+        }
+    }
+
+    return addr;
+}
 mqo_stream mqo_make_stream( mqo_integer fd ){
     mqo_stream s = MQO_OBJALLOC( stream );
     s->fd = fd;
@@ -385,12 +439,37 @@ MQO_BEGIN_PRIM( "tcp-connect", tcp_connect )
     LISTENER_RESULT( mqo_make_listener( server_fd ) );
 MQO_END_PRIM( tcp_connect )
 
+MQO_BEGIN_PRIM( "resolve-addr", resolve_addr )
+    REQ_STRING_ARG( addr )
+    NO_REST_ARGS( )
+
+    RESULT( mqo_vf_integer( mqo_resolve( addr ) ) );
+MQO_END_PRIM( resolve_addr )
+
+
 void mqo_init_net_subsystem( ){
+#ifdef _WIN32
+    WSADATA wsa;
+    WSAStartup( 2, &wsa );
+#else
+    // Commented out, because BSDs will make STDOUT nonblocking if you make
+    // STDIN nonblocking.  This totally fucks with many I/O operations.
+    //
+    // If it turns out that this breaks other UNIXen, which is possible since
+    // select on a blocking socket is sort of an edge case, we should unblock
+    // then reblock during our poll loop.
+    //
+    // Ain't C fun, kids?
+    //
+    // mqo_unblock_socket( STDIN_FILENO );
+#endif
+
     MQO_I_TYPE( stream );
     MQO_I_TYPE( listener );
     
     MQO_BIND_PRIM( tcp_listen );
     MQO_BIND_PRIM( tcp_connect );
+    MQO_BIND_PRIM( resolve_addr );
 
     mqo_net_monitor = mqo_make_process( 
         (mqo_proc_fn) mqo_activate_netmon, 
@@ -401,4 +480,3 @@ void mqo_init_net_subsystem( ){
     mqo_cmd_close = mqo_symbol_fs( "close" );
     mqo_root_obj( (mqo_object) mqo_net_monitor );
 }
-
