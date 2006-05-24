@@ -17,6 +17,25 @@
 #include "mosvm.h"
 #include <string.h>
 
+#ifdef AUDIT_STRINGS
+#define AUDIT_STRING( x ) mqo_audit_string( x );
+void mqo_audit_string( mqo_string string ){
+    assert( string );
+    assert( string->pool );
+    assert( string->length <= string->capacity );
+    assert( string->origin <= string->capacity );
+    assert(( string->origin + string->length ) <= string->capacity );
+    assert( string->origin < 32767 );
+    assert( string->length < 32767 );
+    assert( string->capacity < 32767 );
+    assert( string->origin < 32767 );
+    assert( string->length < 32767 );
+    assert( string->capacity < 32767 );
+}
+#else
+#define AUDIT_STRING( x ) ;
+#endif
+
 mqo_value mqo_lexicon_key( mqo_value item ){
     return mqo_vf_string( mqo_symbol_fv( item )->string );
 }
@@ -37,7 +56,7 @@ mqo_symbol mqo_symbol_fm( const void* s, mqo_integer sl ){
     mqo_node node; 
 
     str = mqo_string_fm( s, sl );
-    
+    AUDIT_STRING( str );
     node = mqo_tree_lookup( mqo_lexicon, mqo_vf_string( str ) );
 
     if( node ){ 
@@ -59,9 +78,11 @@ mqo_symbol mqo_symbol_fs( const char* s ){
 
 mqo_string mqo_make_string( mqo_integer capacity ){
     mqo_string string = MQO_OBJALLOC( string );
+    string->origin = 0;
+    string->length = 0;
     string->pool = malloc( capacity + 1 );
     string->capacity = capacity;
-    string->length = string->origin = 0;
+    AUDIT_STRING( string );
     return string;
 }
 
@@ -81,10 +102,14 @@ mqo_integer mqo_string_compare( mqo_string a, mqo_string b ){
                             mqo_sf_string( b ),
                             al < bl ? al : bl );
 
+    AUDIT_STRING( a );
+    AUDIT_STRING( b );
     return d ? d : ( al - bl );
 }
 
 mqo_boolean mqo_eqvs( mqo_string a, mqo_string b ){
+    AUDIT_STRING( a );
+    AUDIT_STRING( b );
     mqo_integer l = mqo_string_length( a );
     if( l != mqo_string_length( b ) )return 0;
     return ! memcmp( mqo_sf_string( a ), mqo_sf_string( b ), l );
@@ -105,6 +130,7 @@ mqo_value mqo_get_global( mqo_symbol name ){
 
 void mqo_show_string( mqo_string str, mqo_word* ct ){
     //TODO: Improve with ellision, scored length, escaping unprintables.
+    AUDIT_STRING( str );
     mqo_printch( '"' );
     mqo_printstr( str );
     mqo_printch( '"' );
@@ -113,20 +139,26 @@ void mqo_show_string( mqo_string str, mqo_word* ct ){
 
 MQO_GENERIC_TRACE( string );
 void mqo_free_string( mqo_string str ){
+    AUDIT_STRING( str );
     free( str->pool );
     mqo_objfree( (mqo_object) str );
 }
 MQO_C_TYPE( string );
 
 void mqo_trace_symbol( mqo_symbol symbol ){
+    AUDIT_STRING( symbol->string );
+    mqo_grey_obj( (mqo_object) symbol->string );
     if( symbol->global )mqo_grey_val( symbol->value );    
 }
 void mqo_show_symbol( mqo_symbol sym, mqo_word* ct ){
     mqo_printsym( sym );
     (*ct) --;
 }
-
-MQO_GENERIC_FREE( symbol);
+void mqo_free_symbol( mqo_symbol sym ){
+    assert( 0 );
+    mqo_objfree( (mqo_object) sym );
+}
+// MQO_GENERIC_FREE( symbol);
 MQO_GENERIC_COMPARE( symbol);
 MQO_C_TYPE( symbol );
 
@@ -148,6 +180,7 @@ void mqo_init_string_subsystem( ){
     MQO_I_TYPE( symbol );
 }
 void mqo_compact_string( mqo_string string ){
+    AUDIT_STRING( string );
     if( string->origin ){
         if( string->length ){
             memmove( string->pool, 
@@ -157,8 +190,10 @@ void mqo_compact_string( mqo_string string ){
         string->pool[string->length + 1] = 0;
         string->origin = 0;
     }
+    AUDIT_STRING( string );
 }
 void mqo_string_expand( mqo_string string, mqo_integer count ){
+    AUDIT_STRING( string );
     mqo_integer space = (
         string->capacity - string->origin - string->length - count 
     );
@@ -177,22 +212,28 @@ void mqo_string_expand( mqo_string string, mqo_integer count ){
         string->pool = realloc( string->pool, new_capacity + 1 );
         string->capacity = new_capacity;
     }
+    AUDIT_STRING( string );
 }
 void mqo_string_flush( mqo_string string ){
+    AUDIT_STRING( string );
     string->pool[ string->origin = string->length = 0 ] = 0;
+    AUDIT_STRING( string );
 }
 void mqo_string_append(
     mqo_string string, const void* src, mqo_integer srclen 
 ){
+    AUDIT_STRING( string );
     mqo_string_expand( string, srclen );
     memmove( string->pool + string->origin + string->length, src, srclen );
     string->length += srclen;
     string->pool[ string->origin +  string->length ] = 0;
+    AUDIT_STRING( string );
 }
 void mqo_string_alter( 
     mqo_string string, mqo_integer dstofs, mqo_integer dstlen, 
     const void* src, mqo_integer srclen
 ){
+    AUDIT_STRING( string );
     mqo_integer newlen = string->length + srclen - dstlen;
 
     mqo_string_expand( string, newlen );
@@ -209,6 +250,7 @@ void mqo_string_alter(
 
     string->length = newlen;
     string->pool[ newlen ] = 0;
+    AUDIT_STRING( string );
 }
 void mqo_string_prepend( 
     mqo_string string, const void* src, mqo_integer srclen
@@ -274,25 +316,32 @@ mqo_string mqo_string_fs( const char* s ){
 }
 void mqo_string_append_byte( mqo_string string, mqo_byte x ){
     mqo_string_append( string, &x, 1 );
+    AUDIT_STRING( string );
 }
 void mqo_string_append_word( mqo_string string, mqo_word x ){
     x = htons( x );
     mqo_string_append( string, &x, 2 );
+    AUDIT_STRING( string );
 }
 void mqo_string_append_quad( mqo_string string, mqo_quad x ){
     x = htonl( x );
     mqo_string_append( string, &x, 4 );
+    AUDIT_STRING( string );
 }
 void* mqo_string_head( mqo_string head ){
+    AUDIT_STRING( head );
     return head->pool + head->origin;
 }
 void* mqo_string_tail( mqo_string string ){
+    AUDIT_STRING( string );
     return string->pool + string->origin + string->length;
 }
 void mqo_string_wrote( mqo_string string, mqo_integer len ){
+    AUDIT_STRING( string );
     string->length += len;
 }
 mqo_boolean mqo_string_empty( mqo_string str ){
+    AUDIT_STRING( str );
     return ! str->length;
 }
 

@@ -128,7 +128,7 @@ void mqo_collect_garbage( ){
     for( obj = mqo_roots->head; obj; obj = obj->next ){
         mqo_trace_object( obj );
     }
-
+    
     mqo_trace_registers();
     mqo_trace_actives();
     mqo_trace_network();
