@@ -44,7 +44,7 @@
 #define MQO_EWOULDBLOCK EWOULDBLOCK
 #endif
 
-mqo_process mqo_net_monitor;
+mqo_process mqo_stream_monitor;
 
 mqo_listener mqo_first_listener = NULL;
 mqo_listener mqo_last_listener = NULL; 
@@ -141,7 +141,7 @@ mqo_stream mqo_make_stream( mqo_integer fd ){
         mqo_last_stream->next = s;
     }else{
         mqo_first_stream = s;    
-        mqo_enable_process( mqo_net_monitor );
+        mqo_enable_process( mqo_stream_monitor );
     };
     
     s->prev = mqo_last_stream;
@@ -162,7 +162,7 @@ mqo_listener mqo_make_listener( mqo_integer fd ){
         mqo_last_listener->next = l;
     }else{
         mqo_first_listener = l;    
-        mqo_enable_process( mqo_net_monitor );
+        mqo_enable_process( mqo_stream_monitor );
     };
     
     l->prev = mqo_last_listener;
@@ -188,7 +188,7 @@ void mqo_kill_stream( mqo_stream stream ){
     }
 
     if( ( mqo_first_stream == NULL )&&( NULL  == mqo_first_listener ) ){
-        mqo_disable_process( mqo_net_monitor );
+        mqo_disable_process( mqo_stream_monitor );
     }
 }
 
@@ -301,7 +301,7 @@ void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
     }
     
     if( ! maxfd ){
-        mqo_disable_process( mqo_net_monitor );
+        mqo_disable_process( mqo_stream_monitor );
         return;
     }
 
@@ -447,7 +447,7 @@ MQO_BEGIN_PRIM( "resolve-addr", resolve_addr )
 MQO_END_PRIM( resolve_addr )
 
 
-void mqo_init_net_subsystem( ){
+void mqo_init_stream_subsystem( ){
 #ifdef _WIN32
     WSADATA wsa;
     WSAStartup( 2, &wsa );
@@ -471,12 +471,12 @@ void mqo_init_net_subsystem( ){
     MQO_BIND_PRIM( tcp_connect );
     MQO_BIND_PRIM( resolve_addr );
 
-    mqo_net_monitor = mqo_make_process( 
+    mqo_stream_monitor = mqo_make_process( 
         (mqo_proc_fn) mqo_activate_netmon, 
         (mqo_proc_fn) mqo_deactivate_netmon, 
         mqo_vf_null( ) 
     );
     
     mqo_cmd_close = mqo_symbol_fs( "close" );
-    mqo_root_obj( (mqo_object) mqo_net_monitor );
+    mqo_root_obj( (mqo_object) mqo_stream_monitor );
 }

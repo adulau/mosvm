@@ -35,7 +35,7 @@
 #include "mosvm/vm.h"
 #include "mosvm/process.h"
 #include "mosvm/channel.h"
-#include "mosvm/net.h"
+#include "mosvm/stream.h"
 #include "mosvm/error.h"
 #include "mosvm/tag.h"
 #include "mosvm/multimethod.h"

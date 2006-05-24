@@ -14,6 +14,9 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
  */
 
+#ifndef MQO_STREAM_H
+#define MQO_STREAM_H 1
+
 #include "memory.h"
 
 MQO_BEGIN_TYPE( stream )
@@ -33,7 +36,7 @@ MQO_END_TYPE( listener )
 mqo_stream mqo_make_stream( mqo_integer fd );
 mqo_listener mqo_make_listener( mqo_integer fd );
 void mqo_kill_stream( mqo_stream stream );
-void mqo_init_net_subsystem( );
+void mqo_init_stream_subsystem( );
 
 static inline mqo_channel mqo_stream_input( mqo_stream s ){ return s->cmd; }
 static inline mqo_channel mqo_stream_output( mqo_stream s ){ return s->evt; }
@@ -48,3 +51,5 @@ static inline mqo_channel mqo_listener_output( mqo_listener s ){ return s->conns
 #define LISTENER_RESULT( x  ) TYPED_RESULT( listener, x );
 
 void mqo_trace_network();
+
+#endif
