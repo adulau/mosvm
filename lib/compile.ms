@@ -339,7 +339,7 @@
                                           (if (null? terms)
                                             (list 'scatter term)
                                             term))))
-                     (tc->list terms)))
+                     (tc->list tc)))
 
 (define *mosvm-specials*
   (list
