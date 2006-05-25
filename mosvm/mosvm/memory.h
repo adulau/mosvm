@@ -188,6 +188,9 @@ extern mqo_pool mqo_greys, mqo_whites, mqo_blacks, mqo_roots;
 #define MQO_MAX_IMM 1073741823
 #define MQO_MIN_IMM 0
 
+#define MQO_MAX_INT 2147483646
+#define MQO_MIN_INT -2147483646 
+
 struct mqo_object_data {
     mqo_type type;
     mqo_pool pool;

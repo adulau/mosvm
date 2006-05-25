@@ -16,9 +16,7 @@
 (module "lib/build")
 
 (import "lib/compile")
-(import "lib/assemble")
 (import "lib/optimize")
-(import "lib/freeze")
 (import "lib/eval")
 
 (export build-module build-dependencies build-exe read-platform-stub)
@@ -75,7 +73,7 @@
 
 (define (glue string data)
   (string-write string data)
-  (string-write-word string (string-length data))
+  (string-append-word! string (string-length data))
   (string-write string "mvf2")
   string)
 
@@ -83,7 +81,7 @@
   (define string (make-string))
   (string-write string (read-platform-stub platform))
 
-  (for-each glue (circle string) 
+  (for-each (function (glue-dep item) (glue string item))
             (map build-module (code-dependencies main)))
 
   (if (pair? main)

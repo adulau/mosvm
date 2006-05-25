@@ -82,7 +82,7 @@
     (string-write ciphertext (encrypt key (string-read plaintext block-size))))
 
   (define (write-header)
-    (string-write-word plaintext message-length)
+    (string-append-word! plaintext message-length)
     (write-block))
 
   (define (write-body)

@@ -15,15 +15,15 @@
 ;  
 
 (define (read-data-file path)
-  (define file (open-file-descr path "r"))
-  (define data (read-descr-all file))
-  (close-descr file)
+  (define file (open-file path "r"))
+  (define data (read-file file *max-int*))
+  (close-file file)
   data)
 
 (define (write-data-file path content)
-  (define file (open-file-descr path "wct"))
-  (write-descr file content)
-  (close-descr file))
+  (define file (open-file path "wct"))
+  (write-file file content)
+  (close-file file))
 
 (define (read-lisp-file path)
   (string->exprs (read-data-file path)))
@@ -35,8 +35,6 @@
   (apply path-join (string-split* path "/")))
 
 (export path-join convert-path)
-
-;; "Keep a poor man alive at a job he hates.." -- Aimee Mann, "Put Me On Top"
 
 (export read-data-file write-data-file read-lisp-file path-join convert-path)
 

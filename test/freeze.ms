@@ -17,7 +17,6 @@
 
 (import "lib/test")
 (import "lib/freeze")
-(import "lib/assemble")
 
 (enable-spot-tests)
 

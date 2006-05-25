@@ -33,15 +33,18 @@
      (set! module (string-head module (- (string-length module) 4))))
     (else
       (set! src-file (string-append module ".ms"))))
-  
+
+  ;; Only MOSVM can produce VM3 object files.
+
   (if *mosvm?*
     (set! dst-file (string-append module ".mo"))
     (set! dst-file (string-append module ".ma")))
 
   (let ((data (read-lisp-file src-file)))
     (set! data (compile data))
+    (set! data (optimize data))
+
     (when *mosvm?*
-      (set! data (optimize data))
       (set! data (assemble data))
       (set! data (freeze data)))
     (set! dst-file (open-output-file dst-file))

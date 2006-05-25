@@ -16,7 +16,6 @@
 (module "lib/eval")
 (import "lib/compile")
 (import "lib/optimize")
-(import "lib/assemble")
 
 (define (exec block)
     ((assemble (optimize (compile block)))))

@@ -103,4 +103,12 @@ void mqo_init_number_subsystem( ){
     MQO_I_TYPE( number );
     MQO_BIND_PRIM( plus );
     MQO_BIND_PRIM( minus );
+    mqo_set_global( 
+        mqo_symbol_fs( "*max-int*" ), mqo_vf_integer( MQO_MAX_INT ) );
+    mqo_set_global( 
+        mqo_symbol_fs( "*max-imm*" ), mqo_vf_integer( MQO_MAX_IMM ) );
+    mqo_set_global( 
+        mqo_symbol_fs( "*min-int*" ), mqo_vf_integer( MQO_MIN_INT ) );
+    mqo_set_global( 
+        mqo_symbol_fs( "*min-imm*" ), mqo_vf_integer( MQO_MIN_IMM ) );
 }

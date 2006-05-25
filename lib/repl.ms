@@ -18,7 +18,6 @@
 
 (module "lib/repl")
 (import "lib/optimize")
-(import "lib/assemble")
 (import "lib/compile")
 (import "lib/trace")
 (import "lib/eval")

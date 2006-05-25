@@ -418,7 +418,7 @@
   (until done
     (define ch (scanner-next scan))
     (if (dict-ref *ident-chars* ch)
-      (string-write-byte ident ch)
+      (string-append-byte! ident ch)
       (begin 
         (set! done #t)
         (scanner-drop scan ch))))
@@ -450,7 +450,7 @@
          (define ch (scanner-next scan))
          (if (= ch quot)
            (set! done #t)
-           (string-write-byte value ch)))
+           (string-append-byte! value ch)))
       value)
     (begin
       (scanner-drop scan quot)

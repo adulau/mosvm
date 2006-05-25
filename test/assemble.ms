@@ -16,7 +16,7 @@
 ;  
 
 (import "lib/test")
-(import "lib/assemble")
+
 (enable-spot-tests)
 (s: (assemble '()))
 (t: (program? _))

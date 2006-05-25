@@ -271,25 +271,29 @@ void mqo_bind_type( const char* name, mqo_type type ){
 }
 
 mqo_integer mqo_cmp_eqv( mqo_value a, mqo_value b ){
+    mqo_type at, bt;
+    
     if( mqo_is_number( a ) ){
-        if( mqo_is_number( b ) ){
-            return mqo_number_compare( a, b );
-        }else{
-            return -1;
-        }
-    }else if( mqo_is_number( b ) ){
-        return +1;
+        at = mqo_number_type;
+    }else{
+        at = mqo_value_type( a );
+    };
+
+    if( mqo_is_number( b ) ){
+        bt = mqo_number_type;
+    }else{
+        bt = mqo_value_type( b );
     };
    
-    mqo_type at = mqo_value_type( a );
-    mqo_type bt = mqo_value_type( b );
-    
     if( at == bt ){
-        return at->compare( a, b );
+        return at->compare( a, b ); 
+        //TODO: Shim
+        return at->compare ? at->compare( a, b ) : mqo_compare_generic( a, b );
     }else{
         return at - bt;
     }
 }
+
 
 mqo_integer mqo_cmp_eq( mqo_value a, mqo_value b ){
     mqo_integer d = a - b;

@@ -102,17 +102,7 @@ mqo_integer mqo_string_compare( mqo_string a, mqo_string b ){
                             mqo_sf_string( b ),
                             al < bl ? al : bl );
 
-    AUDIT_STRING( a );
-    AUDIT_STRING( b );
     return d ? d : ( al - bl );
-}
-
-mqo_boolean mqo_eqvs( mqo_string a, mqo_string b ){
-    AUDIT_STRING( a );
-    AUDIT_STRING( b );
-    mqo_integer l = mqo_string_length( a );
-    if( l != mqo_string_length( b ) )return 0;
-    return ! memcmp( mqo_sf_string( a ), mqo_sf_string( b ), l );
 }
 
 mqo_boolean mqo_has_global( mqo_symbol name ){
@@ -179,39 +169,38 @@ void mqo_init_string_subsystem( ){
     MQO_I_TYPE( string );
     MQO_I_TYPE( symbol );
 }
-void mqo_compact_string( mqo_string string ){
-    AUDIT_STRING( string );
-    if( string->origin ){
-        if( string->length ){
-            memmove( string->pool, 
-                    string->pool + string->origin, 
-                    string->length );
-        }
-        string->pool[string->length + 1] = 0;
-        string->origin = 0;
-    }
-    AUDIT_STRING( string );
+void mqo_compact_string( mqo_string str ){
+    AUDIT_STRING( str );
+    if( str->origin ){
+        if( str->length ){
+            memmove( str->pool, 
+                    str->pool + str->origin, 
+                    str->length );
+        };
+        str->pool[str->length + 1] = 0;
+        str->origin = 0;
+    };
+    AUDIT_STRING( str );
 }
-void mqo_string_expand( mqo_string string, mqo_integer count ){
+void mqo_string_expand( mqo_string string, mqo_integer incr ){
     AUDIT_STRING( string );
-    mqo_integer space = (
-        string->capacity - string->origin - string->length - count 
-    );
+    mqo_integer head = string->origin;
+    mqo_integer tail = string->capacity - head - string->length;
 
-    if( space >= 0 ) return;
+    if( tail > incr )return;
 
-    if(( string->origin + space )>= 0 ){
-        // We can just compress for it.
-        mqo_compact_string( string );
-    }else{
-        // We expand enough to get the new write in, and add the capacity
-        // of the old string for good measure.
-        mqo_integer new_capacity = string->capacity << 1 - space + 1;
-        mqo_compact_string( string );
+    mqo_compact_string( string );
 
-        string->pool = realloc( string->pool, new_capacity + 1 );
-        string->capacity = new_capacity;
-    }
+    if(( tail + head )> incr )return;
+    
+    mqo_integer req_cap = string->length + incr;
+    mqo_integer new_cap = string->capacity; 
+
+    while( new_cap < req_cap ) new_cap <<= 1;
+
+    string->pool = realloc( string->pool, new_cap + 1 );
+    string->capacity = new_cap;
+    
     AUDIT_STRING( string );
 }
 void mqo_string_flush( mqo_string string ){

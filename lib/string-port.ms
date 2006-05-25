@@ -46,13 +46,13 @@
   (and (string-port? value) (port-write-fn value)))
 
 (define (write-byte byte (<string-port> port))
-  (string-write-byte (string-port-string port) byte))
+  (string-append-byte! (string-port-string port) byte))
 
 (define (write-word word (<string-port> port))
-  (string-write-word (string-port-string port) word))
+  (string-append-word! (string-port-string port) word))
 
 (define (write-quad quad (<string-port> port))
-  (string-write-quad (string-port-string port) quad))
+  (string-append-quad! (string-port-string port) quad))
 
 (define (read-byte (<string-port> port))
   (string-read-byte (string-port-string port)))

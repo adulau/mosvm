@@ -194,6 +194,33 @@ mqo_value mqo_thaw_mem( const void* mem, mqo_quad memlen ){
     return result;
 }
 
+void mqo_freeze_ii( mqo_string buf, mqo_word x ){
+    mqo_string_append_word( buf, x | 0x8000 );
+}
+void mqo_freeze_val( mqo_tree index, mqo_string buf, mqo_value v ){
+    if( mqo_is_null( v ) ){
+        return mqo_string_append_word( buf, 0x7FFF );
+    }else if( mqo_is_true( v ) ){
+        return mqo_string_append_word( buf, 0x7FFC );
+    }else if( mqo_is_false( v ) ){
+        return mqo_string_append_word( buf, 0x7FFD );
+    }else if( mqo_is_integer( v ) ){
+        int x = mqo_integer_fv( v );
+        if(( x >= 0 ) && ( x < 0x8000 )){
+            return mqo_freeze_ii( buf, x );
+        }
+    };
+    
+    mqo_node n = mqo_tree_lookup( index, v );
+    assert( n );
+    
+    if( n ){
+    }
+    mqo_string_append_word( buf, mqo_integer_fv( 
+        mqo_cdr( mqo_pair_fv( n->data ) )
+    ) );
+}
+
 mqo_string mqo_freeze( mqo_value root ){
     mqo_integer item_ct = 0;
     mqo_dict      index = mqo_make_tree( mqo_dict_key );
@@ -247,32 +274,10 @@ mqo_string mqo_freeze( mqo_value root ){
     int i;
     mqo_value item;
 
-    void write_ii( mqo_string buf, mqo_word x ){
-        mqo_string_append_word( buf, x | 0x8000 );
-    }
-    void write_value( mqo_string buf, mqo_value v ){
-        if( mqo_is_null( v ) ){
-            return mqo_string_append_word( buf, 0x7FFF );
-        }else if( mqo_is_true( v ) ){
-            return mqo_string_append_word( buf, 0x7FFC );
-        }else if( mqo_is_false( v ) ){
-            return mqo_string_append_word( buf, 0x7FFD );
-        }else if( mqo_is_integer( v ) ){
-            int x = mqo_integer_fv( v );
-            if(( x >= 0 ) && ( x < 0x8000 )){
-                return write_ii( buf, x );
-            }
-        };
-
-        mqo_string_append_word( buf, mqo_integer_fv( 
-            mqo_cdr( mqo_pair_fv( mqo_tree_lookup( index, v )->data ) )
-        ) );
-    }
-
     items = mqo_list_fv( mqo_car( items ) );
 
     if( inlineq( root ) ){ 
-        write_value( pkg, root ); 
+        mqo_freeze_val( index, pkg, root ); 
     }else{
         mqo_string_append_word( pkg, item_ct );
 
@@ -285,8 +290,8 @@ mqo_string mqo_freeze( mqo_value root ){
             }else if( mqo_is_pair( item ) ){
                 //TODO: Detect Lists.
                 mqo_string_append_byte( pkg, PKG_PAIR );
-                write_value( pkg, mqo_car( mqo_pair_fv( item ) ) );
-                write_value( pkg, mqo_cdr( mqo_pair_fv( item ) ) );
+                mqo_freeze_val( index, pkg, mqo_car( mqo_pair_fv( item ) ) );
+                mqo_freeze_val( index, pkg, mqo_cdr( mqo_pair_fv( item ) ) );
             }else if( mqo_is_procedure( item ) ){ 
                 mqo_procedure proc = mqo_procedure_fv( item );
                 mqo_string field = mqo_make_string( 1024 );
@@ -294,8 +299,8 @@ mqo_string mqo_freeze( mqo_value root ){
                 for( j = 0; j < m; j ++ ){
                     mqo_primitive prim = proc->inst[j].prim;
                     mqo_string_append_byte( field, prim->code );
-                    if( prim->a ) write_value( field, proc->inst[j].a );
-                    if( prim->b ) write_value( field, proc->inst[j].b );
+                    if( prim->a ) mqo_freeze_val( index, field, proc->inst[j].a );
+                    if( prim->b ) mqo_freeze_val( index, field, proc->inst[j].b );
                 }
                 mqo_string_append_byte( pkg, PKG_PROC );
                 mqo_string_append_word( pkg, mqo_string_length( field ) );

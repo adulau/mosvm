@@ -21,7 +21,6 @@
 ; that file at loadup.
 
 (import "lib/optimize")
-(import "lib/assemble")
 (import "lib/compile")
 (import "lib/format")
 (import "lib/trace")
