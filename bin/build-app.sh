@@ -22,6 +22,10 @@ echo $DEPS
 DEPS_MO=""
 RE_GLUE=""
 
+if [ ! -s $OUTP ]||[ $STUB -nt $OUTP ]; then
+    RE_GLUE="yes"
+fi
+
 for DEP in $DEPS; do
     DEP_MS=$DEP.ms
     DEP_MO=$DEP.mo
@@ -32,8 +36,12 @@ for DEP in $DEPS; do
         echo "Assembling $DEP_MA to $DEP_MO.."
         cd $BASE && $BIN/mosasm $DEP_MA $DEP_MO || exit 1
         RE_GLUE="yes"
+    elif [ x$RE_GLUE = x ]&&[ $DEP_MO -nt $OUTP ]; then
+        RE_GLUE="yes"
     fi
     DEPS_MO="$DEPS_MO $DEP_MO"
 done
 
-$BIN/mosld $STUB $DEPS_MO $OUTP && chmod 0755 $OUTP || exit 2
+if [ x$RE_GLUE != x ]; then
+    $BIN/mosld $STUB $DEPS_MO $OUTP && chmod 0755 $OUTP || exit 2
+fi
