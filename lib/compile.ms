@@ -136,6 +136,10 @@
            (set! context (context-parent context)))))
   result)
 
+(set-macro! 'lambda (lambda (formals . body)
+                      `(function ,(cons (make-branch-symbol 'anon-fn)
+                                        formals) 
+                                 ,@body)))
 (set-macro! 'export (lambda any '(begin)))
 (set-macro! 'with-input-port
             (lambda (port . rest)
@@ -353,7 +357,7 @@
                    (for-each 
                      (lambda (x) 
                        (compile-expr block (cadr x) env)
-                       (blocq-append! 
+                       (block-append! 
                          block (cons 'stb 
                                      (context-symbol-addr n-env (car x)))))
                        defns)
@@ -364,12 +368,6 @@
                     (compile-function block
                                       (car formals)
                                       (parse-formals (cdr formals))
-                                      body
-                                      env)))
-    (cons 'lambda (lambda (block env formals . body)
-                    (compile-function block
-                                      #f
-                                      (parse-formals formals)
                                       body
                                       env)))
     (cons '?  (lambda (block env key)
@@ -408,8 +406,6 @@
 
 (define (block-prepend! block stmt) 
   (tc-prepend! (cdr block) stmt))
-
-(define blocq-append! block-append!)
 
 (define (scheme-program->list scheme-program) 
   (let ((pl (make-tc)))
@@ -675,7 +671,9 @@
                                   (context-slot-count env))))
     (block-prepend! inner label)
 
-    (block-append! outer (list 'clos (or name label) label))))
+    (block-append! outer (list 'clos (or name 
+                                        (make-branch-symbol 'anon-fn)) 
+                               label))))
 
 (define (compile-load block sym env) 
   ;TODO Test for is-imported?

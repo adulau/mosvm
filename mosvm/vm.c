@@ -329,9 +329,9 @@ void mqo_instr_stg( ){
 }
 void mqo_instr_usea( ){
     // (define max (instr-ax ip)) 
-    mqo_word max = mqo_imm_fv( MQO_AX ) + 1;
+    mqo_word max = mqo_imm_fv( MQO_AX );
 
-    if( MQO_CP->count < max ){
+    if(( MQO_CP->count - 1 ) < max ){
         mqo_errf( mqo_es_vm, "sii", "argument underflow", MQO_CP->count, max );
     }
 

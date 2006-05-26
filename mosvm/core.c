@@ -293,7 +293,7 @@ MQO_BEGIN_PRIM( "list-index", list_index )
         if(!  mqo_is_pair( v ) ){
             NO_RESULT();
         };
-        list = mqo_pair_fv( v );
+        list = mqo_list_fv( v );
     }
     NO_RESULT();
 MQO_END_PRIM( list_index );
@@ -306,7 +306,7 @@ MQO_BEGIN_PRIM( "memq", memq )
         if( mqo_eq( item, mqo_car( list ) ) ){
             RESULT( mqo_vf_pair( list ) );
         }
-        list = mqo_pair_fv( mqo_cdr( list ) );
+        list = mqo_list_fv( mqo_cdr( list ) );
     }
     RESULT( mqo_vf_false() );
 MQO_END_PRIM( memq );
@@ -319,7 +319,7 @@ MQO_BEGIN_PRIM( "member", member )
         if( ! mqo_cmp_eq( item, mqo_car( list ) ) ){
             RESULT( mqo_vf_pair( list ) );
         }
-        list = mqo_pair_fv( mqo_cdr( list ) );
+        list = mqo_list_fv( mqo_cdr( list ) );
     }
     RESULT( mqo_vf_false() );
 MQO_END_PRIM( member );
@@ -728,10 +728,8 @@ MQO_BEGIN_PRIM( "assq", assq )
                 RESULT( v );
             }
         }
-        v = mqo_cdr( list );
-        if( ! mqo_is_pair( v ) )break;
         //TODO: Should this be an error?
-        list = mqo_pair_fv( v );
+        list = mqo_list_fv( mqo_cdr( list ) );
     }
 
     RESULT( mqo_vf_false() );
@@ -752,10 +750,8 @@ MQO_BEGIN_PRIM( "assoc", assoc )
                 RESULT( v );
             }
         }
-        v = mqo_cdr( list );
-        if( ! mqo_is_pair( v ) )break;
         //TODO: Should this be an error?
-        list = mqo_pair_fv( v );
+        list = mqo_list_fv( mqo_cdr( list ) );
     }
 
     RESULT( mqo_vf_false() );
@@ -881,8 +877,8 @@ MQO_BEGIN_PRIM( "tc-next!", tc_next )
     if( mqo_is_null( mqo_car( tc ) ) ){
         mqo_errf( mqo_es_vm, "s", "tconc out of items" );
     }
-    mqo_pair next = mqo_pair_fv( mqo_car( tc ) );
-    mqo_pair lead = mqo_pair_fv( mqo_cdr( next ) );
+    mqo_pair next = mqo_list_fv( mqo_car( tc ) );
+    mqo_pair lead = mqo_list_fv( mqo_cdr( next ) );
     if( lead ){
         mqo_set_car( tc, mqo_vf_pair( lead ) );
     }else{
