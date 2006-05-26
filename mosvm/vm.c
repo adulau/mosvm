@@ -145,14 +145,13 @@ void mqo_jump( ){
         MQO_EP = mqo_clos_env( clos );
         MQO_IP = mqo_clos_inst( clos );
     }else if( mqo_is_primitive( fn ) ){
-        //TODO: we used to have mqo_next_instr, here.
         mqo_arg_ptr = args;
         mqo_arg_ct = ct;
         MQO_AP = MQO_CP->ap;
+        MQO_EP = MQO_CP->ep;
         MQO_IP = MQO_CP->ip;
-        MQO_CP = MQO_CP->cp;
-        //TODO: attempted in lieu of mqo_nexT_instr
         mqo_primitive_fv( fn )->impl();
+        MQO_CP = MQO_CP->cp;
     }else{
         mqo_errf( mqo_es_vm, "sx", "cannot call non-function", fn );
     }

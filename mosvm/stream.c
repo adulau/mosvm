@@ -144,7 +144,7 @@ mqo_stream mqo_make_stream( mqo_integer fd ){
     unsigned long unblocking = 1;
     mqo_net_error( ioctlsocket( s->fd, FIONBIO, &unblocking ) );
 #else
-    mqo_net_error( fcntl( s->fd, F_SETFL, O_NONBLOCK ) );
+    if( fd ) mqo_net_error( fcntl( s->fd, F_SETFL, O_NONBLOCK ) );
 #endif
 
     return s;

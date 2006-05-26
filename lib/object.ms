@@ -19,11 +19,11 @@
 (define <object> (make-tag 'object))
 
 (define (make-class class-name super-class fields)
-  (apply make-type 
+  (apply make-tag 
          class-name super-class 
          (append (class-fields super-class) fields)))
 
-(define (class-fields class) (type-info class))
+(define (class-fields class) (tag-info class))
  
 (define (make-class-constructor class-name class arg-names)
   (define fields (class-fields class))

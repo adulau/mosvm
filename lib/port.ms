@@ -19,7 +19,8 @@
 (import "lib/object")
 
 ;;; Specifies a magical "end of file" object returned by ports.
-(define *eof* (tag (make-type 'eof <quark>) quark))
+(define <eof> (make-tag 'eof))
+(define *eof* (tag <eof> '*eof*))
 (define (eof-object? value) (eq? *eof* value))
 
 (export *eof* eof-object?)

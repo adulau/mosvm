@@ -19,6 +19,7 @@
 (module "lib/module")
 
 (define *core-deps* (list "core/macro"
+                          "core/append"
                           "core/config" 
                           "site/config"
                           "core/file"

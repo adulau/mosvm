@@ -226,7 +226,8 @@ MQO_BEGIN_PRIM( "wait", wait )
                              mqo_req_output( mqo_car( m ) ) );
             m = mqo_list_fv( mqo_cdr( m ) );
         };
-
+        
+        MQO_CP = MQO_CP->cp;
         mqo_proc_loop();
 
         NO_RESULT( );

@@ -692,22 +692,6 @@
       (block-append! block (if addr (cons 'stb addr)
                                     (list 'stg sym))))))
 
-(define (fix-mixed-formals formals)
-  (let ((tc (make-tc)))
-    (while (pair? formals)
-      (tc-append! tc (car formals))
-      (set! formals (cdr formals)))
-    (tc-append! tc formals)
-    (tc->list tc)))
-
-(define (compile-mixed-lambda block formals body env)
-  (set! formals (fix-mixed-formals formals))
-  (set! env (make-actual-context env formals))
-  (compile-block block body env)
-  (block-prepend! block (list 'usea 
-                              (- (length formals) 1)
-                              (context-slot-count env))))
-
 (define (compile-call block env expr) 
   (block-append! block '(newf))
   (for-each (lambda (term) (if (and (pair? term)

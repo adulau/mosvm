@@ -40,13 +40,18 @@ void mqo_format_hexquad( char* dst, mqo_quad word ){
     mqo_format_hexword( dst + 4, word % 65536 );
 }
 void mqo_printmem( const void* mem, mqo_integer len ){
-    write( STDOUT_FILENO, mem, len );
+    while( len ){
+       int rs = write( STDOUT_FILENO, mem, len );
+       if( rs > 0 ){
+          len -= rs;
+       }else if( rs ){ break; }
+    }
 }
 void mqo_print( const char* st ){
     mqo_printmem( st, strlen( st ) );
 }
 void mqo_printch( mqo_byte ch ){
-    write( STDOUT_FILENO, &ch, 1 );
+    mqo_printmem( &ch, 1 );
     // mqo_os_error( fputc( ch, stdout ) );
     // mqo_os_error( fflush( stdout ) ); 
 }

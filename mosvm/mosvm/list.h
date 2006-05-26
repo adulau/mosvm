@@ -50,7 +50,7 @@ static inline mqo_list mqo_req_list( mqo_value v ){
 }
 
 #define mqo_vf_list mqo_vf_pair
-#define REQ_LIST_ARG( vn ) REQ_TYPED_ARG( vn, list )
+#define REQ_LIST_ARG( vn ) mqo_list vn = mqo_req_list( mqo_req_any( ) );
 #define LIST_RESULT( vn ) TYPED_RESULT( list, vn )
 #define OPT_LIST_ARG( vn ) OPT_TYPED_ARG( vn, list )
 

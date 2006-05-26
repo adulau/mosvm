@@ -1,4 +1,3 @@
-
 ; Copyright (C) 2006, Ephemeral Security, LLC
 ; 
 ; This library is free software; you can redistribute it and/or modify it 
@@ -14,20 +13,8 @@
 ; along with this library; if not, write to the Free Software Foundation, 
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
-(module "lib/record")
-(import "lib/object")
+(define-macro (append . lists)
+    (cons 'list (map (lambda (item) (list 'scatter item))
+                    lists)))
 
-;;; (set-macro! define-record-type 
-;;;             (lambda (record-name make-proto pred-name . record-fields)
-(define-macro (define-record-type record-name 
-                                   make-proto pred-name . record-fields)
-              (let ((tc (make-tc)))
-                (tc-splice! tc (list 'define-class record-name '<object>))
-                (tc-splice! tc (list make-proto pred-name))
-                (tc-splice! tc record-fields)
-                (tc->list tc)))
-   ;`(define-class ,record-name <object> ,make-proto ,pred-name 
-   ;               ,@record-fields))
-
-
-(export define-record-type)
+(export append)
