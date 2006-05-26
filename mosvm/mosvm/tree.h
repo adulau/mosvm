@@ -61,7 +61,10 @@ mqo_value mqo_dict_key( mqo_value item );
    just index or value.
 */
 
-mqo_tree mqo_make_tree( mqo_key_fn key_of );
+mqo_tree mqo_make_tree( mqo_type type, mqo_key_fn key_fn );
+mqo_dict mqo_make_dict( );
+mqo_set mqo_make_set( );
+
 mqo_node mqo_tree_insert(mqo_tree tree, mqo_value item);
 int mqo_tree_remove(mqo_tree tree, mqo_value key);
 mqo_node mqo_tree_lookup(mqo_tree tree, mqo_value key);

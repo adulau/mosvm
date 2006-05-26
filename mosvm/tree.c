@@ -89,9 +89,17 @@ mqo_integer mqo_audit_tree( mqo_tree tree ){
 }
 #endif
 
-mqo_tree mqo_make_tree( mqo_key_fn key_fn ){
-    mqo_tree tree = MQO_OBJALLOC( tree );
+mqo_tree mqo_make_tree( mqo_type type, mqo_key_fn key_fn ){
+    mqo_tree tree = (mqo_tree)mqo_objalloc( 
+        type, sizeof( struct mqo_tree_data ) );
     tree->key_fn = key_fn;
+    return tree;
+}
+mqo_dict mqo_make_dict( ){
+    return mqo_make_tree( mqo_dict_type, mqo_dict_key );
+}
+mqo_set mqo_make_set( ){
+    return mqo_make_tree( mqo_set_type, mqo_set_key );
 }
 
 mqo_node mqo_make_node( mqo_value data ){
@@ -99,6 +107,8 @@ mqo_node mqo_make_node( mqo_value data ){
     mqo_node node = malloc( sizeof( struct mqo_node_data ) );
     node->weight = rand();
     node->data = data;
+    node->left = NULL;
+    node->right = NULL;
     return node;
 }
 

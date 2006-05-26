@@ -784,7 +784,7 @@
       (eq? (string-ref (symbol->string symbol) 0) 
            (integer->char char)))))
 
-(import "lib/eval")
+;(import "lib/eval")
 
 (export reset-branch-index make-branch-symbol
         unkink make-symbol

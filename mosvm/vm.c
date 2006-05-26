@@ -129,6 +129,10 @@ void mqo_instr_scat( ){
     mqo_next_instr( );
 }
 void mqo_jump( ){
+    if( ! MQO_CP->head ){
+        mqo_errf( mqo_es_vm, "s", "cannot evaluate an empty application" );
+    }
+
     mqo_value fn = mqo_car( MQO_CP->head );
     mqo_pair  args = mqo_list_fv( mqo_cdr( MQO_CP->head ) );
     mqo_integer ct = MQO_CP->count;
@@ -141,11 +145,13 @@ void mqo_jump( ){
         MQO_EP = mqo_clos_env( clos );
         MQO_IP = mqo_clos_inst( clos );
     }else if( mqo_is_primitive( fn ) ){
-        mqo_next_instr( );
+        //TODO: we used to have mqo_next_instr, here.
         mqo_arg_ptr = args;
         mqo_arg_ct = ct;
         MQO_AP = MQO_CP->ap;
+        MQO_IP = MQO_CP->ip;
         MQO_CP = MQO_CP->cp;
+        //TODO: attempted in lieu of mqo_nexT_instr
         mqo_primitive_fv( fn )->impl();
     }else{
         mqo_errf( mqo_es_vm, "sx", "cannot call non-function", fn );
@@ -153,10 +159,6 @@ void mqo_jump( ){
 }
 void mqo_instr_call( ){
     // Error if call frame is empty
-    if( ! MQO_AP->head ){
-        mqo_errf( mqo_es_vm, "s", "cannot evaluate an empty application" );
-    }
-
     // (define fn   (call-fn ap))
     // (define args (call-args ap))
 
@@ -174,6 +176,22 @@ void mqo_instr_call( ){
     MQO_AP->ip = MQO_IP+1;
     MQO_CP = MQO_AP;
  
+    mqo_jump( );
+}
+void mqo_instr_tail( ){
+    // (define fn   (call-fn ap))
+    // (define args (call-args ap))
+
+    // (if (is-closure? fn) 
+    //   (begin (set-call-data! cp (call-data ap)) 
+    //          (set! ep (closure-env fn)) 
+    //          (set! ip (proc-instr (closure-proc fn)))) 
+    //   (apply (prim-impl fn) args)) 
+     
+    MQO_CP->head = MQO_AP->head;
+    MQO_CP->tail = MQO_AP->tail;
+    MQO_CP->count = MQO_AP->count;
+
     mqo_jump( );
 }
 void mqo_instr_clos( ){
@@ -310,41 +328,6 @@ void mqo_instr_stg( ){
     mqo_set_global( mqo_symbol_fv( MQO_AX ), MQO_RX );
     mqo_next_instr();
 }
-void mqo_instr_tail( ){
-    // Error if call frame is empty
-    if( ! MQO_AP->head ){
-        mqo_errf( mqo_es_vm, "s", "cannot evaluate an empty application" );
-    }
-
-    // (define fn   (call-fn ap))
-    // (define args (call-args ap))
-
-    mqo_value fn = mqo_car( MQO_AP->head );
-    mqo_pair  args = mqo_list_fv( mqo_cdr( MQO_AP->head ) );
-
-    fn = mqo_reduce_function( fn, args );
-    
-    // (if (is-closure? fn) 
-    //   (begin (set-call-data! cp (call-data ap)) 
-    //          (set! ep (closure-env fn)) 
-    //          (set! ip (proc-instr (closure-proc fn)))) 
-    //   (apply (prim-impl fn) args)) 
-   
-    MQO_CP->head = MQO_AP->head;
-    MQO_CP->tail = MQO_AP->tail;
-    MQO_CP->count = MQO_AP->count;
-
-    if( mqo_is_closure( fn ) ){
-        mqo_closure clos = mqo_closure_fv( fn );
-
-        MQO_EP = mqo_clos_env( clos );
-        MQO_IP = mqo_clos_inst( clos );
-    }else if( mqo_is_primitive( fn ) ){
-        mqo_primitive_fv( fn )->impl();
-    }else{
-        mqo_errf( mqo_es_vm, "sx", "cannot call non-function", fn );
-    }
-}
 void mqo_instr_usea( ){
     // (define max (instr-ax ip)) 
     mqo_word max = mqo_imm_fv( MQO_AX ) + 1;
@@ -471,6 +454,9 @@ void mqo_trace_ip( mqo_instruction ip ){
     mqo_word ct = 64; mqo_show_instruction( ip, &ct );
     mqo_prim_fn p = ip->prim->impl;
     if( p == mqo_instr_call ){
+        mqo_print( " -- " );
+        ct = 64; mqo_show_pair( MQO_AP->head, &ct );
+    }else if( p == mqo_instr_tail ){
         mqo_print( " -- " );
         ct = 64; mqo_show_pair( MQO_AP->head, &ct );
     }else if(( p == mqo_instr_arg )

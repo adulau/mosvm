@@ -223,7 +223,7 @@ void mqo_freeze_val( mqo_tree index, mqo_string buf, mqo_value v ){
 
 mqo_string mqo_freeze( mqo_value root ){
     mqo_integer item_ct = 0;
-    mqo_dict      index = mqo_make_tree( mqo_dict_key );
+    mqo_dict      index = mqo_make_dict( );
     mqo_pair      items = mqo_make_tc( );
 
     mqo_boolean inlineq( mqo_value value ){
@@ -387,6 +387,7 @@ mqo_pair mqo_thaw_tail( const char *name ) {
     mqo_integer iinset = 0;
     mqo_integer *inset = &iinset;
     mqo_pair p = NULL;
+    // mqo_tc tc = mqo_make_tc( );
     mqo_value v;
 
     FILE *f=fopen(name,"rb");
@@ -397,12 +398,14 @@ mqo_pair mqo_thaw_tail( const char *name ) {
 
     for(;;){
         TAIL_READ( f, sig, mqo_frag_taglen );
-        if (memcmp(sig,mqo_frag_tag,mqo_frag_taglen)!=0) return p;
+        if (memcmp(sig,mqo_frag_tag,mqo_frag_taglen)!=0) break;
         v = mqo_thaw_frag( f, inset );
         p = mqo_cons( v, mqo_vf_list( p ) ); 
+        // mqo_tc_append( tc, v );
     }
 
     fclose(f);
 
     return p;
+    // return mqo_list_fv( mqo_car( tc ) );
 }

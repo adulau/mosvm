@@ -316,6 +316,7 @@ mqo_integer mqo_compare_generic( mqo_value a, mqo_value b ){
 
 void mqo_init_memory_subsystem( ){
     mqo_imm_type = mqo_number_type;
+    mqo_string_type->compare = (mqo_cmp_mt)mqo_string_compare;
     MQO_I_TYPE( type );
     MQO_I_TYPE( null );
     //TODO: bind *null* to mqo_vf_null
@@ -335,7 +336,7 @@ mqo_value mqo_req_arg( mqo_type type ){
         return x;
     }
     mqo_errf( mqo_es_vm, "sxx", "argument type mismatch", type, x );
-}    
+}
 mqo_value mqo_opt_any( mqo_boolean* found ){
     if( mqo_arg_ptr ){
         mqo_value x = mqo_car( mqo_arg_ptr );

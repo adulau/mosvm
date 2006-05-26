@@ -918,7 +918,7 @@ MQO_BEGIN_PRIM( "globals", globals )
 MQO_END_PRIM( globals );
 
 MQO_BEGIN_PRIM( "set", set )
-    mqo_set set = mqo_make_tree( mqo_set_key );
+    mqo_set set = mqo_make_set( );
     
     for(;;){
         OPT_ANY_ARG( item );
@@ -984,7 +984,7 @@ MQO_BEGIN_PRIM( "set?", setq )
 MQO_END_PRIM( setq )
 
 MQO_BEGIN_PRIM( "dict", dict )
-    mqo_dict dict = mqo_make_tree( mqo_dict_key );
+    mqo_dict dict = mqo_make_dict( );
 
     for(;;){
         OPT_PAIR_ARG( entry );

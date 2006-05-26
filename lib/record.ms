@@ -17,9 +17,17 @@
 (module "lib/record")
 (import "lib/object")
 
-(define-macro (define-record-type record-name 
-                                  make-proto pred-name . record-fields)
-  `(define-class ,record-name <object> ,make-proto ,pred-name 
-                 ,@record-fields))
+;;; (define-macro (define-record-type record-name 
+;;;                                   make-proto pred-name . record-fields)
+;;;   `(define-class ,record-name <object> ,make-proto ,pred-name 
+;;;                  ,@record-fields))
+
+(set-macro! define-record-type 
+            (lambda (record-name make-proto pred-name . record-fields)
+              (define tc (make-tc))
+              (tc-splice! tc (list 'define-class record-name '<object>))
+              (tc-splice! tc (make-proto pred-name))
+              (tc-splice! tc record-fields)
+              (tc->list tc)))
 
 (export define-record-type)

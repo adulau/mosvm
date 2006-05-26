@@ -20,7 +20,6 @@
 (import "lib/cfb")
 (import "lib/fuse")
 (import "lib/crypto-port")
-(import "lib/freeze")
 (import "lib/format")
 (import "lib/build")
 

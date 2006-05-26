@@ -146,6 +146,7 @@ typedef int mqo_boolean;
     mqo_##child##_type->parent = mqo_##pare##_type; \
     mqo_##child##_type->header.type = mqo_type_type; \
     mqo_root_obj( (mqo_object)mqo_##child##_type ); \
+    mqo_bind_type( mqo_##child##_name, mqo_##child##_type ); \
 
 #define MQO_H_TYPE( tn ) \
     MQO_H_TP( tn ); \

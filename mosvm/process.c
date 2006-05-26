@@ -101,6 +101,7 @@ void mqo_proc_loop( ){
         // This means a subordinate process tried to return to the proc loop;
         // we kill the interpreter exit point, then rejoin the proc loop.
         mqo_interp_xp = NULL;
+
         if( mqo_active_process ){
             mqo_active_process->deactivate( (mqo_object) mqo_active_process,
                                             mqo_active_process->context );
@@ -123,6 +124,8 @@ void mqo_proc_loop( ){
             mqo_active_process = mqo_active_process->next;
         }
     }
+
+    mqo_proc_xp = NULL;
 }
 
 void mqo_load_vm( mqo_vm vm ){

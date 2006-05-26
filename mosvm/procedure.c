@@ -96,7 +96,7 @@ mqo_procedure mqo_assemble( mqo_list src ){
     mqo_integer index;
     mqo_pair p;
     mqo_primitive op;
-    mqo_dict labels = mqo_make_tree( mqo_dict_key );
+    mqo_dict labels = mqo_make_dict( );
     index = 0; p = src;
     
     mqo_value parse_arg( mqo_value arg ){

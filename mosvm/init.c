@@ -17,8 +17,8 @@
 #include "mosvm.h"
 
 void mqo_init_mosvm( ){
-    mqo_init_string_subsystem( );
     mqo_init_memory_subsystem( );
+    mqo_init_string_subsystem( );
     mqo_init_boolean_subsystem( );
     mqo_init_number_subsystem( );
     mqo_init_list_subsystem( );

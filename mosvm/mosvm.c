@@ -97,7 +97,8 @@ int main( int argc, const char** argv ){
     mqo_argv = mqo_list_fv( mqo_car( mqo_argv ) );
 
     mqo_list linked = mqo_thaw_tail( argv[0] );
-    
+    mqo_word xct = 100 ; mqo_show_list_contents( linked, &xct );
+
     if( ! linked ){
         if( mqo_argv ){
             mqo_string src_path = mqo_string_fv( mqo_car( mqo_argv ) );
