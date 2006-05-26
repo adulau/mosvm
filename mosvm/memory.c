@@ -272,7 +272,7 @@ void mqo_bind_type( const char* name, mqo_type type ){
 
 mqo_integer mqo_cmp_eqv( mqo_value a, mqo_value b ){
     mqo_type at, bt;
-    
+
     if( mqo_is_number( a ) ){
         at = mqo_number_type;
     }else{
@@ -285,29 +285,23 @@ mqo_integer mqo_cmp_eqv( mqo_value a, mqo_value b ){
         bt = mqo_value_type( b );
     };
    
-    if( at == bt ){
-        return at->compare( a, b ); 
-        //TODO: Shim
-        return at->compare ? at->compare( a, b ) : mqo_compare_generic( a, b );
-    }else{
-        return at - bt;
-    }
+    if( at == bt )return at->compare( a, b ); 
+    if( at < bt )return -1;
+    if( at > bt )return +1;
+    return 0;
 }
 
-
 mqo_integer mqo_cmp_eq( mqo_value a, mqo_value b ){
-    mqo_integer d = a - b;
-    if( d == 0 )return d;
+    if( a == b ) return 0;
 
-    if( mqo_is_number( a ) ){
-        if( mqo_is_number( b ) ) return mqo_number_compare( a, b );
-    }else if( mqo_is_string( a ) ){
-        if( mqo_is_string( b ) )
-          return mqo_string_compare( mqo_string_fv( a ), 
-                                     mqo_string_fv( b ) );
+    if( mqo_is_number( a ) && mqo_is_number( b ) ){
+        return mqo_number_compare( a, b );
+    }else if( mqo_is_string( a ) && mqo_is_string( b ) ){
+        return mqo_string_compare( mqo_string_fv( a ), mqo_string_fv( b ) );
     };
 
-    return d;
+    if( a < b )return -1;
+    if( a > b )return +1;
 }
 
 mqo_integer mqo_compare_generic( mqo_value a, mqo_value b ){
@@ -316,6 +310,7 @@ mqo_integer mqo_compare_generic( mqo_value a, mqo_value b ){
 
 void mqo_init_memory_subsystem( ){
     mqo_imm_type = mqo_number_type;
+    mqo_string_type->show = (mqo_show_mt)mqo_show_string;
     mqo_string_type->compare = (mqo_cmp_mt)mqo_string_compare;
     MQO_I_TYPE( type );
     MQO_I_TYPE( null );
@@ -347,7 +342,6 @@ mqo_value mqo_opt_any( mqo_boolean* found ){
         return 0;
     }
 }
-
 mqo_value mqo_opt_arg( mqo_type type, mqo_boolean* found ){
     mqo_value x = mqo_opt_any( found );
     if( *found ){
@@ -359,7 +353,6 @@ mqo_value mqo_opt_arg( mqo_type type, mqo_boolean* found ){
         return 0;
     }
 }
-
 mqo_type mqo_direct_type( mqo_value value ){
     mqo_type type = mqo_value_type( value );
     return type->direct ? type->direct : type;

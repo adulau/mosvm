@@ -1,15 +1,3 @@
-+ Add LAMBDA/2 form
-  (lambda/2 name formals . body)
-  (ldf ...)
-  (ldc "my-lambda-name")
-  (ldc 2)
-  (ldg set-lambda-name!)
-  (call)
-
-+ Alter define to use LAMBDA/2
-
-+ Drop set! hack for naming lambdas.
-
 -------------------------------------------------------------------------------
 +  the TRY macro
   (try err
@@ -43,4 +31,9 @@
 
   Only lists need to be decorated by line during read.
   Likewise, only calls need to be decorated by line.
+
++ Replace show with format
+  mqo_format( mqo_buffer buf, mqo_value v, mqo_integer depth );
+  mqo_show -> new buf, mqo_format( buf, v, ct ), print buf;
+
 

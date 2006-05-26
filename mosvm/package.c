@@ -210,12 +210,17 @@ void mqo_freeze_val( mqo_tree index, mqo_string buf, mqo_value v ){
             return mqo_freeze_ii( buf, x );
         }
     };
-    
+   
+    mqo_print( "Looking for: " );
+    mqo_word ct = 64; mqo_show( v, &ct );
+    mqo_newline( );
+
     mqo_node n = mqo_tree_lookup( index, v );
-    assert( n );
-    
-    if( n ){
+    if( ! n ){
+        ct = 1000; mqo_show_tree( index, &ct );
+        assert( n );
     }
+    
     mqo_string_append_word( buf, mqo_integer_fv( 
         mqo_cdr( mqo_pair_fv( n->data ) )
     ) );
@@ -239,6 +244,10 @@ mqo_string mqo_freeze( mqo_value root ){
         if( inlineq( value ) )return;
         if( mqo_tree_lookup( index, value ) )return;
         
+    mqo_print( "Inserting: " );
+    mqo_word ct = 64; mqo_show( value, &ct );
+    mqo_newline( );
+
         mqo_tree_insert( index, 
                          mqo_vf_pair( 
                             mqo_cons( value, mqo_vf_integer( item_ct ) ) ) );
