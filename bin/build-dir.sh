@@ -19,10 +19,14 @@ LIBS_MO=""
 for LIB_MS in $LIBS; do
     LIB=$LIBDIR/`basename $LIB_MS .ms`
     LIB_MS=$LIB.ms
+    LIB_MA=$LIB.ma
     LIB_MO=$LIB.mo
     if [ ! -s $LIB_MO ]||[ $LIB_MS -nt $LIB_MO ]; then
-        echo "Compiling $LIB_MS to $LIB_MO.."
+        echo "Compiling $LIB_MS to $LIB_MA.."
         $DO_SCHEME $BIN/mosc.ms $LIB || exit 1
+        echo "Assembling $LIB_MA to $LIB_MO.."
+        $BIN/mosasm $LIB_MA $LIB_MO || exit 1
+        RE_GLUE="yes"
     fi
     LIBS_MO="$LIBS_MO $LIB_MO"
 done

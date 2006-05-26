@@ -29,6 +29,9 @@ const char* mqo_em_noprint = "illegal character";
 const char* mqo_em_endq = "closing \" missing";
 const char* mqo_em_endp = "closing ) missing";
 const char* mqo_em_more = "expected more";
+const char* mqo_em_nohead= "expected value before \".\"";
+const char* mqo_em_notail = "expected value after \".\"";
+const char* mqo_em_extra_tail = "superfluous value after \".\"";
 
 mqo_quad mqo_parse_dec( char** r_str, mqo_boolean* r_succ ){
     char* str = *r_str;
@@ -127,7 +130,13 @@ mqo_symbol mqo_parse_sym( char** r_str, mqo_boolean* r_succ ){
 
     *r_succ = any;
     *r_str = str;
-    return any ? mqo_symbol_fm( sym, str - sym ) : NULL;
+    if( any ){
+        return mqo_symbol_fm( sym, str - sym );
+    }else{
+        mqo_parse_errmsg = "expected symbol";
+        mqo_parse_incomplete = 1;
+        return NULL;
+    }
 }
 
 mqo_string mqo_parse_str( char** r_str, mqo_boolean* r_succ ){
@@ -221,6 +230,11 @@ mqo_list mqo_parse_list( char** r_str, mqo_boolean* r_succ ){
         case '.':
             if( mqo_list_fv( mqo_car( tc ) ) ){
                 str = mqo_skip_space( str + 1 );
+                if(( *str == '.' || *str == ')' )){
+                    mqo_parse_errmsg = mqo_em_notail;
+                    mqo_parse_incomplete = 0;
+                    goto fail;
+                }
                 x = mqo_parse_value( &str, r_succ );
 
                 if( *r_succ ){
@@ -231,14 +245,19 @@ mqo_list mqo_parse_list( char** r_str, mqo_boolean* r_succ ){
                         goto succ;
                     }else{
                         // More than one term follows '.' in a pair.
+                        mqo_parse_errmsg = mqo_em_extra_tail;
+                        mqo_parse_incomplete = 0;
+                        
                         goto fail;
                     }
                 }else{
-                    // No term follows '.' in the pair.
+                    // Parse value was displeased..
                     goto fail;
                 };
             }else{
                 // No term precedes '.' in the pair.
+                mqo_parse_errmsg = mqo_em_nohead;
+                mqo_parse_incomplete = 0;
                 goto fail;
             }
         case ')':
@@ -246,13 +265,14 @@ mqo_list mqo_parse_list( char** r_str, mqo_boolean* r_succ ){
             goto succ;
         case 0:
             mqo_parse_errmsg = mqo_em_endp;
-        mqo_parse_incomplete = 1;
+            mqo_parse_incomplete = 1;
             goto fail;
         default:
             x = mqo_parse_value( &str, r_succ );
             if( *r_succ ){
                 mqo_tc_append( tc, x );
             }else{
+                // Parse value was displeased.
                 goto fail;
             }
         }

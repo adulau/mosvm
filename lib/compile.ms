@@ -567,7 +567,7 @@
         
         (if (and (is-top-context? env)
                  (is-exported? name env))
-          `(set-macro! (quote ,name) (lambda ,args ,@body))
+          `(set-macro! (quote ,name) (function ,(cons name args) ,@body))
           '(begin)))))
 
   (map (lambda (expr)
@@ -675,7 +675,7 @@
                                   (context-slot-count env))))
     (block-prepend! inner label)
 
-    (block-append! outer (list 'clos name label))))
+    (block-append! outer (list 'clos (or name label) label))))
 
 (define (compile-load block sym env) 
   ;TODO Test for is-imported?

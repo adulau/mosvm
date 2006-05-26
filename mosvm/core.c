@@ -330,6 +330,18 @@ MQO_BEGIN_PRIM( "exit", exit )
     exit( has_code ? code : 0 );
 MQO_END_PRIM( exit )
 
+MQO_BEGIN_PRIM( "equal?", equal )
+    REQ_ANY_ARG( v0 );
+    for(;;){
+        OPT_ANY_ARG( vN );
+        if( ! has_vN )break;
+        if( ! mqo_eqv( v0, vN ) ){
+            RESULT( mqo_vf_false( ) );
+        }
+    }
+    RESULT( mqo_vf_true( ) );
+MQO_END_PRIM( equal )
+
 MQO_BEGIN_PRIM( "eq?", eq )
     REQ_ANY_ARG( v0 );
     for(;;){
@@ -700,6 +712,30 @@ MQO_BEGIN_PRIM( "string-append", string_append )
     }
     STRING_RESULT( s0 );
 MQO_END_PRIM( string_append );
+
+MQO_BEGIN_PRIM( "assq", assq )
+    REQ_ANY_ARG( key );
+    REQ_LIST_ARG( list );
+    NO_REST_ARGS( );
+    
+    mqo_value v;
+
+    while( list ){
+        v = mqo_car( list );
+        if( mqo_is_pair( v ) ){
+        //TODO: Should this be an error?
+            if( mqo_eqv( mqo_car( mqo_pair_fv( v ) ), key ) ){
+                RESULT( v );
+            }
+        }
+        v = mqo_cdr( list );
+        if( ! mqo_is_pair( v ) )break;
+        //TODO: Should this be an error?
+        list = mqo_pair_fv( v );
+    }
+
+    RESULT( mqo_vf_false() );
+MQO_END_PRIM( assq );
 
 MQO_BEGIN_PRIM( "assoc", assoc )
     REQ_ANY_ARG( key );
@@ -1663,9 +1699,11 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( vector_length );
     MQO_BIND_PRIM( vectorq );
     MQO_BIND_PRIM( eq );
+    MQO_BIND_PRIM( equal );
     MQO_BIND_PRIM( memq );
     MQO_BIND_PRIM( member );
     MQO_BIND_PRIM( assoc );
+    MQO_BIND_PRIM( assq );
     MQO_BIND_PRIM( string_append );
     MQO_BIND_PRIM( string_length );
     MQO_BIND_PRIM( string_ref );

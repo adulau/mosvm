@@ -16,7 +16,7 @@
 (module "lib/object")
 (import "lib/iterate")
 
-(define <object> (make-type 'object <vector>))
+(define <object> (make-tag 'object))
 
 (define (make-class class-name super-class fields)
   (apply make-type 

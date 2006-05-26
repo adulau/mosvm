@@ -190,7 +190,9 @@
 (define (module . dont-care) #f) ;This is used by MOSVM to ensure built-in
                                  ;modules are registered.
 
-(define-macro (export . don't-car) 1) ;This is used by MOSVM to identify
+(define-macro (export . bah) 1) ;This is used by MOSVM to identify
                                       ;exported identifiers.
+(define-macro (function formals . stmts)
+    `(lambda ,(cdr formals) ,@stmts))
 
 (load "../core/macro.ms")
