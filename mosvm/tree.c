@@ -70,15 +70,15 @@ void mqo_audit_node( mqo_node node, mqo_key_fn key_fn, mqo_integer *pct ){
     
     if( node->left ){
         assert( node->left->weight >= node->weight );
-        assert( mqo_cmp_eq( key, key_fn( node->left->data ) ) > 0 );
-        assert( mqo_cmp_eq( key_fn( node->left->data ), key ) < 0 );
+        assert( mqo_cmp_eqv( key, key_fn( node->left->data ) ) > 0 );
+        assert( mqo_cmp_eqv( key_fn( node->left->data ), key ) < 0 );
         mqo_audit_node( node->left, key_fn, pct );
     }
 
     if( node->right ){
         assert( node->right->weight >= node->weight );
-        assert( mqo_cmp_eq( key, key_fn( node->right->data ) ) < 0 );
-        assert( mqo_cmp_eq( key_fn( node->right->data ), key ) > 0 );
+        assert( mqo_cmp_eqv( key, key_fn( node->right->data ) ) < 0 );
+        assert( mqo_cmp_eqv( key_fn( node->right->data ), key ) > 0 );
         mqo_audit_node( node->right, key_fn, pct );
     }
 }
@@ -93,6 +93,7 @@ mqo_tree mqo_make_tree( mqo_type type, mqo_key_fn key_fn ){
     mqo_tree tree = (mqo_tree)mqo_objalloc( 
         type, sizeof( struct mqo_tree_data ) );
     tree->key_fn = key_fn;
+    tree->root = NULL;
     return tree;
 }
 mqo_dict mqo_make_dict( ){
@@ -112,15 +113,7 @@ mqo_node mqo_make_node( mqo_value data ){
     return node;
 }
 
-mqo_node mqo_tree_insert( mqo_tree tree, mqo_value item ){
-    mqo_key_fn key_fn = tree->key_fn;
-    mqo_value key = key_fn( item );
-    mqo_node yield = NULL;
-
-#ifdef MQO_AUDIT_TREES
-mqo_integer count = mqo_audit_tree( tree );
-#endif
-
+int mqo_insert_item_at( mqo_node* link, mqo_node* yield, mqo_value item, mqo_value key, mqo_key_fn key_fn ){
     //Internal routine to recurse down the tree, and either discover the
     //leaf closest to a new node, or a matching node.  Returns nonzero if a
     //node was created and rebalancing is required.
@@ -132,45 +125,41 @@ mqo_integer count = mqo_audit_tree( tree );
     // Returns 0 if the node was found.
     // Returns 1 if the node was made.
 
-    int insert_at( mqo_node* link ){
-        mqo_node node = *link;
+    mqo_node node = *link;
 
-        if( ! node ){
-            *link = yield = mqo_make_node( item );
-#ifdef MQO_AUDIT_TREES
-        count += 1;
-#endif
-            return 1;
-        };
+    if( ! node ){
+        node = mqo_make_node( item );
+        *link = node;
+        *yield = node;
+        return 1;
+    };
 
-        mqo_integer difference = mqo_cmp_eq( key, key_fn( node->data ) );
+    mqo_integer difference = mqo_cmp_eqv( key, key_fn( node->data ) );
 
-        if( difference < 0 ){
-            if( insert_at( &(node->left) ) ){
-                if( node->left->weight < node->weight ){
-                    mqo_raise_left( link ); return 1;
-                };
+    if( difference < 0 ){
+        if( mqo_insert_item_at( &(node->left), yield, item, key, key_fn ) ){
+            if( node->left->weight < node->weight ){
+                mqo_raise_left( link ); return 1;
             };
-        }else if( difference > 0 ){
-            if( insert_at( &(node->right) ) ){
-                if( node->right->weight < node->weight ){
-                    mqo_raise_right( link ); return 1;
-                };
-            };
-        }else{
-            yield = node;
-            node->data = item;
         };
+    }else if( difference > 0 ){
+        if( mqo_insert_item_at( &(node->right), yield, item, key, key_fn ) ){
+            if( node->right->weight < node->weight ){
+                mqo_raise_right( link ); return 1;
+            };
+        };
+    }else{
+        *yield = node;
+        node->data = item;
+    };
 
-        return 0;
-    }
+    return 0;
+}
     
-    insert_at( &(tree->root) );
+mqo_node mqo_tree_insert( mqo_tree tree, mqo_value item ){
+    mqo_node yield = NULL;
 
-#ifdef MQO_AUDIT_TREES
-    mqo_integer new_count = mqo_audit_tree( tree );
-    assert( count == new_count );
-#endif
+    mqo_insert_item_at( &(tree->root), &yield, item, tree->key_fn( item ), tree->key_fn );
 
     return yield;
 }
@@ -182,23 +171,14 @@ int mqo_tree_remove( mqo_tree tree, mqo_value key ){
     mqo_node node;
     mqo_integer difference;
 
-#ifdef MQO_AUDIT_TREES
-    mqo_integer count = mqo_audit_tree( tree );
-#endif
-
     for(;;){
         node = *root; 
 
         if( node == NULL ){
-#ifdef MQO_AUDIT_TREES
-            mqo_integer new_count = mqo_audit_tree( tree );
-            assert( count == new_count );
-#endif
-            
             return 0; // Node not found.
         }
 
-        difference = mqo_cmp_eq( key, key_fn( node->data ) );
+        difference = mqo_cmp_eqv( key, key_fn( node->data ) );
 
         if( difference < 0 ){
             root = &(node->left);
@@ -226,13 +206,7 @@ int mqo_tree_remove( mqo_tree tree, mqo_value key ){
             root = &((*root)->left);
         }else{
             *root = NULL; 
-
-#ifdef MQO_AUDIT_TREES
-    count -= 1;
-    mqo_integer new_count = mqo_audit_tree( tree );
-    assert( count == new_count );
-#endif
-            free( node );
+        
             return 1;            
         }
     }
@@ -246,7 +220,7 @@ mqo_node mqo_tree_lookup( mqo_tree tree, mqo_value key ){
     while( node ){
         if( node == NULL )return NULL; // Node not found.
             
-        mqo_integer difference = mqo_cmp_eq( key, key_fn( node->data ) );
+        mqo_integer difference = mqo_cmp_eqv( key, key_fn( node->data ) );
 
         if( difference < 0 ){
             node = node->left;
