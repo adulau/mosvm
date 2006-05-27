@@ -222,7 +222,7 @@
 
   (define (new-sxml tag inv attrs)
     (unless (null? attrs)
-      (set! inv (cons (cons '@ attrs)
+      (set! inv (cons (cons '* attrs)
                       inv)))
     (cons tag inv))
 
@@ -321,7 +321,7 @@
         '()
         (begin
           (define tag (cadr sxml))
-          (if (and (pair? tag) (eq? (car tag) '@))
+          (if (and (pair? tag) (eq? (car tag) '*))
             (cdr (cdr sxml))
             (cdr sxml)))))
     '()))
@@ -334,7 +334,7 @@
         '()
         (begin
           (define tag (cadr sxml))
-          (if (and (pair? tag) (eq? (car tag) '@))
+          (if (and (pair? tag) (eq? (car tag) '*))
             (cdr tag)
             '()))))
     '()))

@@ -226,25 +226,25 @@ void mqo_instr_jmp( ){
 }
 //TODO: Add the prog field to instructions
 void mqo_instr_jf( ){
-    // (if (eq? #t rx)
-    //     (set! ip (next-instr ip))
-    //     (set! ip (instr-ax ip)))
-
-    if( mqo_is_true( MQO_RX ) ){
-        mqo_next_instr();
-    }else{
-        MQO_IP = MQO_IP->proc->inst + mqo_imm_fv( MQO_AX );
-    }
-}
-void mqo_instr_jt( ){
-    // (if (eq? #t rx)
+    // (if (eq? #f rx)
     //     (set! ip (instr-ax ip))
     //     (set! ip (next-instr ip)))
 
-    if( mqo_is_true( MQO_RX ) ){
+    if( mqo_is_false( MQO_RX ) ){
         MQO_IP = MQO_IP->proc->inst + mqo_imm_fv( MQO_AX );
     }else{
         mqo_next_instr();
+    }
+}
+void mqo_instr_jt( ){
+    // (if (eq? #f rx)
+    //     (set! ip (next-instr ip))
+    //     (set! ip (instr-ax ip)))
+
+    if( mqo_is_false( MQO_RX ) ){
+        mqo_next_instr();
+    }else{
+        MQO_IP = MQO_IP->proc->inst + mqo_imm_fv( MQO_AX );
     }
 }
 void mqo_instr_ldb( ){
@@ -258,6 +258,10 @@ void mqo_instr_ldb( ){
         ), 
         mqo_imm_fv( MQO_BX ) 
     );
+    
+    mqo_print( "    LDB: " );
+    mqo_word ct = 100; mqo_show( MQO_RX, &ct );
+    mqo_newline();
 
     mqo_next_instr();
 }
@@ -449,6 +453,10 @@ void mqo_init_vm_subsystem( ){
     MQO_BIND_OP( usea, 1, 1); //11
     MQO_BIND_OP( usen, 1, 1); //12
 }
+void mqo_trace_rx( mqo_value rx ){
+    mqo_print( " -> " );
+    mqo_word ct = 64; mqo_show( rx, &ct );
+}
 void mqo_trace_ip( mqo_instruction ip ){
     mqo_printint( ip - ip->proc->inst );
     mqo_print( ": " );
@@ -469,7 +477,7 @@ void mqo_trace_ip( mqo_instruction ip ){
         }
         ct = 64; mqo_show( MQO_RX, &ct );
         mqo_print( ")" );
-    };
+    }
     mqo_newline();
 }
 void mqo_chain( mqo_pair data ){

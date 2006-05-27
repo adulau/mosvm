@@ -63,7 +63,8 @@
   (until done 
          (cond ((memq '() lists) (set! index #f)
                                  (set! done #t))
-               ((apply fn (map-car lists)) (set! done #t))
+               ((apply fn (map-car lists)) 
+                (set! done #t))
                (else (set! index (+ index 1))
                      (set! lists (map-cdr lists)))))
   index)

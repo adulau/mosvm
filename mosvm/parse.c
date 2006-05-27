@@ -32,6 +32,7 @@ const char* mqo_em_more = "expected more";
 const char* mqo_em_nohead= "expected value before \".\"";
 const char* mqo_em_notail = "expected value after \".\"";
 const char* mqo_em_extra_tail = "superfluous value after \".\"";
+const char* mqo_em_badsharp = "expected \"t\" or \"f\" after \"#\"";
 
 mqo_quad mqo_parse_dec( char** r_str, mqo_boolean* r_succ ){
     char* str = *r_str;
@@ -118,8 +119,7 @@ mqo_symbol mqo_parse_sym( char** r_str, mqo_boolean* r_succ ){
     char ch = *str;
     int any = 0;
     // Only alphabetics and *<>=! lead multi-character symbols.  Everything
-    // else is treated like a special operator, like "'", "`", ",", "#", 
-    // or "@" 
+    // else is treated like a special operator, like "'", "`", ",", or @ 
 
     for(;;){
         ch = *str;
@@ -287,7 +287,7 @@ fail:
     return NULL;
 }
 
-mqo_symbol mqo_sym_splice = NULL;
+mqo_symbol mqo_sym_scatter = NULL;
 mqo_symbol mqo_sym_quote = NULL;
 mqo_symbol mqo_sym_unquote = NULL;
 mqo_symbol mqo_sym_quasiquote = NULL;
@@ -305,7 +305,7 @@ mqo_value mqo_parse_value( char** r_str, mqo_boolean* r_succ ){
         x = mqo_vf_integer( mqo_parse_int( &str, r_succ ) );
     }else if( ch == '@' ){
         str ++;
-        x = mqo_vf_pair( mqo_listf( 2, mqo_sym_splice,
+        x = mqo_vf_pair( mqo_listf( 2, mqo_sym_scatter,
                                        mqo_parse_value( &str, r_succ ) ) );
     }else if( ch == '`' ){
         str ++;
@@ -331,6 +331,17 @@ mqo_value mqo_parse_value( char** r_str, mqo_boolean* r_succ ){
     }else if( ch == '"' ){
         mqo_string s = mqo_parse_str( &str, r_succ );
         if( *r_succ ) x = mqo_vf_string( s );
+    }else if( ch == '#' ){
+        str ++;
+        ch = *(str++);
+        if( ch == 'f' ){
+            x = mqo_vf_false( );
+        }else if( ch == 't' ){
+            x = mqo_vf_true( );
+        }else{
+            mqo_parse_errmsg = mqo_em_badsharp;
+            mqo_parse_incomplete = ! ch;
+        }
     }else{
         mqo_symbol s = mqo_parse_sym( &str, r_succ );
         if( *r_succ ) x = mqo_vf_symbol( s );
@@ -368,7 +379,7 @@ fail:
 }
 
 void mqo_init_parse_subsystem( ){
-    mqo_sym_splice = mqo_symbol_fs( "splice" );
+    mqo_sym_scatter = mqo_symbol_fs( "scatter" );
     mqo_sym_quote = mqo_symbol_fs( "quote" );
     mqo_sym_unquote = mqo_symbol_fs( "unquote" );
     mqo_sym_quasiquote = mqo_symbol_fs( "quasiquote" );
