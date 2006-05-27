@@ -143,9 +143,13 @@
   result)
 
 (define (compile program)
-  (define env (make-top-context))
-  (compile-lisp-block env
-                      (compile-imports env (compile-exports env program))))
+  (let ((env (make-top-context)))
+    (set! program (compile-exports env program))
+    (set! program (compile-imports env program))
+    (set! program (compile-lisp-block env program))
+  (append (list (list 'usen 0 (context-slot-count env)))
+          program
+          (list (list 'retn)))))
 
 (define (compile-lisp-block env block)
   (define tc (make-tc))
@@ -209,7 +213,7 @@
   (if (and (pair? arg) 
            (eq? (car arg)
                 'scatter))
-    (compile-lisp-arg* env arg)
+    (compile-lisp-arg* env (cadr arg))
     (compile-lisp-arg1 env arg)))
 
 (define (compile-lisp-arg1 env arg)
@@ -274,7 +278,7 @@
                                              (list 'stg term)))
                      (cons 'asm (tc->list tc)))))
     (cons 'define (lambda (env term . body)
-                    (when (pair? term)
+                    (if (pair? term)
                       ;; Build a man a fire, and he'll be warm for a day.
                       ;;
                       ;; Set the people who said 'defines should only be 
@@ -296,9 +300,13 @@
                                     (function ,(cons term (parse-slots args)) 
                                               ,@body)
                                     (or (? ,term) refuse-method)))
-                                `((function ,(cons term args) ,@body)))))))
-                      (compile-decl env term))
-                      (list 'set! term body)))
+                                `(function ,(cons term args) ,@body))))))
+                      (set! body (cons 'begin body)))
+                    (compile-decl env term)
+                    ;;(display "Body will be: ")
+                    ;;;(write body)
+                    ;;;(newline)
+                    (list 'set! term body)))
     (cons '?  (lambda (env key)
                 (let ((addr (context-symbol-addr env key)))
                   (list 'asm (if addr
