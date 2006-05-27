@@ -497,8 +497,9 @@
                     `(asm (mos ,test)
                           (jf ,false-branch)
                           (mos ,t-expr)
-                          ,false-branch
                           (jmp ,done-branch)
+                          ,false-branch
+                          (mos ,f-expr)
                           ,done-branch))))
 
 (set-macro! 'return (lambda (expr)
