@@ -42,7 +42,7 @@
 
   (let ((data (read-lisp-file src-file)))
     (set! data (compile data))
-    (set! data (optimize data))
+    ;(set! data (optimize data))
 
     (when *mosvm?*
       (set! data (assemble data))

@@ -59,7 +59,7 @@ mqo_integer mqo_list_length( mqo_list p ){
     mqo_integer c = 0;
     while( p ){
         c += 1;
-        p = mqo_list_fv( mqo_cdr( p ) );
+        p = mqo_req_list( mqo_cdr( p ) );
     }
 done:
     return c;

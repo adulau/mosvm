@@ -296,7 +296,7 @@ complete:
 mqo_string mqo_string_fm( const void* s, mqo_integer sl ){
     mqo_string a = mqo_make_string( sl );
     memcpy( a->pool, s, sl );
-    a->pool[sl+1] = 0;
+    a->pool[sl] = 0;
     a->length = sl;
     return a;
 }

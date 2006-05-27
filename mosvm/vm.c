@@ -194,15 +194,17 @@ void mqo_instr_tail( ){
     mqo_jump( );
 }
 void mqo_instr_clos( ){
-    // (set! rx (make-closure ep (instr-ax ip)))
+    // (set! rx (make-closure ep ip))
+    // (set! ip (instr-ax ip))
     // (set! ip (next-instr ip))
 
     MQO_RX = mqo_vf_closure( mqo_make_closure( 
         MQO_AX,
-        MQO_IP->proc->inst + mqo_imm_fv( MQO_BX ),
+        MQO_IP+1,
         MQO_EP
     ) );
-    mqo_next_instr();
+
+    MQO_IP = MQO_IP->proc->inst + mqo_imm_fv( MQO_BX );
 }
 void mqo_instr_gar( ){
     // (set! gp (cons (make-guard rx cp ap (instr-ax ip))

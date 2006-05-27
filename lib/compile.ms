@@ -43,6 +43,12 @@
   (dict-set! (context-rules context) key function))
 
 (define (find-context-rule context key)
+  ;;;(display "Finding rule for ")
+  ;;;(write key)
+  ;;;(display " in ")
+  ;;;(write context)
+  ;;;(newline)
+
   (if context
     (let ((rule (dict-ref (context-rules context) key)))
       (if rule 
@@ -136,11 +142,211 @@
            (set! context (context-parent context)))))
   result)
 
+(define (compile program)
+  (define env (make-top-context))
+  (compile-lisp-block env
+                      (compile-imports env (compile-exports env program))))
+
+(define (compile-lisp-block env block)
+  (define tc (make-tc))
+  (for-each (lambda (expr)
+              (tc-splice! tc (compile-lisp-expr env expr)))
+            (compile-macros env block))
+  (tc->list tc))
+
+(define (compile-lisp-expr env expr)
+  (cond ((or (boolean? expr) 
+             (integer? expr)
+             (string? expr)
+             (null? expr))
+         (list (list 'ldc expr)))
+        ((symbol? expr)
+         (let ((addr (context-symbol-addr env expr)))
+           (if addr (list (cons 'ldb addr))
+                    (list (list 'ldg expr)))))
+        ((pair? expr)
+           (compile-lisp-form env expr))
+        (else
+           (error 'compile "Cannot compile" expr))))
+        
+(define (compile-lisp-form env form)
+  (define lead (car form))
+  (define rest (cdr form))
+  ;;;(display "Compiling Lisp Form: " )
+  ;;;(write form)
+  ;;;(newline)
+
+  (if (eq? lead 'asm)
+    (compile-asm-block env rest)
+    (let ((rule (assq lead *mosvm-special-forms*)))
+      ;;;(display "    special rule is: " )
+      ;;;(write rule)
+      ;;;(newline)
+      (if rule
+        (compile-lisp-expr env (apply (cdr rule) env rest))
+        (let ((rule (find-context-rule env lead)))
+          ;;;(display "    macro rule is: " )
+          ;;;(write rule)
+          ;;;(newline)
+          (if rule
+            (compile-lisp-expr env (apply rule (cdr form)))
+            (compile-lisp-call env form)))))))
+
+(define (compile-lisp-call env call)
+  (define tc (make-tc))
+  ;;;(display "Compiling Lisp Call: " )
+  ;;;(write call)
+  ;;;(newline)
+
+  (tc-append! tc '(newf))
+  (for-each (lambda (term) 
+              (tc-splice! tc (compile-lisp-arg env term)))
+            call)
+  (tc-append! tc '(call))
+  (tc->list tc))
+
+(define (compile-lisp-arg env arg)
+  (if (and (pair? arg) 
+           (eq? (car arg)
+                'scatter))
+    (compile-lisp-arg* env arg)
+    (compile-lisp-arg1 env arg)))
+
+(define (compile-lisp-arg1 env arg)
+  ;;;(display "Compiling Lisp Simple Arg: " )
+  ;;;(write arg)
+  ;;;(newline)
+
+  (append (compile-lisp-expr env arg)
+          '((arg))))
+
+(define (compile-lisp-arg* env arg)
+  ;;;(display "Compiling Lisp Complex Arg: " )
+  ;;;(write arg)
+  ;;;(newline)
+
+  (append (compile-lisp-expr env arg)
+          '((scat))))
+
+(define (compile-asm-block env block)
+  (define tc (make-tc))
+  ;;;(display "Compiling Assembler Block: " )
+  ;;;(write block)
+  ;;;(newline)
+
+  (for-each (lambda (expr)
+              (tc-splice! tc (compile-asm-expr env expr)))
+            block)
+  (tc->list tc))
+
+(define (compile-asm-expr env expr)
+  ;;;(display "Compiling Assembler Expr: " )
+  ;;;(write expr)
+  ;;;(newline)
+
+  (cond ((symbol? expr) 
+         (list expr))
+        ((not (pair? expr)) 
+         (error 'compile "Cannot inline" expr))
+        ((eq? (car expr) 'mos)
+         (compile-lisp-block env (cdr expr)))
+        (else (list expr))))
+
+(define *mosvm-special-forms*
+  (list
+    (cons 'let (lambda (env defns . body)
+                 (let ((n-env (make-virtual-context env (map car defns)))
+                       (tc (make-tc)))
+                   (for-each 
+                     (lambda (x) 
+                       (tc-splice! tc (compile-lisp-block env (cdr x)))
+                       (tc-append! tc 
+                                   (cons 'stb 
+                                         (context-symbol-addr n-env (car x)))))
+                     defns)
+                   (tc-splice! tc (compile-lisp-block n-env body))
+                   (cons 'asm (tc->list tc)))))
+    (cons 'set!  (lambda (env term . body)
+                   (let ((addr (context-symbol-addr env term))
+                         (tc (make-tc)))
+                     (tc-splice! tc (compile-lisp-block env body))
+                     (tc-append! tc (if addr (cons 'stb addr)
+                                             (list 'stg term)))
+                     (cons 'asm (tc->list tc)))))
+    (cons 'define (lambda (env term . body)
+                    (when (pair? term)
+                      ;; Build a man a fire, and he'll be warm for a day.
+                      ;;
+                      ;; Set the people who said 'defines should only be 
+                      ;; found at the start of a function body, and the whole 
+                      ;; world is a better place..
+                      (let ((last (last-pair term)))
+                        (let ((fixed (null? (cdr last))))
+                          (let ((method (and fixed (any pair? term))) 
+                                (args (cdr term))
+                                (signature #f))
+                            (set! term (car term))
+                            (when method
+                              (set! signature (parse-signature args))
+                              (set! args (parse-slots args)))
+                            (set! body 
+                              (if method
+                                `((make-multimethod 
+                                    ,signature
+                                    (function ,(cons term (parse-slots args)) 
+                                              ,@body)
+                                    (or (? ,term) refuse-method)))
+                                `((function ,(cons term args) ,@body)))))))
+                      (compile-decl env term))
+                      (list 'set! term body)))
+    (cons '?  (lambda (env key)
+                (let ((addr (context-symbol-addr env key)))
+                  (list 'asm (if addr
+                               (cons 'ldb addr)
+                               (list 'ldg key))))))
+    (cons 'function (lambda (env formals . body)
+                      ;;;(display "Compiling function ")
+                      ;;;(write formals)
+                      ;;;(newline)
+                      (let ((name (car formals))
+                            (bind 'usen)
+                            (tail (last-pair formals)))
+                          ;;;(display "    tail is ")
+                          ;;;(write tail)
+                          ;;;(newline)
+                          (when (symbol? (cdr tail))
+                            (set! bind 'usea)
+                            ;;;(display "   Altering tail")
+                            ;;;(newline)
+                            (set-cdr! tail (list (cdr tail))))
+                          ;;;(display "    tail is now ")
+                          ;;;(write tail)
+                          ;;;(newline)
+                          ;;;(display "    Formals are ")
+                          ;;;(write formals)
+                          ;;;(newline)
+                          (let ((args (cdr formals)))
+                            (let ((in (make-actual-context env args))
+                                  (ct (- (length args)
+                                         (if (eq? bind 'usea)
+                                           1 0)))
+                                  (after (make-branch-symbol 'after)))
+                              (let ((body (compile-lisp-block in body)))
+                                (append 
+                                  (list 'asm 
+                                        (list 'clos name after)
+                                        (list bind ct 
+                                              (context-slot-count in)))
+                                  body
+                                  (list '(retn)
+                                        after))))))))))
 (set-macro! 'lambda (lambda (formals . body)
                       `(function ,(cons (make-branch-symbol 'anon-fn)
                                         formals) 
                                  ,@body)))
+
 (set-macro! 'export (lambda any '(begin)))
+
 (set-macro! 'with-input-port
             (lambda (port . rest)
               `(let ((%old-input (current-input-port)))
@@ -151,6 +357,7 @@
                         (define %result (begin ,@rest))
                         (set-process-input! %old-input)
                         %result))))
+
 (set-macro! 'with-output-port
             (lambda (port . rest)
               `(let ((%old-output (current-output-port)))
@@ -161,6 +368,7 @@
                         (define %result (begin ,@rest))
                         (set-process-output! %old-output)
                         %result))))
+
 (set-macro! 'string-output
             (lambda rest
               `(let ((%old-output (current-output-port))
@@ -206,15 +414,16 @@
                            branches)))))
 
 (set-macro! 'cond (lambda clauses 
-                    (if (null? clauses) 
-                      #f
+                    (if (null? clauses)
+                      '(begin)
                       (let ((clause (car clauses))
-                            (rest (cdr clauses)))
+                            (clauses (cdr clauses)))
                         (if (eq? (car clause) 'else)
-                          `(begin ,@(cdr clause))
-                          `(if ,(car clause)
-                             (begin ,@(cdr clause))
-                             (cond ,@rest)))))))
+                          (cons 'begin (cdr clause))
+                          (list 'if 
+                                (car clause) 
+                                (cons 'begin (cdr clause))
+                                (cons 'cond  clauses)))))))
 
 (set-macro! 'when 
             (lambda (test . rest)   `(if ,test (begin ,@rest))))
@@ -268,20 +477,21 @@
                              ,done)))))
 
 (set-macro! 'if (lambda (test t-expr . rest)
-                  (define f-expr 
-                    (case (length rest)
-                      ((0) '(begin))
-                      ((1) (car rest))
-                      (else 
-                        (error "if only accepts a test, and two branches."))))
-                  (define done-branch (make-branch-symbol 'done))
-                  (define false-branch (make-branch-symbol 'false))
-                  `(asm (mos ,test)
-                        (jf ,false-branch)
-                        (mos ,t-expr)
-                        ,false-branch
-                        (jmp ,done-branch)
-                        ,done-branch)))
+                  (let ((f-expr 
+                          (case (length rest)
+                            ((0) '(begin))
+                            ((1) (car rest))
+                            (else 
+                              (error 
+                                "if only accepts a test, and two branches."))))
+                      (done-branch (make-branch-symbol 'done))
+                      (false-branch (make-branch-symbol 'false)))
+                    `(asm (mos ,test)
+                          (jf ,false-branch)
+                          (mos ,t-expr)
+                          ,false-branch
+                          (jmp ,done-branch)
+                          ,done-branch))))
 
 (set-macro! 'return (lambda (expr)
                       `(asm (mos ,expr)
@@ -343,102 +553,6 @@
                                             term))))
                      (tc->list tc)))
 
-(define *mosvm-specials*
-  (list
-    (cons 'asm (lambda (block env . stmts)
-                 (for-each 
-                   (lambda (stmt) 
-                     (if (and (pair? stmt) (eq? 'mos (car stmt)))
-                       (compile-block block (cdr stmt) env)
-                       (block-append! block stmt)))
-                   stmts)))
-    (cons 'let (lambda (block env defns . body)
-                 (let ((n-env (make-virtual-context env (map car defns))))
-                   (for-each 
-                     (lambda (x) 
-                       (compile-expr block (cadr x) env)
-                       (block-append! 
-                         block (cons 'stb 
-                                     (context-symbol-addr n-env (car x)))))
-                       defns)
-                   (compile-block block body n-env))))
-    (cons 'set!  (lambda (block env . expr)
-                   (compile-store block expr env)))
-    (cons 'function (lambda (block env formals . body)
-                    (compile-function block
-                                      (car formals)
-                                      (parse-formals (cdr formals))
-                                      body
-                                      env)))
-    (cons '?  (lambda (block env key)
-                (let ((addr (context-symbol-addr env key)))
-                  (if addr 
-                    (block-append! block (cons 'ldb addr))
-                    (compile-expr block 
-                                  `(get-global (quote ,key)) 
-                                  env)))))
-    (cons '?? (lambda (block env key)
-                (cond 
-                  ((is-top-context? env)
-                   (compile-expr block `(get-global (quote ,key)) env))
-                  ((is-top-context? (context-parent env))
-                   (compile-expr block `(get-global (quote ,key)) env))
-                  (else
-                    (let ((addr (context-symbol-addr env key)))
-                      (if addr 
-                        (block-append! block (cons 'ldb addr))
-                        (compile-expr block 
-                                      `(get-global (quote ,key)) 
-                                      env)))))))
-    ))
-
-(define (make-scheme-program) (make-tc))
-
-(define (make-block scheme-program) 
-  (let ((block (cons scheme-program (make-tc))))
-    (tc-append! scheme-program block)
-    block))  
-
-(define (block-scheme-program block) (car block))
-
-(define (block-append! block stmt) 
-  (tc-append! (cdr block) stmt))
-
-(define (block-prepend! block stmt) 
-  (tc-prepend! (cdr block) stmt))
-
-(define (scheme-program->list scheme-program) 
-  (let ((pl (make-tc)))
-    (for-each (lambda (block)
-                (for-each (lambda (stmt) 
-                            (tc-append! pl stmt))
-                          (tc->list (cdr block))))
-              (tc->list scheme-program))
-    (tc->list pl)))
-
-(define (expand-loop expr env)
-  (cond
-    ((null? expr) expr)
-    ((pair? expr) (cons (expand (car expr) env)
-                        (expand-loop (cdr expr) env)))
-    (else (expand expr env))))
-
-(define (expand expr env)
-  (cond ((null? expr) '())
-        ((not (pair? expr)) expr)
-        ((assq (car expr) *mosvm-specials*) expr)
-        (else   
-          (set! expr (expand-loop expr env))
-          (let ((syn (find-context-rule env (car expr))))
-            (if syn (expand (apply syn (cdr expr)) env)
-                    expr)))))
-
-(define (is-import? expr) 
-  (and (pair? expr)
-       (= (length expr) 2)
-       (eq? (car expr) 'import)
-       (string? (cadr expr))))
-
 (define (is-export? expr)
   (and (pair? expr)
        (not (null? expr))
@@ -452,7 +566,7 @@
        (not (null? expr))
        (eq? (car expr) 'define-macro)))
  
-(define (compile-exports code env)
+(define (compile-exports env code)
   (define tc (make-tc))
 
   ;TODO: This needs to be a set.
@@ -464,53 +578,23 @@
 
   (filter isnt-export? code))
 
-(define (compile-defines code env)
-  (define (is-define? expr)
-    (and (pair? expr)
-         (not (null? expr))
-         (eq? (car expr) 'define)))
+(define (parse-signature args)
+  (map (lambda (i) 
+         (if (pair? i) 
+           (car i)
+           #t))
+       args)
+  #f)
 
-  (define (compile-decl sym env)
-    (cond ((and (is-top-context? env)
-                (is-exported? sym env)) 
-           #f)
-          (else 
-            (add-context-binding! env sym)
-            #t)))
+(define (compile-decl env sym)
+  (cond ((and (is-top-context? env)
+              (is-exported? sym env)) 
+         #f)
+        (else 
+          (add-context-binding! env sym)
+          #t)))
 
-  (define (compile-define expr)
-    (when (< (length expr) 2)
-      (error 'compile 
-             "the define form requires a term to define, and a definition" 
-             expr))
-    (let ((term (cadr expr))
-          (body (cdr (cdr expr))))
-
-      (if (pair? term)
-        (let ((args (cdr term)))
-          (set! term (car term))
-
-          (if (and (pair? args) (any pair? (unkink args)))
-            (set! body `(make-multimethod (list ,@(parse-signature args))
-                                          (function (,term ,@(parse-slots args))
-                                                    ,@body)
-                                          (or (?? ,term) refuse-method)))
-            (set! body `(function ,(cons term args) ,@body))))
-        (if (= (length body) 1)
-          (set! body (car body))
-          (error 'compile "variable definitions should be one expression"
-                 expr)))
-
-      (compile-decl term env)
-      (list 'set! term body)))
-
-  (map (lambda (stmt)
-         (if (is-define? stmt)
-           (compile-define stmt)
-           stmt))
-       code))
-
-(define (compile-imports code env) 
+(define (compile-imports env code) 
   (define (compile-dependency path)
     (define code (read-module-source path))
     (define exports (list))
@@ -539,9 +623,20 @@
     (define id (cadr expr))
     (for-each compile-dependency (code-dependencies id)))
     
-  (for-each compile-import (filter is-import? code)))
+  (define (is-import? expr) 
+    (and (pair? expr)
+         (= (length expr) 2)
+         (eq? (car expr) 'import)
+         (string? (cadr expr))))
+    
+  (define (isnt-import? expr)
+    (not (is-import? expr)))
 
-(define (compile-macros code env)
+  (for-each compile-import (filter is-import? code))
+ 
+  (filter isnt-import? code))
+
+(define (compile-macros env code)
   (define (isnt-macro? expr)
     (not (is-macro? expr)))
 
@@ -572,71 +667,6 @@
            expr))
        code))
 
-(define (compile code)
-  ;; I loathe nested lets, but Scheme's inner defines are let-like,
-  ;; and MOSVM doesn't do letrec.
-  (let ((program (make-scheme-program)))
-    (let ((base-block (make-block program))
-          (top-context (make-top-context)))
-      (set! code (compile-exports code top-context))
-      (compile-imports code top-context)
-      (compile-block base-block code top-context)
-      (block-prepend! base-block 
-                      (list 'usen 0 (context-slot-count top-context)))
-      (block-append! base-block '(retn))
-      (scheme-program->list program))))
-
-(define (compile-block block code env)
-  (set! code (compile-macros code env))
-  (set! code (compile-defines code env))
-  (until (null? code)
-    (compile-expr block (car code) env)
-    (set! code (cdr code))))
-
-(define (compile-expr block expr env)
-  (cond ((null? expr)    (compile-null block env))
-        ((list? expr)    (compile-form block expr env))
-        ((integer? expr) (compile-integer block expr env))
-        ((string? expr)  (compile-string block expr env))
-        ((symbol? expr)  (compile-load block expr env))
-        ((eq? expr #f)   (compile-false block env))
-        ((eq? expr #t)   (compile-true block env))
-        (else (error 'compile "unrecognized expression" expr))))
-
-(define (compile-null block env) (compile-constant block '() env))
-(define (compile-true block env) (compile-constant block #t env))
-(define (compile-false block env) (compile-constant block #f env))
-(define (compile-string block expr env)   (compile-constant block expr env))
-(define (compile-integer block expr env)  (compile-constant block expr env))
-(define (compile-constant block expr env) (block-append! block (list 'ldc expr)))
-
-(define (compile-form block expr env)
-  (set! expr (expand expr env))
-  (if (pair? expr)
-    (let ((rule (assq (car expr) *mosvm-specials*)))
-      (if rule 
-        (apply (cdr rule) block env (cdr expr))
-        (compile-call block env expr)))
-    (compile-expr block expr env)))
-
-(define-record-type <formals>
-                    (make-formals fluidf signature slots)
-                    formals?
-                    (fluidf fluid-formals?)
-                    (signature formal-signature)
-                    (slots formal-slots))
-
-(define (method-formals? formals) (formal-signature formals))
-
-(define (parse-signature args)
-  (if (any pair? (unkink args))
-    (map (lambda (i) 
-           (if (pair? i) 
-             (car i)
-             #t))
-         args)
-    #f))
-
 (define (parse-slots args)
   (map (lambda (i)
          (if (pair? i)
@@ -644,87 +674,10 @@
            i))
        args))
 
-(define (parse-formals formals)
-  (cond 
-    ((symbol? formals)     (make-formals #t #f (list formals)))
-    ((null? formals)       (make-formals #f #f '()))
-    ((not (pair? formals)) (error 'compile "indecipherable formals" formals))
-    ((symbol? (cdr (last-pair formals)))
-     (set! formals (unkink formals))
-     (make-formals #t (parse-signature formals) (parse-slots formals)))
-    (else (make-formals #f (parse-signature formals) (parse-slots formals)))))
-
-(define (compile-function outer name formals body env)
-  (set! env (make-actual-context env (formal-slots formals)))
-  (let ((label (make-branch-symbol 'lambda))
-        (inner (make-block (block-scheme-program outer)))
-        (args  (formal-slots formals)))
-    
-    (compile-block inner body env)
-    (block-append! inner '(retn))
-    (block-prepend! inner (if (fluid-formals? formals)
-                            (list 'usea 
-                                  (- (length args) 1) 
-                                  (context-slot-count env))
-                            (list 'usen 
-                                  (length args) 
-                                  (context-slot-count env))))
-    (block-prepend! inner label)
-
-    (block-append! outer (list 'clos (or name 
-                                        (make-branch-symbol 'anon-fn)) 
-                               label))))
-
-(define (compile-load block sym env) 
-  ;TODO Test for is-imported?
-  (let ((addr (context-symbol-addr env sym)))
-    (block-append! block (if addr (cons 'ldb addr)
-                                  (list 'ldg sym)))))
-
-(define (compile-store block expr env) 
-  ;TODO Test for is-imported?
-  (let ((sym (car expr))
-        (val (cadr expr)))
-    (compile-expr block val env)
-    (let ((addr (context-symbol-addr env sym)))
-      (block-append! block (if addr (cons 'stb addr)
-                                    (list 'stg sym))))))
-
-(define (compile-call block env expr) 
-  (block-append! block '(newf))
-  (for-each (lambda (term) (if (and (pair? term)
-                                    (eq? (car term) 'scatter))
-                             (begin
-                               (compile-expr block (cadr term) env)
-                               (block-append! block '(scat)))
-                             (begin
-                               (compile-expr block term env)
-                               (block-append! block '(arg)))))
-            expr)
-  (block-append! block '(call)))
-
-; Copyright (C) 2006, Ephemeral Security, LLC 
-;  
-; This library is free software; you can redistribute it and/or modify it  
-; under the terms of the GNU Lesser General Public License, version 2.1
-; as published by the Free Software Foundation.
-;  
-; This library is distributed in the hope that it will be useful, but WITHOUT  
-; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or  
-; FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License  
-; for more details. 
-;  
-; You should have received a copy of the GNU Lesser General Public License  
-; along with this library; if not, write to the Free Software Foundation,  
-; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA  
-;  
-
 (define make-procedure
   (if *mosvm?*
     (lambda (args body) (eval `(lambda ,args ,@body)))
     (lambda (args body) (primitive-eval `(lambda ,args ,@body)))))
-
-(export make-procedure)
 
 (define *branch-index* 0)
 
@@ -734,19 +687,6 @@
 (define (make-branch-symbol root) 
   (set! *branch-index* (+ *branch-index* 1))
   (string->symbol (string-append (symbol->string root) "-" (number->string *branch-index*))))
-
-(define (unkink l)
-  (cond 
-    ((null? l) l)
-    ((pair? l)
-     (let ((tc (make-tc)))
-       (while (and (pair? l) 
-                   (not (null? l)))
-              (tc-append! tc (car l))
-              (set! l (cdr l)))
-       (unless (null? l) (tc-append! tc l))
-       (tc->list tc)))
-    (else l)))
 
 (define (make-symbol . items)
   (string->symbol 
@@ -766,9 +706,5 @@
       (eq? (string-ref (symbol->string symbol) 0) 
            (integer->char char)))))
 
-;(import "lib/eval")
-
-(export reset-branch-index make-branch-symbol
-        unkink make-symbol
-        symbol-starts-with?)
+(export reset-branch-index make-branch-symbol make-symbol symbol-starts-with?)
 

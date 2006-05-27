@@ -18,7 +18,6 @@ else
 fi
 
 DEPS="`cd $BASE && $DO_SCHEME $BIN/manifest.ms $PROG`"
-echo $DEPS
 DEPS_MO=""
 RE_GLUE=""
 
