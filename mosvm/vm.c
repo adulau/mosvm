@@ -259,10 +259,6 @@ void mqo_instr_ldb( ){
         mqo_imm_fv( MQO_BX ) 
     );
     
-    mqo_print( "    LDB: " );
-    mqo_word ct = 100; mqo_show( MQO_RX, &ct );
-    mqo_newline();
-
     mqo_next_instr();
 }
 void mqo_instr_ldc( ){
