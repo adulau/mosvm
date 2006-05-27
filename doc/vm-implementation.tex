@@ -1,0 +1,589 @@
+\documentclass[notitlepage,oneside]{book}
+
+\usepackage{palatino}
+\usepackage{makeidx}
+
+\author{Scott W. Dunlop\\Ephemeral Security}
+\title{The Design and Implementation of the Mosquito Virtual Machine}
+
+\makeindex
+\usepackage[pdftex]{hyperref}
+\usepackage{tex2page}
+
+\begin{document}
+
+\frontmatter
+
+\maketitle
+\tableofcontents
+
+\chapter{Introduction}
+\label{intro}
+\index{Mosquito Virtual Machine}
+\index{MOSVM}
+
+The Mosquito Virtual Machine (MOSVM) is a compact portable virtual machine capable of executing concurrent Mosquito Lisp (MOSLISP) processes on a wide variety of host operating systems and architectures.  The Mosquito Secure Remote Execution Framework (MOSREF) is implemented using MOSVM and MOSLISP as a convenient platform abstraction.
+
+\index{Mosquito Secure Remote Execution Framework}
+\index{MOSREF}
+The Mosquito Virtual Machine must be compact; in the normal operation and usage of MOSREF, the Mosquito Virtual Machine and an initial application loader written in Mosquito Lisp must be deployed across the network, occasionally using a remote code execution exploit, as part of a security penetration test.
+
+MOSVM must also be portable across a wide range of host operating systems and environments, permitting the deployment of security tools to any host architecture commonly found in modern data centers, including Windows 2000, Linux, OpenBSD, and Solaris.
+
+Since network security audits require many interactions with hostile or nonresponsive network applications, MOSVM provides a pervasive concurrency model that permits MOSVM processes to suspend themselves to await a response to a network request, or a timed event.   MOSVM does not provide a preemptive multiprocess model, reducing the need for carefully planned synchronization operations.
+
+\index{Mosquito Lisp}
+\index{MOSLISP}
+Mosquito Lisp is a procedural language derived from Scheme and Lisp 1.5.  Mosquito Lisp differs from Scheme in many places to reduce design complexity for MOSLISP implementations and make the language more approachable for programmers who are unfamiliar with Functional Programming.  Many of these changes also make Mosquito Lisp implementations more efficient for common programming tasks.
+
+\mainmatter
+
+\chapter{The Inner Interpreter}
+\index{Inner Interpreter}
+
+The inner interpreter executes a single process within the Mosquito Virtual Machine; the inner interpreter may be interrupted by calls to the halt (\ref{p-halt}), next (\ref{p-next}), or pause (\ref{p-pause}) primitives, or when waiting on a network event.
+
+MOSVM's inner interpreter is a stackless register machine built on top of the MOSVM memory management system (\ref{memory}).  The interpreter employs a limited set of instructions to construct function calls, manage the lexical environment, and perform basic control operations; these basic instructions express the fundamental operations required to construct calls to the primitive functions (\ref{primitives}) included with MOSVM.
+
+\section{Virtual Machine Registers}
+
+\subsection{The Apply Register (AP)}
+\label{r-ap}
+\index{AP}
+\index{Apply Register}
+
+The Apply Register contains a pointer to the next call frame, under construction.  When a CALL instruction is executed, the call frame referenced by AP shall contain a list of arguments, the function called, and a copy of all registers that must be returned when the function returns.
+
+\subsection{The Context Register (CP)}
+\label{r-cp}
+\index{CP}
+\index{Context Register}
+
+The Context Register contains a pointer to the current call frame, which contains registers that must be restored on function return.
+
+\subsection{The Environment Register (EP)}
+\label{r-ep}
+\index{EP}
+\index{Environment Register}
+
+The Environment Register refers to a list of vectors that provide storage for variables bound within the current lexical environment.  The innermost lexical scope is first in this list.
+
+\subsection{The Instruction Register (IP)}
+\label{r-ip}
+\index{IP}
+\index{Instruction Register}
+
+The Instruction Register refers to the instruction currently being evaluated; instructions in MOSVM are of fixed length, and consist of a pointer to the operator, and two operand values.  Unused operands should contain null values to
+simplify memory tracing.
+
+\subsection{The Result Register (RX)}
+\label{r-rx}
+\index{RX}
+\index{Result Register}
+
+All primitive functions in MOSVM leave the value yielded by their execution in RX; various load instructions also leave the loaded value in RX.  The contents of RX is placed by the ARG1 and ARGN instructions in AP's argument list.
+
+\subsection{The Guard Register (GP)}
+\label{r-gp}
+\index{GP}
+\index{Guard Register}
+
+The Guard Register contains a list of guard frames.  These guard frames contain functions that will be called if an error occurs, providing a versatile exception handling system.  New guards may be added to GP using the GAR instruction, and removed using the RAG instruction.
+
+\section{Virtual Machine Instructions}
+
+\subsection{The Argument Instruction (ARG)}
+\label{i-arg}
+\index{ARG}
+\index{Argument Instruction}
+
+Places the value in RX as the next item in the call frame being constructed in AP.  Emitted by the compiler after the evaluation of an expression that is a term in an application.
+
+\scm{
+(call-add-item! ap rx)
+(set! ip (next-instr ip))
+}
+
+\subsection{The Call Instruction (CALL)}
+\label{i-call}
+\index{CALL}
+\index{Call Instruction}
+
+The Call Instruction causes the contents of the virtual machine registers, excluding RX, GP and AP, to be stored in the call frame referenced by AP.  The CALL Instruction supports the application of Closures, Primitives and Multimethods.
+
+\scm{
+(define fn   (call-fn ap))
+(define args (call-args ap))
+
+;; Multimethods require thrashing to find first fit method.
+(while (is-multimethod? fn)
+  (if (multimethod-accepts? fn args)
+    (set! fn (multimethod-impl fn))
+    (set! fn (multimethod-reject fn))))
+
+(if (is-closure? fn)
+  (begin (set-call-cp! ap cp)
+         (set-call-ep! ap ep)
+         (set-call-ip! ap (next-instr ip))
+         (set! cp ap)
+         (set! ep (closure-env fn))
+         (set! ip (proc-instr (closure-proc fn))))
+  (apply (prim-impl fn) args))
+}
+
+\subsection{The Closure Instruction (CLOS)}
+\label{i-clos}
+\index{CLOS}
+\index{Closure Instruction}
+
+Constructs a new closure using the current environment, EP, starting at the next instruction, then jumps to the address referenced in BX.  AX is used as the name of the closure, and should be memorable.
+
+\scm{
+(set! rx (make-closure ep ip))
+(set! ip (instr-ax ip))
+}
+
+\subsection{The Guard Instruction (GAR)}
+\label{i-gar}
+\index{GAR}
+\index{Add Guard Instruction}
+
+Constructs a new guard using the closure in RX, and the instruction referenced by AX.
+
+\scm{
+(set! gp (cons (make-guard cp ap ep (instr-ax ip))
+               gp))
+(set! ip (next-instr ip))
+}
+
+\subsection{The Jump If False Instruction (JF)}
+\label{i-jf}
+\index{JF}
+\index{Jump If False Instruction}
+
+If the contents of RX is the false value, the IP register is set as described in the Jump Instruction.
+
+\scm{
+(if (eq? #f rx)
+  (set! ip (instr-ax ip))
+  (set! ip (next-instr ip)))
+}
+
+\subsection{The Jump Instruction (JMP)}
+\label{i-jmp}
+\index{JMP}
+\index{Jump Instruction}
+
+Sets the IP register to reference the Instruction referenced by AX.  Produced primarily by control structures in Mosquito Lisp.
+
+\scm{
+(set! ip (instr-ax ip))
+}
+
+\subsection{The Jump If True Instruction (JT)}
+\label{i-jt}
+\index{JT}
+\index{Jump If True Instruction}
+
+If the contents of RX is not the false value, which is the Scheme / Mosquito Lisp definition of true, the IP register is set as described in the Jump Instruction.
+
+\scm{
+(if (eq? #f rx)
+  (set! ip (next-instr ip))
+  (set! ip (instr-ax ip)))
+}
+
+\subsection{The Load Bound Instruction (LDB)}
+\label{i-ldb}
+\index{LDB}
+\index{Load Bound Instruction}
+
+The Load Bound Instruction employs the environment chain in the EP register to load a bound variable.  The index in AX indicates the proximity of the lexical scope, with 0 being the innermost and subsequent values indicating higher and higher scopes.  The index in BX indicates the variable's index.
+
+The Mosquito Lisp compiler, unlike most Scheme implementations, employs a technique called Let Compression that allocates additional slots for all variables bound within a closure instead of creating anonymous closures to express these variables.  Space for variables declared using inner defines is also allocated using this technique.
+
+This optimization, while expensive at compile time, means a tremendous increase in efficiency for variable assignment and access.  For more information, see the USEN and USEA instructions.
+
+\scm{
+(set! rx (vector-ref (list-ref ep (instr-ax ip))
+                     (instr-bx ip)))
+(set! ip (next-instr ip))
+}
+
+\subsection{The Load Constant Instruction (LDC)}
+\label{i-ldc}
+\index{LDC}
+\index{Load Constant Instruction}
+
+The Load Constant Instruction places the AX operand in RX; this is often produced by the compiler when it encounters quoted expressions, or atomic values like strings, nulls, or integers.
+
+\scm{
+(set! rx (instr-ax ip))
+(set! ip (next-instr ip))
+}
+
+\subsection{The Load Global Instruction (LDG)}
+\label{i-ldg}
+\index{LDG}
+\index{Load Global Instruction}
+
+The Load Global Instruction checks for a global value assigned to the symbol contained by AX, and, if one is present, places it in RX.  If none is found, an error is signalled.  This instruction is produced by the compiler when a variable is referenced that is not bound in the current lexical scope. 
+
+\scm{
+(set! rx (get-global (instr-ax ip)))
+(set! ip (next-instr ip))
+}
+
+\subsection{The New Frame Instruction (NEWF)}
+\label{i-newf}
+\index{NEWF}
+\index{New Frame Instruction}
+
+The New Frame Instruction creates a new call frame, and places it in AP. This instruction precedes every function application.
+
+\scm{
+(set! ap (make-call-frame))
+(set! ip (next-instr ip))
+}
+
+\subsection{The Remove Guard Instruction (RAG)}
+\label{i-rag}
+\index{RAG}
+\index{Remove Guard Instruction}
+
+Removes the first guard referenced in GP from the guard list.
+
+\scm{
+(set! gp (cdr gp))
+(set! ip (next-instr ip))
+}
+
+\subsection{The Return Instruction (RETN)}
+\label{i-retn}
+\index{RETN}
+\index{Return Instruction}
+
+The RETN Instruction restores the registers stored in the call frame referenced by CP, and is used to signal the completion of evaluation of a closure.
+
+\scm{
+(set! ep (call-ep cp))
+(set! ip (call-ip cp))
+(set! cp (call-cp cp))
+}
+
+\subsection{The Scatter Instruction (SCAT)}
+\label{i-scat}
+\index{SCAT}
+\index{Scatter Instruction}
+
+Places each item in the list in RX in the call frame being constructed in AP, sequentially.  Emitted by the compiler when the form \verb\(@ ...)\ is encountered.
+
+\scm{
+(for-each (lambda (rx) (call-add-item! ap rx)) 
+          rx)
+(set! ip (next-instr ip))
+}
+
+\subsection{The Store Bound Instruction (STB)}
+\label{i-stb}
+\index{STB}
+\index{Store Bound Instruction}
+
+The Store Bound Instruction assigns the value in RX to the variable referenced by BX in the environment referenced by AX in EP, similar to the Load Bound instruction (\ref{i-ldb}).
+
+\scm{
+(vector-set! (list-ref ep (instr-ax ip))
+             (instr-bx ip)
+             rx)
+(set! ip (next-instr ip))
+}
+
+\subsection{The Store Global Instruction (STG)}
+\label{i-stg}
+\index{STG}
+\index{Store Global Instruction}
+
+The Store Global instruction assigns the value in RX globally for the symbol referenced by AX.  In MOSVM, assignment and retrieval of global variables is a constant time operation.
+
+\scm{
+(set-global (instr-ax ip) rx)
+(set! ip (next-instr ip))
+}
+
+\subsection{The Tail Instruction (TAIL)}
+\label{i-tail}
+\index{TAIL}
+\index{Tail Instruction}
+
+The Tail Instruction is similar to CALL, but copies information about the function call from AP to CP instead of replacing CP with AP.  This is semantically equivalent to a CALL instruction, followed by a RETN instruction, and permits the compiler to support Scheme style tail call optimization.  (In fact, Mosquito Lisp achieves tail call optimization by replacing all contiguous CALL and RETN instructions with a TAIL instruction.)
+
+\scm{
+(define fn   (call-fn ap))
+(define args (call-args ap))
+
+;; Multimethods require thrashing to find first fit method.
+(while (is-multimethod? fn)
+  (if (multimethod-accepts? fn args)
+    (set! fn (multimethod-impl fn))
+    (set! fn (multimethod-reject fn))))
+
+(if (is-closure? fn)
+  (begin (set-call-data! cp (call-data ap))
+         (set! ep (closure-env fn))
+         (set! ip (proc-instr (closure-proc fn))))
+  (apply (prim-impl fn) args))
+}
+
+\subsection{The Use All Instruction (USEA)}
+\label{i-usea}
+\index{USEA}
+\index{Use All Instruction}
+
+Constructs an environment, and prepends it to EP with BX slots, then loads AX arguments from CP.  Any extra arguments from CP are left in a list, and placed in AX + 1.
+
+\scm{
+(define max (instr-ax ip))
+(define env (make-vector (instr-bx ip)))
+(let loop ((ix 0)
+           (args (call-args cp)))
+  (cond ((= ix max)  (vector-set! env ix args))
+        ((null? args)) ;;; Do nothing.
+        (else        (vector-set! env ix (car args))
+                     (loop (+ ix 1) (cdr args)))))
+(set! ep (cons env ep))
+(set! ip (next-instr ip))
+}
+
+\subsection{The Use Specific Instruction (USEN)}
+\label{i-usen}
+\index{USEN}
+\index{Use Specific Instruction}
+
+Constructs an environment, and prepends it to EP with BX slots, then loads AX arguments from CP.  If there are more than AX arguments, an error is raised.
+
+\scm{
+(define env (make-vector (instr-bx ip)))
+(let loop ((ix 0)
+           (args (call-args cp)))
+  (if (not (null? args))
+     (vector-set! env ix (car args)))
+  (loop (+ ix 1) (cdr args)))
+(set! ep (cons env ep))
+(set! ip (next-instr ip))
+}
+
+\section{Inner Interpreter Structures}
+\label{ii-struct}
+
+To Be Documented.
+
+\subsection{Call Frame}
+\label{s-callframe}
+\index{Call Frame}
+
+To Be Documented.
+
+\subsection{Environment}
+\label{s-environment}
+\index{Environment}
+
+To Be Documented.
+
+\chapter{Process Scheduler}
+\label{proc}
+
+The Mosquito Virtual Machine provides a simple lightweight process model intended to simplify the implementation of network applications which often spend protracted periods waiting on input.
+
+The Mosquito Virtual Machine will terminate if all of its processes are halted, or suspended.
+
+A MOSVM process may be in one of the following states: active, paused, suspended or halted.
+
+\subsection{The Active Process}
+
+There may only be one or zero active processes in the Mosquito Virtual Machine.  The active process controls the registers and flow of execution so
+long as it is active.  An Active Process may Pause, Halt or Suspend itself.
+
+\subsection{Paused Processes}
+
+A Paused process is scheduled to become Active after the current Active process yields control.  A Paused Process may be Halted or Suspended, or it may become Active if no other process is active.
+
+\subsection{Halted Processes}
+
+A Halted process has either completed its task, or has signalled an error that was not caught by a guard.   Halted Process may not change its status, and, if there are no external references, is a candidate for reclaimation by the garbage collector.
+
+\subsection{Suspended Processes}
+
+A Suspended process is waiting on an event, and will not become active until one has been sent to the process.  A Suspended process may be Halted, but can only be made Active or restored to Paused state when an event has been sent.
+
+\chapter{Memory Management}
+\label{memory}
+
+To Be Documented.
+
+\chapter{Primitive Functions}
+\label{primitives}
+
+In the Mosquito Virtual Machine, a primitive function is any function which is wholly implemented in C, and included in the MOSVM executable.
+
+To Be Documented.
+
+\section{The Error Primitive, error}
+\index{Error Primitive}
+\index{error}
+\label{p-error}
+
+To Be Documented.
+
+\section{The Halt Primitive, halt}
+\index{Halt Primitive}
+\index{halt}
+\label{p-halt}
+
+To Be Documented.
+
+\section{The Next Primitive, next}
+\index{Next Primitive}
+\index{next}
+\label{p-next}
+
+To Be Documented.
+
+\section{The Pause Primitive, pause}
+\index{Pause Primitive}
+\index{pause}
+\label{p-pause}
+
+To Be Documented.
+
+\section{The Re-Error Primitive, re-error}
+\index{Re-Error Primitive}
+\index{re-error}
+\label{p-re-error}
+
+To Be Documented.
+
+\section{The Spawn Primitive, spawn}
+\index{Spawn Primitive}
+\index{spawn}
+\label{p-spawn}
+
+To Be Documented.
+
+\section{The Thaw Primitive, thaw}
+\index{Thaw Primitive}
+\index{thaw}
+\label{p-thaw}
+
+To Be Documented.
+
+\chapter{MOSVM Object Packages}
+\label{serialization}
+\index{Object Package}
+
+The Mosquito Virtual Machine provides functionality for extracting a MOSVM program from a serialized string.  The MOSVM Object Package format is designed to be easy to implement and compact due to the design requirements of the Mosquito Virtual Machine.
+
+The Mosquito Virtual Machine provides the capability to reconstruct a value from a MOSVM Object Package.  The Mosquito Lisp compiler, which runs on the Mosquito Virtual Machine, provides the additional functionality required to encode Object Packages.
+
+\section{The Object Package Header}
+\label{package-header}
+\index{Object Package Header}
+
+The MOSVM Object Package Header is a word, in IETF network short order, expressed in two bytes.  If the most significant bit is set, the Object Package 
+expresses an immediate integer, as explained in "References and Immediates." (\ref{refs})  If the value is one of: 0x7FFF, 0x7FFD, or 0x7FFC, it is assumed to express one of the special atomic values, also explained in "References and Immediates."
+
+\index{thaw}
+\index{root object}
+Otherwise, this initial word expresses the number of records contained by the object package.  The first record is the "root object" that was packages, and shall be returned by the MOSVM "thaw" primitive. (\ref{p-thaw})
+
+\section{References and Immediates}
+\label{refs}
+\index{references}
+\index{immediates}
+
+In the MOSVM Object Package format, a given value may be either a Reference or an Immediate.  An Immediate value is an integer in the range 0 to 32767, inclusive, and is expressed as a 16 bit value with the most significant bit set, and the value expressed using the least significant bits.  Immediates are used to express integer values that fit within the specified range.  Larger integers are encoding using Integer Records. (\ref{int-record})
+
+There are, in MOSVM, three special references that are assumed to refer constant values that are ubiquitous in Lisp: 0x7FFF, the null value, 0x7FFD, the false value, and 0x77FC, the true value.
+
+This leaves reference space for 32,000 records, which is sufficient for packaging MOSVM modules and programs.
+
+All References and Immediates are encoded in IETF network short order, and expressed in two bytes.
+
+\section{The Integer Record}
+\label{int-record}
+\index{Integer Record}
+
+Integer Records express integer values that cannot be expressed as immediates. (\ref{refs}) 
+
+A Integer Record consists of four bytes, in IETF network long order.  
+
+\section{The Pair Record}
+\label{pair-record}
+\index{Pair Record}
+
+Pair Records encode a pair of values.
+
+A Pair Record consists of two Values.
+
+The pair \scm{(alpha . beta)} is packaged as:
+\begin{verbatim}
+0003
+PAIR        -- 0001 0002
+SYMBOL 0005 -- 'alpha'
+SYMBOL 0004 -- 'beta'
+\end{verbatim}
+
+\section{The Procedure Record}
+\label{proc-record}
+\index{Procedure Record}
+
+Procedure Records encode a Mosquito Virtual Machine procedure; generally, these procedure records are used to express MOSVM programs and modules.  
+
+A Procedure Record consists a length of the procedure record, followed by a sequence of instruction fields.  An instruction field consists of a byte, corresponding with the instruction code, and, optionally one or two words expressing the instruction's operands.  These words are omitted if the instruction does not employ the operand.
+
+This optimization is expensive, but results in a tremendous savings in MOSVM since most instructions do not employ an operand.
+
+The expression \scm{(print "Hello, world!")} compiles to:
+
+\scm{(newf)(ldg print)(ldc "Hello, world!")(call)(retn)}
+
+\begin{verbatim}
+0003
+PROC   0009 -- NEWF LDG 0001 LDC 0002 CALL RETN
+SYMBOL 0005 -- 'print'
+STRING 0013 -- 'Hello, world!'
+\end{verbatim}
+
+\section{The List Record}
+\label{list-record}
+\index{List Record}
+
+List Records encode a sequence of pairs that comprise a traditional Lisp list, by only encoding the car of each pair, and implying that the cdr of each pair refers to the next.  List Records may only be used if the rest of the package only refers to the first pair in the list -- this case is so frequent, it merits a special optimization.
+
+A List Record consists of a count of Pairs encoded, no less than 1, and a sequence of Values, one per pair, in first to last order.
+
+The scheme list \scm{(alpha beta charlie)} is packaged as:
+
+\begin{verbatim}
+0004 
+LIST   0003 -- 0001 0002 0003
+SYMBOL 0005 -- 'alpha'
+SYMBOL 0004 -- 'beta'
+SYMBOL 0007 -- 'charlie'
+\end{verbatim}
+
+\section{The String Record}
+\label{string-record}
+\index{String Record}
+
+A String Record consists of a two byte length, in IETF network short order, and a sequence of bytes expressing the string's contents, in first to last order.  
+
+The string \scm{"abc\0efg"} is packaged as:
+
+\begin{verbatim}
+0001
+STRING -- 0007 'abc' 00 'efg'
+\end{verbatim}
+
+\printindex
+
+\end{document}
