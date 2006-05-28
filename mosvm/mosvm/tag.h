@@ -33,6 +33,10 @@ MQO_END_TYPE( cell )
 #define TAG_RESULT( vn ) TYPED_RESULT( tag, vn )
 #define OPT_TAG_ARG( vn ) OPT_TYPED_ARG( vn, tag )
 
+#define REQ_CELL_ARG( vn ) REQ_TYPED_ARG( vn, cell )
+#define CELL_RESULT( vn ) TYPED_RESULT( cell, vn )
+#define OPT_CELL_ARG( vn ) OPT_TYPED_ARG( vn, cell )
+
 void mqo_init_tag_subsystem( );
 mqo_boolean mqo_isaq( mqo_value x, mqo_value t );
 #endif

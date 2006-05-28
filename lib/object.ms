@@ -13,21 +13,24 @@
 ; along with this library; if not, write to the Free Software Foundation, 
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
+;; lib/object must be readble by scheme, but does not need to be executable --
+;; @( ) forms must not be used; instead, use (scatter expr).
+
 (module "lib/object")
 (import "lib/iterate")
 
-(define <object> (make-tag 'object))
+(define <object> (make-tag 'object #f))
 
+(define (class-fields (<tag> class)) (cdr (tag-info class)))
+(define (super-class (<tag> class)) (car (tag-info class)))
 (define (make-class class-name super-class fields)
-  (apply make-tag 
-         class-name super-class 
-         (append (class-fields super-class) fields)))
+  (make-tag class-name super-class (scatter (class-fields super-class))
+                                   (scatter fields)))
 
-(define (class-fields class) (tag-info class))
- 
 (define (make-class-constructor class-name class arg-names)
   (define fields (class-fields class))
   (define field-count  (length fields))
+  
   (define arg-offsets  
     (map (function (set-arg-offset arg-name) 
            (or (list-index (lambda (x) (eq? x arg-name)) fields)
@@ -41,7 +44,7 @@
                   (vector-set! data arg-offset arg-value))
                 arg-offsets
                 arg-values)
-      (tag class data))))
+      (cell class data))))
 
 (define (make-field-accessor class field-name)
   (define field-offset (list-index (lambda (x) (eq? x field-name))
@@ -51,22 +54,32 @@
 (define (make-field-modifier class field-name)
   (define field-offset (list-index (lambda (x) (eq? x field-name))
                                    (class-fields class)))
-  (lambda (inst value) (vector-set! (repr inst) field-offset value)))
+  (lambda (inst value) 
+    (vector-set! (repr value) field-offset value)))
 
+(define (make-class-predicate class)
+  (define ancestry (make-tc))
+  (while class
+         (tc-append! ancestry class)
+         (set! class (super-class class)))
+  (set! ancestry (tc->list ancestry))
+
+  (lambda (value) (and (cell? value) (memq (tag value) ancestry))))
+    
 (define-macro (define-class class-tag super-class 
                             make-proto pred-name . class-fields)
 
   (define class-name (make-symbol "<" class-tag ">"))
-
+  
   (define (bind-field-accessor access-name field-name)
-    `(define ,access-name 
+    `(deflet ,access-name
        (make-multimethod 
          (list ,class-name) 
          (make-field-accessor ,class-name (quote ,field-name))
          (or (? ,access-name) refuse-method))))
 
   (define (bind-field-modifier modif-name field-name)
-    `(define ,modif-name 
+    `(deflet ,modif-name 
        (make-multimethod 
          (list ,class-name #t) 
          (make-field-modifier ,class-name (quote ,field-name))

@@ -13,6 +13,12 @@
 ; along with this library; if not, write to the Free Software Foundation,  
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA  
 
+; TODO: Currently, if a user redefines the name of a special form or macro,
+;       overlaying it with an identifier, the macro will take precedence in
+;       applicative forms --
+;       (let ((let my-let-fn))
+;         (let a 1))
+
 (module "lib/compile")
 
 (import "lib/module")
@@ -180,6 +186,9 @@
   ;;;(write form)
   ;;;(newline)
 
+  (if (eq? (car form) 'newf)
+    (error "What the hell?" form))
+
   (if (eq? lead 'asm)
     (compile-asm-block env rest)
     (let ((rule (assq lead *mosvm-special-forms*)))
@@ -198,10 +207,6 @@
 
 (define (compile-lisp-call env call)
   (define tc (make-tc))
-  ;;;(display "Compiling Lisp Call: " )
-  ;;;(write call)
-  ;;;(newline)
-
   (tc-append! tc '(newf))
   (for-each (lambda (term) 
               (tc-splice! tc (compile-lisp-arg env term)))
@@ -277,41 +282,55 @@
                      (tc-append! tc (if addr (cons 'stb addr)
                                              (list 'stg term)))
                      (cons 'asm (tc->list tc)))))
-    
+
+    (cons 'deflet (lambda (env term . rest)
+                    (let ((cmp-fn #f)
+                          (id #f))
+                      (cond
+                        ((not (pair? term))
+                         (set! cmp-fn compile-define-val)
+                         (set! id term))
+                        ((any pair? term)
+                         (set! cmp-fn compile-define-mm)
+                         (set! id (car term)))
+                        (else
+                          (set! cmp-fn compile-define-fn)
+                          (set! id (car term))))
+
+                      (let ((result (cmp-fn env term rest)))
+                        (compile-decl env id)
+                        result))))
+
     (cons 'define (lambda (env term . rest)
-                    (if (pair? term)
-                      (if (any pair? term)
-                        (compile-define-mm env (car term) (cdr term) rest)
-                        (compile-define-fn env (car term) (cdr term)
-                                           rest))
-                      (compile-define-val env term rest))))
-                    
+                    (let ((cmp-fn #f)
+                          (id #f))
+                      (cond
+                        ((not (pair? term))
+                         (set! cmp-fn compile-define-val)
+                         (set! id term))
+                        ((any pair? term)
+                         (set! cmp-fn compile-define-mm)
+                         (set! id (car term)))
+                        (else
+                          (set! cmp-fn compile-define-fn)
+                          (set! id (car term))))
+
+                      (compile-decl env id)
+                      (cmp-fn env term rest))))
+
     (cons '?  (lambda (env key)
                 (let ((addr (context-symbol-addr env key)))
                   (if addr 
                     (list 'asm (cons 'ldb addr))
                     (list 'get-global (list 'quote key))))))
+
     (cons 'function (lambda (env formals . body)
-                      ;;;(display "Compiling function ")
-                      ;;;(write formals)
-                      ;;;(newline)
                       (let ((name (car formals))
                             (bind 'usen)
                             (tail (last-pair formals)))
-                          ;;;(display "    tail is ")
-                          ;;;(write tail)
-                          ;;;(newline)
                           (when (symbol? (cdr tail))
                             (set! bind 'usea)
-                            ;;;(display "   Altering tail")
-                            ;;;(newline)
                             (set-cdr! tail (list (cdr tail))))
-                          ;;;(display "    tail is now ")
-                          ;;;(write tail)
-                          ;;;(newline)
-                          ;;;(display "    Formals are ")
-                          ;;;(write formals)
-                          ;;;(newline)
                           (let ((args (cdr formals)))
                             (let ((in (make-actual-context env args))
                                   (ct (- (length args)
@@ -521,6 +540,10 @@
                                     (list 'quote form))
                                  ((eq? (car form) 'unquote)  
                                     (parse-imm (cdr form)))
+                                 ;; Only needed when compile is running under
+                                 ;; scheme..
+                                 ((eq? (car form) 'unquote-splicing)  
+                                    (parse-imm (cons 'scatter (cdr form))))
                                  (else                
                                     (parse-qq form))))
                                  
@@ -695,24 +718,22 @@
            (integer->char char)))))
 
 (define (compile-define-val env term expr)
-  (compile-decl env term)
   `(set! ,term ,@expr))
 
-(define (compile-define-fn env name args body)
-  (compile-decl env name)
-  `(set! ,name (function ,(cons name args) ,@body)))
+(define (compile-define-fn env term body)
+  `(set! ,(car term) (function ,term ,@body)))
 
-(define (compile-define-mm env name args body)
+(define (compile-define-mm env term body)
   ;; Bloody, nasty, vicious.. Poor multimethods don't get to know about
   ;; themselves.. It's an ugly hack
-  (define result
-    (compile-lisp-expr env
-      `((make-multimethod ,(parse-signature args)
-                          (function ,(cons name (parse-slots args)) 
-                                    ,@body)
-                          (or (? ,name) refuse-method)))))
-  (compile-decl env name)
-  result)
+  (define name (car term))
+  (define args (cdr term))
+
+  (compile-lisp-expr 
+    env `(make-multimethod ,(parse-signature args)
+                           (function ,(cons name (parse-slots args)) 
+                                     ,@body)
+                           (or (? ,name) refuse-method))))
 
 (export reset-branch-index make-branch-symbol make-symbol symbol-starts-with?)
 
