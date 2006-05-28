@@ -277,41 +277,20 @@
                      (tc-append! tc (if addr (cons 'stb addr)
                                              (list 'stg term)))
                      (cons 'asm (tc->list tc)))))
-    (cons 'define (lambda (env term . body)
+    
+    (cons 'define (lambda (env term . rest)
                     (if (pair? term)
-                      ;; Build a man a fire, and he'll be warm for a day.
-                      ;;
-                      ;; Set the people who said 'defines should only be 
-                      ;; found at the start of a function body, and the whole 
-                      ;; world is a better place..
-                      (let ((last (last-pair term)))
-                        (let ((fixed (null? (cdr last))))
-                          (let ((method (and fixed (any pair? term))) 
-                                (args (cdr term))
-                                (signature #f))
-                            (set! term (car term))
-                            (when method
-                              (set! signature (parse-signature args))
-                              (set! args (parse-slots args)))
-                            (set! body 
-                              (if method
-                                `((make-multimethod 
-                                    ,signature
-                                    (function ,(cons term (parse-slots args)) 
-                                              ,@body)
-                                    (or (? ,term) refuse-method)))
-                                `(function ,(cons term args) ,@body))))))
-                      (set! body (cons 'begin body)))
-                    (compile-decl env term)
-                    ;;(display "Body will be: ")
-                    ;;;(write body)
-                    ;;;(newline)
-                    (list 'set! term body)))
+                      (if (any pair? term)
+                        (compile-define-mm env (car term) (cdr term) rest)
+                        (compile-define-fn env (car term) (cdr term)
+                                           rest))
+                      (compile-define-val env term rest))))
+                    
     (cons '?  (lambda (env key)
                 (let ((addr (context-symbol-addr env key)))
-                  (list 'asm (if addr
-                               (cons 'ldb addr)
-                               (list 'ldg key))))))
+                  (if addr 
+                    (list 'asm (cons 'ldb addr))
+                    (list 'get-global (list 'quote key))))))
     (cons 'function (lambda (env formals . body)
                       ;;;(display "Compiling function ")
                       ;;;(write formals)
@@ -714,6 +693,26 @@
     (lambda (symbol char)
       (eq? (string-ref (symbol->string symbol) 0) 
            (integer->char char)))))
+
+(define (compile-define-val env term expr)
+  (compile-decl env term)
+  `(set! ,term ,@expr))
+
+(define (compile-define-fn env name args body)
+  (compile-decl env name)
+  `(set! ,name (function ,(cons name args) ,@body)))
+
+(define (compile-define-mm env name args body)
+  ;; Bloody, nasty, vicious.. Poor multimethods don't get to know about
+  ;; themselves.. It's an ugly hack
+  (define result
+    (compile-lisp-expr env
+      `((make-multimethod ,(parse-signature args)
+                          (function ,(cons name (parse-slots args)) 
+                                    ,@body)
+                          (or (? ,name) refuse-method)))))
+  (compile-decl env name)
+  result)
 
 (export reset-branch-index make-branch-symbol make-symbol symbol-starts-with?)
 

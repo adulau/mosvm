@@ -185,6 +185,13 @@
                           (string-length s1))
             s2))
 
+(define (any fn l)
+  (if (pair? l)
+    (if (fn (car l))
+      (car l)
+      (any fn (cdr l)))
+    #f))
+
 (define (string-head s i) (substring s 0 i))
  
 (define (module . dont-care) #f) ;This is used by MOSVM to ensure built-in

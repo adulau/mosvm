@@ -29,7 +29,7 @@
   (define fields (class-fields class))
   (define field-count  (length fields))
   (define arg-offsets  
-    (map (lambda (arg-name) 
+    (map (function (set-arg-offset arg-name) 
            (or (list-index (lambda (x) (eq? x arg-name)) fields)
                (error 'class "constructor field is not a member of the class"
                       arg-name class-name)))
