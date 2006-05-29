@@ -111,22 +111,8 @@ void mqo_collect_window( ){
 }
 void mqo_collect_garbage( ){
     mqo_object obj;
-    /*
-    mqo_print( "Tracing " );
-    mqo_printint( mqo_old_objects );
-    mqo_print( " v. " );
-    mqo_printint( mqo_new_objects );
-    mqo_newline( );
-    */
 
     mqo_old_objects = mqo_new_objects = 0;
-    // printf( "Before Tracing Roots:\n" );
-    // printf( "    ROOTS?: %s\n", mqo_roots->head ? "YES" : "NO" );
-    // printf( "    GREYS?: %s\n", mqo_greys->head ? "YES" : "NO" );
-    // printf( "    BLACKS?: %s\n", mqo_blacks->head ? "YES" : "NO" );
-    // printf( "    WHITES?: %s\n", mqo_whites->head ? "YES" : "NO" );
-
-    // printf( "Tracing roots" );
 
     for( obj = mqo_roots->head; obj; obj = obj->next ){
         mqo_trace_object( obj );
@@ -135,15 +121,6 @@ void mqo_collect_garbage( ){
     mqo_trace_registers();
     mqo_trace_actives();
     mqo_trace_network();
-    // printf( "\n" );
-
-    // printf( "Before Tracing Greys:\n" );
-    // printf( "    ROOTS?: %s\n", mqo_roots->head ? "YES" : "NO" );
-    // printf( "    GREYS?: %s\n", mqo_greys->head ? "YES" : "NO" );
-    // printf( "    BLACKS?: %s\n", mqo_blacks->head ? "YES" : "NO" );
-    // printf( "    WHITES?: %s\n", mqo_whites->head ? "YES" : "NO" );
-
-    // printf( "Tracing greys" );
 
     while( obj = mqo_greys->head ){
         mqo_unpool_obj( obj );
@@ -151,19 +128,9 @@ void mqo_collect_garbage( ){
         mqo_trace_object( obj );
     }
     
-    // printf( "\n" );
-
-    // printf( "Before Freeing Blacks:\n" );
-    // printf( "    ROOTS?: %s\n", mqo_roots->head ? "YES" : "NO" );
-    // printf( "    GREYS?: %s\n", mqo_greys->head ? "YES" : "NO" );
-    // printf( "    BLACKS?: %s\n", mqo_blacks->head ? "YES" : "NO" );
-    // printf( "    WHITES?: %s\n", mqo_whites->head ? "YES" : "NO" );
-    
-    // printf( "Freeing" );
     while( obj = mqo_blacks->head ){
         obj->type->free( obj );    
     }
-    // printf( "\n" );
     
     mqo_pool temp = mqo_whites;
     mqo_whites = mqo_blacks;
@@ -191,7 +158,7 @@ void mqo_root_object( mqo_object obj ){
     mqo_unpool_obj( obj );
 }
 
-mqo_type mqo_make_type( mqo_value name, mqo_type parent, mqo_value info ){
+mqo_type mqo_make_type( mqo_value name, mqo_type parent ){
     mqo_type direct, type = MQO_OBJALLOC( type );
 
     if(! parent ){
@@ -205,7 +172,6 @@ mqo_type mqo_make_type( mqo_value name, mqo_type parent, mqo_value info ){
     type->direct = direct;
     type->name = name;
     type->parent = parent;
-    type->info = info;
 
     return type;
 }
@@ -214,38 +180,24 @@ void mqo_trace_type( mqo_type type ){
     mqo_grey_obj( (mqo_object) type->parent );
     mqo_grey_obj( (mqo_object) type->direct );
     mqo_grey_obj( (mqo_object) type->name );
-    mqo_grey_val( type->info );
 }
 
-void mqo_show_type( mqo_type type, mqo_word* ct ){
-    mqo_printch( '<' );
-    mqo_show( type->name, ct );
-
-    if( mqo_is_null( type->info ) ){
-    }else if( *ct == 0 ){
-        mqo_print( " ...");
-    }else if( mqo_is_null( type->info ) ){
-        // Do nothing.
-    }else if( mqo_is_pair( type->info ) ){
-        mqo_show_list_contents( mqo_pair_fv( type->info ), ct );
-    }else{
-        mqo_print( " . " );
-        mqo_show( type->info, ct );
-    }
-
-    mqo_printch( '>' );
+void mqo_format_type( mqo_string buf, mqo_type type ){
+    mqo_format_char( buf, '<' );
+    mqo_format_sym( buf, type->name );
+    mqo_format_char( buf, '>' );
 }
 
-void mqo_generic_show( mqo_value value, mqo_word* ct ){
-    mqo_begin_showtag( value );
-    mqo_end_showtag( value );
+void mqo_generic_show( mqo_string buf, mqo_value value ){
+    mqo_format_begin( buf, value );
+    mqo_format_end( buf );
 }
 
 MQO_GENERIC_COMPARE( type );
 MQO_GENERIC_FREE( type );
 MQO_C_TYPE( type );
 
-void mqo_show_null( mqo_value null, mqo_word* ct ){
+void mqo_format_null( mqo_string buf, mqo_value null ){
     mqo_print( "null" );
 }
 

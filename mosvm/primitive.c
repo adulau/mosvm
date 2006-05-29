@@ -31,10 +31,10 @@ void mqo_bind_primitive( const char* name, mqo_prim_fn impl ){
 void mqo_trace_primitive( mqo_primitive prim ){
     mqo_grey_obj( (mqo_object) mqo_prim_name( prim ) );
 }
-void mqo_show_primitive( mqo_primitive prim, mqo_word* ct ){
-    //mqo_print( "[prim " );
-    mqo_printsym( mqo_prim_name( prim ) );
-    //mqo_print( "]" );
+void mqo_format_primitive( mqo_string buf, mqo_primitive prim ){
+    mqo_format_begin( buf, prim );
+    mqo_format_sym( buf, mqo_prim_name( prim ) );
+    mqo_format_end( buf );
 }
 
 mqo_pair mqo_arg_ptr = NULL;

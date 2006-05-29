@@ -29,36 +29,26 @@ mqo_integer mqo_instruction_code( mqo_primitive prim ){
     return i;
 }
 
-void mqo_show_instruction( mqo_instruction instr, mqo_word* ct ){
+void mqo_format_instruction( mqo_string buf, mqo_instruction instr ){
     mqo_primitive prim = instr->prim;
     mqo_value a = instr->a;
     mqo_value b = instr->b;
     mqo_integer c = mqo_instruction_code( prim );
     
-    mqo_printch( '(' );
-    mqo_printsym( mqo_prim_name( prim ) );
+    mqo_format_char( buf, '(' );
+    mqo_format_sym( buf, mqo_prim_name( prim ) );
 
     if( prim->a ){
-        mqo_space( ); 
-        mqo_show( instr->a, ct );
+        mqo_format_char( buf, ' ' );
+        mqo_format( buf, instr->a );
     }
 
     if( prim->b ){
-        mqo_space( ); 
-        mqo_show( instr->b, ct );
+        mqo_format_char( buf, ' ' );
+        mqo_format( buf, instr->b );
     }
 
-    mqo_printch( ')' );
-}
-void mqo_dump_procedure( mqo_procedure proc ){
-    mqo_print( "[proc " );
-    mqo_word i;
-    for( i = 0; i < proc->length; i ++ ){
-        mqo_word ct = 5; 
-        mqo_show_instruction( mqo_procedure_ref( proc, i ), &ct );
-        if( i < proc->length - 1 ) mqo_print( "\n      " );
-    }
-    mqo_print( "]" );
+    mqo_format_char( buf, ')' );
 }
 mqo_procedure mqo_make_procedure( mqo_word length ){
     size_t tail = sizeof( struct mqo_instruction_data ) * length;

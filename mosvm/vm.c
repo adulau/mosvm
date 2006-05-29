@@ -449,38 +449,39 @@ void mqo_init_vm_subsystem( ){
     MQO_BIND_OP( usea, 1, 1); //11
     MQO_BIND_OP( usen, 1, 1); //12
 }
-void mqo_trace_rx( mqo_value rx ){
-    mqo_print( " -> " );
-    mqo_word ct = 64; mqo_show( rx, &ct );
-}
 void mqo_trace_ip( mqo_instruction ip ){
-    mqo_printint( ip - ip->proc->inst );
-    mqo_print( ": " );
-    mqo_word ct = 64; mqo_show_instruction( ip, &ct );
+    mqo_string s = mqo_make_string( 80 );
+    mqo_format_hex( s, ip - ip->proc->inst );
+    mqo_format_cs( s, ": " );
+    mqo_format_instruction( s, ip );
     mqo_prim_fn p = ip->prim->impl;
+
+    int ap = 0, rx = 0;
+    
     if( p == mqo_instr_call ){
-        mqo_print( " -- " );
-        ct = 64; mqo_show_pair( MQO_AP->head, &ct );
+        ap = 1;
     }else if( p == mqo_instr_tail ){
-        mqo_print( " -- " );
-        ct = 64; mqo_show_pair( MQO_AP->head, &ct );
-    }else if(( p == mqo_instr_arg )
-           ||( p == mqo_instr_scat )) {
-        mqo_print( " -- (" );
-        if( MQO_AP->head ){
-            ct = 64; mqo_show_list_contents( MQO_AP->head, &ct );
-            mqo_space( );
-        }
-        ct = 64; mqo_show( MQO_RX, &ct );
-        mqo_print( ")" );
+        ap = 1;
+    }else if(( p == mqo_instr_arg ) ||( p == mqo_instr_scat )) {
+        ap = 1; rx = 1;
     }else if( p == mqo_instr_stb ){
-        mqo_print( " -- " );
-        ct = 64; mqo_show( MQO_RX, &ct );
+        rx = 1;
     }else if( p == mqo_instr_stg ){
-        mqo_print( " -- " );
-        ct = 64; mqo_show( MQO_RX, &ct );
+        rx = 1;
     }
-    mqo_newline();
+    
+    if( ap ){
+        mqo_format_cs( s, " -- " );
+        mqo_format_pair( s, MQO_AP->head );
+    }
+    if( rx ){
+        mqo_format_cs( s, " :: " );
+        mqo_format( s, MQO_AP->head );
+    }
+
+    mqo_format_nl( s );
+    mqo_printstr( s );
+    mqo_objfree( s );
 }
 void mqo_chain( mqo_pair data ){
     if( ! MQO_CP ) MQO_CP = mqo_make_callframe( );
@@ -504,21 +505,8 @@ void mqo_chainf( mqo_value fn, mqo_word ct, ... ){
     mqo_chain( mqo_pair_fv( mqo_car( tc ) ) );
 }
 
-// int mqo_trace_cp( mqo_callframe cp ){
-//     if( cp == NULL )return 4;
-//     int depth = mqo_trace_cp( cp->cp );
-// 
-//     mqo_indent( depth );
-//     mqo_printch( '(' );
-//     mqo_word ct = 64; mqo_show_list_contents( cp->head, &ct );
-//     if( cp->head )mqo_space( );
-//     mqo_print( "...)\n" );
-// 
-//     return depth + 4;
-// }
 void mqo_trace_step( ){
     mqo_trace_ip( MQO_IP );
-    // mqo_trace_cp( MQO_CP );
 }
 mqo_value mqo_req_function( mqo_value v ){
     if( mqo_is_function( v ) )return v;

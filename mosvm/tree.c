@@ -247,25 +247,15 @@ void mqo_iter_tree( mqo_tree tree, mqo_iter_mt iter, void* ctxt ){
     mqo_iter_node( tree->root, iter, ctxt );
 }
 
-void mqo_show_tree_cb( mqo_value value, mqo_word* ct ){
-    if( ct )switch( *ct ){
-    case 0:
-        return;
-    case 1:
-        mqo_print( " ..." );
-        return;
-    default:
-        (*ct) --;
-    }
-
-    mqo_space( );
-    mqo_show( value, ct );
+void mqo_format_tree_cb( mqo_value value, mqo_string buf ){
+    mqo_format_char( buf, ' ' );
+    mqo_format( buf, value );
 }
 
-void mqo_show_tree( mqo_tree tree, mqo_word* ct ){
-    mqo_begin_showtag( mqo_vf_tree( tree ) );
-    mqo_iter_tree( tree, (mqo_iter_mt)mqo_show_tree_cb, ct );
-    mqo_end_showtag( );
+void mqo_format_tree( mqo_string buf, mqo_tree tree ){
+    mqo_format_begin( buf, tree );
+    mqo_iter_tree( tree, (mqo_iter_mt)mqo_format_tree_cb, ct );
+    mqo_format_end( buf );
 }
 
 mqo_value mqo_set_key( mqo_value item ){ return item; }

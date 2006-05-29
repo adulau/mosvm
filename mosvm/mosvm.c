@@ -93,8 +93,7 @@ int main( int argc, const char** argv ){
         while( globals ){
             mqo_printsym( mqo_symbol_fv( mqo_car( mqo_pair_fv( mqo_car( globals ) ) ) ) );
             mqo_print( " -- " );
-            mqo_word ct = 64; 
-            mqo_show( mqo_value_type( mqo_cdr( mqo_pair_fv( mqo_car( globals ) ) ) )->name, &ct );
+            mqo_show( mqo_value_type( mqo_cdr( mqo_pair_fv( mqo_car( globals ) ) ) )->name );
             mqo_newline( );
             globals = mqo_list_fv( mqo_cdr( globals ) );
         }

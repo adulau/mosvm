@@ -17,40 +17,44 @@
 #include "mosvm.h"
 #include <stdarg.h>
 
-void mqo_show_error( mqo_error e, mqo_word* ct ){
-    mqo_print( "[error " );
-    mqo_printsym( e->key );
-    mqo_show_list_contents( e->info, ct );
-    mqo_print( "]" );
+void mqo_format_error( mqo_string buf, mqo_error e ){
+    mqo_format_begin( buf, e );
+    mqo_format_char( buf, ' ' );
+    mqo_format_sym( buf, e->key )
+    mqo_format_items( buf, e->info );
+    mqo_format_end( buf );
 }
 
-int mqo_traceback_frame( mqo_list context  ){
+int mqo_format_context( mqo_string buf, mqo_list context  ){
     if( context == NULL )return 0; 
     
     if( mqo_traceback_frame( mqo_list_fv( mqo_cdr( context ) ) ) ){ 
-        mqo_indent( 11 ); 
+        mqo_format_indent( buf, 11 ); 
     }else{ 
-        mqo_print( "TRACEBACK: " ); 
+        mqo_format_cs( buf, "TRACEBACK: " ); 
     };
     
-    mqo_word ll = 64; mqo_show( mqo_car( context ), &ll );
+    mqo_format( buf, mqo_car( context ) );
     mqo_newline( );
 
     return 1;
 }
-void mqo_traceback( mqo_error e ){
-    mqo_pair p;
 
-    mqo_print( "ERROR: " );
-    mqo_printsym( e->key );
+void mqo_format_traceback( mqo_string buf, mqo_error e ){
+    mqo_pair p;
+    
+    mqo_format_cs( buf, "ERROR: " );
+    mqo_format_sym( e->key );
+
     p = e->info;
+
     if( p ){
         mqo_value v = mqo_car( e->info );
         if( mqo_is_string( v ) ){
-            mqo_print( " -- " );
-            mqo_printstr( mqo_string_fv( v ) );
-            mqo_newline();
-            mqo_print( "       " );
+            mqo_format_cs( buf, "--" );
+            mqo_format_str( buf, mqo_string_fv( v ) );
+            mqo_format_nl( buf );
+            mqo_format_cs( buf, "       " );
             
             if( mqo_is_list( mqo_cdr( p ) ) ){
                 p = mqo_list_fv( mqo_cdr( p ) );
@@ -58,14 +62,14 @@ void mqo_traceback( mqo_error e ){
                 p = NULL;
             }
         }else{
-            mqo_print( " :: " );
+            mqo_format_cs( buf, " :: " );
         };
 
-        mqo_word ct = 64; mqo_show_list_contents( p, &ct );
+        mqo_format_items( buf, p );
     };
 
-    mqo_newline( );
-    mqo_traceback_frame( e->context );
+    mqo_format_nl( buf );
+    mqo_format_context( buf, e->context );
 }
 
 mqo_error mqo_make_error( mqo_symbol key, mqo_list info, mqo_list context ){
@@ -167,10 +171,10 @@ mqo_guard mqo_make_guard(
 
     return g;
 }
-void mqo_show_guard( mqo_guard guard, mqo_word* ct ){
-    mqo_print( "[guard " );
-    mqo_show( guard->fn, ct );
-    mqo_print( "]" );
+void mqo_format_guard( mqo_string buf, mqo_guard guard ){
+    mqo_format_begin( buf, guard );
+    mqo_format_func( buf, guard->fn );
+    mqo_format_end( buf );
 }
 void mqo_trace_guard( mqo_guard guard ){
     mqo_grey_val( guard->fn );

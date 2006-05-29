@@ -207,14 +207,7 @@ void mqo_set_input( mqo_value x, mqo_channel input ){
 
 MQO_GENERIC_COMPARE( channel );
 
-void mqo_show_channel( mqo_channel channel, mqo_word* ct ){
-    mqo_print( "[channel" );
-    if( channel->head ){
-        mqo_space( );
-        mqo_show_list_contents( channel->head, ct );
-    }
-    mqo_print( "]" );
-}
+MQO_GENERIC_SHOW( channel );
 MQO_GENERIC_FREE( channel );
 MQO_C_TYPE( channel )
 

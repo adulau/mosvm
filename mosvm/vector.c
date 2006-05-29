@@ -17,25 +17,20 @@
 #include "mosvm.h"
 #include <string.h>
 
-void mqo_show_vector_contents( mqo_vector v, mqo_word* ct ){
+void mqo_format_vector_contents( mqo_string s, mqo_vector v, mqo_boolean sp ){
     mqo_integer ln = mqo_vector_length( v );
     mqo_integer ix = 0;
 
     for( ix = 0; ix < ln; ix ++ ){
-        if( ! *ct ){
-            mqo_print( " ..." ); 
-            return;
-        }else{
-            mqo_space();
-            mqo_show( mqo_vector_get( v, ix ), ct );
-        }
+        if( sp ) mqo_format_char( s, ' ' );
+        sp = 1;
+        mqo_format( s, mqo_vector_get( v, ix ) );
     }
-    
 }
-void mqo_show_vector( mqo_vector v, mqo_word* ct ){
-    mqo_begin_showtag( mqo_vf_vector( v ) );
-    mqo_show_vector_contents( v, ct ); 
-    mqo_end_showtag( );
+void mqo_format_vector( mqo_string s, mqo_vector v ){
+    mqo_format_begin( s, v );
+    mqo_format_vector_contents( s, v, 1 ); 
+    mqo_format_end( s );
 }
 
 mqo_vector mqo_make_vector( mqo_integer length ){

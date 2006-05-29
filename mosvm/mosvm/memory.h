@@ -119,7 +119,7 @@ typedef int mqo_boolean;
     } 
 
 #define MQO_I_TYPE__( tn ) \
-    mqo_##tn##_type->show = (mqo_show_mt)mqo_show_##tn; \
+    mqo_##tn##_type->format = (mqo_format_mt)mqo_format_##tn; \
     mqo_##tn##_type->trace = (mqo_gc_mt)mqo_trace_##tn; \
     mqo_##tn##_type->free = (mqo_gc_mt)mqo_free_##tn; \
     mqo_##tn##_type->compare = (mqo_cmp_mt)mqo_##tn##_compare; \
@@ -138,7 +138,7 @@ typedef int mqo_boolean;
     MQO_C_TYPE( chil );
 
 #define MQO_I_SUBTYPE( child, pare ) \
-    mqo_##child##_type->show = (mqo_show_mt)mqo_show_##pare; \
+    mqo_##child##_type->format = (mqo_format_mt)mqo_format_##pare; \
     mqo_##child##_type->trace = (mqo_gc_mt)mqo_trace_##pare; \
     mqo_##child##_type->free = (mqo_gc_mt)mqo_free_##pare; \
     mqo_##child##_type->compare = (mqo_cmp_mt)mqo_##pare##_compare; \
@@ -256,16 +256,16 @@ void mqo_objfree( void* obj );
 
 typedef void (*mqo_gc_mt)( mqo_object obj );
 typedef mqo_integer (*mqo_cmp_mt)( mqo_value a, mqo_value b );
-typedef void (*mqo_show_mt)( mqo_value obj, mqo_word* ct );
+typedef void (*mqo_format_mt)( void*, mqo_value obj );
 
 #define MQO_INHERIT_MT( child, parent ) \
     MQO_INHERIT_GC( child, parent ); \
-    MQO_INHERIT_SHOW( child, parent ); \
+    MQO_INHERIT_FORMAT( child, parent ); \
     MQO_INHERIT_COMPARE( child, parent );
 
 #define MQO_GENERIC_MT( type ) \
     MQO_GENERIC_GC( type ); \
-    MQO_GENERIC_SHOW( type ); \
+    MQO_GENERIC_FORMAT( type ); \
     MQO_GENERIC_COMPARE( type );
 
 #define MQO_INHERIT_GC( child, parent ) \
@@ -285,8 +285,8 @@ typedef void (*mqo_show_mt)( mqo_value obj, mqo_word* ct );
 #define MQO_GENERIC_COMPARE( type ) \
     const mqo_cmp_mt mqo_##type##_compare = mqo_compare_generic;
 
-#define MQO_GENERIC_SHOW( type ) \
-    const mqo_show_mt mqo_show_##type = (mqo_show_mt) mqo_generic_show; 
+#define MQO_GENERIC_FORMAT( type ) \
+    const mqo_format_mt mqo_format_##type = (mqo_format_mt) mqo_generic_format; 
 
 #define MQO_INHERIT_TRACE( child, parent ) \
     const mqo_gc_mt mqo_trace_##child = (mqo_gc_mt) mqo_trace_##parent; \
@@ -294,13 +294,13 @@ typedef void (*mqo_show_mt)( mqo_value obj, mqo_word* ct );
 #define MQO_INHERIT_FREE( child, parent ) \
     const mqo_gc_mt mqo_free_##child = (mqo_gc_mt) mqo_free_##parent; \
 
-#define MQO_INHERIT_SHOW( child, parent ) \
-    const mqo_show_mt mqo_show_##child = (mqo_show_mt) mqo_show_##parent; \
+#define MQO_INHERIT_FORMAT( child, parent ) \
+    const mqo_format_mt mqo_format_##child = (mqo_format_mt) mqo_format_##parent; \
 
 #define MQO_INHERIT_COMPARE( child, parent ) \
     const mqo_cmp_mt mqo_##child##_compare = (mqo_cmp_mt) mqo_##parent##_compare; \
 
-void mqo_generic_show( mqo_value val, mqo_word* ct );
+void mqo_generic_format( void* buf, mqo_word* ct );
 void mqo_generic_trace( mqo_object obj );
 void mqo_generic_free( mqo_object obj );
 mqo_integer mqo_compare_generic( mqo_value a, mqo_value b );
@@ -323,7 +323,7 @@ struct mqo_type_data {
     mqo_gc_mt trace;
     mqo_gc_mt free;
     mqo_cmp_mt compare;
-    mqo_show_mt show;
+    mqo_format_mt format;
     mqo_value name;
     mqo_value info;
 };

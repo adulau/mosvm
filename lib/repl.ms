@@ -15,26 +15,21 @@
 ; under the terms of the GNU Lesser General Public License, version 2.1
 ; as published by the Free Software Foundation.
 
-
 (module "lib/repl")
 (import "lib/optimize")
 (import "lib/compile")
-(import "lib/trace")
 (import "lib/eval")
 
 (define (repl)
-  (define data #f)
-
-  (until (closed?)
-    (write "\n>> ")
-    (set! data (read))
-    (if (eof-object? data) 
-      (halt)
-      (guard traceback
-             (set! data (exec (string->exprs data)))
-             (unless (closed?)
-               (write ":: ") 
-               (show data))))))
+  (forever
+    (define data (wait))
+    (when (eof-object? data) (return))
+    (define expr (string->exprs data))
+    (define result (exec expr))
+    (guard traceback
+         (send (string-append "::" 
+                              (format result)
+                              "\n")))))
 
 (export repl)
 

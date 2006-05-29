@@ -32,10 +32,11 @@ MQO_BEGIN_TYPE( random )
     int id;
 MQO_END_TYPE( random )
 
-void mqo_show_random( mqo_random random, mqo_word* ct ){
-    mqo_print( "[random ");
-    mqo_print( random->descr->name );
-    mqo_print( "]" );
+void mqo_format_random( mqo_string buf, mqo_random random ){
+    mqo_format_begin( buf, random );
+    mqo_format_char( buf, ' ' );
+    mqo_format_cs( buf, random->descr->name );
+    mqo_format_end( buf );
 }
 
 MQO_GENERIC_GC( random );
@@ -49,11 +50,14 @@ MQO_END_TYPE( aes_key )
 
 MQO_GENERIC_COMPARE( aes_key );
 MQO_GENERIC_GC( aes_key );
-void mqo_show_aes_key( mqo_aes_key key, mqo_word* ct ){
-    mqo_print( "[aes-key " );
-    mqo_printint( key->keysize );
-    mqo_print( "]" );
+
+void mqo_format_aes_key( mqo_string buf, mqo_aes_key key ){
+    mqo_format_begin( buf, random );
+    mqo_format_char( buf, ' ' );
+    mqo_format_int( buf, key->keysize );
+    mqo_format_end( buf );
 }
+
 MQO_C_TYPE2( aes_key, "aes-key" );
 
 mqo_symbol mqo_es_crypto = NULL;

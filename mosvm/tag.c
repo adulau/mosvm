@@ -26,17 +26,16 @@ void mqo_trace_tag( mqo_tag t ){
     mqo_grey_obj( (mqo_object)t->name );
     mqo_grey_val( t->info );
 }
-void mqo_show_tag( mqo_tag t, mqo_word* ct ){
-    mqo_printch( '[' );
-    mqo_printsym( t->name );
+void mqo_format_tag( mqo_string buf, mqo_tag t ){
+    mqo_format_char( buf, '<' );
+    mqo_format_sym( buf, t->name );
     if( mqo_is_pair( t->info ) ){
-        mqo_space( );
-        mqo_show_list_contents( mqo_pair_fv( t->info ), ct );
+        mqo_format_items( buf, mqo_pair_fv( t->info ), 1 )
     }else if( t->info ){
-        mqo_print( " . " );
-        mqo_show( t->info, ct );
+        mqo_format_cs( buf, " . " );
+        mqo_format( buf, ct );
     }
-    mqo_printch( ']' );
+    mqo_format_char( buf, '>' );
 }
 MQO_GENERIC_COMPARE( tag );
 MQO_GENERIC_FREE( tag );
@@ -48,12 +47,12 @@ mqo_cell mqo_make_cell( mqo_tag tag, mqo_value repr ){
     cell->repr = repr;
     return cell;
 }
-void mqo_show_cell( mqo_cell c, mqo_word* ct ){
-    mqo_printch( '[' );
-    mqo_printsym( c->tag->name );
-    mqo_space( );
-    mqo_show( c->repr, ct );
-    mqo_printch( ']' );
+void mqo_format_cell( mqo_string buf, mqo_cell c ){
+    mqo_format_char( buf, '[' );
+    mqo_format_sym( buf, c->tag->name );
+    mqo_format_char( buf, ' ' );
+    mqo_format( buf, c->repr );
+    mqo_format_char( buf, ']' );
 }
 void mqo_trace_cell( mqo_cell c ){
     mqo_grey_obj( (mqo_object) c->tag );

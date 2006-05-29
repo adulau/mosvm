@@ -118,13 +118,12 @@ mqo_value mqo_get_global( mqo_symbol name ){
     return mqo_has_global( name ) ? name->value : mqo_vf_null();
 }
 
-void mqo_show_string( mqo_string str, mqo_word* ct ){
+void mqo_format_string( mqo_string buf, mqo_string str ){
     //TODO: Improve with ellision, scored length, escaping unprintables.
     AUDIT_STRING( str );
-    mqo_printch( '"' );
-    mqo_printstr( str );
-    mqo_printch( '"' );
-    (*ct) --;
+    mqo_format_char( buf, '"' );
+    mqo_format_str( str );
+    mqo_format_char( buf, '"' );
 }
 
 MQO_GENERIC_TRACE( string );
@@ -140,9 +139,8 @@ void mqo_trace_symbol( mqo_symbol symbol ){
     mqo_grey_obj( (mqo_object) symbol->string );
     if( symbol->global )mqo_grey_val( symbol->value );    
 }
-void mqo_show_symbol( mqo_symbol sym, mqo_word* ct ){
-    mqo_printsym( sym );
-    (*ct) --;
+void mqo_format_symbol( mqo_buffer buf, mqo_symbol sym ){
+    mqo_format_sym( buf, sym ); 
 }
 void mqo_free_symbol( mqo_symbol sym ){
     assert( 0 );

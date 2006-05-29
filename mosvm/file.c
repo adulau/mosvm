@@ -38,19 +38,14 @@ void mqo_free_file( mqo_file file ){
     if( ! file->closed )close( file->fd );
     mqo_objfree( file );
 }
-void mqo_show_file( mqo_file file, mqo_word* ct ){
-    if( file->closed ){
-        mqo_print( "[closed file" );
-    }else{
-        mqo_print( "[open file" );
-    };
-
+void mqo_format_file( mqo_string buf, mqo_file file ){
+    mqo_format_begin( buf, file );
+    mqo_format_cs( buf, file->closed ? "closed" : "open" );
     if( file->path ){
-        mqo_space( );
-        mqo_show_string( file->path, ct );
+        mqo_format_char( buf, ' ' );
+        mqo_format_str( buf, file->path );
     };
-
-    mqo_printch( ']' );
+    mqo_format_end( buf );
 }
 MQO_GENERIC_COMPARE( file );
 int mqo_os_error( int code ){

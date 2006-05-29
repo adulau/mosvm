@@ -19,8 +19,8 @@
 mqo_value mqo_the_true;
 mqo_value mqo_the_false;
 
-void mqo_show_boolean( mqo_value a, mqo_word* ct ){
-    if( a == mqo_the_false ){ mqo_print( "#f" ); }else{ mqo_print( "#t" ); };
+void mqo_format_boolean( mqo_buffer buf, mqo_value v ){
+    mqo_format_cs( buf, v == mqo_the_false ? "#f" : "#t" );
 }
 mqo_integer mqo_boolean_compare( mqo_value a, mqo_value b ){
     if( a == b )return 0;

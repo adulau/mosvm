@@ -60,10 +60,10 @@ mqo_value mqo_reduce_function( mqo_value fn, mqo_list args ){
     }
 }
 
-void mqo_show_multimethod( mqo_multimethod multimethod, mqo_word* ct  ){
-    mqo_print( "[multimethod ");
-    mqo_show( multimethod->name, ct );
-    mqo_print( "]");
+void mqo_format_multimethod( mqo_string buf, mqo_multimethod multimethod ){
+    mqo_format_begin( buf, multimethod );
+    mqo_format( buf, multimethod->name );
+    mqo_format_end( buf );
 }
 
 MQO_GENERIC_FREE( multimethod );

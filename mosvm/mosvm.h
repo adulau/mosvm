@@ -29,6 +29,7 @@
 #include "mosvm/closure.h"
 #include "mosvm/parse.h"
 #include "mosvm/print.h"
+#include "mosvm/format.h"
 #include "mosvm/regex.h"
 #include "mosvm/file.h"
 #include "mosvm/package.h"
