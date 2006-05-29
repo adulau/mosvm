@@ -53,33 +53,7 @@ int main( int argc, const char** argv ){
 #endif
 
     mqo_init_mosvm( );
-/*
-    if( argc > 1 ){ 
-        int i;
-        for( i = 1; i < argc; i ++ ){
-            mqo_value x;
-
-            if( ! strcmp( argv[i], "-d" ) ){
-                mqo_trace_flag = ! mqo_trace_flag; 
-            }else if( ! strcmp( argv[i], "-g" ) ){
-                mqo_word ct = 65535;
-                mqo_show( mqo_vf_pair( mqo_get_globals( ) ), &ct );
-            }else{ 
-                x = mqo_thaw_str( mqo_read_file( argv[i] ) );
-                if( mqo_is_function( x ) ){
-                    mqo_run( x );
-                }else{
-                    mqo_word ct = 100; mqo_show( x, &ct );
-                    mqo_newline();
-                }
-            }
-        }
-    }else{
-        mqo_print( argv[0] );
-        mqo_print( " objfile1 objfile2 ...\n" );
-        mqo_print( "Executes each object file in turn.\n" );
-    }
-*/
+    
     mqo_argv = mqo_make_tc( );
     mqo_argc = 0;
     int i, mqo_show_globals = 0;
@@ -95,8 +69,10 @@ int main( int argc, const char** argv ){
     };
 
     mqo_argv = mqo_list_fv( mqo_car( mqo_argv ) );
+    mqo_root_obj( (mqo_object) mqo_argv );
 
     mqo_list linked = mqo_thaw_tail( argv[0] );
+    mqo_root_obj( (mqo_object) linked );
 
     if( ! linked ){
         if( mqo_argv ){
