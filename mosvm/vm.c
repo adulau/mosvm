@@ -473,6 +473,12 @@ void mqo_trace_ip( mqo_instruction ip ){
         }
         ct = 64; mqo_show( MQO_RX, &ct );
         mqo_print( ")" );
+    }else if( p == mqo_instr_stb ){
+        mqo_print( " -- " );
+        ct = 64; mqo_show( MQO_RX, &ct );
+    }else if( p == mqo_instr_stg ){
+        mqo_print( " -- " );
+        ct = 64; mqo_show( MQO_RX, &ct );
     }
     mqo_newline();
 }

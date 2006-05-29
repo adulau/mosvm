@@ -141,27 +141,67 @@ mqo_value mqo_channel_tail( mqo_channel channel ){
     return mqo_car( channel->tail );
 }
 
-mqo_channel mqo_req_input( mqo_value x ){
-    if( mqo_is_stream( x ) ){
-        return mqo_stream_input( mqo_stream_fv( x ) );
-    }else if( mqo_is_channel( x ) ){
-        return mqo_channel_fv( x );
-    }else{
-        mqo_errf( mqo_es_vm, "sx", "expected channel or stream",
-                  x );
-    }
-}
-
-mqo_channel mqo_req_output( mqo_value x ){
+mqo_channel mqo_get_output( mqo_value x ){
     if( mqo_is_stream( x ) ){
         return mqo_stream_output( mqo_stream_fv( x ) );
     }else if( mqo_is_channel( x ) ){
         return mqo_channel_fv( x );
-    }else if( mqo_is_listener( x ) ){
-        return mqo_listener_output( mqo_listener_fv( x ) );
+    }else if( mqo_is_process( x ) ){
+        return (mqo_channel)mqo_process_output( mqo_process_fv( x ) );
     }else{
-        mqo_errf( mqo_es_vm, "sx", "expected channel, stream or listener",
-                  x );
+        return NULL;
+    }
+}
+
+mqo_channel mqo_req_output( mqo_value x ){
+    mqo_channel c = mqo_get_output( x );
+    if( c == NULL ){
+        mqo_errf( mqo_es_vm, "sx", "cannot determine output channel", x );
+    }else{
+        return c;
+    }
+}
+
+void mqo_set_output( mqo_value x, mqo_channel output ){
+    if( mqo_is_stream( x ) ){
+        mqo_set_stream_output( mqo_stream_fv( x ), output );
+    }else if( mqo_is_process( x ) ){
+        mqo_set_process_output( mqo_process_fv( x ), (mqo_object) output );
+    }else{
+        mqo_errf( mqo_es_vm, "sx", "cannot assign output channel", x );
+    }
+}
+
+mqo_channel mqo_get_input( mqo_value x ){
+    if( mqo_is_stream( x ) ){
+        return mqo_stream_input( mqo_stream_fv( x ) );
+    }else if( mqo_is_channel( x ) ){
+        return mqo_channel_fv( x );
+    }else if( mqo_is_listener( x ) ){
+        return mqo_listener_input( mqo_listener_fv( x ) );
+    }else if( mqo_is_process( x ) ){
+        return (mqo_channel)mqo_process_input( mqo_process_fv( x ) );
+    }else{
+        return NULL;
+    }
+}
+
+mqo_channel mqo_req_input( mqo_value x ){
+    mqo_channel c = mqo_get_output( x );
+    if( c == NULL ){
+        mqo_errf( mqo_es_vm, "sx", "cannot determine input channel", x );
+    }else{
+        return c;
+    }
+}
+
+void mqo_set_input( mqo_value x, mqo_channel input ){
+    if( mqo_is_stream( x ) ){
+        return mqo_set_stream_input( mqo_stream_fv( x ), input );
+    }else if( mqo_is_process( x ) ){
+        return mqo_set_process_input( mqo_process_fv( x ), (mqo_object) input );
+    }else{
+        mqo_errf( mqo_es_vm, "sx", "cannot assign input channel", x );
     }
 }
 
@@ -252,6 +292,60 @@ MQO_BEGIN_PRIM( "waiting?", waitingq )
     }
 MQO_END_PRIM( waitingq )
 
+MQO_BEGIN_PRIM( "set-input!", set_input )
+    REQ_ANY_ARG( value );
+    REQ_CHANNEL_ARG( channel );
+    NO_REST_ARGS( );
+    
+    mqo_set_input( value, channel );
+
+    RESULT( value );
+MQO_END_PRIM( set_input )
+
+MQO_BEGIN_PRIM( "set-output!", set_output )
+    REQ_ANY_ARG( value );
+    REQ_CHANNEL_ARG( channel );
+    NO_REST_ARGS( );
+    
+    mqo_set_output( value, channel );
+
+    RESULT( value );
+MQO_END_PRIM( set_output )
+
+MQO_BEGIN_PRIM( "input", input )
+    OPT_INPUT_ARG( channel );
+    NO_REST_ARGS( );
+    if( ! has_channel ){
+        channel = mqo_req_input( mqo_vf_process( mqo_active_process ) );
+    }
+    CHANNEL_RESULT( channel );
+MQO_END_PRIM( input )
+
+MQO_BEGIN_PRIM( "output", output )
+    OPT_OUTPUT_ARG( channel );
+    NO_REST_ARGS( );
+    if( ! has_channel ){
+        channel = mqo_req_output( mqo_vf_process( mqo_active_process ) );
+    }
+    CHANNEL_RESULT( channel );
+MQO_END_PRIM( output )
+
+MQO_BEGIN_PRIM( "input?", inputq )
+    OPT_ANY_ARG( value );
+    NO_REST_ARGS( );
+    if( ! has_value ) value = mqo_vf_process( mqo_active_process );
+    mqo_channel channel = mqo_get_input( value );
+    RESULT( channel ? mqo_vf_channel( channel ) : mqo_vf_false( ) );
+MQO_END_PRIM( input )
+
+MQO_BEGIN_PRIM( "output?", outputq )
+    OPT_ANY_ARG( value );
+    NO_REST_ARGS( );
+    if( ! has_value ) value = mqo_vf_process( mqo_active_process );
+    mqo_channel channel = mqo_get_output( value );
+    RESULT( channel ? mqo_vf_channel( channel ) : mqo_vf_false( ) );
+MQO_END_PRIM( output )
+
 void mqo_init_channel_subsystem( ){
     MQO_I_TYPE( channel );
     MQO_BIND_PRIM( wait );
@@ -259,4 +353,10 @@ void mqo_init_channel_subsystem( ){
     MQO_BIND_PRIM( send );
     MQO_BIND_PRIM( channel_emptyq );
     MQO_BIND_PRIM( make_channel );
+    MQO_BIND_PRIM( input );
+    MQO_BIND_PRIM( output );
+    MQO_BIND_PRIM( set_input );
+    MQO_BIND_PRIM( set_output );
+    MQO_BIND_PRIM( inputq );
+    MQO_BIND_PRIM( outputq );
 }

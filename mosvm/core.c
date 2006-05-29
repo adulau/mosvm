@@ -268,14 +268,14 @@ MQO_BEGIN_PRIM( "make-vector", make_vector )
     if( length < 0 )mqo_errf( mqo_es_vm, "si", "expected non-negative",
                                 length );
 
-    mqo_vector v = mqo_make_vector( length );
+    mqo_vector vect = mqo_make_vector( length );
 
     if( has_init ){
         while( length-- ){
-            mqo_vector_put( v, length, init );
+            mqo_vector_put( vect, length, init );
         }
     }
-    RESULT( mqo_vf_vector( v ) );
+    RESULT( mqo_vf_vector( vect ) );
 MQO_END_PRIM( make_vector )
 
 MQO_BEGIN_PRIM( "list-index", list_index )

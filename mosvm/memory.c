@@ -56,7 +56,10 @@ mqo_object mqo_objalloc( mqo_type type, mqo_quad size ){
     mqo_new_objects++;
 
     assert( size >= sizeof( struct mqo_object_data ) );
+
     mqo_object obj = (mqo_object) malloc( size );
+    //TODO: Remove all inits of = NULL;
+    bzero( obj, size );
 
     //TODO: MQO_RESTORE: if(! obj )mqo_errf( mqo_es_mem, "sxi", "out of memory", type, size );
     assert( obj );

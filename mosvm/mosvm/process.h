@@ -17,6 +17,8 @@
 #ifndef MQO_PROCESS_H
 #define MQO_PROCESS_H 1
 
+#include "memory.h"
+
 typedef void (*mqo_proc_fn)(mqo_object process, mqo_value context );
 
 MQO_BEGIN_TYPE( process )
@@ -25,7 +27,7 @@ MQO_BEGIN_TYPE( process )
     mqo_value context;
     mqo_boolean enabled;
     mqo_object monitoring; //TODO: This is a channel..
-    mqo_value input, output;
+    mqo_object input, output;
 MQO_END_TYPE( process )
 
 MQO_BEGIN_TYPE( vm )
@@ -52,6 +54,10 @@ void mqo_proc_loop( );
 
 mqo_process mqo_spawn_func( mqo_value func );
 
+mqo_object mqo_process_input( mqo_process process );
+mqo_object mqo_process_output( mqo_process process );
+void mqo_set_process_input( mqo_process process, mqo_object input );
+void mqo_set_process_output( mqo_process process, mqo_object output );
 void mqo_init_process_subsystem( );
 
 extern mqo_process mqo_active_process;

@@ -52,8 +52,17 @@ mqo_channel mqo_req_output( mqo_value x );
 #define OPT_CHANNEL_ARG( x ) OPT_TYPED_ARG( x, channel )
 #define CHANNEL_RESULT( x )  TYPED_RESULT( channel, x )
 
+#define mqo_input mqo_channel
+#define mqo_output mqo_channel
+#define mqo_output_fv mqo_get_output
+#define mqo_input_fv mqo_get_input
+#define mqo_input_type mqo_channel_type
+#define mqo_output_type mqo_channel_type
+
 #define REQ_INPUT_ARG( x )  mqo_channel x = mqo_req_input( mqo_req_any() );
+#define OPT_INPUT_ARG( x )  OPT_TYPED_ARG( x, input );
 #define REQ_OUTPUT_ARG( x )  mqo_channel x = mqo_req_output( mqo_req_any() );
+#define OPT_OUTPUT_ARG( x )  OPT_TYPED_ARG( x, output );
 
 void mqo_init_channel_subsystem( );
 

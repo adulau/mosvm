@@ -47,13 +47,11 @@ void mqo_show_closure( mqo_closure clos, mqo_word* ct ){
 mqo_value mqo_function_name( mqo_value function ){
     mqo_value result;
 
-again:
     if( mqo_is_closure( function ) ){
         result = mqo_closure_fv( function )->name;
         if( ! result ) result = function;
     }else if( mqo_is_multimethod( function ) ){
-        function = mqo_multimethod_fv( function )->func;
-        goto again;
+        result = mqo_multimethod_fv( function )->name;
     }else if( mqo_is_primitive( function ) ){
         result = mqo_vf_symbol( mqo_primitive_fv( function )->name );
     }else{

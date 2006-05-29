@@ -42,8 +42,8 @@ mqo_process mqo_make_process(
     process->prev = process->next = NULL;
     process->enabled = 0;
     process->monitoring = NULL;
-    process->input = mqo_vf_null( );
-    process->output = mqo_vf_null( );
+    process->input = NULL;
+    process->output = NULL;
     return process;
 }
 
@@ -58,6 +58,18 @@ mqo_vm mqo_make_vm( ){
     return vm;
 }
 
+mqo_object mqo_process_input( mqo_process process ){
+    return process->input;
+}
+mqo_object mqo_process_output( mqo_process process ){
+    return process->output;
+}
+void mqo_set_process_input( mqo_process process, mqo_object input ){
+    process->input = input;
+}
+void mqo_set_process_output( mqo_process process, mqo_object output ){
+    process->output = output;
+}
 void mqo_enable_process( mqo_process process ){
     if( process->enabled )return; 
 
@@ -201,6 +213,7 @@ mqo_process mqo_spawn_func( mqo_value func ){
         }else if( mqo_is_procedure( func ) ){
             vm->ip = mqo_procedure_fv( func )->inst;
         }else{
+            assert(0);
             mqo_errf( mqo_es_vm, "sx", "only functions can be spawned", func );
         }
 
@@ -243,7 +256,12 @@ MQO_BEGIN_PRIM( "spawn", spawn )
     REQ_FUNCTION_ARG( func )
     NO_REST_ARGS( );
     
-    PROCESS_RESULT( mqo_spawn_func( func ) );
+    mqo_process p = mqo_spawn_func( func );
+
+    mqo_set_process_output( p, mqo_process_output( mqo_active_process ) );
+    mqo_set_process_input( p, mqo_process_input( mqo_active_process ) );
+
+    PROCESS_RESULT( p );
 MQO_END_PRIM( spawn )
 
 MQO_BEGIN_PRIM( "active-process", active_process )
@@ -252,56 +270,10 @@ MQO_BEGIN_PRIM( "active-process", active_process )
     RESULT( mqo_vf_process( mqo_active_process ) );
 MQO_END_PRIM( active_process )
 
-MQO_BEGIN_PRIM( "process-input", process_input )
-    OPT_PROCESS_ARG( process )
-    NO_REST_ARGS( );
-    if( ! has_process ) process = mqo_active_process;
-    RESULT( process->input );
-MQO_END_PRIM( process_input )
-
-MQO_BEGIN_PRIM( "set-process-input!", set_process_input )
-    REQ_ANY_ARG( input );
-    OPT_ANY_ARG( process );
-    NO_REST_ARGS( );
-
-    if( has_process ){
-        mqo_req_process( input )->input = process;
-    }else{
-        mqo_active_process->input = input;
-    }
-    
-    NO_RESULT( );
-MQO_END_PRIM( set_process_input )
-
-MQO_BEGIN_PRIM( "process-output", process_output )
-    OPT_PROCESS_ARG( process )
-    NO_REST_ARGS( );
-    if( ! has_process ) process = mqo_active_process;
-    RESULT( process->output );
-MQO_END_PRIM( process_output )
-
-MQO_BEGIN_PRIM( "set-process-output!", set_process_output )
-    REQ_ANY_ARG( output );
-    OPT_ANY_ARG( process );
-    NO_REST_ARGS( );
-
-    if( has_process ){
-        mqo_req_process( output )->output = process;
-    }else{
-        mqo_active_process->output = output;
-    }
-    
-    NO_RESULT( );
-MQO_END_PRIM( set_process_output )
-
 void mqo_init_process_subsystem( ){
     MQO_I_TYPE( process );
     MQO_I_TYPE( vm );
 
     MQO_BIND_PRIM( spawn );
     MQO_BIND_PRIM( active_process );
-    MQO_BIND_PRIM( process_input );
-    MQO_BIND_PRIM( set_process_output );
-    MQO_BIND_PRIM( process_output );
-    MQO_BIND_PRIM( set_process_output );
 }

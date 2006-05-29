@@ -23,10 +23,11 @@ MQO_BEGIN_TYPE( multimethod )
     mqo_value     signature;
     mqo_value     func;
     mqo_value     next;
+    mqo_value     name;
 MQO_END_TYPE( multimethod )
 
 #define REQ_MULTIMETHOD_ARG( vn ) REQ_TYPED_ARG( vn, multimethod )
-#define MULTIMETHOD_RESULT( vn ) TYPED_RESULT( vn, multimethod )
+#define MULTIMETHOD_RESULT( vn ) TYPED_RESULT( multimethod, vn )
 #define OPT_MULTIMETHOD_ARG( vn ) OPT_TYPED_ARG( vn, multimethod )
 
 mqo_multimethod mqo_make_multimethod( 

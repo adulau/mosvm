@@ -23,12 +23,15 @@ mqo_multimethod mqo_make_multimethod(
     m->signature = signature;
     m->func = func;
     m->next = next;
+    m->name = mqo_function_name( func );
+    return m;
 }
 
 void mqo_trace_multimethod( mqo_multimethod m ){
     mqo_grey_val( m->signature );
     mqo_grey_val( m->func );
     mqo_grey_val( m->next );
+    mqo_grey_val( m->name );
 }
 
 mqo_boolean mqo_isa( mqo_value x, mqo_value t ){
@@ -57,8 +60,13 @@ mqo_value mqo_reduce_function( mqo_value fn, mqo_list args ){
     }
 }
 
+void mqo_show_multimethod( mqo_multimethod multimethod, mqo_word* ct  ){
+    mqo_print( "[multimethod ");
+    mqo_show( multimethod->name, ct );
+    mqo_print( "]");
+}
+
 MQO_GENERIC_FREE( multimethod );
-MQO_GENERIC_SHOW( multimethod );
 MQO_GENERIC_COMPARE( multimethod );
 
 MQO_C_TYPE( multimethod );
@@ -71,19 +79,17 @@ MQO_BEGIN_PRIM( "make-multimethod", make_multimethod )
 
     if((! mqo_is_true( sig ))&&(! mqo_is_pair( sig ) )){
         mqo_errf( mqo_es_vm, "sx", "expected list or #t", sig );
-    }
+    };
 
     if(! mqo_is_function( fail ) ){
         mqo_errf( mqo_es_vm, "sx", "expected function for fail", fail );
-    }
+    };
 
     if(! mqo_is_function( pass ) ){
         mqo_errf( mqo_es_vm, "sx", "expected function for pass", pass );
-    }
-
-    RESULT(
-        mqo_vf_multimethod( mqo_make_multimethod( sig, pass, fail ) )
-    );
+    };
+    
+    MULTIMETHOD_RESULT( mqo_make_multimethod( sig, pass, fail ) );
 MQO_END_PRIM( make_multimethod )
 
 MQO_BEGIN_PRIM( "isa?", isaq )

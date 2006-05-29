@@ -16,6 +16,11 @@
 
 #include "mosvm.h"
 
+#ifndef NDEBUG
+// All praise the BSD malloc..
+char* malloc_options = "ADFG";
+#endif
+
 void mqo_init_mosvm( ){
     mqo_init_memory_subsystem( );
     mqo_init_string_subsystem( );

@@ -139,7 +139,6 @@ mqo_stream mqo_make_stream( mqo_integer fd ){
     s->error = 0;
     s->closed = 0;
     s->enabled = 0;
-
 #if defined( _WIN32 )||defined( __CYGWIN__ )
     unsigned long unblocking = 1;
     mqo_net_error( ioctlsocket( s->fd, FIONBIO, &unblocking ) );
@@ -329,13 +328,18 @@ void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
         next = stream->next; fd = stream->fd;
 
         int use = 0;
+        
+        if( mqo_is_stream_reading( stream ) ){
+            if( stream->closed ){
+                // Nobody in here but us chickennnnnnnns.
+                mqo_channel_append( stream->evt, mqo_vf_symbol( mqo_cmd_close ) );
+            }else{
+                use = 1;
+            }
+        };
 
         FD_SET( fd, &reads );
         FD_SET( fd, &errors );
-
-        if( mqo_is_stream_reading( stream ) ){
-            use = 1;
-        };
 
         if( mqo_is_stream_writing( stream ) ){
             fd = fd ? fd : STDOUT_FILENO;
@@ -532,13 +536,26 @@ void mqo_init_stream_subsystem( ){
     //TODO: fork a pipe.
 #else
     // On Unix, *stdin* is a stream. On WIN32, *stdio* is a filthy word..
-    mqo_set_global( mqo_symbol_fs( "*stdio*"), 
-                    mqo_vf_stream( mqo_make_stream( 0 ) ) );
+    mqo_stdio = mqo_make_stream( 0 );
+    mqo_root_obj( (mqo_object) mqo_stdio );
+    mqo_set_global( mqo_symbol_fs( "*stdio*"), mqo_vf_stream( mqo_stdio ) );
 #endif
 }
 
+void mqo_set_stream_input( mqo_stream s, mqo_channel input ){
+    mqo_enable_stream( s );
+    s->evt = input;
+}
 mqo_channel mqo_stream_input( mqo_stream s ){ mqo_enable_stream( s );
-                                              return s->cmd; }
-mqo_channel mqo_stream_output( mqo_stream s ){ mqo_enable_stream( s );
                                               return s->evt; }
-//TODO: Ensure stdio remaps for output.
+void mqo_set_stream_output( mqo_stream s, mqo_channel output ){
+    mqo_enable_stream( s );
+    s->cmd = output;
+}
+mqo_channel mqo_stream_output( mqo_stream s ){ mqo_enable_stream( s );
+                                              return s->cmd; }
+//TODO: Spam eof to the evt monitor every time someone tries to read a closed
+//      channel.
+
+mqo_stream mqo_stdio;
+
