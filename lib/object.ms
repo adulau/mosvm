@@ -76,14 +76,18 @@
        (make-multimethod 
          (list ,class-name) 
          (make-field-accessor ,class-name (quote ,field-name))
-         (or (? ,access-name) refuse-method))))
+         (if (function? (? ,access-name))
+            (? ,access-name) 
+            refuse-method))))
 
   (define (bind-field-modifier modif-name field-name)
     `(deflet ,modif-name 
        (make-multimethod 
          (list ,class-name #t) 
          (make-field-modifier ,class-name (quote ,field-name))
-         (or (? ,modif-name) refuse-method))))
+         (if (function? (? ,modif-name))
+            (? ,modif-name) 
+            refuse-method))))
 
   `(begin 
      (define ,class-name  (make-class ',class-tag 

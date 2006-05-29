@@ -14,6 +14,9 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA  
 ;  
 
+; Optimization:
+; Any LDB LDC LDG followed by NEWF or another load may be culled
+
 (module "lib/optimize")
 
 (define (optimize assembly)

@@ -80,7 +80,7 @@
 (define (value->string (<pair> pair)) (pair->string (repr pair)))
 (define (value->string (<string> string)) (string-append "\"" (repr string) "\""))
 (define (value->string (<symbol> symbol)) (symbol->string (repr symbol)))
-(define (value->string (<integer> integer)) (number->string (repr integer)))
+(define (value->string (<number> number)) (number->string (repr number)))
 (define (value->string (<boolean> value)) (if (repr value) "#t" "#f"))
 
 (define (show value) (show value (current-output-port)))
