@@ -20,15 +20,15 @@
 void mqo_format_error( mqo_string buf, mqo_error e ){
     mqo_format_begin( buf, e );
     mqo_format_char( buf, ' ' );
-    mqo_format_sym( buf, e->key )
-    mqo_format_items( buf, e->info );
+    mqo_format_sym( buf, e->key );
+    mqo_format_items( buf, e->info, 1 );
     mqo_format_end( buf );
 }
 
 int mqo_format_context( mqo_string buf, mqo_list context  ){
     if( context == NULL )return 0; 
     
-    if( mqo_traceback_frame( mqo_list_fv( mqo_cdr( context ) ) ) ){ 
+    if( mqo_format_context( buf, mqo_list_fv( mqo_cdr( context ) ) ) ){ 
         mqo_format_indent( buf, 11 ); 
     }else{ 
         mqo_format_cs( buf, "TRACEBACK: " ); 
@@ -44,7 +44,7 @@ void mqo_format_traceback( mqo_string buf, mqo_error e ){
     mqo_pair p;
     
     mqo_format_cs( buf, "ERROR: " );
-    mqo_format_sym( e->key );
+    mqo_format_sym( buf, e->key );
 
     p = e->info;
 
@@ -65,7 +65,7 @@ void mqo_format_traceback( mqo_string buf, mqo_error e ){
             mqo_format_cs( buf, " :: " );
         };
 
-        mqo_format_items( buf, p );
+        mqo_format_items( buf, p, 0 );
     };
 
     mqo_format_nl( buf );
@@ -107,7 +107,10 @@ void mqo_throw_error( mqo_error e ){
         MQO_IP = g->ip;
         mqo_chainf( g->fn, 1, e );
     }else{
-        mqo_traceback( e ); exit( 1 );
+        mqo_string s = mqo_make_string( 128 );
+        mqo_format_traceback( s, e ); 
+        mqo_printstr( s );
+        exit( 1 );
     }
 }
 
@@ -201,7 +204,10 @@ MQO_BEGIN_PRIM( "traceback", traceback )
     REQ_ERROR_ARG( error );
     NO_REST_ARGS( );
     
-    mqo_traceback( error );
+    mqo_string s = mqo_make_string( 128 );
+    mqo_format_traceback( s, error );
+    mqo_printstr( s );
+    mqo_objfree( s );
 
     NO_RESULT( );
 MQO_END_PRIM( error )

@@ -300,7 +300,7 @@ typedef void (*mqo_format_mt)( void*, mqo_value obj );
 #define MQO_INHERIT_COMPARE( child, parent ) \
     const mqo_cmp_mt mqo_##child##_compare = (mqo_cmp_mt) mqo_##parent##_compare; \
 
-void mqo_generic_format( void* buf, mqo_word* ct );
+void mqo_generic_format( void* buf, mqo_value x );
 void mqo_generic_trace( mqo_object obj );
 void mqo_generic_free( mqo_object obj );
 mqo_integer mqo_compare_generic( mqo_value a, mqo_value b );
@@ -325,7 +325,6 @@ struct mqo_type_data {
     mqo_cmp_mt compare;
     mqo_format_mt format;
     mqo_value name;
-    mqo_value info;
 };
 
 MQO_H_TYPE( type );
@@ -359,6 +358,6 @@ mqo_value mqo_opt_arg( mqo_type type, mqo_boolean* found );
 
 void mqo_no_more_args( );
 
-mqo_type mqo_make_type( mqo_value name, mqo_type parent, mqo_value info );
+mqo_type mqo_make_type( mqo_value name, mqo_type parent );
 mqo_type mqo_direct_type( mqo_value value );
 #endif

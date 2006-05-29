@@ -114,7 +114,7 @@ void mqo_free_regex( mqo_regex regex ){
 
 MQO_GENERIC_TRACE( regex );
 MQO_GENERIC_COMPARE( regex );
-MQO_GENERIC_SHOW( regex );
+MQO_GENERIC_FORMAT( regex );
 MQO_C_TYPE( regex );
 
 void mqo_init_regex_subsystem( ){

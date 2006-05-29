@@ -21,7 +21,10 @@
 
 // FORMAT.C -------------------------------------------------------------------
 void mqo_format_char( mqo_string buf, char ch ){
-    mqo_string_append_byte( ch );
+    mqo_string_append_byte( buf, ch );
+}
+void mqo_format_nl( mqo_string buf ){
+    mqo_string_append_byte( buf, '\n' );
 }
 void mqo_format_hexnibble( mqo_string buf, mqo_quad digit ){
     if( digit > 9 ){
@@ -31,8 +34,8 @@ void mqo_format_hexnibble( mqo_string buf, mqo_quad digit ){
     }
 }
 void mqo_format_hexbyte( mqo_string buf, mqo_quad byte ){
-    mqo_format_hexnibble( mqo_string, byte / 16 );
-    mqo_format_hexnibble( mqo_string, byte % 16 );
+    mqo_format_hexnibble( buf, byte / 16 );
+    mqo_format_hexnibble( buf, byte % 16 );
 }
 void mqo_format_hexword( mqo_string buf, mqo_quad word ){
     mqo_format_hexbyte( buf, word / 256 );
@@ -90,18 +93,19 @@ void mqo_format_addr( mqo_string buf, mqo_integer i ){
     if( i ){
         mqo_format_hex( buf, (mqo_quad)i );
     }else{
-        mqo_format( buf, "null" );
+        mqo_format_cs( buf, "null" );
     }
 }
 void mqo_format_cs( mqo_string buf, const char* c ){
     mqo_string_append( buf, c, strlen( c ) );
 }
-void mqo_format_begin( mqo_string buf, mqo_value o ){
+void mqo_format_begin( mqo_string buf, void* oo ){
+    mqo_object o = (mqo_object)oo; 
     mqo_format_char( buf, '[' );
-    mqo_format( buf, mqo_value_type( o )->name );
+    mqo_format( buf, o->type->name );
 }
 void mqo_format_end( mqo_string buf ){
-    mqo_printch( buf, ']' );
+    mqo_format_char( buf, ']' );
 }
 void mqo_format( mqo_string s, mqo_value v ){
     mqo_type t = mqo_value_type( v );
@@ -109,10 +113,10 @@ void mqo_format( mqo_string s, mqo_value v ){
     if( t && t->format ){
         t->format( s, v );
     }else{
-        mqo_format_generic( s, v );
+        mqo_generic_format( s, v );
     }
 }
-mqo_string mqo_formatf( const char* fmt, ... ){
+mqo_string mqo_formatf( char* fmt, ... ){
     va_list ap;
     mqo_string buf = mqo_make_string( 64 );
     va_start( ap, fmt );
@@ -123,7 +127,7 @@ mqo_string mqo_formatf( const char* fmt, ... ){
             mqo_format_cs( buf, va_arg( ap, const char* ) );
             break;
         case 'x':
-            mqo_format( buf, va_arg( ap, const char* ) );
+            mqo_format( buf, va_arg( ap, mqo_value ) );
             break;
         case 'i':
             mqo_format_int( buf, va_arg( ap, mqo_integer ) );

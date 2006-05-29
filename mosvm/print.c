@@ -42,7 +42,7 @@ void mqo_newline( ){
 void mqo_space( ){
     mqo_printch( ' ' );
 }
-void mqo_show( mqo_value v, mqo_word* ct ){
+void mqo_show( mqo_value v ){
     mqo_string s = mqo_make_string( 64 );
     mqo_format( s, v );
     mqo_printstr( s );
@@ -64,7 +64,7 @@ MQO_BEGIN_PRIM( "format", format )
     NO_REST_ARGS( );
     
     if( ! has_buffer ) buffer = mqo_make_string( 64 );
-    mqo_format( buffer, v );
+    mqo_format( buffer, value );
 
     STRING_RESULT( buffer );
 MQO_END_PRIM( format )

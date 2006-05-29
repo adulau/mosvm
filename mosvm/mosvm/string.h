@@ -52,7 +52,7 @@ mqo_boolean mqo_eqvs( mqo_string a, mqo_string b );
 mqo_boolean mqo_has_global( mqo_symbol name );
 void mqo_set_global( mqo_symbol name, mqo_value value );
 mqo_value mqo_get_global( mqo_symbol name );
-void mqo_show_string( mqo_string str, mqo_word* ct );
+void mqo_format_string( mqo_string buf, mqo_string str );
 
 mqo_list mqo_get_globals( );
 void mqo_init_string_subsystem( );

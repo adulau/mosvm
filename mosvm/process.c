@@ -25,7 +25,7 @@ mqo_process mqo_active_process = NULL;
 void mqo_activate_vm( mqo_process process, mqo_vm vm );
 void mqo_activate_netmon( mqo_process process, mqo_object );
 
-MQO_GENERIC_SHOW( process );
+MQO_GENERIC_FORMAT( process );
 MQO_GENERIC_FREE( process );
 MQO_GENERIC_COMPARE( process );
 void mqo_trace_actives( ){
@@ -248,7 +248,7 @@ void mqo_trace_vm( mqo_vm vm ){
 }
 
 MQO_GENERIC_FREE( vm );
-MQO_GENERIC_SHOW( vm );
+MQO_GENERIC_FORMAT( vm );
 MQO_GENERIC_COMPARE( vm );
 MQO_C_TYPE( vm );
 

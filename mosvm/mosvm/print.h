@@ -25,7 +25,7 @@ void mqo_printch( mqo_byte ch );
 void mqo_printstr( mqo_string s );
 void mqo_newline( );
 void mqo_space( );
-void mqo_show( mqo_value v, mqo_word* ct );
+void mqo_show( mqo_value v );
 void mqo_init_print_subsystem( );
 
 #endif

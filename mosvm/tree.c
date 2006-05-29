@@ -254,7 +254,7 @@ void mqo_format_tree_cb( mqo_value value, mqo_string buf ){
 
 void mqo_format_tree( mqo_string buf, mqo_tree tree ){
     mqo_format_begin( buf, tree );
-    mqo_iter_tree( tree, (mqo_iter_mt)mqo_format_tree_cb, ct );
+    mqo_iter_tree( tree, (mqo_iter_mt)mqo_format_tree_cb, buf );
     mqo_format_end( buf );
 }
 
@@ -287,12 +287,12 @@ MQO_GENERIC_COMPARE( tree );
 MQO_C_TYPE( tree );
 
 MQO_INHERIT_GC( set, tree );
-MQO_INHERIT_SHOW( set, tree );
+MQO_INHERIT_FORMAT( set, tree );
 MQO_GENERIC_COMPARE( set );
 MQO_C_TYPE( set );
 
 MQO_INHERIT_GC( dict, tree );
-MQO_INHERIT_SHOW( dict, tree );
+MQO_INHERIT_FORMAT( dict, tree );
 MQO_GENERIC_COMPARE( dict );
 MQO_C_TYPE( dict );
 

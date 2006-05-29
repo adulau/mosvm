@@ -184,12 +184,13 @@ void mqo_trace_type( mqo_type type ){
 
 void mqo_format_type( mqo_string buf, mqo_type type ){
     mqo_format_char( buf, '<' );
-    mqo_format_sym( buf, type->name );
+    mqo_format( buf, type->name );
     mqo_format_char( buf, '>' );
 }
 
-void mqo_generic_show( mqo_string buf, mqo_value value ){
-    mqo_format_begin( buf, value );
+void mqo_generic_format( void* bbuf, mqo_value value ){
+    mqo_string buf = bbuf; 
+    mqo_format_begin( buf, mqo_obj_fv( value ) );
     mqo_format_end( buf );
 }
 
@@ -207,7 +208,10 @@ MQO_C_TP( null );
 
 MQO_GENERIC_COMPARE( imm );
 MQO_GENERIC_GC( imm );
-void mqo_show_imm( mqo_integer imm, void* ct ){ mqo_printint( imm >> 1 ); };
+
+void mqo_format_imm( mqo_string s, mqo_quad imm ){ 
+    mqo_format_int( s, imm >> 1 ); 
+};
 
 struct mqo_type_data mqo_imm_type_data = { 
     {NULL, NULL, NULL, NULL }, NULL, NULL 
@@ -265,7 +269,7 @@ mqo_integer mqo_compare_generic( mqo_value a, mqo_value b ){
 
 void mqo_init_memory_subsystem( ){
     mqo_imm_type = mqo_number_type;
-    mqo_string_type->show = (mqo_show_mt)mqo_show_string;
+    mqo_string_type->format = (mqo_format_mt)mqo_format_string;
     mqo_string_type->compare = (mqo_cmp_mt)mqo_string_compare;
     MQO_I_TYPE( type );
     MQO_I_TYPE( null );

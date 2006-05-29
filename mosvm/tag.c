@@ -30,10 +30,10 @@ void mqo_format_tag( mqo_string buf, mqo_tag t ){
     mqo_format_char( buf, '<' );
     mqo_format_sym( buf, t->name );
     if( mqo_is_pair( t->info ) ){
-        mqo_format_items( buf, mqo_pair_fv( t->info ), 1 )
+        mqo_format_items( buf, mqo_pair_fv( t->info ), 1 );
     }else if( t->info ){
         mqo_format_cs( buf, " . " );
-        mqo_format( buf, ct );
+        mqo_format( buf, t->info );
     }
     mqo_format_char( buf, '>' );
 }

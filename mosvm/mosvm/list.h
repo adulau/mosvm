@@ -70,7 +70,7 @@ static inline mqo_value mqo_set_cdr( mqo_pair pair, mqo_value x ){
     assert( pair );
     pair->cdr = x; 
 }
-void mqo_show_list_contents( mqo_pair p, mqo_word* ct );
+void mqo_format_items( void* b, mqo_pair p, mqo_boolean sp );
 
 mqo_pair mqo_cons( mqo_value car, mqo_value cdr );
 mqo_list mqo_list_ref( mqo_list p, mqo_integer ofs );
@@ -82,7 +82,7 @@ mqo_boolean mqo_eqvp( mqo_pair a, mqo_pair b );
 mqo_boolean mqo_equalp( mqo_pair a, mqo_pair b );
 mqo_pair mqo_last_pair( mqo_list p );
 
-void mqo_show_pair( mqo_pair x, mqo_word* c );
+void mqo_format_pair( void * b, mqo_pair p );
 void mqo_init_list_subsystem( );
 mqo_integer mqo_list_length( mqo_list p );
 

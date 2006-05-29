@@ -21,6 +21,7 @@
 #include <stdarg.h>
 
 void mqo_format_char( mqo_string buf, char ch );
+void mqo_format_nl( mqo_string buf );
 void mqo_format_hexnibble( mqo_string buf, mqo_quad digit );
 void mqo_format_hexbyte( mqo_string buf, mqo_quad byte );
 void mqo_format_hexword( mqo_string buf, mqo_quad word );
@@ -33,10 +34,10 @@ void mqo_format_str( mqo_string buf, mqo_string s );
 void mqo_format_sym( mqo_string buf, mqo_symbol s );
 void mqo_format_addr( mqo_string buf, mqo_integer i );
 void mqo_format_cs( mqo_string buf, const char* c );
-void mqo_format_begin( mqo_string buf, mqo_value o );
+void mqo_format_begin( mqo_string buf, void* o );
 void mqo_format_end( mqo_string buf );
 void mqo_format( mqo_string s, mqo_value v );
-mqo_string mqo_formatf( const char* fmt, ... );
+mqo_string mqo_formatf( char* fmt, ... );
 
 #endif
 

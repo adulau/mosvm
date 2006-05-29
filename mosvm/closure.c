@@ -33,7 +33,7 @@ void mqo_trace_closure( mqo_closure clos ){
 void mqo_format_closure( mqo_string buf, mqo_closure clos ){
     mqo_format_begin( buf, clos );
     mqo_format_char( buf, ' ' );
-    mqo_format( buf, mqo_closure->name );
+    mqo_format( buf, clos->name );
     mqo_format_end( buf );
 }
 
@@ -53,7 +53,9 @@ mqo_value mqo_function_name( mqo_value function ){
 
     return result;
 }
-
+void mqo_format_func( mqo_string buf, mqo_value func ){
+    mqo_format( buf, mqo_function_name( func ) );
+}
 MQO_GENERIC_COMPARE( closure );
 MQO_GENERIC_FREE( closure );
 MQO_C_TYPE( closure );

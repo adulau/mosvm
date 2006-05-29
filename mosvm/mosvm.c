@@ -26,7 +26,9 @@ void mqo_handle_sigint( int sig ){
     mqo_newline( );
     mqo_print( "Interrupted by user." );
     mqo_newline( );
-    mqo_traceback_frame( mqo_frame_context( MQO_CP ) );
+    mqo_string s = mqo_make_string( 128 );
+    mqo_format_context( s, mqo_frame_context( MQO_CP ) );
+    mqo_printstr( s );
     mqo_newline( );
     exit(909);
 }
@@ -91,7 +93,7 @@ int main( int argc, const char** argv ){
     if( mqo_show_globals ){
         mqo_list globals = mqo_get_globals( );
         while( globals ){
-            mqo_printsym( mqo_symbol_fv( mqo_car( mqo_pair_fv( mqo_car( globals ) ) ) ) );
+            mqo_show( mqo_car( mqo_pair_fv( mqo_car( globals ) ) ) );
             mqo_print( " -- " );
             mqo_show( mqo_value_type( mqo_cdr( mqo_pair_fv( mqo_car( globals ) ) ) )->name );
             mqo_newline( );

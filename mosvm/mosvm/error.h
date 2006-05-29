@@ -41,8 +41,8 @@ MQO_END_TYPE( guard )
 
 void mqo_errf( mqo_symbol key, const char* fmt, ... );
 void mqo_show_error( mqo_error e, mqo_word* ct );
-void mqo_traceback( mqo_error e );
-int mqo_traceback_frame( mqo_list context );
+void mqo_format_traceback( mqo_string buf, mqo_error e );
+int mqo_format_context( mqo_string buf, mqo_list context  );
 mqo_error mqo_make_error( mqo_symbol key, mqo_list info, mqo_list context );
 mqo_pair mqo_frame_context( mqo_callframe callframe );
 void mqo_throw_error( mqo_error e );

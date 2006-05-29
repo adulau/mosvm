@@ -84,7 +84,8 @@ void mqo_trace_pair( mqo_pair p ){
     mqo_grey_val( mqo_cdr( p ) );
 }
 
-void mqo_format_items( mqo_string buf, mqo_pair p, mqo_boolean sp ){
+void mqo_format_items( void* bbuf, mqo_pair p, mqo_boolean sp ){
+    mqo_string buf = bbuf;
     if( p == NULL )return;
     
     for(;;){
@@ -100,7 +101,7 @@ void mqo_format_items( mqo_string buf, mqo_pair p, mqo_boolean sp ){
         }else if( mqo_is_pair( cdr ) ){
             p = mqo_pair_fv( cdr );
         }else{
-            mqo_format_cs( " . " );
+            mqo_format_cs( buf, " . " );
             mqo_format( buf, cdr );
             return;
         }
@@ -130,12 +131,13 @@ done:
     return head;
 }
 
-void mqo_format_pair( mqo_buffer buf, mqo_pair p ){
-    mqo_format_char( '(' );
+void mqo_format_pair( void* bbuf, mqo_pair p ){
+    mqo_string buf = bbuf;
+    mqo_format_char( buf, '(' );
     if( p ){
         mqo_format_items( buf, p, 0 );
     }
-    mqo_format_char( ')' );
+    mqo_format_char( buf, ')' );
 }
 
 MQO_GENERIC_FREE( pair );

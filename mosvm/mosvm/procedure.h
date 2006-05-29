@@ -64,7 +64,7 @@ static inline mqo_word mqo_procedure_set(
     instr->b = b;
 }
 
-void mqo_show_instruction( mqo_instruction x, mqo_word* c );
+void mqo_format_instruction( mqo_string buf, mqo_instruction x );
 
 void mqo_init_procedure_subsystem( );
 

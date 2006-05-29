@@ -72,7 +72,7 @@ void mqo_trace_procedure( mqo_procedure proc ){
     }
 }
 
-MQO_GENERIC_SHOW( procedure );
+MQO_GENERIC_FORMAT( procedure );
 MQO_GENERIC_COMPARE( procedure );
 MQO_GENERIC_FREE( procedure );
 

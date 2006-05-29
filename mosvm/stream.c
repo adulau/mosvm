@@ -410,7 +410,7 @@ void mqo_trace_stream( mqo_stream stream ){
 void mqo_free_stream( mqo_stream stream ){
     mqo_objfree( stream );
 }
-MQO_GENERIC_SHOW( stream );
+MQO_GENERIC_FORMAT( stream );
 MQO_GENERIC_COMPARE( stream );
 MQO_C_TYPE( stream );
 
@@ -420,7 +420,7 @@ void mqo_trace_listener( mqo_listener listener ){
     mqo_grey_obj( (mqo_object) listener->prev );
     mqo_grey_obj( (mqo_object) listener->next );
 }
-MQO_GENERIC_SHOW( listener );
+MQO_GENERIC_FORMAT( listener );
 MQO_GENERIC_COMPARE( listener );
 MQO_GENERIC_FREE( listener );
 //TODO: This should never be used -- but we should be killing, here.

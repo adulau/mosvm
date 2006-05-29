@@ -415,7 +415,7 @@ void mqo_trace_callframe( mqo_callframe cf ){
 
 MQO_GENERIC_FREE( callframe );
 MQO_GENERIC_COMPARE( callframe );
-MQO_GENERIC_SHOW( callframe );
+MQO_GENERIC_FORMAT( callframe );
 MQO_C_TYPE2( callframe, "call-frame" )
 
 mqo_symbol mqo_es_vm;
@@ -476,7 +476,7 @@ void mqo_trace_ip( mqo_instruction ip ){
     }
     if( rx ){
         mqo_format_cs( s, " :: " );
-        mqo_format( s, MQO_AP->head );
+        mqo_format_pair( s, MQO_AP->head );
     }
 
     mqo_format_nl( s );

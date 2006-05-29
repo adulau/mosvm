@@ -207,7 +207,7 @@ void mqo_set_input( mqo_value x, mqo_channel input ){
 
 MQO_GENERIC_COMPARE( channel );
 
-MQO_GENERIC_SHOW( channel );
+MQO_GENERIC_FORMAT( channel );
 MQO_GENERIC_FREE( channel );
 MQO_C_TYPE( channel )
 
