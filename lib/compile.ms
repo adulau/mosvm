@@ -594,8 +594,7 @@
          (if (pair? i) 
            (car i)
            #t))
-       args)
-  #f)
+       args))
 
 (define (compile-decl env sym)
   (cond ((and (is-top-context? env)
@@ -729,11 +728,13 @@
   (define name (car term))
   (define args (cdr term))
 
-  (compile-lisp-expr 
-    env `(make-multimethod ,(parse-signature args)
-                           (function ,(cons name (parse-slots args)) 
-                                     ,@body)
-                           (or (? ,name) refuse-method))))
+  `(set! ,name 
+     (make-multimethod ,(cons 'list (parse-signature args))
+                       (function ,(cons name (parse-slots args)) 
+                                 ,@body)
+                       (if (function? (? ,name))
+                         (? ,name)
+                         refuse-method))))
 
 (export reset-branch-index make-branch-symbol make-symbol symbol-starts-with?)
 

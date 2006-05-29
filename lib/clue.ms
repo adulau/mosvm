@@ -226,7 +226,7 @@
                                       (cadr parameter)))
                           parameters))))
 
-(export set-clue set-clue-record-parameters)
+(export set-clue set-clue-record-parameter set-clue-record-parameters)
 
 ;(set-clue (find-clue db customer (billing-day 15))
 ;          (last-bill-date today))

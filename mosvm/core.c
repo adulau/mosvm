@@ -796,7 +796,7 @@ MQO_BEGIN_PRIM( "argc", argc )
 MQO_END_PRIM( argc )
 
 MQO_BEGIN_PRIM( "refuse-method", refuse_method )
-    mqo_errf( mqo_es_vm, "method not found");
+    mqo_errf( mqo_es_vm, "s", "method not found");
 MQO_END_PRIM( refuse_method )
 
 MQO_BEGIN_PRIM( "get-global", get_global )
@@ -1387,6 +1387,13 @@ MQO_BEGIN_PRIM( "string-join", string_join )
     RESULT( mqo_vf_string( res ) );
 MQO_END_PRIM( string_join )
 
+MQO_BEGIN_PRIM( "function?", functionq )
+    REQ_ANY_ARG( value )
+    NO_REST_ARGS( );
+
+    BOOLEAN_RESULT( mqo_is_function( value ) );
+MQO_END_PRIM( functionq )
+
 MQO_BEGIN_PRIM( "function-name", function_name )
     REQ_ANY_ARG( function )
     NO_REST_ARGS( );
@@ -1790,6 +1797,7 @@ void mqo_bind_core_prims( ){
     
     MQO_BIND_PRIM( globals );
     MQO_BIND_PRIM( function_name );
+    MQO_BIND_PRIM( functionq );
 
     MQO_BIND_PRIM( make_string );
     MQO_BIND_PRIM( flush_string );

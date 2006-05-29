@@ -20,7 +20,7 @@
 
 ;;; Specifies a magical "end of file" object returned by ports.
 (define <eof> (make-tag 'eof))
-(define *eof* (tag <eof> '*eof*))
+(define *eof* (cell <eof> '*eof*))
 (define (eof-object? value) (eq? *eof* value))
 
 (export *eof* eof-object?)
