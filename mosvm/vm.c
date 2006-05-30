@@ -152,6 +152,9 @@ void mqo_jump( ){
         MQO_IP = MQO_CP->ip;
         mqo_primitive_fv( fn )->impl();
         MQO_CP = MQO_CP->cp;
+    }else if( mqo_is_procedure( fn ) ){
+        MQO_EP = NULL;
+        MQO_IP = mqo_procedure_fv( fn )->inst;
     }else{
         mqo_errf( mqo_es_vm, "sx", "cannot call non-function", fn );
     }
