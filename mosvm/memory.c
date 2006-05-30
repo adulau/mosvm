@@ -201,7 +201,7 @@ MQO_GENERIC_FREE( type );
 MQO_C_TYPE( type );
 
 void mqo_format_null( mqo_string buf, mqo_value null ){
-    mqo_print( "null" );
+    mqo_format_cs( buf, "null" );
 }
 
 MQO_GENERIC_COMPARE( null );
