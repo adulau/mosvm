@@ -29,8 +29,7 @@
     (send ">> ")
     (define cmd (wait cmds))
     (guard traceback
-      (define data cmd)
-      (define data (exec cmd)))
+      (exec cmd))
     (send (string-append ":: " (format data) *line-sep*))))
 
 (export repl)

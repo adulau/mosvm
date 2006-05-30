@@ -289,6 +289,9 @@
                         ((not (pair? term))
                          (set! cmp-fn compile-define-val)
                          (set! id term))
+                        ((not (null? (cdr (last-pair term))))
+                         (set! cmp-fn compile-define-fn)
+                         (set! id (car term)))
                         ((any pair? term)
                          (set! cmp-fn compile-define-mm)
                          (set! id (car term)))
@@ -307,6 +310,9 @@
                         ((not (pair? term))
                          (set! cmp-fn compile-define-val)
                          (set! id term))
+                        ((not (null? (cdr (last-pair term))))
+                         (set! cmp-fn compile-define-fn)
+                         (set! id (car term)))
                         ((any pair? term)
                          (set! cmp-fn compile-define-mm)
                          (set! id (car term)))
@@ -346,46 +352,55 @@
                                   (list '(retn)
                                         after))))))))))
 (set-macro! 'lambda (lambda (formals . body)
-                      `(function ,(cons (make-branch-symbol 'anon-fn)
-                                        formals) 
-                                 ,@body)))
+                      (apply list 'function 
+                             (cons (make-branch-symbol 'anon-fn)
+                                   formals)
+                             body)))
 (set-macro! 'define-record-type
                     (lambda (name make pred . fields)
-                      `(define-class ,name <object> ,make ,pred ,@fields)))
+                      (apply list 'define-class 
+                             name '<object> 
+                             make pred 
+                             fields)))
 
 (set-macro! 'export (lambda any '(begin)))
 
 (set-macro! 's:
             (lambda (stmt . rest)
-              `(if *spot-test?*
-                 (do-s '(,stmt ,@rest) (lambda () ,stmt ,@rest)))))
+              (list 'if '*spot-test?*
+                    (list do-s (cons stmt rest) 
+                          (apply list 'lambda '() stmt rest)))))
 (set-macro! 'r:
             (lambda (stmt . rest)
-              `(if *spot-test?*
-                 (do-r '(,stmt ,@rest) (lambda () ,stmt ,@rest)))))
+              (list 'if '*spot-test?*
+                 (list do-r (cons stmt rest) 
+                       (apply list 'lambda '() stmt rest)))))
 (set-macro! 't:
             (lambda (stmt . rest)
-              `(if *spot-test?*
-                 (do-t '(,stmt ,@rest) (lambda (_) ,stmt ,@rest)))))
+              (list 'if '*spot-test?*
+                 (list do-t (cons stmt rest) 
+                       (apply list 'lambda '(_) stmt rest)))))
 (set-macro! 'guard
             (lambda (fn . rest)
               (let ((el (make-branch-symbol 'exit)))
                 `(asm (mos ,fn)
                       (gar ,el)
-                      (mos (begin ,@rest))
+                      (mos ,(cons 'begin rest))
                       (rag)
                       ,el))))
 (set-macro! 'case 
             (lambda (expr . branches)
                (define var (make-branch-symbol 'key))
                `(let ((,var ,expr))
-                  (cond
-                    ,@(map (lambda (branch)
-                             (if (eq? (car branch) 'else)
-                               branch
-                               `((memq ,var (quote ,(car branch)))
-                                 ,@(cdr branch))))
-                           branches)))))
+                  ,(cons 'cond
+                         (map (lambda (branch)
+                                (if (eq? (car branch) 'else)
+                                  branch
+                                  (cons 
+                                    (list 'memq var 
+                                          (list 'quote (car branch)))
+                                    (cdr branch))))
+                              branches)))))
 
 (set-macro! 'cond (lambda clauses 
                     (if (null? clauses)
@@ -400,10 +415,12 @@
                                 (cons 'cond  clauses)))))))
 
 (set-macro! 'when 
-            (lambda (test . rest)   `(if ,test (begin ,@rest))))
+            (lambda (test . rest)   
+              (list 'if test (cons 'begin rest))))
 
 (set-macro! 'unless 
-            (lambda (test . rest) `(if ,test (begin) (begin ,@rest))))
+            (lambda (test . rest) 
+              (list 'if test '(begin) (cons 'begin rest))))
 
 (set-macro! 'while (lambda (test . rest)  
                      (let ((enter (make-branch-symbol 'enter))
@@ -411,7 +428,7 @@
                        `(asm ,enter
                              (mos ,test) 
                              (jf ,exit) 
-                             (mos ,@rest)
+                             ,(cons 'mos rest)
                              (jmp ,enter)
                              ,exit))))
 (set-macro! 'until 
@@ -421,7 +438,7 @@
                 `(asm ,enter
                       (mos ,test) 
                       (jt ,exit) 
-                      (mos ,@rest)
+                      ,(cons 'mos rest)
                       (jmp ,enter)
                       ,exit))))
 
@@ -429,7 +446,7 @@
             (lambda rest  
               (let ((again (make-branch-symbol 'again)))
                 `(asm ,again
-                      (mos ,@rest) 
+                      ,(cons 'mos rest) 
                       (jmp ,again)))))
 
 (set-macro! 'or (lambda (test . rest)  
@@ -438,7 +455,7 @@
                     (let ((done (make-branch-symbol 'done)))
                       `(asm (mos ,test)
                             (jt ,done)
-                            (mos (or ,@rest))
+                            (mos ,(cons 'or rest))
                             ,done)))))
 
 (set-macro! 'and (lambda (test . rest)  
@@ -447,7 +464,7 @@
                      (let ((done (make-branch-symbol 'done)))
                        `(asm (mos ,test)
                              (jf ,done)
-                             (mos (and ,@rest))
+                             (mos ,(cons 'and rest))
                              ,done)))))
 
 (set-macro! 'if (lambda (test t-expr . rest)
@@ -469,11 +486,11 @@
                           ,done-branch))))
 
 (set-macro! 'return (lambda expr
-                      `(asm (mos ,@expr)
+                      `(asm ,(cons 'mos expr)
                             (retn))))
 
 (set-macro! 'begin (lambda stmts
-                     `(asm (mos ,@stmts))))
+                     `(asm ,(cons 'mos stmts))))
 
 (set-macro! 'quote (lambda (value)
                      `(asm (ldc ,value))))
@@ -645,7 +662,9 @@
         
         (if (and (is-top-context? env)
                  (is-exported? name env))
-          `(set-macro! (quote ,name) (function ,(cons name args) ,@body))
+          `(set-macro! (quote ,name) ,(apply list 'function 
+                                             (cons name args) 
+                                             body))
           '(begin)))))
 
   (map (lambda (expr)
@@ -663,8 +682,8 @@
 
 (define make-procedure
   (if *mosvm?*
-    (lambda (args body) (eval `(lambda ,args ,@body)))
-    (lambda (args body) (primitive-eval `(lambda ,args ,@body)))))
+    (lambda (args body) (eval (apply list 'lambda args body)))
+    (lambda (args body) (primitive-eval (apply list 'lambda args body)))))
 
 (define *branch-index* 0)
 
@@ -694,10 +713,10 @@
            (integer->char char)))))
 
 (define (compile-define-val env term expr)
-  `(set! ,term ,@expr))
+  (apply list 'set! term expr))
 
 (define (compile-define-fn env term body)
-  `(set! ,(car term) (function ,term ,@body)))
+  (list 'set! (car term) (apply list 'function term body)))
 
 (define (compile-define-mm env term body)
   ;; Bloody, nasty, vicious.. Poor multimethods don't get to know about
@@ -705,13 +724,15 @@
   (define name (car term))
   (define args (cdr term))
 
-  `(set! ,name 
-     (make-multimethod ,(cons 'list (parse-signature args))
-                       (function ,(cons name (parse-slots args)) 
-                                 ,@body)
-                       (if (function? (? ,name))
-                         (? ,name)
-                         refuse-method))))
+  (list 'set! name 
+     (list 'make-multimethod 
+           (cons 'list (parse-signature args))
+           (apply list 'function (cons name (parse-slots args)) 
+                  body)
+           (list 'if 
+                 (list 'function? (list '? name))
+                 (list '? name)
+                 'refuse-method))))
 
 (export reset-branch-index make-branch-symbol make-symbol symbol-starts-with?)
 
