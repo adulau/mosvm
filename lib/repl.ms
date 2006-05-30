@@ -26,7 +26,7 @@
 (define (repl)
   (define cmds (s-filter (line-filter (input))))
   (until (closed? cmds)
-    (send ">> ")    
+    (send ">> ")
     (define cmd (wait cmds))
     (guard traceback
       (define data cmd)

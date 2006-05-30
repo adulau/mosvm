@@ -278,23 +278,28 @@ void mqo_stream_write_evt( mqo_stream stream ){
     mqo_string buf;
     mqo_boolean put;
 
-    mqo_value  cmd = mqo_channel_head( stream->cmd );
+    mqo_value  cmd = mqo_read_channel( stream->cmd );
 
     if( mqo_is_symbol( cmd ) && ( mqo_symbol_fv( cmd ) == mqo_eof ) ){
-        mqo_read_channel( stream->cmd );
         mqo_close_stream( stream );
     }else if( mqo_is_string( cmd ) ){
         mqo_string buf = mqo_string_fv( cmd );
-        mqo_integer fd = stream->fd;
         mqo_integer len = mqo_string_length( buf );
-        if( len  == 0 ){ mqo_read_channel( stream->cmd ); return; };
+        if( len == 0 ){ return; };
+
+        char* str = mqo_sf_string( buf );
+
+        mqo_integer fd = stream->fd;
+
         int rs = fd ? send( fd, mqo_string_head( buf ), len, 0 )
                     : write( fd, mqo_string_head( buf ), len );
         if( rs > 0 ){
-            mqo_string_skip( buf, rs );
-            if( mqo_string_empty( buf ) ){
-                mqo_read_channel( stream->cmd );
-            }
+            if( len -= rs ){
+                mqo_channel_prepend( 
+                    stream->cmd, 
+                    mqo_vf_string( mqo_string_fm( str + rs, len ) )
+                );
+            };
         }else{
 #if defined(_WIN32)||defined(__CYGWIN__)
         int errno = WSAGetLastError();
