@@ -101,10 +101,16 @@ void mqo_throw_error( mqo_error e ){
     if( MQO_GP ){
         mqo_guard g = mqo_guard_fv( mqo_car( MQO_GP ) );
         MQO_GP = mqo_list_fv( mqo_cdr( MQO_GP ) );
-        MQO_AP = g->ap;
         MQO_CP = g->cp;
         MQO_EP = g->ep;
         MQO_IP = g->ip;
+        
+        MQO_AP = mqo_make_callframe( );
+        MQO_AP->cp = MQO_CP;
+        MQO_AP->ep = MQO_EP;
+        MQO_AP->ip = MQO_IP;
+        MQO_CP = MQO_AP;
+
         mqo_chainf( g->fn, 1, e );
     }else{
         mqo_string s = mqo_make_string( 128 );
@@ -176,6 +182,7 @@ mqo_guard mqo_make_guard(
 }
 void mqo_format_guard( mqo_string buf, mqo_guard guard ){
     mqo_format_begin( buf, guard );
+    mqo_format_char( buf, ' ' );
     mqo_format_func( buf, guard->fn );
     mqo_format_end( buf );
 }

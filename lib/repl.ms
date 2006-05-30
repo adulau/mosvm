@@ -28,8 +28,8 @@
   (until (closed? cmds)
     (send ">> ")
     (define cmd (wait cmds))
-    (guard traceback
-      (exec cmd))
-    (send (string-append ":: " (format data) *line-sep*))))
+    (guard (lambda (e) (print (format e)) (print *line-sep*))
+      (set! cmd (exec cmd))
+      (send (string-append ":: " (format cmd) *line-sep*)))))
 
 (export repl)
