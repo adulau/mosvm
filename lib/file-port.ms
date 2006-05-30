@@ -128,3 +128,4 @@
 
 (export open-lisp-input-file)
 
+;;; MOSVM2

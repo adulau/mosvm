@@ -72,14 +72,14 @@
     (build-module (tc-next! dependencies))))
 
 (define (glue string data)
-  (string-write string data)
+  (string-append! string data)
   (string-append-word! string (string-length data))
-  (string-write string "mvf2")
+  (string-append! string "mvf2")
   string)
 
 (define (build-exe platform main)
   (define string (make-string))
-  (string-write string (read-platform-stub platform))
+  (string-append! string (read-platform-stub platform))
 
   (for-each (function (glue-dep item) (glue string item))
             (map build-module (code-dependencies main)))
@@ -90,3 +90,4 @@
 
   string)
 
+;;; MOSVM2

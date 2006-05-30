@@ -78,3 +78,4 @@
     `(guard (lambda (err) err) ,@stmts))
 
 (export traceback trace trap)
+;;; MOSVM2

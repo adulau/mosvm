@@ -115,3 +115,4 @@
         define-class make-field-accessor
         <object>)
 
+;;; MOSVM2

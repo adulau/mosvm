@@ -38,7 +38,7 @@
                     (exports context-exports set-context-exports!))
     
 (define (add-context-slot! context slot)
-  (set-context-slots! context (append! (context-slots context) (list slot))))
+  (set-context-slots! context (append (context-slots context) (list slot))))
 
 (define (add-context-symbol! context symbol)
   (set-context-symbols! context (cons symbol (context-symbols context))))
@@ -149,8 +149,7 @@
 (define (compile program)
   (let ((env (make-top-context)))
     (set! program (compile-exports env program))
-    (set! program (compile-imports env program))
-    (compile-defines env program)
+    (compile-imports env program)
     (set! program (compile-lisp-block env program))
   (append (list (list 'usen 0 (context-slot-count env)))
           program
@@ -158,6 +157,7 @@
 
 (define (compile-lisp-block env block)
   (define tc (make-tc))
+  (compile-defines env block)
   (for-each (lambda (expr)
               (tc-splice! tc (compile-lisp-expr env expr)))
             (compile-macros env block))
@@ -636,9 +636,7 @@
   (define (isnt-import? expr)
     (not (is-import? expr)))
 
-  (for-each compile-import (filter is-import? code))
- 
-  (filter isnt-import? code))
+  (for-each compile-import (filter is-import? code)))
 
 (define (compile-macros env code)
   (define (isnt-macro? expr)
@@ -736,3 +734,4 @@
 
 (export reset-branch-index make-branch-symbol make-symbol symbol-starts-with?)
 
+;;; MOSVM2

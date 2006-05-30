@@ -28,8 +28,9 @@
   (until (closed? cmds)
     (send ">> ")
     (define cmd (wait cmds))
-    (guard (lambda (e) (print (format e)) (print *line-sep*))
+    (guard traceback
       (set! cmd (exec cmd))
       (send (string-append ":: " (format cmd) *line-sep*)))))
 
 (export repl)
+;;; MOSVM2

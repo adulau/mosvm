@@ -1321,6 +1321,7 @@ MQO_BEGIN_PRIM( "string-join", string_join )
             mqo_string_append( res, mqo_sf_string( sep ), 
                                     mqo_string_length( sep ) );
         }
+        any = 1;
         mqo_string_append( res, mqo_sf_string( item ), 
                                 mqo_string_length( item ) );
     }

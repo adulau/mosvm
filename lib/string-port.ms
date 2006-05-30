@@ -77,3 +77,4 @@
         get-output-string string-input-port? string-output-port?
         read-line)
 
+;;; MOSVM2

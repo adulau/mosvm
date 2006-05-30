@@ -91,3 +91,4 @@
         set->string dict->string type->string value->string 
         show)
 
+;;; MOSVM2
