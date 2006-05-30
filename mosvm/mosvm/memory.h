@@ -132,6 +132,7 @@ typedef int mqo_boolean;
     
 #define MQO_I_TYPE( tn ) \
     mqo_##tn##_type->direct = mqo_##tn##_type; \
+    MQO_BIND_PRIM( tn##q ) \
     MQO_I_TYPE_( tn );
 
 #define MQO_C_SUBTYPE( chil, pare ) \
@@ -157,7 +158,13 @@ typedef int mqo_boolean;
 
 #define MQO_C_TYPE2( tn, ts ) \
     MQO_C_TP2( tn, ts ); \
-    MQO_C_RQ( tn );
+    MQO_C_RQ( tn ); \
+    MQO_BEGIN_PRIM( ts "?", tn##q ) \
+        REQ_ANY_ARG( value ); \
+        NO_REST_ARGS( ); \
+        \
+        BOOLEAN_RESULT( mqo_is_##tn( value ) ); \
+    MQO_END_PRIM( tn##q ) \
 
 #define MQO_C_TYPE( tn ) \
     MQO_C_TYPE2( tn, #tn ); 

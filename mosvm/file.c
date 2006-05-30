@@ -171,13 +171,6 @@ MQO_BEGIN_PRIM( "open-file", open_file )
                                 has_mode ? mode : 0600 ) );
 MQO_END_PRIM( open_file )
 
-MQO_BEGIN_PRIM( "file?", fileq )
-    REQ_ANY_ARG( value );
-    NO_REST_ARGS( )
-
-    RESULT( mqo_vf_boolean( mqo_is_file( value ) ) );
-MQO_END_PRIM( fileq )
-
 MQO_BEGIN_PRIM( "file-len", file_len )
     REQ_FILE_ARG( file );
     NO_REST_ARGS( );

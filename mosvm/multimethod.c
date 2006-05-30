@@ -56,7 +56,14 @@ mqo_value mqo_reduce_function( mqo_value fn, mqo_list args ){
         sigs = mqo_cdr( mqo_pair_fv( sigs ) );
         arg = mqo_car( ( args ) );
         args = mqo_list_fv( mqo_cdr( args ) );
-        if( ! mqo_isa( arg, sig ) ) return mm->next;
+        if( mqo_is_true( sig ) || mqo_isa( arg, sig ) ){
+        }else{
+            mqo_show( arg );
+            mqo_print( " is not a " );
+            mqo_show( sig );
+            mqo_newline( );
+            return mm->next;
+        }
     }
 }
 

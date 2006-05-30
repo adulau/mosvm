@@ -63,7 +63,7 @@ MQO_BEGIN_PRIM( "reverse", reverse )
     mqo_pair ep = NULL;
     while( pair ){
         ep = mqo_cons( mqo_car( pair ), mqo_vf_list( ep ) );
-        pair = mqo_req_pair( mqo_cdr( pair ) );
+        pair = mqo_req_list( mqo_cdr( pair ) );
     }
     RESULT( mqo_vf_list( ep ) );
 MQO_END_PRIM( reverse );
@@ -104,20 +104,6 @@ MQO_BEGIN_PRIM( "equal?", equalq )
     }
     RESULT( mqo_vf_true( ) );
 MQO_END_PRIM( equalq );
-
-MQO_BEGIN_PRIM( "string?", stringq )
-    REQ_ANY_ARG( value )
-    NO_REST_ARGS( );
-    
-    RESULT( mqo_vf_boolean( mqo_is_string( value ) ) );
-MQO_END_PRIM( stringq )
-
-MQO_BEGIN_PRIM( "symbol?", symbolq )
-    REQ_ANY_ARG( value )
-    NO_REST_ARGS( );
-    
-    RESULT( mqo_vf_boolean( mqo_is_symbol( value ) ) );
-MQO_END_PRIM( symbolq )
 
 MQO_BEGIN_PRIM( "not", not )
     REQ_ANY_ARG( value )
@@ -300,7 +286,7 @@ MQO_END_PRIM( list_index );
 
 MQO_BEGIN_PRIM( "memq", memq )
     REQ_ANY_ARG( item );
-    REQ_PAIR_ARG( list );
+    REQ_LIST_ARG( list );
     NO_REST_ARGS( );
     while( list ){
         if( mqo_eq( item, mqo_car( list ) ) ){
@@ -313,7 +299,7 @@ MQO_END_PRIM( memq );
 
 MQO_BEGIN_PRIM( "member", member )
     REQ_ANY_ARG( item );
-    REQ_PAIR_ARG( list );
+    REQ_LIST_ARG( list );
     NO_REST_ARGS( );
     while( list ){
         if( ! mqo_cmp_eq( item, mqo_car( list ) ) ){
@@ -365,18 +351,6 @@ MQO_BEGIN_PRIM( "integer?", integerq )
     NO_REST_ARGS( );
     RESULT( mqo_vf_boolean( ( mqo_is_integer( v ) ) ) );
 MQO_END_PRIM( integerq )
-
-MQO_BEGIN_PRIM( "pair?", pairq )
-    REQ_ANY_ARG( v );
-    NO_REST_ARGS( );
-    RESULT( mqo_vf_boolean( ( mqo_is_pair( v ) ) ) );
-MQO_END_PRIM( pairq )
-
-MQO_BEGIN_PRIM( "null?", nullq )
-    REQ_ANY_ARG( v );
-    NO_REST_ARGS( );
-    RESULT( mqo_vf_boolean( ( mqo_is_null( v ) ) ) );
-MQO_END_PRIM( nullq )
 
 MQO_BEGIN_PRIM( "cons", cons )
     REQ_ANY_ARG( car );
@@ -627,24 +601,11 @@ MQO_BEGIN_PRIM( "string=?", string_eqq )
     NO_REST_ARGS( );
 MQO_END_PRIM( string_eqq )
 
-MQO_BEGIN_PRIM( "vector?", vectorq )
-    REQ_ANY_ARG( value );
-    NO_REST_ARGS( );
-    RESULT( mqo_vf_boolean( mqo_is_vector( value ) ) );
-MQO_END_PRIM( vectorq )
-
 MQO_BEGIN_PRIM( "length", length )
     REQ_LIST_ARG( pair );
     NO_REST_ARGS( );
     INTEGER_RESULT( mqo_list_length( pair ) );
 MQO_END_PRIM( length )
-
-MQO_BEGIN_PRIM( "error?", errorq )
-    REQ_ANY_ARG( val );
-    NO_REST_ARGS( );
-    
-    RESULT( mqo_is_error( val ) ? mqo_vf_true( ) : mqo_vf_false( ) );
-MQO_END_PRIM( errorq )
 
 MQO_BEGIN_PRIM( "error-key", error_key )
     REQ_ERROR_ARG( err );
@@ -668,7 +629,7 @@ MQO_BEGIN_PRIM( "error-context", error_context )
 MQO_END_PRIM( error_context )
 
 MQO_BEGIN_PRIM( "map-car", map_car )
-    REQ_PAIR_ARG( src );
+    REQ_LIST_ARG( src );
     NO_REST_ARGS( );
     mqo_tc tc = mqo_make_tc();
     while( src ){
@@ -680,7 +641,7 @@ MQO_BEGIN_PRIM( "map-car", map_car )
 MQO_END_PRIM( map_car );
 
 MQO_BEGIN_PRIM( "map-cdr", map_cdr )
-    REQ_PAIR_ARG( src );
+    REQ_LIST_ARG( src );
     NO_REST_ARGS( );
     mqo_tc tc = mqo_make_tc();
     while( src ){
@@ -848,28 +809,16 @@ MQO_END_PRIM( tc_clear )
 
 MQO_BEGIN_PRIM( "tc-splice!", tc_splice )
     REQ_TC_ARG( tc );
-    REQ_PAIR_ARG( list );
+    REQ_LIST_ARG( list );
     NO_REST_ARGS( );
 
     while( list ){
         mqo_tc_append( tc, mqo_car( list ) );
-        list = mqo_req_pair( mqo_cdr( list ) );
+        list = mqo_req_list( mqo_cdr( list ) );
     }
 
     RESULT( mqo_vf_tc( tc ) );
 MQO_END_PRIM( tc_splice )
-
-MQO_BEGIN_PRIM( "tc?", tcq )
-    REQ_ANY_ARG( value )
-    NO_REST_ARGS( );
-    RESULT( mqo_vf_boolean( mqo_is_tc( value ) ) );
-MQO_END_PRIM( tcq )
-
-MQO_BEGIN_PRIM( "procedure?", procedureq )
-    REQ_ANY_ARG( value )
-    NO_REST_ARGS( );
-    RESULT( mqo_vf_boolean( mqo_is_procedure( value ) ) );
-MQO_END_PRIM( procedureq )
 
 MQO_BEGIN_PRIM( "tc-next!", tc_next )
     REQ_TC_ARG( tc );
@@ -1014,13 +963,6 @@ MQO_BEGIN_PRIM( "set->list", set_to_list )
     RESULT( mqo_car( tc ) );
 MQO_END_PRIM( set_to_list )
 
-MQO_BEGIN_PRIM( "set?", setq )
-    REQ_ANY_ARG( value );
-    NO_REST_ARGS( );
-    
-    RESULT( mqo_vf_boolean( mqo_is_set( value ) ) );
-MQO_END_PRIM( setq )
-
 MQO_BEGIN_PRIM( "dict", dict )
     mqo_dict dict = mqo_make_dict( );
 
@@ -1032,13 +974,6 @@ MQO_BEGIN_PRIM( "dict", dict )
     
     RESULT( mqo_vf_dict( dict ) );
 MQO_END_PRIM( dict )
-
-MQO_BEGIN_PRIM( "dict?", dictq )
-    REQ_ANY_ARG( value );
-    NO_REST_ARGS( );
-    
-    RESULT( mqo_vf_boolean( mqo_is_dict( value ) ) );
-MQO_END_PRIM( dictq )
 
 MQO_BEGIN_PRIM( "dict->list", dict_to_list )
     REQ_DICT_ARG( dict );
@@ -1687,12 +1622,8 @@ MQO_BEGIN_PRIM( "copy-string", copy_string )
 MQO_END_PRIM( copy_string )
 
 void mqo_bind_core_prims( ){
-    MQO_BIND_PRIM( symbolq );
-    MQO_BIND_PRIM( stringq );
     MQO_BIND_PRIM( integerq );
-    MQO_BIND_PRIM( pairq );
     MQO_BIND_PRIM( listq );
-    MQO_BIND_PRIM( nullq );
     MQO_BIND_PRIM( cons );
     MQO_BIND_PRIM( car );
     MQO_BIND_PRIM( cdr );
@@ -1706,7 +1637,6 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( vector_set );
     MQO_BIND_PRIM( vector_ref );
     MQO_BIND_PRIM( vector_length );
-    MQO_BIND_PRIM( vectorq );
     MQO_BIND_PRIM( eq );
     MQO_BIND_PRIM( equal );
     MQO_BIND_PRIM( memq );
@@ -1768,22 +1698,17 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( tc_to_list );
     MQO_BIND_PRIM( tc_next );
     MQO_BIND_PRIM( tc_emptyq );
-    MQO_BIND_PRIM( tcq );
     MQO_BIND_PRIM( tc_clear );
-
-    MQO_BIND_PRIM( procedureq );
 
     MQO_BIND_PRIM( string_to_exprs );
 
     MQO_BIND_PRIM( set );
-    MQO_BIND_PRIM( setq );
     MQO_BIND_PRIM( set_addd );
     MQO_BIND_PRIM( set_removed );
     MQO_BIND_PRIM( set_memberq );
     MQO_BIND_PRIM( set_to_list );
     
     MQO_BIND_PRIM( dict );
-    MQO_BIND_PRIM( dictq );
     MQO_BIND_PRIM( dict_setd );
     MQO_BIND_PRIM( dict_ref );
     MQO_BIND_PRIM( dict_removed );
@@ -1807,7 +1732,6 @@ void mqo_bind_core_prims( ){
 
     MQO_BIND_PRIM( make_string );
     MQO_BIND_PRIM( flush_string );
-    MQO_BIND_PRIM( stringq );
     MQO_BIND_PRIM( empty_stringq );
     MQO_BIND_PRIM( string_append );
     MQO_BIND_PRIM( string_read );
@@ -1840,7 +1764,6 @@ void mqo_bind_core_prims( ){
     
     MQO_BIND_PRIM( copy_string );
     
-    MQO_BIND_PRIM( errorq );
     MQO_BIND_PRIM( error_key );
     MQO_BIND_PRIM( error_info );
 

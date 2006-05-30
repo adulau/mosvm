@@ -104,27 +104,6 @@ MQO_BEGIN_PRIM( "tag", tag )
     TAG_RESULT( cell->tag );
 MQO_END_PRIM( tag );
 
-MQO_BEGIN_PRIM( "type?", typeq )
-    REQ_ANY_ARG( value );
-    NO_REST_ARGS( );
-    
-    BOOLEAN_RESULT( mqo_is_tag( value ) || mqo_is_type( value ) );
-MQO_END_PRIM( typeq )
-
-MQO_BEGIN_PRIM( "tag?", tagq )
-    REQ_ANY_ARG( value );
-    NO_REST_ARGS( );
-    
-    BOOLEAN_RESULT( mqo_is_tag( value ) );
-MQO_END_PRIM( tagq )
-
-MQO_BEGIN_PRIM( "cell?", cellq )
-    REQ_ANY_ARG( value );
-    NO_REST_ARGS( );
-    
-    BOOLEAN_RESULT( mqo_is_cell( value ) );
-MQO_END_PRIM( cellq )
-
 MQO_BEGIN_PRIM( "make-tag", make_tag )
     REQ_SYMBOL_ARG( name );
     REST_ARGS( info );
@@ -150,11 +129,8 @@ void mqo_init_tag_subsystem( ){
     MQO_I_TYPE( tag );
     MQO_BIND_PRIM( type_name );
     MQO_BIND_PRIM( xtype );
-    MQO_BIND_PRIM( typeq );
-    MQO_BIND_PRIM( tagq );
     MQO_BIND_PRIM( make_tag );
     MQO_BIND_PRIM( tag_info );
-    MQO_BIND_PRIM( cellq );
     MQO_BIND_PRIM( cell );
     MQO_BIND_PRIM( tag );
     MQO_BIND_PRIM( repr );

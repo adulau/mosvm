@@ -256,13 +256,6 @@ MQO_BEGIN_PRIM( "channel-empty?", channel_emptyq )
     BOOLEAN_RESULT( mqo_channel_empty( channel ) );
 MQO_END_PRIM( channel_emptyq )
 
-MQO_BEGIN_PRIM( "channel?", channelq )
-    REQ_ANY_ARG( value );
-    NO_REST_ARGS( );
-    
-    BOOLEAN_RESULT( mqo_is_channel( value ) );
-MQO_END_PRIM( channelq )
-
 MQO_BEGIN_PRIM( "wait", wait )
     REST_ARGS( channels );
 

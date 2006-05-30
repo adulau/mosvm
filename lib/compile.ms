@@ -150,6 +150,7 @@
   (let ((env (make-top-context)))
     (set! program (compile-exports env program))
     (set! program (compile-imports env program))
+    (compile-defines env program)
     (set! program (compile-lisp-block env program))
   (append (list (list 'usen 0 (context-slot-count env)))
           program
@@ -348,6 +349,9 @@
                       `(function ,(cons (make-branch-symbol 'anon-fn)
                                         formals) 
                                  ,@body)))
+(set-macro! 'define-record-type
+                    (lambda (name make pred . fields)
+                      `(define-class ,name <object> ,make ,pred ,@fields)))
 
 (set-macro! 'export (lambda any '(begin)))
 
@@ -541,6 +545,15 @@
        (not (null? expr))
        (eq? (car expr) 'define-macro)))
  
+(define (compile-defines env code)
+  (until (null? code)
+    (let ((expr (car code)))
+      (set! code (cdr code))
+      (if (and (pair? expr) (memq (car expr) '(define deflet)))
+        (compile-decl env (if (pair? (cadr expr))
+                            (car (cadr expr))
+                            (cadr expr)))))))
+
 (define (compile-exports env code)
   (define tc (make-tc))
 

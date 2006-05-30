@@ -55,7 +55,7 @@
   (define field-offset (list-index (lambda (x) (eq? x field-name))
                                    (class-fields class)))
   (lambda (inst value) 
-    (vector-set! (repr value) field-offset value)))
+    (vector-set! (repr inst) field-offset value)))
 
 (define (make-class-predicate class)
   (define ancestry (make-tc))

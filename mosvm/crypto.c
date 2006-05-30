@@ -202,12 +202,6 @@ MQO_BEGIN_PRIM( "make-random", make_random )
     RANDOM_RESULT(( rng ) );
 MQO_END_PRIM( make_random )
 
-MQO_BEGIN_PRIM( "random?", randomq )
-    REQ_ANY_ARG( value );
-    NO_REST_ARGS( );
-
-    BOOLEAN_RESULT(( mqo_is_random( value ) ) );
-MQO_END_PRIM( randomq )
 MQO_BEGIN_PRIM( "add-entropy", add_entropy )
     REQ_STRING_ARG( entropy );
     OPT_RANDOM_ARG( random );
@@ -314,13 +308,6 @@ MQO_BEGIN_PRIM( "make-aes-key", make_aes_key )
 
     AES_RESULT(( key ) );
 MQO_END_PRIM( make_aes_key )
-
-MQO_BEGIN_PRIM( "aes-key?", aes_keyq )
-    REQ_ANY_ARG( value );
-    NO_REST_ARGS( );
-
-    BOOLEAN_RESULT(( mqo_is_aes_key( value ) ) );
-MQO_END_PRIM( aes_keyq )
 
 MQO_BEGIN_PRIM( "aes-encrypt", aes_encrypt )
     REQ_AES_ARG( aes );
@@ -512,13 +499,6 @@ MQO_BEGIN_PRIM( "ecdh-shared-secret", ecdh_shared_secret )
 
     STRING_RESULT(( mqo_string_fm( buf, buflen ) ) );
 MQO_END_PRIM( ecdh_shared_secret )
-
-MQO_BEGIN_PRIM( "ecdh-key?", ecdh_keyq )
-    REQ_ANY_ARG( value )
-    NO_REST_ARGS( );
-    
-    BOOLEAN_RESULT(( mqo_is_ecdh_key( value ) ) );
-MQO_END_PRIM( ecdh_keyq )
 
 MQO_BEGIN_PRIM( "ecdh-public-key?", ecdh_public_keyq )
     REQ_ANY_ARG( value )

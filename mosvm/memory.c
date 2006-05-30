@@ -269,6 +269,12 @@ mqo_integer mqo_compare_generic( mqo_value a, mqo_value b ){
     return a - b;
 }
 
+MQO_BEGIN_PRIM( "null?", nullq )
+    REQ_ANY_ARG( value );
+    NO_REST_ARGS( );
+    BOOLEAN_RESULT( mqo_is_null( value ) );
+MQO_END_PRIM( nullq )
+
 void mqo_init_memory_subsystem( ){
     mqo_imm_type = mqo_number_type;
     mqo_string_type->format = (mqo_format_mt)mqo_format_string;
