@@ -206,6 +206,14 @@ mqo_channel mqo_get_input( mqo_value x ){
     }
 }
 
+mqo_channel mqo_get_channel( mqo_value x ){
+    mqo_channel c;
+    c = mqo_get_input( x );
+    if( c ) return c;
+    c = mqo_get_output( x );
+    if( c ) return c;
+    return NULL;
+}
 mqo_channel mqo_req_input( mqo_value x ){
     mqo_channel c = mqo_get_input( x );
     if( c == NULL ){
@@ -369,18 +377,34 @@ MQO_BEGIN_PRIM( "output?", outputq )
 MQO_END_PRIM( output )
 
 MQO_BEGIN_PRIM( "closed?", closedq )
-    REQ_CHANNEL_ARG( channel );
+    REQ_ANY_ARG( channel );
     NO_REST_ARGS( );
     
-    BOOLEAN_RESULT( channel->closed );
+    mqo_channel c = mqo_get_channel( channel );
+
+    BOOLEAN_RESULT( c ? c->closed : 1 );
 MQO_END_PRIM( closedq )
 
 MQO_BEGIN_PRIM( "close", close )
-    REQ_CHANNEL_ARG( channel );
+    REQ_ANY_ARG( channel );
     NO_REST_ARGS( );
+    
+    mqo_channel c;
+    int any = 0;
 
-    mqo_close_channel( channel );
+    c = mqo_get_input( c );
+    if( c ){
+        mqo_close_channel( c );
+        any = 1;
+    }
 
+    c = mqo_get_output( c );
+    if( c ){
+        mqo_close_channel( c );
+        any = 1;
+    }
+    
+    if( ! any ) mqo_errf( mqo_es_vm, "sx", "could not close object", channel );
     CHANNEL_RESULT( channel );
 MQO_END_PRIM( close )
 
