@@ -78,8 +78,15 @@ MQO_GENERIC_FREE( procedure );
 
 MQO_C_TYPE( procedure );
 
+MQO_BEGIN_PRIM( "assemble", assemble )
+    REQ_LIST_ARG( source );
+    NO_REST_ARGS( );
+    PROCEDURE_RESULT( mqo_assemble( source ) );
+MQO_END_PRIM( assemble )
+
 void mqo_init_procedure_subsystem( ){
     MQO_I_TYPE( procedure );
+    MQO_BIND_PRIM( assemble );
 }
 
 mqo_procedure mqo_assemble( mqo_list src ){

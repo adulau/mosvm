@@ -22,7 +22,7 @@
   (define (parse)
     (forever
       (define next (string-read-line! buf))
-      (if next (send line out)
+      (if next (send next out)
                (return))))
   
   (spawn (function (next-line)

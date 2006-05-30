@@ -33,6 +33,7 @@ MQO_BEGIN_TYPE( channel )
     mqo_integer length;
     mqo_channel prev, next;
     mqo_boolean closed;
+    mqo_value   source;
 MQO_END_TYPE( channel )
 
 void mqo_add_monitor( mqo_process process, mqo_channel channel );

@@ -40,14 +40,6 @@ void mqo_run( mqo_value func ){
     mqo_set_process_output( p, (mqo_object) mqo_stream_output( mqo_stdio ) );
     mqo_set_process_input( p, (mqo_object) mqo_stream_input( mqo_stdio ) );
 
-    mqo_print( "Will run process " );
-    mqo_show( p );
-    mqo_print( " with input " );
-    mqo_show( mqo_process_input( p ) );
-    mqo_print( " and output " );
-    mqo_show( mqo_process_output( p ) );
-    mqo_newline();
-
     mqo_proc_loop( );
 }
 

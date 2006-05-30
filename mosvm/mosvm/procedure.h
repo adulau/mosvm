@@ -41,7 +41,7 @@ MQO_BEGIN_TYPE( procedure )
     struct mqo_instruction_data inst[0];
 MQO_END_TYPE( procedure )
 #define REQ_PROCEDURE_ARG( vn ) REQ_TYPED_ARG( vn, procedure )
-#define PROCEDURE_RESULT( vn ) TYPED_RESULT( vn, procedure )
+#define PROCEDURE_RESULT( vn ) TYPED_RESULT( procedure, vn )
 #define OPT_PROCEDURE_ARG( vn ) OPT_TYPED_ARG( vn, procedure )
 
 mqo_procedure mqo_make_procedure( mqo_word length );

@@ -28,8 +28,8 @@
     (define line (wait lines))
     (guard traceback
       (define prog (string->exprs line))
-      ;(define data (exec prog))
+      (define data (exec prog))
       (define data prog))
-    (send (string-append "::" (format data) *line-sep*))))
+    (send (string-append ":: " (format data) *line-sep*))))
 
 (export repl)

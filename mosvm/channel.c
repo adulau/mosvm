@@ -26,6 +26,7 @@ mqo_channel mqo_make_channel( ){
     c->closed = 0;
     c->head = c->tail = NULL;
     c->prev = c->next = NULL;
+    c->source = 0;
     return c;
 }
 void mqo_trace_channel( mqo_channel channel ){
@@ -34,10 +35,19 @@ void mqo_trace_channel( mqo_channel channel ){
     mqo_grey_obj( (mqo_object) channel->tail );
     mqo_grey_obj( (mqo_object) channel->prev );
     mqo_grey_obj( (mqo_object) channel->next );
+    mqo_grey_val( channel->source );
+}
+
+void mqo_trip_source( mqo_channel channel ){
+    if( mqo_is_stream( channel->source ) ){
+        mqo_enable_stream( mqo_stream_fv( channel->source ) );
+    }
 }
 
 void mqo_add_monitor( mqo_process process, mqo_channel channel ){
-    assert( channel->monitor == NULL );
+    if( channel->monitor ){
+        mqo_errf( mqo_es_vm, "sxx", "channel already monitored", process, channel );
+    }
 
     mqo_disable_process( process );
     mqo_channel other = (mqo_channel) process->monitoring;
@@ -47,6 +57,8 @@ void mqo_add_monitor( mqo_process process, mqo_channel channel ){
     channel->next = other;
     process->monitoring = (mqo_object) channel;
     channel->monitor = process;
+
+    mqo_trip_source( channel );
 }
 
 void mqo_remove_monitor( mqo_process process, mqo_channel channel ){
@@ -220,13 +232,19 @@ MQO_GENERIC_FREE( channel );
 MQO_C_TYPE( channel )
 
 MQO_BEGIN_PRIM( "send", send )
-    REQ_OUTPUT_ARG( channel );
-    REST_ARGS( messages );
+    REQ_ANY_ARG( message );
+    REST_ARGS( channels );
     
-    while( messages ){
-        mqo_channel_append( channel, mqo_car( messages ) );
-        messages = mqo_req_list( mqo_cdr( messages ) );
+    if( ! channels ){
+        channels = mqo_cons( mqo_vf_process( mqo_active_process ),
+                             mqo_vf_null() );
     };
+
+    while( channels ){
+        mqo_channel_append( mqo_req_output( mqo_car( channels ) ), 
+                            message );
+        channels = mqo_req_list( mqo_cdr( channels ) );
+    }
 
     NO_RESULT( );
 MQO_END_PRIM( send )
@@ -247,22 +265,21 @@ MQO_END_PRIM( channelq )
 
 MQO_BEGIN_PRIM( "wait", wait )
     REST_ARGS( channels );
+
+    if( ! channels ){
+        channels = mqo_cons( mqo_vf_process( mqo_active_process ),
+                             mqo_vf_null() );
+    };
+
     mqo_pair m = channels;
 
     mqo_channel r = NULL;
 
     while( m ){
         mqo_channel c = mqo_req_input( mqo_car( m ) );
-        mqo_print( "Requiring input from: " );
-        mqo_show( mqo_car( m ) );
-        mqo_print( " for channel: " );
-        mqo_show( mqo_vf_channel( c ) );
-        mqo_print( "\n" );
         if( ! mqo_channel_empty( c ) ){
-            mqo_print( "    Found data.\n" );
             r = c;
         }else if( c->closed ){
-            mqo_print( "    Channel closed.\n" );
             r = c;
         }
         m = mqo_req_list( mqo_cdr( m ) );
@@ -272,10 +289,6 @@ MQO_BEGIN_PRIM( "wait", wait )
         RESULT( mqo_read_channel( r ) );
     }else{
         mqo_pair m = channels;
-
-        mqo_print( "Will wait on: " );
-        mqo_show( mqo_vf_list( m ) );
-        mqo_print( "\n" );
 
         while( m ){
             mqo_add_monitor( mqo_active_process,

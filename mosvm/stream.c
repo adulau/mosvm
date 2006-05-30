@@ -133,7 +133,9 @@ mqo_stream mqo_make_stream( mqo_integer fd ){
     mqo_stream s = MQO_OBJALLOC( stream );
     s->fd = fd;
     s->cmd = mqo_make_channel( );
+    s->cmd->source = mqo_vf_stream( s );
     s->evt = mqo_make_channel( );
+    s->evt->source = mqo_vf_stream( s );
     s->next = NULL;
     s->prev = mqo_last_stream;
     s->error = 0;
@@ -162,7 +164,6 @@ mqo_listener mqo_make_listener( mqo_integer fd ){
     }else{
         mqo_first_listener = l;    
         mqo_enable_process( mqo_stream_monitor );
-        mqo_print( "Enabling stream monitor for listener.\n" );
     };
     
     l->prev = mqo_last_listener;
@@ -184,7 +185,6 @@ void mqo_enable_stream( mqo_stream stream ){
     }else{
         mqo_first_stream = stream;
         mqo_enable_process( mqo_stream_monitor );
-        mqo_print( "Enabling stream monitor for stream.\n" );
     }
 
     mqo_last_stream = stream;
@@ -285,10 +285,11 @@ void mqo_stream_write_evt( mqo_stream stream ){
         mqo_close_stream( stream );
     }else if( mqo_is_string( cmd ) ){
         mqo_string buf = mqo_string_fv( cmd );
-        int rs = stream->fd ? send( stream->fd, mqo_string_head( buf ), 
-                                    mqo_string_length( buf ), 0 )
-                            : write( stream->fd, mqo_string_head( buf ), 
-                                     mqo_string_length( buf ) );
+        mqo_integer fd = stream->fd;
+        mqo_integer len = mqo_string_length( buf );
+        if( len  == 0 ){ mqo_read_channel( stream->cmd ); return; };
+        int rs = fd ? send( fd, mqo_string_head( buf ), len, 0 )
+                    : write( fd, mqo_string_head( buf ), len );
         if( rs > 0 ){
             mqo_string_skip( buf, rs );
             if( mqo_string_empty( buf ) ){
@@ -333,7 +334,6 @@ void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
         int use = 0;
         
         if( mqo_is_stream_reading( stream ) ){
-            mqo_print( "Stream is reading.\n" );
             use = 1;
         };
 
@@ -341,35 +341,32 @@ void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
         FD_SET( fd, &errors );
 
         if( mqo_is_stream_writing( stream ) ){
-            mqo_print( "Stream is writing.\n" );
             fd = fd ? fd : STDOUT_FILENO;
             FD_SET( fd, &writes );
             use = 1;
         };
-
-        if( fd > maxfd ) maxfd = fd;
+        
+        if( (++fd) > maxfd ) maxfd = fd;
 
         if( ! use ){
-            mqo_print( "Stream is not in use.\n" );
             mqo_disable_stream( stream );
         }
     }
     
     for( listener = mqo_first_listener; listener; listener = listener->next ){
         fd = listener->fd;
-        if( fd > maxfd ) maxfd = fd;
         FD_SET( fd, &reads );
         FD_SET( fd, &errors );
+        if( (++fd) > maxfd ) maxfd = fd;
     }
    
     if(!( mqo_first_stream || mqo_first_listener )){
-        mqo_print( "Disabling stream monitor for disuse.\n" );
         mqo_disable_process( mqo_stream_monitor );
         return;
     };
 
     struct timeval timeout = { 0, 0 };
-    select( maxfd + 1,
+    select( maxfd,
             &reads, &writes, &errors,
             //&timeout );
             mqo_can_be_only_one( ) ? (struct timeval*) NULL 
@@ -378,17 +375,16 @@ void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
     for( stream = mqo_first_stream; stream; stream = next ){
         next = stream->next;
         fd = stream->fd;
-        if( fd > maxfd ) maxfd = fd;
-        if( FD_ISSET( stream->fd, &reads ) || FD_ISSET( stream->fd, &errors ) ){
+        if( FD_ISSET( fd, &reads ) || FD_ISSET( fd, &errors ) ){
             mqo_stream_read_evt( stream );
         };
-        if( FD_ISSET( stream->fd, &writes ) ){
+        fd = fd ? fd : STDOUT_FILENO;
+        if( FD_ISSET( fd, &writes ) ){
             mqo_stream_write_evt( stream );
         };
     }
     for( listener = mqo_first_listener; listener; listener = listener->next ){
         fd = listener->fd;
-        if( fd > maxfd ) maxfd = fd;
         if( FD_ISSET( listener->fd, &reads ) 
          || FD_ISSET( listener->fd, &errors ) ){
             mqo_listener_read_evt( listener );
