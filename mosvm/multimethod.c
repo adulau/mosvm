@@ -62,6 +62,7 @@ mqo_value mqo_reduce_function( mqo_value fn, mqo_list args ){
 
 void mqo_format_multimethod( mqo_string buf, mqo_multimethod multimethod ){
     mqo_format_begin( buf, multimethod );
+    mqo_format_char( buf, ' ' );
     mqo_format( buf, multimethod->name );
     mqo_format_end( buf );
 }

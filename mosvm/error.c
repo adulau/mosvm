@@ -35,7 +35,7 @@ int mqo_format_context( mqo_string buf, mqo_list context  ){
     };
     
     mqo_format( buf, mqo_car( context ) );
-    mqo_newline( );
+    mqo_format_nl( buf );
 
     return 1;
 }

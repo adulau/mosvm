@@ -19,6 +19,8 @@
 
 #include "memory.h"
 
+mqo_symbol mqo_eof;
+
 MQO_BEGIN_TYPE( stream )
     mqo_integer fd;
     mqo_channel cmd, evt;

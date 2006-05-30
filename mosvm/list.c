@@ -92,7 +92,7 @@ void mqo_format_items( void* bbuf, mqo_pair p, mqo_boolean sp ){
         mqo_value car = mqo_car( p );
         mqo_value cdr = mqo_cdr( p );
     
-        if( sp )mqo_space( );
+        if( sp )mqo_format_char( buf, ' ' );
         sp = 1;
         mqo_format( buf, car );
 

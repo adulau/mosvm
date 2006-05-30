@@ -12,24 +12,27 @@
 ; You should have received a copy of the GNU Lesser General Public License 
 ; along with this library; if not, write to the Free Software Foundation, 
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
-; under the terms of the GNU Lesser General Public License, version 2.1
-; as published by the Free Software Foundation.
 
-(module "lib/repl")
+(module "lib/line-filter")
 
-(import "lib/optimize")
-(import "lib/compile")
-(import "lib/eval")
-(import "lib/line-filter")
+(define (line-filter in)
+  (define out (make-channel))
+  (define buf (make-string 80)) 
 
-(define (repl)
-  (define lines (line-filter (input)))
-  (until (closed? lines)
-    (define line (wait lines))
-    (guard traceback
-      (define prog (string->exprs line))
-      ;(define data (exec prog))
-      (define data prog))
-    (send (string-append "::" (format data) *line-sep*))))
+  (define (parse)
+    (forever
+      (define next (string-read-line! buf))
+      (if next (send line out)
+               (return))))
+  
+  (spawn (function (next-line)
+            (until (closed? in)
+               (define next (wait in))
+               (when (string? next)
+                 (string-append! buf next)
+                 (parse)))
+            (send buf out)
+            (close out)))
+  out)
 
-(export repl)
+(export line-filter)

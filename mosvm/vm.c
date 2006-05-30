@@ -476,7 +476,7 @@ void mqo_trace_ip( mqo_instruction ip ){
     }
     if( rx ){
         mqo_format_cs( s, " :: " );
-        mqo_format_pair( s, MQO_AP->head );
+        mqo_format( s, MQO_RX );
     }
 
     mqo_format_nl( s );

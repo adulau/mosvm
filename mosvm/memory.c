@@ -191,6 +191,8 @@ void mqo_format_type( mqo_string buf, mqo_type type ){
 void mqo_generic_format( void* bbuf, mqo_value value ){
     mqo_string buf = bbuf; 
     mqo_format_begin( buf, mqo_obj_fv( value ) );
+    mqo_format_char( buf, ' ' );
+    mqo_format_addr( buf, value );
     mqo_format_end( buf );
 }
 

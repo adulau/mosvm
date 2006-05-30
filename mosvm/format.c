@@ -24,7 +24,10 @@ void mqo_format_char( mqo_string buf, char ch ){
     mqo_string_append_byte( buf, ch );
 }
 void mqo_format_nl( mqo_string buf ){
-    mqo_string_append_byte( buf, '\n' );
+#if defined(_WIN32)||defined(__CYGWIN__)
+    mqo_format_char( buf, '\r' );
+#endif
+    mqo_format_char( buf, '\n' );
 }
 void mqo_format_hexnibble( mqo_string buf, mqo_quad digit ){
     if( digit > 9 ){

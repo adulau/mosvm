@@ -305,15 +305,15 @@ void mqo_init_file_subsystem( ){
     MQO_I_TYPE( file );
 
 #if defined(_WIN32)||defined(__CYGWIN__)
-    mqo_symbol_fs( "*path-sep*" )->value = 
-        mqo_vf_string( mqo_string_fs( "\\" ) );
-    mqo_symbol_fs( "*line-sep*" )->value = 
-        mqo_vf_string( mqo_string_fs( "\r\n" ) );
+    mqo_set_global( mqo_symbol_fs( "*path-sep*" ), 
+                    mqo_vf_string( mqo_string_fs( "\\" ) ) );
+    mqo_set_global( mqo_symbol_fs( "*line-sep*" ),
+                    mqo_vf_string( mqo_string_fs( "\r\n" ) ) );
 #else
-    mqo_symbol_fs( "*path-sep*" )->value = 
-        mqo_vf_string( mqo_string_fs( "/" ) );
-    mqo_symbol_fs( "*line-sep*" )->value = 
-        mqo_vf_string( mqo_string_fs( "\n" ) );
+    mqo_set_global( mqo_symbol_fs( "*path-sep*" ),
+                    mqo_vf_string( mqo_string_fs( "/" ) ) );
+    mqo_set_global( mqo_symbol_fs( "*line-sep*" ),
+                    mqo_vf_string( mqo_string_fs( "\n" ) ) );
 #endif
 
     MQO_BIND_PRIM( open_file );

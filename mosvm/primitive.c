@@ -33,6 +33,7 @@ void mqo_trace_primitive( mqo_primitive prim ){
 }
 void mqo_format_primitive( mqo_string buf, mqo_primitive prim ){
     mqo_format_begin( buf, prim );
+    mqo_format_char( buf, ' ' );
     mqo_format_sym( buf, mqo_prim_name( prim ) );
     mqo_format_end( buf );
 }

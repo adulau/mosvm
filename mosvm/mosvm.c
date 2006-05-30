@@ -23,13 +23,13 @@
 
 //TODO: Add (disable-sigint) so the drone can block this.
 void mqo_handle_sigint( int sig ){
-    mqo_newline( );
-    mqo_print( "Interrupted by user." );
-    mqo_newline( );
     mqo_string s = mqo_make_string( 128 );
+    mqo_format_nl( s );
+    mqo_format_cs( s, "Interrupted by user." );
+    mqo_format_nl( s );
     mqo_format_context( s, mqo_frame_context( MQO_CP ) );
+    mqo_format_nl( s );
     mqo_printstr( s );
-    mqo_newline( );
     exit(909);
 }
 #endif
@@ -39,6 +39,15 @@ void mqo_run( mqo_value func ){
     mqo_process p = mqo_spawn_func( func );
     mqo_set_process_output( p, (mqo_object) mqo_stream_output( mqo_stdio ) );
     mqo_set_process_input( p, (mqo_object) mqo_stream_input( mqo_stdio ) );
+
+    mqo_print( "Will run process " );
+    mqo_show( p );
+    mqo_print( " with input " );
+    mqo_show( mqo_process_input( p ) );
+    mqo_print( " and output " );
+    mqo_show( mqo_process_output( p ) );
+    mqo_newline();
+
     mqo_proc_loop( );
 }
 

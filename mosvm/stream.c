@@ -52,7 +52,7 @@ mqo_listener mqo_last_listener = NULL;
 mqo_stream mqo_first_stream = NULL;
 mqo_stream mqo_last_stream = NULL; 
 
-mqo_symbol mqo_cmd_close = NULL;
+mqo_symbol mqo_eof = NULL;
 
 void mqo_report_host_error( ){
 #if defined(_WIN32)||defined(__CYGWIN__)
@@ -162,6 +162,7 @@ mqo_listener mqo_make_listener( mqo_integer fd ){
     }else{
         mqo_first_listener = l;    
         mqo_enable_process( mqo_stream_monitor );
+        mqo_print( "Enabling stream monitor for listener.\n" );
     };
     
     l->prev = mqo_last_listener;
@@ -183,6 +184,7 @@ void mqo_enable_stream( mqo_stream stream ){
     }else{
         mqo_first_stream = stream;
         mqo_enable_process( mqo_stream_monitor );
+        mqo_print( "Enabling stream monitor for stream.\n" );
     }
 
     mqo_last_stream = stream;
@@ -217,7 +219,8 @@ void mqo_disable_stream( mqo_stream stream ){
 void mqo_close_stream( mqo_stream stream ){
     mqo_disable_stream( stream );
     if( stream->closed )return;
-    mqo_channel_append( stream->evt, mqo_vf_symbol( mqo_cmd_close ) );
+    mqo_close_channel( stream->evt );
+    mqo_close_channel( stream->cmd );
     stream->closed = 1;
     close( stream->fd );
 }
@@ -277,7 +280,7 @@ void mqo_stream_write_evt( mqo_stream stream ){
 
     mqo_value  cmd = mqo_channel_head( stream->cmd );
 
-    if( mqo_is_symbol( cmd ) && ( mqo_symbol_fv( cmd ) == mqo_cmd_close ) ){
+    if( mqo_is_symbol( cmd ) && ( mqo_symbol_fv( cmd ) == mqo_eof ) ){
         mqo_read_channel( stream->cmd );
         mqo_close_stream( stream );
     }else if( mqo_is_string( cmd ) ){
@@ -326,22 +329,19 @@ void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
         //     are commands, we will keep it in the active list.
 
         next = stream->next; fd = stream->fd;
-
+        
         int use = 0;
         
         if( mqo_is_stream_reading( stream ) ){
-            if( stream->closed ){
-                // Nobody in here but us chickennnnnnnns.
-                mqo_channel_append( stream->evt, mqo_vf_symbol( mqo_cmd_close ) );
-            }else{
-                use = 1;
-            }
+            mqo_print( "Stream is reading.\n" );
+            use = 1;
         };
 
         FD_SET( fd, &reads );
         FD_SET( fd, &errors );
 
         if( mqo_is_stream_writing( stream ) ){
+            mqo_print( "Stream is writing.\n" );
             fd = fd ? fd : STDOUT_FILENO;
             FD_SET( fd, &writes );
             use = 1;
@@ -350,6 +350,7 @@ void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
         if( fd > maxfd ) maxfd = fd;
 
         if( ! use ){
+            mqo_print( "Stream is not in use.\n" );
             mqo_disable_stream( stream );
         }
     }
@@ -362,6 +363,7 @@ void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
     }
    
     if(!( mqo_first_stream || mqo_first_listener )){
+        mqo_print( "Disabling stream monitor for disuse.\n" );
         mqo_disable_process( mqo_stream_monitor );
         return;
     };
@@ -527,7 +529,7 @@ void mqo_init_stream_subsystem( ){
         mqo_vf_null( ) 
     );
     
-    mqo_cmd_close = mqo_symbol_fs( "close" );
+    mqo_eof = mqo_symbol_fs( "eof" );
     mqo_root_obj( (mqo_object) mqo_stream_monitor );
 
 #ifdef _WIN32

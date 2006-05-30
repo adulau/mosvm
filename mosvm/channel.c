@@ -15,10 +15,15 @@
  */
 
 #include "mosvm.h"
-
+void mqo_close_channel( mqo_channel c ){
+    if( c->closed )return;
+    mqo_channel_append( c, mqo_vf_symbol( mqo_eof ) );
+    c->closed = 1;
+}
 mqo_channel mqo_make_channel( ){
     mqo_channel c = MQO_OBJALLOC( channel );
     c->monitor = NULL;
+    c->closed = 0;
     c->head = c->tail = NULL;
     c->prev = c->next = NULL;
     return c;
@@ -91,6 +96,7 @@ mqo_boolean mqo_wake_monitor( mqo_channel channel, mqo_value message ){
     return 0;
 }
 void mqo_channel_append( mqo_channel channel, mqo_value message ){
+    if( channel->closed )mqo_errf( mqo_es_vm, "sxx", "cannot send to closed channel", channel, message );
     if( mqo_wake_monitor( channel, message ) )return;
 
     mqo_pair p = mqo_cons( message, mqo_vf_null() );
@@ -105,6 +111,8 @@ void mqo_channel_append( mqo_channel channel, mqo_value message ){
 }
 
 void mqo_channel_prepend( mqo_channel channel, mqo_value message ){
+    if( channel->closed )mqo_errf( mqo_es_vm, "sxx", "cannot send to closed channel", channel, message );
+    if( mqo_wake_monitor( channel, message ) )return;
     if( mqo_wake_monitor( channel, message ) )return;
 
     mqo_pair p = mqo_cons( message, mqo_vf_list( channel->head ) );
@@ -187,7 +195,7 @@ mqo_channel mqo_get_input( mqo_value x ){
 }
 
 mqo_channel mqo_req_input( mqo_value x ){
-    mqo_channel c = mqo_get_output( x );
+    mqo_channel c = mqo_get_input( x );
     if( c == NULL ){
         mqo_errf( mqo_es_vm, "sx", "cannot determine input channel", x );
     }else{
@@ -212,7 +220,7 @@ MQO_GENERIC_FREE( channel );
 MQO_C_TYPE( channel )
 
 MQO_BEGIN_PRIM( "send", send )
-    REQ_INPUT_ARG( channel );
+    REQ_OUTPUT_ARG( channel );
     REST_ARGS( messages );
     
     while( messages ){
@@ -244,8 +252,19 @@ MQO_BEGIN_PRIM( "wait", wait )
     mqo_channel r = NULL;
 
     while( m ){
-        mqo_channel c = mqo_req_output( mqo_car( m ) );
-        if( ! mqo_channel_empty( c ) ) r = c;
+        mqo_channel c = mqo_req_input( mqo_car( m ) );
+        mqo_print( "Requiring input from: " );
+        mqo_show( mqo_car( m ) );
+        mqo_print( " for channel: " );
+        mqo_show( mqo_vf_channel( c ) );
+        mqo_print( "\n" );
+        if( ! mqo_channel_empty( c ) ){
+            mqo_print( "    Found data.\n" );
+            r = c;
+        }else if( c->closed ){
+            mqo_print( "    Channel closed.\n" );
+            r = c;
+        }
         m = mqo_req_list( mqo_cdr( m ) );
     };
 
@@ -254,9 +273,13 @@ MQO_BEGIN_PRIM( "wait", wait )
     }else{
         mqo_pair m = channels;
 
+        mqo_print( "Will wait on: " );
+        mqo_show( mqo_vf_list( m ) );
+        mqo_print( "\n" );
+
         while( m ){
             mqo_add_monitor( mqo_active_process,
-                             mqo_req_output( mqo_car( m ) ) );
+                             mqo_get_input( mqo_car( m ) ) );
             m = mqo_list_fv( mqo_cdr( m ) );
         };
         
@@ -339,6 +362,22 @@ MQO_BEGIN_PRIM( "output?", outputq )
     RESULT( channel ? mqo_vf_channel( channel ) : mqo_vf_false( ) );
 MQO_END_PRIM( output )
 
+MQO_BEGIN_PRIM( "closed?", closedq )
+    REQ_CHANNEL_ARG( channel );
+    NO_REST_ARGS( );
+    
+    BOOLEAN_RESULT( channel->closed );
+MQO_END_PRIM( closedq )
+
+MQO_BEGIN_PRIM( "close", close )
+    REQ_CHANNEL_ARG( channel );
+    NO_REST_ARGS( );
+
+    mqo_close_channel( channel );
+
+    CHANNEL_RESULT( channel );
+MQO_END_PRIM( close )
+
 void mqo_init_channel_subsystem( ){
     MQO_I_TYPE( channel );
     MQO_BIND_PRIM( wait );
@@ -352,4 +391,6 @@ void mqo_init_channel_subsystem( ){
     MQO_BIND_PRIM( set_output );
     MQO_BIND_PRIM( inputq );
     MQO_BIND_PRIM( outputq );
+    MQO_BIND_PRIM( closedq );
+    MQO_BIND_PRIM( close );
 }

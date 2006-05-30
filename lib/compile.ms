@@ -24,8 +24,6 @@
 (import "lib/module")
 (import "lib/iterate")
 (import "lib/record")
-(import "lib/port")
-(import "lib/string-port")
 
 (export compile)
 
@@ -353,40 +351,6 @@
 
 (set-macro! 'export (lambda any '(begin)))
 
-(set-macro! 'with-input-port
-            (lambda (port . rest)
-              `(let ((%old-input (current-input-port)))
-                 (set-process-input! ,port)
-                 (guard (lambda (%e) 
-                          (set-process-input! %old-input)
-                          (re-error %e))
-                        (define %result (begin ,@rest))
-                        (set-process-input! %old-input)
-                        %result))))
-
-(set-macro! 'with-output-port
-            (lambda (port . rest)
-              `(let ((%old-output (current-output-port)))
-                 (set-process-output! ,port)
-                 (guard (lambda (%e) 
-                          (set-process-output! %old-output)
-                          (re-error %e))
-                        (define %result (begin ,@rest))
-                        (set-process-output! %old-output)
-                        %result))))
-
-(set-macro! 'string-output
-            (lambda rest
-              `(let ((%old-output (current-output-port))
-                     (%string (open-output-string)))
-                 (set-process-output! %string)
-                 (guard (lambda (%e)
-                          (set-process-output! %old-output)
-                          (write (get-output-string %string))
-                          (re-error %e))
-                        (define %result (begin ,@rest))
-                        (set-process-output! %old-output)
-                        (write (get-output-string %string))))))
 (set-macro! 's:
             (lambda (stmt . rest)
               `(if *spot-test?*
@@ -500,8 +464,8 @@
                           (mos ,f-expr)
                           ,done-branch))))
 
-(set-macro! 'return (lambda (expr)
-                      `(asm (mos ,expr)
+(set-macro! 'return (lambda expr
+                      `(asm (mos ,@expr)
                             (retn))))
 
 (set-macro! 'begin (lambda stmts
