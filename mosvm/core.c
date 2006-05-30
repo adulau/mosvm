@@ -931,6 +931,9 @@ MQO_BEGIN_PRIM( "tc->list", tc_to_list )
     RESULT( mqo_car( tc ) );
 MQO_END_PRIM( tc_to_list )
 
+mqo_symbol mqo_es_parse;
+mqo_symbol mqo_es_inc;
+
 MQO_BEGIN_PRIM( "string->exprs", string_to_exprs )
     REQ_STRING_ARG( src );
     NO_REST_ARGS( );
@@ -940,7 +943,10 @@ MQO_BEGIN_PRIM( "string->exprs", string_to_exprs )
     if( ok ){
         RESULT( mqo_vf_list( v ) );
     }else{
-        mqo_errf( mqo_es_vm, "si", mqo_parse_errmsg, mqo_parse_incomplete );
+        mqo_errf( mqo_parse_incomplete ? mqo_es_inc :
+                                         mqo_es_parse, 
+                  "s", mqo_parse_errmsg 
+        );
     }
 MQO_END_PRIM( string_to_exprs )
 
@@ -1833,4 +1839,13 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( string_erased );
     
     MQO_BIND_PRIM( copy_string );
+    
+    MQO_BIND_PRIM( errorq );
+    MQO_BIND_PRIM( error_key );
+    MQO_BIND_PRIM( error_info );
+
+    mqo_es_parse = mqo_symbol_fs( "parse" );
+    mqo_root_obj( (mqo_object) mqo_es_parse );
+    mqo_es_inc = mqo_symbol_fs( "inc" );
+    mqo_root_obj( (mqo_object) mqo_es_inc );
 }

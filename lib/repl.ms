@@ -21,15 +21,17 @@
 (import "lib/compile")
 (import "lib/eval")
 (import "lib/line-filter")
+(import "lib/s-filter")
 
 (define (repl)
-  (define lines (line-filter (input)))
-  (until (closed? lines)
-    (define line (wait lines))
+  (define cmds (s-filter (line-filter (input))))
+  (until (closed? cmds)
+    (send ">> ")    
+    (define cmd (wait cmds))
     (guard traceback
-      (define prog (string->exprs line))
-      (define data (exec prog))
-      (define data prog))
+      (define data cmd)
+      ; (define data (exec cmd))
+      )
     (send (string-append ":: " (format data) *line-sep*))))
 
 (export repl)

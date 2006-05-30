@@ -26,13 +26,14 @@ mqo_integer mqo_parse_incomplete = 0;
 const char* mqo_parse_errmsg = NULL;
 const char* mqo_em_nodigits = "expected digits";
 const char* mqo_em_noprint = "illegal character";
-const char* mqo_em_endq = "closing \" missing";
-const char* mqo_em_endp = "closing ) missing";
+const char* mqo_em_endq = "closing quote missing";
+const char* mqo_em_endp = "closing \")\" missing";
 const char* mqo_em_more = "expected more";
 const char* mqo_em_nohead= "expected value before \".\"";
 const char* mqo_em_notail = "expected value after \".\"";
 const char* mqo_em_extra_tail = "superfluous value after \".\"";
 const char* mqo_em_badsharp = "expected \"t\" or \"f\" after \"#\"";
+const char* mqo_em_begp = "\")\" unmatched by \"(\"";
 
 mqo_quad mqo_parse_dec( char** r_str, mqo_boolean* r_succ ){
     char* str = *r_str;
@@ -331,6 +332,10 @@ mqo_value mqo_parse_value( char** r_str, mqo_boolean* r_succ ){
     }else if( ch == '"' ){
         mqo_string s = mqo_parse_str( &str, r_succ );
         if( *r_succ ) x = mqo_vf_string( s );
+    }else if( ch == ')' ){
+        *r_succ = 0;
+        mqo_parse_incomplete = 0;
+        mqo_parse_errmsg = mqo_em_begp;
     }else if( ch == '#' ){
         str ++;
         ch = *(str++);
