@@ -13,21 +13,18 @@
 ; along with this library; if not, write to the Free Software Foundation, 
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
-(import "lib/tcp-server")
+(module "lib/tcp-server")
+(import "lib/with-io")
 
-(define (print-line . args)
-  (print (string-append @args *line-sep*)))
+(define (spawn-tcp-server portno fn)
+  (define server (tcp-listen portno))
+  (spawn (lambda ()
+            (until (closed? server)
+              ;; Born just a little too slooooooooow!
+              (with-io (wait server)
+                (spawn fn)))))
+  server)
 
-(define (eko-session)
-  (print-line "Session begins.")
-  (until (closed?)
-    (print-line "Waiting for data...")
-    (define data (wait))
-    (print-line "Received data: " (format data))
-    (send data)
-    (print-line "Sent data."))
-  (print-line "Session complete."))
+(export spawn-tcp-server)
 
-(define (eko portno)
-  (spawn-tcp-server portno eko-session))
-;;; MOSVM3
+;;; MOSVM2

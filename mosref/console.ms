@@ -62,7 +62,7 @@
 (define (make-drone-exe console-addr console-portno console-ecdh platform)
   (build-exe platform
              `((import "mosref/drone")
-               (import "lib/conn")
+               (import "lib/tcp-server")
                (drone-repl
                  (drone-affiliation 
                    (import-ecdh

@@ -7,3 +7,5 @@
 (list 'a 'b 'c 'd 'e 'f 'g 'h); overwrites the data stack. 
 (gc-now);if trace is on, a file finalization message will be displayed.
   
+;;; MOSVM2
+;;; MOSVM2

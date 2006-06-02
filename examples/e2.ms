@@ -26,3 +26,5 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 ((lambda (a b c) (error 'test "this is an inner test error")) 11 22 33)
+;;; MOSVM2
+;;; MOSVM2

@@ -26,3 +26,5 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 ((lambda x x) 1 2 3)
+;;; MOSVM2
+;;; MOSVM2

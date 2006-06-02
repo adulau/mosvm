@@ -15,7 +15,7 @@
 
 (module "lib/http-url")
 (import "lib/url")
-(import "lib/conn")
+(import "lib/tcp-server")
 
 (define-class http-url <object>
               (make-http-url user host portno path args frag)

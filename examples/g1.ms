@@ -26,3 +26,5 @@
 ; POSSIBILITY OF SUCH DAMAGE.
 
 (guard show (error 'test 1))
+;;; MOSVM2
+;;; MOSVM2

@@ -17,7 +17,7 @@
 
 (module "lib/http-server")
 (import "lib/http-url")
-(import "lib/conn")
+(import "lib/tcp-server")
 
 (define-class http-request <object>
               (make-http-request method headers url version body port)

@@ -66,6 +66,7 @@ void mqo_report_net_error( ){
 #if defined(_WIN32)||defined(__CYGWIN__)
     mqo_errf( mqo_es_vm, "s", strerror( WSAGetLastError() ) );
 #else
+    if( errno == EINPROGRESS )return;
     mqo_errf( mqo_es_vm, "s", strerror( errno ) );
 #endif
 }
@@ -472,31 +473,40 @@ MQO_BEGIN_PRIM( "tcp-listen", tcp_listen )
 MQO_END_PRIM( tcp_listen )
 
 MQO_BEGIN_PRIM( "tcp-connect", tcp_connect )
+    REQ_ANY_ARG( address );
     REQ_INTEGER_ARG( portno );
     NO_REST_ARGS( );
+    
+    mqo_integer addint;
 
-    static struct sockaddr_in addr;
-
+    if( mqo_is_integer( addint ) ){
+        addint = mqo_integer_fv( addint );
+    }else if( mqo_is_string( addint ) ){
+        addint = mqo_resolve( mqo_string_fv( addint ) );
+    }else{  
+        mqo_errf( mqo_es_vm, "sx",
+                  "expected a string or integer for addint", addint );
+    }   
+    
+    static struct sockaddr_in addr; 
+ 
     memset( &addr, 0, sizeof( addr ) );
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = htonl( INADDR_ANY );
+    addr.sin_addr.s_addr = htonl( addint );
     addr.sin_port = htons( portno );
 
-    int server_fd = mqo_net_error( socket( AF_INET, SOCK_STREAM,
-                                           IPPROTO_TCP ) );
-    mqo_net_error( bind( server_fd, (struct sockaddr*)&addr, sizeof( addr ) ) );
-    mqo_net_error( listen( server_fd, 5 ) );
+    int fd = mqo_net_error( socket( AF_INET, SOCK_STREAM, IPPROTO_TCP ) );
 
 #if defined( _WIN32 )||defined( __CYGWIN__ )
     unsigned long unblocking = 1;
-    mqo_net_error( ioctlsocket( server_fd, FIONBIO, &unblocking ) );
+    mqo_net_error( ioctlsocket( fd, FIONBIO, &unblocking ) );
 #else
-    mqo_net_error( fcntl( server_fd, F_SETFL, O_NONBLOCK ) );
+    mqo_net_error( fcntl( fd, F_SETFL, O_NONBLOCK ) );
 #endif
 
-    //TODO: Create a server name.
+    mqo_net_error( connect( fd, (struct sockaddr*)&addr, sizeof( addr ) ) );
 
-    LISTENER_RESULT( mqo_make_listener( server_fd ) );
+    STREAM_RESULT( mqo_make_stream( fd ) );
 MQO_END_PRIM( tcp_connect )
 
 MQO_BEGIN_PRIM( "stream-closed?", stream_closedq )

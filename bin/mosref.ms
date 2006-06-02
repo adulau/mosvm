@@ -15,7 +15,7 @@
 
 (module "bin/mosref")
 (import "mosref/console")
-(import "lib/conn")
+(import "lib/tcp-server")
 
 (define unparsed-args (apply make-tc (cdr (argv))))
 

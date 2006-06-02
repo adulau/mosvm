@@ -232,9 +232,14 @@
   ;;;(display "Compiling Lisp Complex Arg: " )
   ;;;(write arg)
   ;;;(newline)
-
-  (append (compile-lisp-expr env arg)
+  (append (compile-lisp-expr env (compile-lisp-arg*2 arg))
           '((scat))))
+
+(define (compile-lisp-arg*2 arg)
+  (if (and (pair? arg)
+           (eq? (car arg) 'scatter))
+    (list 'append (list 'scatter (compile-lisp-arg*2 (cadr arg))))
+    arg))
 
 (define (compile-asm-block env block)
   (define tc (make-tc))

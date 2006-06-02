@@ -13,7 +13,7 @@
 ; along with this library; if not, write to the Free Software Foundation, 
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
-(import "lib/conn")
+(import "lib/tcp-server")
 
 (define (polly-session)
   (write "Polly wants a cracker!\n")
@@ -24,3 +24,5 @@
 (define (polly portno)
   (spawn-tcp-server portno polly-session))
 
+;;; MOSVM2
+;;; MOSVM2

@@ -13,10 +13,12 @@
 ; along with this library; if not, write to the Free Software Foundation, 
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
-(import "lib/conn")
+(import "lib/tcp-server")
 (import "lib/repl")
 (import "lib/format")
 
 (define (net-repl portno)
   (spawn-tcp-server portno repl))
 
+;;; MOSVM2
+;;; MOSVM2

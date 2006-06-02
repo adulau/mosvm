@@ -27,3 +27,5 @@
 
 (error 'test "this is a" "test error")
 
+;;; MOSVM2
+;;; MOSVM2

@@ -323,20 +323,42 @@ MQO_BEGIN_PRIM( "waiting?", waitingq )
 MQO_END_PRIM( waitingq )
 
 MQO_BEGIN_PRIM( "set-input!", set_input )
-    REQ_ANY_ARG( value );
-    REQ_CHANNEL_ARG( channel );
+    REQ_ANY_ARG( arg1 );
+    OPT_ANY_ARG( arg2 );
     NO_REST_ARGS( );
     
+    mqo_value value; 
+    mqo_channel channel;
+
+    if( has_arg2 ){
+        value = arg1;
+        channel = mqo_get_input( arg2 );
+    }else{
+        value = mqo_vf_process( mqo_active_process );
+        channel = mqo_get_input( arg1 );
+    }
+
     mqo_set_input( value, channel );
 
     RESULT( value );
 MQO_END_PRIM( set_input )
 
 MQO_BEGIN_PRIM( "set-output!", set_output )
-    REQ_ANY_ARG( value );
-    REQ_CHANNEL_ARG( channel );
+    REQ_ANY_ARG( arg1 );
+    OPT_ANY_ARG( arg2 );
     NO_REST_ARGS( );
     
+    mqo_value value; 
+    mqo_channel channel;
+
+    if( has_arg2 ){
+        value = arg1;
+        channel = mqo_get_output( arg2 );
+    }else{
+        value = mqo_vf_process( mqo_active_process );
+        channel = mqo_get_output( arg1 );
+    }
+
     mqo_set_output( value, channel );
 
     RESULT( value );
