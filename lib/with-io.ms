@@ -25,11 +25,13 @@
       (guard (lambda (e)
                (reset)
                (re-error e))
+        (set-input!  io)
+        (set-output! io)
         (func)))
     (reset)
     result))
 
-(define (do-with-input input func)
+(define (do-with-input io func)
   (let ((old-input (input)))
     (define (reset)
       (set-input! old-input))
@@ -37,11 +39,12 @@
       (guard (lambda (e)
                (reset)
                (re-error e))
+        (set-input!  io)
         (func)))
     (reset)
     result))
 
-(define (do-with-output output func)
+(define (do-with-output io func)
   (let ((old-output (output)))
     (define (reset)
       (set-output! old-output))
@@ -49,18 +52,19 @@
       (guard (lambda (e)
                (reset)
                (re-error e))
+        (set-output! io)
         (func)))
     (reset)
     result))
 
-(define-macro (with-io io body)
+(define-macro (with-io io . body)
     (list 'do-with-io io (apply list 'function '(inner-io-func) body)))
 
-(define-macro (with-input input body)
+(define-macro (with-input input . body)
     (list 'do-with-input input 
           (apply list 'function '(inner-input-func) body)))
 
-(define-macro (with-output output body)
+(define-macro (with-output output . body)
     (list 'do-with-output output 
           (apply list 'function '(inner-output-func) body)))
 

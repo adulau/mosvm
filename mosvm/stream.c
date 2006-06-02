@@ -282,6 +282,7 @@ void mqo_listener_read_evt( mqo_listener listener ){
         //TODO: We blissfully ignore errors during accept..
         //TODO: We do need to report the catastrophic event of EMFILE or ENFILE
     }else{
+        printf( "Listener read event, got connection %i\n", conn );
         mqo_channel_append( 
             listener->conns, mqo_vf_stream( mqo_make_stream( conn ) ) );
     }
@@ -601,12 +602,14 @@ void mqo_set_stream_input( mqo_stream s, mqo_channel input ){
     s->evt = input;
 }
 mqo_channel mqo_stream_input( mqo_stream s ){ mqo_enable_stream( s );
+                                              assert( s->evt );
                                               return s->evt; }
 void mqo_set_stream_output( mqo_stream s, mqo_channel output ){
     mqo_enable_stream( s );
     s->cmd = output;
 }
 mqo_channel mqo_stream_output( mqo_stream s ){ mqo_enable_stream( s );
+                                               assert( s->cmd );
                                               return s->cmd; }
 
 mqo_stream mqo_stdio;

@@ -22,7 +22,7 @@ $(MOSREF): $(MOSC) $(MOSVM) libs mosrefs
 	sh bin/build-app.sh $(MOSVM_STUB) bin/mosref $(MOSREF)
 
 repl:
-	rlwrap -b"()" -f share/symbols $(MOSVM)
+	rlwrap -b"()" -f share/symbols $(MOSVM) -x
 
 package: $(PACKAGE)
 

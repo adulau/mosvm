@@ -39,5 +39,7 @@ void mqo_format_end( mqo_string buf );
 void mqo_format( mqo_string s, mqo_value v );
 mqo_string mqo_formatf( char* fmt, ... );
 
+#define mqo_printf( fmt, ... ) mqo_printstr( mqo_formatf( fmt, __VA_ARGS__ ) );
+
 #endif
 

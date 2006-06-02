@@ -150,4 +150,3 @@ done:
     va_end( ap );
     return buf;
 }
-

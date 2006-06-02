@@ -65,6 +65,8 @@ int main( int argc, const char** argv ){
     for( i = 1; i < argc; i ++ ){
         if( ! strcmp( argv[i], "-d" ) ){
             mqo_trace_flag ++;
+        }else if( ! strcmp( argv[i], "-x" ) ){
+            mqo_abort_on_error = 1;
         }else if( ! strcmp( argv[i], "-g" ) ){
             mqo_show_globals = 1;
         }else{

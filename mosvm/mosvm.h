@@ -48,5 +48,6 @@ void mqo_bind_core_prims( );
 mqo_value mqo_make_mote( mqo_type type );
 int mqo_argc;
 mqo_list mqo_argv;
+extern int mqo_abort_on_error;
 
 #endif

@@ -18,10 +18,15 @@
 
 (define (spawn-tcp-server portno fn)
   (define server (tcp-listen portno))
-  (spawn (lambda ()
-            (until (closed? server)
-              ;; Born just a little too slooooooooow!
-              (with-io (wait server)
+  (spawn (function (tcp-server)
+            (forever
+              (define conn (wait server))
+              (print (string-append "New connection is "
+                                      (format (input conn))  
+                                      " : " 
+                                      (format (output conn))
+                                      "\n"))
+              (with-io conn
                 (spawn fn)))))
   server)
 

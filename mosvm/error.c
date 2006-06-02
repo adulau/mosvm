@@ -17,6 +17,8 @@
 #include "mosvm.h"
 #include <stdarg.h>
 
+int mqo_abort_on_error = 0;
+
 void mqo_format_error( mqo_string buf, mqo_error e ){
     mqo_format_begin( buf, e );
     mqo_format_char( buf, ' ' );
@@ -116,7 +118,11 @@ void mqo_throw_error( mqo_error e ){
         mqo_string s = mqo_make_string( 128 );
         mqo_format_traceback( s, e ); 
         mqo_printstr( s );
-        exit( 1 );
+        if( mqo_abort_on_error ){
+            abort( );
+        }else{
+            exit( 1 );
+        }
     }
 }
 

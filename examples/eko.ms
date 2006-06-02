@@ -19,11 +19,16 @@
   (print (string-append @args *line-sep*)))
 
 (define (eko-session)
-  (print-line "Session begins.")
-  (until (closed?)
+  (print-line "Session begins; input is " 
+              (format (input)) 
+              " and output is " 
+              (format (output)))
+  (forever 
     (print-line "Waiting for data...")
     (define data (wait))
     (print-line "Received data: " (format data))
+    (when (eq? data 'close)
+      (return))
     (send data)
     (print-line "Sent data."))
   (print-line "Session complete."))
