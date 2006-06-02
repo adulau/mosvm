@@ -26,8 +26,11 @@
                (return))))
   
   (spawn (function (next-line)
-            (until (closed? in)
+            (forever
                (define next (wait in))
+               (when (eq? next 'close)
+                 (send next out)
+                 (return))
                (when (string? next)
                  (string-append! buf next)
                  (parse)))

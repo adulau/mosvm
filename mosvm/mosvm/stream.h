@@ -19,13 +19,17 @@
 
 #include "memory.h"
 
-mqo_symbol mqo_eof;
+mqo_value mqo_the_eof;
+
+#define MQO_READY      0
+#define MQO_CONNECTING 1
+#define MQO_CLOSED     2 
 
 MQO_BEGIN_TYPE( stream )
     mqo_integer fd;
     mqo_channel cmd, evt;
     mqo_stream prev, next;
-    mqo_boolean enabled, closed;
+    mqo_integer state, enabled;
     int error;
 MQO_END_TYPE( stream )
 
@@ -36,10 +40,12 @@ MQO_BEGIN_TYPE( listener )
     int error;
 MQO_END_TYPE( listener )
 
+MQO_H_TP( eof );
+MQO_H_IS( eof );
+static inline mqo_value mqo_vf_eof( ){ return mqo_the_eof; }
+
 mqo_stream mqo_make_stream( mqo_integer fd );
 mqo_listener mqo_make_listener( mqo_integer fd );
-void mqo_enable_stream( mqo_stream stream );
-void mqo_disable_stream( mqo_stream stream );
 void mqo_init_stream_subsystem( );
 
 mqo_channel mqo_stream_input( mqo_stream s );
@@ -56,6 +62,8 @@ static inline void mqo_set_listener_input( mqo_listener s, mqo_channel c ){ s->c
 #define OPT_LISTENER_ARG( vn  ) OPT_TYPED_ARG( vn, listener );
 #define LISTENER_RESULT( x  ) TYPED_RESULT( listener, x );
 
+void mqo_enable_stream( mqo_stream s );
+void mqo_disable_stream( mqo_stream s );
 void mqo_trace_network();
 extern mqo_stream mqo_stdio;
 #endif

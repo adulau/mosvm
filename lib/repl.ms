@@ -25,12 +25,14 @@
 
 (define (repl)
   (define cmds (s-filter (line-filter (input))))
-  (until (closed? cmds)
+  (forever
     (send ">> ")
     (define cmd (wait cmds))
+    (when (eq? cmd 'close) (return))
     (guard traceback
-      (set! cmd (exec cmd))
-      (send (string-append ":: " (format cmd) *line-sep*)))))
+      (send (string-append ":: " 
+                           (format (exec cmd)) 
+                           *line-sep*)))))
 
 (export repl)
 ;;; MOSVM2
