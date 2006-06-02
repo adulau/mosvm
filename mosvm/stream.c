@@ -40,7 +40,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <fcntl.h>
+#include <sys/ioctl.h>
 #define MQO_EWOULDBLOCK EWOULDBLOCK
 #endif
 
@@ -160,7 +160,9 @@ mqo_stream mqo_make_stream( mqo_integer fd ){
     unsigned long unblocking = 1;
     mqo_net_error( ioctlsocket( s->fd, FIONBIO, &unblocking ) );
 #else
-    if( fd ) mqo_net_error( fcntl( s->fd, F_SETFL, O_NONBLOCK ) );
+    // mqo_net_error( fcntl( fd, F_SETFL, O_NONBLOCK ) );
+    unsigned long unblocking = 1;
+    if( fd )mqo_net_error( ioctl( fd, FIONBIO, &unblocking ) );
 #endif
 
     return s;
@@ -293,7 +295,7 @@ void mqo_stream_write_evt( mqo_stream stream ){
     mqo_boolean put;
 
     if( stream->state == MQO_CONNECTING ){
-        mqo_channel_append( stream->cmd, mqo_vf_symbol( mqo_ss_connect ) );
+        mqo_channel_append( stream->evt, mqo_vf_symbol( mqo_ss_connect ) );
         stream->state = MQO_READY;
     };
 
@@ -364,6 +366,7 @@ void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
             printf( "Stream %i is connecting..\n", fd );
             FD_SET( fd, &errors );
             FD_SET( fd, &writes );
+            use = 1;
         }else{
             if( mqo_is_stream_reading( stream ) ){
                 printf( "Stream %i is reading..\n", fd );
@@ -501,7 +504,9 @@ MQO_BEGIN_PRIM( "tcp-listen", tcp_listen )
     unsigned long unblocking = 1;
     mqo_net_error( ioctlsocket( server_fd, FIONBIO, &unblocking ) );
 #else
-    mqo_net_error( fcntl( server_fd, F_SETFL, O_NONBLOCK ) );
+    // mqo_net_error( fcntl( server_fd, F_SETFL, O_NONBLOCK ) );
+    unsigned long unblocking = 1;
+    mqo_net_error( ioctl( server_fd, FIONBIO, &unblocking ) );
 #endif
 
     //TODO: Create a server name.
@@ -516,13 +521,13 @@ MQO_BEGIN_PRIM( "tcp-connect", tcp_connect )
     
     mqo_integer addint;
 
-    if( mqo_is_integer( addint ) ){
-        addint = mqo_integer_fv( addint );
-    }else if( mqo_is_string( addint ) ){
-        addint = mqo_resolve( mqo_string_fv( addint ) );
+    if( mqo_is_integer( address ) ){
+        addint = mqo_integer_fv( address );
+    }else if( mqo_is_string( address ) ){
+        addint = mqo_resolve( mqo_string_fv( address ) );
     }else{  
         mqo_errf( mqo_es_vm, "sx",
-                  "expected a string or integer for addint", addint );
+                  "expected a string or integer for address", address );
     }   
     
     static struct sockaddr_in addr; 
@@ -538,7 +543,9 @@ MQO_BEGIN_PRIM( "tcp-connect", tcp_connect )
     unsigned long unblocking = 1;
     mqo_net_error( ioctlsocket( fd, FIONBIO, &unblocking ) );
 #else
-    mqo_net_error( fcntl( fd, F_SETFL, O_NONBLOCK ) );
+    // mqo_net_error( fcntl( fd, F_SETFL, O_NONBLOCK ) );
+    unsigned long unblocking = 1;
+    mqo_net_error( ioctl( fd, FIONBIO, &unblocking ) );
 #endif
 
     mqo_net_error( connect( fd, (struct sockaddr*)&addr, sizeof( addr ) ) );
@@ -599,17 +606,16 @@ void mqo_init_stream_subsystem( ){
 
 void mqo_set_stream_input( mqo_stream s, mqo_channel input ){
     mqo_enable_stream( s );
-    s->evt = input;
+    s->cmd = input;
 }
 mqo_channel mqo_stream_input( mqo_stream s ){ mqo_enable_stream( s );
-                                              assert( s->evt );
-                                              return s->evt; }
+                                              return s->cmd; }
 void mqo_set_stream_output( mqo_stream s, mqo_channel output ){
     mqo_enable_stream( s );
-    s->cmd = output;
+    s->evt = output;
 }
 mqo_channel mqo_stream_output( mqo_stream s ){ mqo_enable_stream( s );
-                                               assert( s->cmd );
-                                              return s->cmd; }
+                                               assert( s->evt );
+                                              return s->evt; }
 
 mqo_stream mqo_stdio;

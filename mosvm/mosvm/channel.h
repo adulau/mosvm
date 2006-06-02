@@ -64,7 +64,7 @@ mqo_channel mqo_req_output( mqo_value x );
 #define REQ_INPUT_ARG( x )  mqo_channel x = mqo_req_input( mqo_req_any() );
 #define OPT_INPUT_ARG( x )  mqo_boolean has_ ## x; mqo_channel x = mqo_opt_input( & has_##x );
 #define REQ_OUTPUT_ARG( x )  mqo_channel x = mqo_req_output( mqo_req_any() );
-#define OPT_OUTPUT_ARG( x )  mqo_boolean has_ ## x; mqo_channel x = mqo_opt_input( & has_##x );
+#define OPT_OUTPUT_ARG( x )  mqo_boolean has_ ## x; mqo_channel x = mqo_opt_output( & has_##x );
 
 static inline mqo_channel mqo_opt_input( mqo_boolean* has_input ){
     mqo_value x = mqo_opt_any( has_input );

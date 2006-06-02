@@ -251,12 +251,12 @@ MQO_BEGIN_PRIM( "send", send )
     REST_ARGS( channels );
     
     if( ! channels ){
-        channels = mqo_cons( mqo_vf_process( mqo_active_process ),
+        channels = mqo_cons( mqo_vf_channel( mqo_active_process->output ),
                              mqo_vf_null() );
     };
 
     while( channels ){
-        mqo_channel_append( mqo_req_output( mqo_car( channels ) ), 
+        mqo_channel_append( mqo_req_input( mqo_car( channels ) ), 
                             message );
         channels = mqo_req_list( mqo_cdr( channels ) );
     }
@@ -275,7 +275,7 @@ MQO_BEGIN_PRIM( "wait", wait )
     REST_ARGS( channels );
 
     if( ! channels ){
-        channels = mqo_cons( mqo_vf_process( mqo_active_process ),
+        channels = mqo_cons( mqo_vf_channel( mqo_active_process->input ),
                              mqo_vf_null() );
     };
 
@@ -284,7 +284,7 @@ MQO_BEGIN_PRIM( "wait", wait )
     mqo_channel r = NULL;
 
     while( m ){
-        mqo_channel c = mqo_req_input( mqo_car( m ) );
+        mqo_channel c = mqo_req_output( mqo_car( m ) );
         if( ! mqo_channel_empty( c ) ){
             r = c;
         }
@@ -298,7 +298,7 @@ MQO_BEGIN_PRIM( "wait", wait )
 
         while( m ){
             mqo_add_monitor( mqo_active_process,
-                             mqo_get_input( mqo_car( m ) ) );
+                             mqo_get_output( mqo_car( m ) ) );
             m = mqo_list_fv( mqo_cdr( m ) );
         };
         
@@ -373,18 +373,22 @@ MQO_END_PRIM( set_output )
 MQO_BEGIN_PRIM( "input", input )
     OPT_INPUT_ARG( channel );
     NO_REST_ARGS( );
+
     if( ! has_channel ){
         channel = mqo_req_input( mqo_vf_process( mqo_active_process ) );
     }
+
     CHANNEL_RESULT( channel );
 MQO_END_PRIM( input )
 
 MQO_BEGIN_PRIM( "output", output )
     OPT_OUTPUT_ARG( channel );
     NO_REST_ARGS( );
+
     if( ! has_channel ){
         channel = mqo_req_output( mqo_vf_process( mqo_active_process ) );
     }
+
     CHANNEL_RESULT( channel );
 MQO_END_PRIM( output )
 
