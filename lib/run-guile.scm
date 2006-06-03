@@ -65,3 +65,6 @@
 (define (dict-set? d k)
   (hashq-get-handle d k))
 
+; Guile's stack is too small and conservative for lib/compile
+(debug-set! stack 100000)
+
