@@ -55,6 +55,8 @@ int main( int argc, const char** argv ){
     argv[0]=name;
 #else
     signal( SIGINT, mqo_handle_sigint );
+    // SIGPIPE is the devil; mosvm's write operations check for errors.
+    signal( SIGPIPE, SIG_IGN );
 #endif
 
     mqo_init_mosvm( );

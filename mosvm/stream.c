@@ -56,6 +56,25 @@ mqo_symbol mqo_ss_fail;
 mqo_symbol mqo_ss_close;
 mqo_symbol mqo_ss_connect;
 
+void mqo_stream_error( mqo_stream stream, int code ){
+    mqo_channel_append( 
+        stream->evt, 
+        mqo_vf_list( 
+            mqo_listf( 4, 
+                       mqo_vf_symbol( mqo_ss_fail ),  
+                       mqo_vf_string( mqo_string_fs( strerror( code ) ) ),
+                       stream, 
+                       mqo_vf_integer( code ) ) ) );
+}
+
+void mqo_stream_net_error( mqo_stream stream ){
+#ifndef _WIN32 
+    mqo_stream_error( stream, errno );
+#else
+    mqo_stream_error( stream, WSAGetLastError() );
+#endif
+}
+
 void mqo_report_host_error( ){
 #if defined(_WIN32)||defined(__CYGWIN__)
     mqo_errf( mqo_es_vm, "s", strerror( WSAGetLastError() ) );
@@ -134,15 +153,6 @@ mqo_integer mqo_resolve( mqo_string name ){
 
     return addr;
 }
-
-//TODO: A stream that has connected sends:
-//      (status ready)
-//TODO: A stream that has disconnected sends:
-//      (status closed)
-//TODO: A stream that has failed sends:
-//      (failure message code)
-//TODO: A stream that has received data sends:
-//      data
 
 mqo_stream mqo_make_stream( mqo_integer fd ){
     mqo_stream s = MQO_OBJALLOC( stream );
@@ -262,11 +272,7 @@ void mqo_stream_read_evt( mqo_stream stream ){
         // Lies.. Why does select lie to us so?
         if( errno == EAGAIN )return;
         
-        mqo_channel_append( 
-            stream->evt, 
-            mqo_vf_list( mqo_listf( 2, mqo_ss_fail, 
-                                       mqo_string_fs( strerror( errno ) ) ) ) 
-        );
+        mqo_stream_net_error( stream );
         
         // TODO: Assumption: all errors are fatal..
         mqo_close_stream( stream );
@@ -289,13 +295,31 @@ void mqo_listener_read_evt( mqo_listener listener ){
     }
 }
 
+int mqo_stream_send( mqo_stream stream, void* data, mqo_quad datalen ){
+    int result;
+
+    if( stream->fd ){
+        result = send( stream->fd, data, datalen, 0 );
+        if( result == -1 ) mqo_stream_net_error( stream );
+    }else{
+        result = write( STDOUT_FILENO, data, datalen );
+        if( result == -1 ) mqo_stream_error( stream, errno );
+    };
+
+    return result; 
+}
+
 void mqo_stream_write_evt( mqo_stream stream ){
     mqo_string buf;
     mqo_boolean put;
 
     if( stream->state == MQO_CONNECTING ){
-        mqo_channel_append( stream->evt, mqo_vf_symbol( mqo_ss_connect ) );
-        stream->state = MQO_READY;
+        if( mqo_stream_send( stream, NULL, 0 ) == -1 ){
+            mqo_close_stream( stream );
+        }else{
+            mqo_channel_append( stream->evt, mqo_vf_symbol( mqo_ss_connect ) );
+            stream->state = MQO_READY;
+        }
     };
 
     if( mqo_channel_empty( stream->cmd ) )return;
@@ -312,9 +336,9 @@ void mqo_stream_write_evt( mqo_stream stream ){
         char* str = mqo_sf_string( buf );
 
         mqo_integer fd = stream->fd;
+        
+        int rs = mqo_stream_send( stream, str, len );
 
-        int rs = fd ? send( fd, mqo_string_head( buf ), len, 0 )
-                    : write( fd, mqo_string_head( buf ), len );
         if( rs > 0 ){
             if( len -= rs ){
                 mqo_channel_prepend( 
@@ -322,11 +346,6 @@ void mqo_stream_write_evt( mqo_stream stream ){
                     mqo_vf_string( mqo_string_fm( str + rs, len ) )
                 );
             };
-        }else{
-#if defined(_WIN32)||defined(__CYGWIN__)
-        int errno = WSAGetLastError();
-#endif
-            stream->error = errno;
         }
     }else{
         mqo_errf( mqo_es_vm, "sx", "bad write command", cmd );
