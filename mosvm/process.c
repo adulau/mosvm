@@ -200,14 +200,6 @@ mqo_process mqo_spawn_func( mqo_value func ){
     mqo_process process;
     func = mqo_reduce_function( func, NULL );
     
-    mqo_string s = mqo_make_string( 100 );
-    mqo_format_cs( s, "Spawning function " );
-    mqo_format( s, func );
-    mqo_format_nl( s );
-    mqo_printstr( s );
-
-    printf( "Spawning function %x\n", func );
-
     if( mqo_is_primitive( func ) ){
         process = mqo_make_process( (mqo_proc_fn)mqo_activate_prim, 
                                     (mqo_proc_fn)mqo_deactivate_prim,

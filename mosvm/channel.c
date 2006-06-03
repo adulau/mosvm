@@ -53,13 +53,6 @@ void mqo_add_monitor( mqo_process process, mqo_channel channel ){
     channel->monitor = process;
 
     mqo_trip_source( channel );
-
-    mqo_string s = mqo_make_string( 80 );
-    mqo_format( s, process );
-    mqo_format_cs( s, " will wait on " );
-    mqo_format( s, channel );
-    mqo_format_nl( s );
-    mqo_printstr( s );
 }
 
 void mqo_remove_monitor( mqo_process process, mqo_channel channel ){
@@ -97,14 +90,6 @@ mqo_boolean mqo_wake_monitor( mqo_channel channel, mqo_value message ){
     mqo_process process = channel->monitor;
 
     if( process ){ 
-        mqo_string s = mqo_make_string( 100 );
-        mqo_format_cs( s, "Will wake monitor " );
-        mqo_format( s, process );
-        mqo_format_cs( s, " with " );
-        mqo_format( s, message );
-        mqo_format_nl( s );
-        mqo_printstr( s );
-
         mqo_clear_monitors( process );
         mqo_enable_process( process );
         if( mqo_is_vm( process->context ) ){
@@ -342,7 +327,6 @@ MQO_BEGIN_PRIM( "set-input!", set_input )
         value = mqo_vf_process( mqo_active_process );
         channel = mqo_get_input( arg1 );
     }
-    mqo_printf( "sxsxs", "Setting input of ", value, " to ", channel, "\n" );
     mqo_set_input( value, channel );
 
     RESULT( value );
@@ -364,7 +348,6 @@ MQO_BEGIN_PRIM( "set-output!", set_output )
         channel = mqo_get_output( arg1 );
     }
 
-    mqo_printf( "sxsxs", "Setting output of ", value, " to ", channel, "\n" );
     mqo_set_output( value, channel );
 
     RESULT( value );

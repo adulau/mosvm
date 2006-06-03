@@ -284,7 +284,6 @@ void mqo_listener_read_evt( mqo_listener listener ){
         //TODO: We blissfully ignore errors during accept..
         //TODO: We do need to report the catastrophic event of EMFILE or ENFILE
     }else{
-        printf( "Listener read event, got connection %i\n", conn );
         mqo_channel_append( 
             listener->conns, mqo_vf_stream( mqo_make_stream( conn ) ) );
     }
@@ -363,19 +362,16 @@ void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
             mqo_disable_stream( stream );
             continue;
         }else if( stream->state == MQO_CONNECTING ){
-            printf( "Stream %i is connecting..\n", fd );
             FD_SET( fd, &errors );
             FD_SET( fd, &writes );
             use = 1;
         }else{
             if( mqo_is_stream_reading( stream ) ){
-                printf( "Stream %i is reading..\n", fd );
                 FD_SET( fd, &reads );
                 FD_SET( fd, &errors );
                 use = 1;
             };
             if( mqo_is_stream_writing( stream ) ){
-                printf( "Stream %i is writing..\n", fd );
                 if( fd == STDIN_FILENO ) fd = STDOUT_FILENO;
                 FD_SET( fd, &writes );
                 use = 1;
@@ -383,7 +379,6 @@ void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
         }
 
         if( ! use ){
-            printf( "Stream %i is not doing anything.\n", fd );
             mqo_disable_stream( stream );
         }else if( (++fd) > maxfd ) maxfd = fd;
     }
@@ -398,16 +393,15 @@ void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
     if(!( mqo_first_stream || mqo_first_listener )){
         mqo_disable_process( mqo_stream_monitor );
         return;
-    }else{
-        mqo_string buf = mqo_make_string( 64 );
-        mqo_format_cs( buf, "Waiting on:" );
-        for( stream = mqo_first_stream; stream; stream = next ){
-            next = stream->next;
-            mqo_format_cs( buf, " " );
-            mqo_format( buf, mqo_vf_integer( stream->fd ) );
-        }
-        mqo_format_nl( buf );
-        mqo_printstr( buf );
+////    }else{
+////        mqo_format_cs( buf, "Waiting on:" );
+////        for( stream = mqo_first_stream; stream; stream = next ){
+////            next = stream->next;
+////            mqo_format_cs( buf, " " );
+////            mqo_format( buf, mqo_vf_integer( stream->fd ) );
+////        }
+////        mqo_format_nl( buf );
+////        mqo_printstr( buf );
     }
 
     struct timeval timeout = { 0, 0 };
