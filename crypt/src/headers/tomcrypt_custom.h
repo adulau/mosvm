@@ -135,7 +135,7 @@
 #define TRY_URANDOM_FIRST
 
 /* ---> Public Key Crypto <--- */
-#define MRSA
+// #define MRSA
 
 /* Digital Signature Algorithm */
 // #define MDSA
