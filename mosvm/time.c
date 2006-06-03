@@ -17,6 +17,7 @@
 #include "mosvm.h"
 #include <sys/time.h>
 
+
 mqo_timeout mqo_first_timeout = NULL;
 mqo_timeout mqo_last_timeout = NULL;
 mqo_process mqo_timemon;
@@ -29,11 +30,22 @@ int mqo_timeout_compare( mqo_timeout t1, mqo_timeout t2 ){
     return 0;
 }
 
+/*
+
 void mqo_get_now( mqo_quad* secs, mqo_quad* nsecs ){
     struct timespec ts;
     clock_gettime( CLOCK_REALTIME, &ts );
     *secs = ts.tv_sec;
     *nsecs = ts.tv_nsec;
+}
+
+*/
+
+void mqo_get_now( mqo_quad* secs, mqo_quad* nsecs ){
+    struct timeval ts;
+    gettimeofday( &ts, NULL );
+    *secs = ts.tv_sec;
+    *nsecs = ts.tv_usec * 1000;
 }
 
 mqo_timeout mqo_make_timeout( 
