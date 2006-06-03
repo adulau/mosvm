@@ -3,20 +3,38 @@ include $(ROOT)/Makefile.cf
 
 OBJECTS=memory.o number.o boolean.o list.o string.o tree.o vector.o regex.o package.o primitive.o procedure.o parse.o format.o print.o closure.o vm.o file.o error.o process.o crypto.o channel.o stream.o core.o tag.o multimethod.o time.o init.o
 
-TOOLS=$(MOSASM) $(MOSVM_STUB) $(MOSLD)
-
-LIBS=$(LIBTC)
+TOOLS=$(MOSVM_STUB) $(MOSASM) $(MOSLD)
 
 all: $(TOOLS)
 
-$(MOSASM): mosvm/*.h mosvm.h $(OBJECTS) mosasm.o
-	gcc $(CFLAGS) $(LDFLAGS) $(OBJECTS) mosasm.o $(LIBS) -o $(MOSASM)
+ifeq ($(OS),Darwin)
+
+REQS=$(OBJECTS)
+LIBS=$(LIBRX)
+
+# Mac OS X Tiger's linker is partially broken; we have to do something nasty..
+cryptlib: $(LIBTC)
+	rm -rf cryptlib
+	mkdir cryptlib
+	cd cryptlib && ar x ../../crypt/libtomcrypt.a
+
+REQS+=cryptlib
+LIBS+=cryptlib/*.o
+
+else
+
+LIBS+=$(LIBS) $(LIBTC)
+
+endif
+
+$(MOSVM_STUB): $(REQS) mosvm.o
+	$(DO_CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) mosvm.o $(LIBS) -o $(MOSVM_STUB)
+
+$(MOSASM): $(REQS) mosasm.o
+	$(DO_CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) mosasm.o $(LIBS) -o $(MOSASM)
 	
-$(MOSVM_STUB): mosvm/*.h mosvm.h $(OBJECTS) mosvm.o
-	gcc $(CFLAGS) $(LDFLAGS) $(OBJECTS) mosvm.o $(LIBS) -o $(MOSVM_STUB)
-	
-$(MOSLD): mosvm/*.h mosvm.h $(OBJECTS) mosld.o
-	gcc $(CFLAGS) $(LDFLAGS) $(OBJECTS) mosld.o $(LIBS) -o $(MOSLD)
-	
+$(MOSLD): $(REQS) mosld.o
+	$(DO_CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) mosld.o $(LIBS) -o $(MOSLD)
+
 clean:
 	rm -f $(TOOLS) *.o *.core
