@@ -41,7 +41,7 @@ mqo_timeout mqo_make_timeout(
 ){
     mqo_quad secs, nsecs; mqo_get_now( &secs, &nsecs );
     secs += (ms / 1000);
-    nsecs += ((ms % 1000) * 1000000); // 1,000,000 ns per ms
+    nsecs += ((ms % 1000) * 1000); // 1,000 ns per ms
     mqo_timeout timeout = MQO_OBJALLOC( timeout );
     timeout->secs = secs;
     timeout->nsecs = nsecs;
