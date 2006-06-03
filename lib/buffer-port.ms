@@ -18,6 +18,8 @@
 (import "lib/object")
 (import "lib/port")
 
+;TODO: Delete
+
 (define (open-string-port)
   (define buf (make-string))
   (define ps  #f)

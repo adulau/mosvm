@@ -370,21 +370,6 @@
 
 (set-macro! 'export (lambda any '(begin)))
 
-(set-macro! 's:
-            (lambda (stmt . rest)
-              (list 'if '*spot-test?*
-                    (list do-s (cons stmt rest) 
-                          (apply list 'lambda '() stmt rest)))))
-(set-macro! 'r:
-            (lambda (stmt . rest)
-              (list 'if '*spot-test?*
-                 (list do-r (cons stmt rest) 
-                       (apply list 'lambda '() stmt rest)))))
-(set-macro! 't:
-            (lambda (stmt . rest)
-              (list 'if '*spot-test?*
-                 (list do-t (cons stmt rest) 
-                       (apply list 'lambda '(_) stmt rest)))))
 (set-macro! 'guard
             (lambda (fn . rest)
               (let ((el (make-branch-symbol 'exit)))
@@ -620,7 +605,7 @@
         (set! args (cdr args))
 
         (when (memq name exports)
-          (add-context-rule! env name (make-procedure args body)))))
+          (add-context-rule! env name (make-procedure name args body)))))
 
     (for-each compile-imported-export
               (filter is-export? code))
@@ -660,7 +645,7 @@
                expr))
       (let ((name (car args)))
         (set! args (cdr args))
-        (add-context-rule! env name (make-procedure args body))
+        (add-context-rule! env name (make-procedure name args body))
         '(begin)
         
         (if (and (is-top-context? env)
@@ -685,8 +670,18 @@
 
 (define make-procedure
   (if *mosvm?*
-    (lambda (args body) (eval (apply list 'lambda args body)))
-    (lambda (args body) (primitive-eval (apply list 'lambda args body)))))
+    (lambda (name args body) 
+      (print "Making procedure for: ")
+      (print (format name))
+      (print " -- " )
+      (print (format args))
+      (print "\n")
+      (print (format body))
+      (print "\n")
+      ((assemble (compile (list (apply list 'function 
+                                       (cons name args) 
+                                       body))))))
+    (lambda (name args body) (primitive-eval (apply list 'lambda args body)))))
 
 (define *branch-index* 0)
 

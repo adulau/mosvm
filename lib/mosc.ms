@@ -42,19 +42,19 @@
 
   (let ((data (read-lisp-file src-file)))
     (set! data (compile data))
-    ;(set! data (optimize data))
-
-    (when *mosvm?*
-      (set! data (assemble data))
-      (set! data (freeze data)))
-    (set! dst-file (open-output-file dst-file))
-    (if *mosvm?*
-      (write-data data dst-file)
-      (for-each (lambda (item)
-                  (write item dst-file)
-                  (newline dst-file))
-                data))
-    (close-output-port dst-file)))
+    (set! data (optimize data))
+    
+    (cond 
+      (*mosvm?*
+        (set! data (assemble data))
+        (set! data (freeze data))
+        (write-data-file dst-file data))
+      (else
+        (set! dst-file (open-output-file dst-file))
+        (for-each (lambda (item)
+                    (write item dst-file)
+                    (newline dst-file))
+                  data)
+        (close-output-port dst-file)))))
 
 (export mosc)
-;;; MOSVM2

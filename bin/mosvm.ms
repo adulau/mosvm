@@ -15,13 +15,12 @@
 ;  
 
 (import "lib/repl")
-(import "lib/eval")
 
 (case (argc)
-  ((0 1) (repl)(exit))
+  ((0) (repl)(exit))
   (else  
-    (let ((r (load (cadr (argv)))))
+    (let ((r (load (car (argv)))))
       (if (? main)
-        (apply main (cdr (cdr (argv))))
-        r))))
+        (apply main (cdr (argv))))
+        r)))
 

@@ -45,3 +45,4 @@
   (write (identify-forms (read-all (open-input-file (cadr args))))
          (open-output-file (caddr args))))
 
+;;; MOSVM2

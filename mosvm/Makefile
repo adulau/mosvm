@@ -7,10 +7,11 @@ TOOLS=$(MOSVM_STUB) $(MOSASM) $(MOSLD)
 
 all: $(TOOLS)
 
-ifeq ($(OS),Darwin)
-
 REQS=$(OBJECTS)
+
 LIBS=$(LIBRX)
+
+ifeq ($(OS),Darwin)
 
 # Mac OS X Tiger's linker is partially broken; we have to do something nasty..
 cryptlib: $(LIBTC)
@@ -23,7 +24,7 @@ LIBS+=cryptlib/*.o
 
 else
 
-LIBS+=$(LIBS) $(LIBTC)
+LIBS+=$(LIBTC)
 
 endif
 

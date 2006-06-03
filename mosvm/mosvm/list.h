@@ -52,7 +52,7 @@ static inline mqo_list mqo_req_list( mqo_value v ){
 #define mqo_vf_list mqo_vf_pair
 #define REQ_LIST_ARG( vn ) mqo_list vn = mqo_req_list( mqo_req_any( ) );
 #define LIST_RESULT( vn ) TYPED_RESULT( list, vn )
-#define OPT_LIST_ARG( vn ) OPT_TYPED_ARG( vn, list )
+#define OPT_LIST_ARG( vn ) mqo_boolean has_##vn = 1; mqo_list vn = mqo_opt_list( &has_##vn );
 
 static inline mqo_value mqo_car( mqo_pair pair ){ 
     assert( pair );
@@ -71,7 +71,10 @@ static inline mqo_value mqo_set_cdr( mqo_pair pair, mqo_value x ){
     pair->cdr = x; 
 }
 void mqo_format_items( void* b, mqo_pair p, mqo_boolean sp );
-
+static inline mqo_list mqo_opt_list( mqo_boolean* has ){
+    mqo_value v = mqo_opt_any( has );
+    return ( *has ) ? mqo_req_list( v ) : NULL;
+}
 mqo_pair mqo_cons( mqo_value car, mqo_value cdr );
 mqo_list mqo_list_ref( mqo_list p, mqo_integer ofs );
 

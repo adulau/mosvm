@@ -85,4 +85,17 @@
 (export *spot-test?* do-s do-r do-t spot-report main 
         enable-spot-tests disable-spot-tests)
 
-;;; MOSVM2
+(define-macro (s: expr . body)
+    (list 'do-s (list 'quote expr) 
+          (apply list 'function '(s-test) expr body)))
+
+(define-macro (r: expr . body)
+    (list 'do-r (list 'quote expr) 
+          (apply list 'function '(r-test) expr body)))
+
+(define-macro (t: expr . body)
+    (list 'do-t (list 'quote expr) 
+          (apply list 'function '(t-test _) expr body)))
+
+(export s: r: t:)
+
