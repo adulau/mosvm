@@ -389,31 +389,30 @@ To Be Documented.
 
 To Be Documented.
 
-\chapter{Process Scheduler}
+\chapter{Concurrency in the Mosquito Virtual Machine}
 \label{proc}
 
-The Mosquito Virtual Machine provides a simple lightweight process model intended to simplify the implementation of network applications which often spend protracted periods waiting on input.
+The Mosquito Virtual Machine provides a compact, efficient, cooperative process model to abstract high latency concurrent tasks that are prevalent in network applications.  Since inactive processes in MOSVM do not consume any CPU resources, and their heap consumption is limited to that of maintaining a copy of the virtual machine registers, they are quite inexpensive when contrasted with thread facilities provided by most operating systems.
 
-The Mosquito Virtual Machine will terminate if all of its processes are halted, or suspended.
+\subsection{Process}
 
-A MOSVM process may be in one of the following states: active, paused, suspended or halted.
+Processes in MOSVM may be in one of four states: Active, Paused, Waiting or Halted.  Only one process may be Active in a given Virtual Machine; as long as it is active, it controls the virtual machine's registers and flow of execution.  A Paused process has either yielded control of the virtual machine to permit other processes to proceed, or has not started execution.  A Waiting process will not continue execution until one of the Channels it is monitoring receives a message.  A Halted process will not resume execution -- a process generally enters the halt state if an error condition has propagated through all of the guards.
 
-\subsection{The Active Process}
+\subsection{Channels}
 
-There may only be one or zero active processes in the Mosquito Virtual Machine.  The active process controls the registers and flow of execution so
-long as it is active.  An Active Process may Pause, Halt or Suspend itself.
+Channels in MOSVM are a hybrid of classic message queues, and Lisp ports -- Processes may place any value in a Channel, and may suspend operation while they wait for a message to arrive.  Only one process may monitor a given channel for new messages, although any process may append new messages to the queue.  A process may monitor more than one queue -- a capability that is often used to achieve timeout-like effects with use of the Time Monitor.
 
-\subsection{Paused Processes}
+MOSVM's network connections employ an input and output channel to achieve a fully asynchronous interface -- this permits an application to perform other operations while network transactions complete.
 
-A Paused process is scheduled to become Active after the current Active process yields control.  A Paused Process may be Halted or Suspended, or it may become Active if no other process is active.
+Timeouts may be achieved using the Time Monitor, by waiting on an input channel and a timeout channel simultaneously.  This is often useful for operations with a possible lapse that would not be handled by the host environment, such as establishing a TCP connection.  ( Many firewalls do not respond with reset packet in response to the initial synchronization packet, often causing protracted waits. )
 
-\subsection{Halted Processes}
+\subsection{The Network Monitor}
 
-A Halted process has either completed its task, or has signalled an error that was not caught by a guard.   Halted Process may not change its status, and, if there are no external references, is a candidate for reclaimation by the garbage collector.
+The Network Monitor is a primitive process, implemented in C, that employs the host environment's asynchronous network APIs to collect information about network connections and listeners.  If the network monitor is the only process in the active or paused state, it will consume minimal processor resources while it waits for network events.
 
-\subsection{Suspended Processes}
+\subsection{The Time Monitor}
 
-A Suspended process is waiting on an event, and will not become active until one has been sent to the process.  A Suspended process may be Halted, but can only be made Active or restored to Paused state when an event has been sent.
+To Be Documented.
 
 \chapter{Memory Management}
 \label{memory}

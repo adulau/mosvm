@@ -121,6 +121,7 @@ void mqo_collect_garbage( ){
     mqo_trace_registers();
     mqo_trace_actives();
     mqo_trace_network();
+    mqo_trace_timeouts();
 
     while( obj = mqo_greys->head ){
         mqo_unpool_obj( obj );

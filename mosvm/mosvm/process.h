@@ -75,4 +75,6 @@ static inline mqo_boolean mqo_can_be_only_one( ){
 #define OPT_PROCESS_ARG( x ) OPT_TYPED_ARG( x, process )
 #define PROCESS_RESULT( x )  TYPED_RESULT( process, x )
 
+extern mqo_quad mqo_vm_count;
+
 #endif

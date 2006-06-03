@@ -175,7 +175,7 @@ mqo_listener mqo_make_listener( mqo_integer fd ){
     l->next = NULL;
     l->prev = mqo_last_listener;
     l->error = 0;
-
+    
     if( mqo_last_listener ){
         mqo_last_listener->next = l;
     }else{
@@ -403,13 +403,24 @@ void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
 ////        mqo_format_nl( buf );
 ////        mqo_printstr( buf );
     }
+   
+    struct timeval* timeout;
 
-    struct timeval timeout = { 0, 0 };
+    if( mqo_can_be_only_one( ) ){
+        timeout = NULL;
+    }else if( mqo_vm_count ){
+        struct timeval time = { 0, 0 };
+        timeout = &time;
+        //TODO: If timemon and netmon are alone, they will spin hot.
+    }else{  
+        //TODO: Must only be other monitors.. We'll throttle back to 1ms / tick
+        struct timeval time = { 0, 1000 };
+        timeout = &time;
+    }
+    
     select( maxfd,
             &reads, &writes, &errors,
-            //&timeout );
-            mqo_can_be_only_one( ) ? (struct timeval*) NULL 
-                                   : &timeout  );
+            timeout );
    
     for( stream = mqo_first_stream; stream; stream = next ){
         next = stream->next;

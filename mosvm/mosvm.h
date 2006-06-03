@@ -41,6 +41,7 @@
 #include "mosvm/tag.h"
 #include "mosvm/multimethod.h"
 #include "mosvm/file.h"
+#include "mosvm/time.h"
 
 void mqo_init_mosvm( );
 void mqo_init_crypto_subsystem( );

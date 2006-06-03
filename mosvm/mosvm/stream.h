@@ -66,4 +66,5 @@ void mqo_enable_stream( mqo_stream s );
 void mqo_disable_stream( mqo_stream s );
 void mqo_trace_network();
 extern mqo_stream mqo_stdio;
+
 #endif

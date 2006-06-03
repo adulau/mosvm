@@ -40,6 +40,7 @@ void mqo_init_mosvm( ){
     mqo_init_process_subsystem( );
     mqo_init_channel_subsystem( );
     mqo_init_stream_subsystem( );
+    mqo_init_time_subsystem( );
     mqo_init_crypto_subsystem( );
     mqo_init_parse_subsystem( );
     mqo_init_tag_subsystem( );

@@ -18,6 +18,7 @@
 #include <setjmp.h>
 #include <stdarg.h>
 
+mqo_quad mqo_vm_count = 0;
 mqo_process mqo_first_enabled = NULL;
 mqo_process mqo_last_enabled = NULL;
 mqo_process mqo_active_process = NULL;
@@ -77,6 +78,8 @@ void mqo_set_process_output( mqo_process process, mqo_object output ){
 }
 void mqo_enable_process( mqo_process process ){
     if( process->enabled )return; 
+    
+    if( mqo_is_vm( process->context ) ) mqo_vm_count ++;
 
     process->enabled = 1;
     process->next = NULL;
@@ -93,6 +96,8 @@ void mqo_enable_process( mqo_process process ){
 
 void mqo_disable_process( mqo_process process ){
     if( ! process->enabled )return; 
+
+    if( mqo_is_vm( process->context ) ) mqo_vm_count --;
 
     mqo_process prev = process->prev;
     mqo_process next = process->next;
