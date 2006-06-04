@@ -5,9 +5,9 @@ include $(ROOT)/Makefile.cf
 TESTS=test-core test-quasi test-parse test-assemble test-freeze test-process test-buffer test-regex test-url test-http
 # test-compile is bugged atm..
 
-all: $(MOSC) $(MOSVM) libs mosrefs $(MOSREF) 
+all: $(MOSC) $(MOSVM) $(MOSREF) 
 test: $(TESTS)
-test-%: test/%.mo $(MOSVM) libs mosrefs
+test-%: test/%.mo $(MOSVM) lib mosref
 	$(MOSVM) $<
 
 import-all-lib.ms: $(MOSVM) lib/*.ms
@@ -18,7 +18,7 @@ import-all-lib.ms: $(MOSVM) lib/*.ms
 share/symbols: $(MOSVM) import-all-lib.ms
 	$(MOSVM) -g import-all-lib.ms >share/symbols
 	
-$(MOSREF): $(MOSC) $(MOSVM) libs mosrefs
+$(MOSREF): $(MOSC) $(MOSVM) lib mosref
 	sh bin/build-app.sh $(MOSVM_STUB) bin/mosref $(MOSREF)
 
 repl:
@@ -26,21 +26,25 @@ repl:
 
 package: $(PACKAGE)
 
-$(PACKAGE): $(MOSC) $(MOSVM) $(MOSREF) libs mosrefs
+$(PACKAGE): $(MOSC) $(MOSVM) $(MOSREF) core lib mosref
 	rm -rf $(PACKAGEDIR) $(PACKAGE)
 	mkdir $(PACKAGEDIR)
 	cp -rf bin lib mosref stubs core site test examples $(PACKAGEDIR)
 	$(PACKAGECMD)
 
-mosrefs: $(MOSVM) libs
-	sh bin/build-dir.sh mosref
-
 site/config.ms: bin/situation.sh
 	sh bin/situation.sh
 
-libs: lib/*ms core/*ms site/*ms site/config.ms
-	sh bin/build-dir.sh core
+mosref: $(MOSC) bin/build-dir.sh lib core site mosref/*ms
+	sh bin/build-dir.sh mosref
+
+lib: $(MOSC) bin/build-dir.sh core site lib/*ms
 	sh bin/build-dir.sh lib
+
+core: $(MOSC) bin/build-dir.sh site core/*ms
+	sh bin/build-dir.sh core
+
+site: $(MOSC) bin/build-dir.sh core/*ms site/config.ms
 	sh bin/build-dir.sh site
 
 clean:
@@ -66,7 +70,7 @@ $(GLUE): mosvm/glue.c mosvm/mosvm/*.[ch]
 $(MOSC): $(MOSVM_STUB) $(GLUE) 
 	sh bin/build-app.sh $(MOSVM_STUB) bin/mosc $(MOSC)
 
-$(MOSVM): $(MOSC) $(GLUE) site/config.ms libs
+$(MOSVM): $(MOSC) $(GLUE) site/config.ms lib
 	sh bin/build-app.sh $(MOSVM_STUB) bin/mosvm $(MOSVM)
 
 %.ma: %.ms  bin/seed-mosc.sh lib/compile.ms lib/lib.ms lib/mosc.ms

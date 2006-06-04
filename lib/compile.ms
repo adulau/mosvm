@@ -671,13 +671,6 @@
 (define make-procedure
   (if *mosvm?*
     (lambda (name args body) 
-      (print "Making procedure for: ")
-      (print (format name))
-      (print " -- " )
-      (print (format args))
-      (print "\n")
-      (print (format body))
-      (print "\n")
       ((assemble (compile (list (apply list 'function 
                                        (cons name args) 
                                        body))))))
