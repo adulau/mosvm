@@ -382,7 +382,7 @@ MQO_BEGIN_PRIM( "xor-string", xor_string )
     mqo_integer strlen = mqo_string_length( string );
     mqo_integer masklen = mqo_string_length( mask );
 
-    if( strlen > mqo_string_length( mask ) ){
+    if( strlen > mask ){
         mqo_errf( mqo_es_vm, "s", 
                   "string length must be not be greater than mask length" );
     }
@@ -400,7 +400,8 @@ MQO_BEGIN_PRIM( "xor-string", xor_string )
     for( ; i < masklen; i ++ ){
         ds[ i ] = ms[ i ];
     }
-    dst->length = masklen;
+
+    mqo_string_wrote( dst, masklen );
 
     //TODO: An xor-string!.
     STRING_RESULT(( dst ) );

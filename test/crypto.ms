@@ -37,11 +37,10 @@
 (s: (aes-decrypt k (base64-decode c)))
 (r: p)
 
-(s: (xor-string "alpha" "maskmaskmask"))
+(s: (xor-string "alpha" "maskm"))
 (t: (= (string-length _) 5))
 (t: (not (string=? _ "alpha")))
-(t: (string=? (xor-string _ "maskmask") "alpha"))
-(t: (not (string=? (xor-string _ "askmask") "alpha")))
+(t: (string=? (xor-string _ "maskm") "alpha"))
 
 (s: (make-ecdh-key 256))
 (t: (ecdh-key? _))

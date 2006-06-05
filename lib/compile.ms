@@ -748,5 +748,3 @@
   (list op (tc->list rs) (and mt (tc->list sg))))
 
 (export reset-branch-index make-branch-symbol make-symbol symbol-starts-with?)
-
-;;; MOSVM2
