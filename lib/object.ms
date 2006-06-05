@@ -49,12 +49,12 @@
 (define (make-field-accessor class field-name)
   (define field-offset (list-index (lambda (x) (eq? x field-name))
                                    (class-fields class)))
-  (lambda (inst) (vector-ref (repr inst) field-offset)))
+  (function (field-accessor inst) (vector-ref (repr inst) field-offset)))
 
 (define (make-field-modifier class field-name)
   (define field-offset (list-index (lambda (x) (eq? x field-name))
                                    (class-fields class)))
-  (lambda (inst value) 
+  (function (field-modifier inst value) 
     (vector-set! (repr inst) field-offset value)))
 
 (define (make-class-predicate class)

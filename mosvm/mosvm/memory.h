@@ -136,7 +136,13 @@ typedef int mqo_boolean;
     MQO_I_TYPE_( tn );
 
 #define MQO_C_SUBTYPE( chil, pare ) \
-    MQO_C_TYPE( chil );
+    MQO_C_TYPE( chil ); \
+    MQO_BEGIN_PRIM( #chil "?", chil##q ) \
+        REQ_ANY_ARG( value ); \
+        NO_REST_ARGS( ); \
+        \
+        BOOLEAN_RESULT( mqo_is_##chil( value ) ); \
+    MQO_END_PRIM( chil##q ) \
 
 #define MQO_I_SUBTYPE( child, pare ) \
     mqo_##child##_type->format = (mqo_format_mt)mqo_format_##pare; \
@@ -148,6 +154,7 @@ typedef int mqo_boolean;
     mqo_##child##_type->header.type = mqo_type_type; \
     mqo_root_obj( (mqo_object)mqo_##child##_type ); \
     mqo_bind_type( mqo_##child##_name, mqo_##child##_type ); \
+    MQO_BIND_PRIM( child##q ) \
 
 #define MQO_H_TYPE( tn ) \
     MQO_H_TP( tn ); \

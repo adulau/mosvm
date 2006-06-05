@@ -50,8 +50,8 @@ mqo_cell mqo_make_cell( mqo_tag tag, mqo_value repr ){
 void mqo_format_cell( mqo_string buf, mqo_cell c ){
     mqo_format_char( buf, '[' );
     mqo_format_sym( buf, c->tag->name );
-    mqo_format_char( buf, ' ' );
-    mqo_format( buf, c->repr );
+    // TODO: fix.. mqo_format_char( buf, ' ' );
+    // mqo_format( buf, c->repr );
     mqo_format_char( buf, ']' );
 }
 void mqo_trace_cell( mqo_cell c ){

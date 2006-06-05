@@ -232,7 +232,7 @@
 ;          (last-bill-date today))
 
 (define (drop-clue records)
-  (cond ((pair? records) 
+  (cond ((list? records) 
          (for-each drop-clue records))
         (else
           (define record records)
@@ -273,11 +273,4 @@
             data)
   db)
 
-(import "lib/format")
-(define (value->string (<clue-db> db)) "[DB]")
-(define (value->string (<clue-index> index)) "[INDEX]")
-(define (value->string (<clue-record> record)) "[RECORD]")
-(export value->string)
-
 (export clue-db->list list->clue-db clue-record->list list->clue-record)
-;;; MOSVM2
