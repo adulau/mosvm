@@ -32,5 +32,3 @@
         (else "lib/eval load can only handle .mo and .ms files")))
 
 (export eval load-ms load exec)
-
-;;; MOSVM2

@@ -382,7 +382,7 @@ MQO_BEGIN_PRIM( "xor-string", xor_string )
     mqo_integer strlen = mqo_string_length( string );
     mqo_integer masklen = mqo_string_length( mask );
 
-    if( strlen > mask ){
+    if( strlen > masklen ){
         mqo_errf( mqo_es_vm, "s", 
                   "string length must be not be greater than mask length" );
     }

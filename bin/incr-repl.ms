@@ -22,7 +22,6 @@
 
 (import "lib/optimize")
 (import "lib/compile")
-(import "lib/format")
 (import "lib/trace")
 (import "lib/eval")
 (import "lib/file-port")
@@ -54,7 +53,7 @@
             (write ":: ")
             (show result)
             (newline)
-            (write (lead-lines ";; " (value->string result)) file-output)
+            (write (lead-lines ";; " (format result)) file-output)
             (newline file-output)))))
 
   (close-output-port file))

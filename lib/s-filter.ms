@@ -47,4 +47,3 @@
   out)
 
 (export s-filter)
-;;; MOSVM2

@@ -1,4 +1,3 @@
-
 ; Copyright (C) 2006, Ephemeral Security, LLC
 ; 
 ; This library is free software; you can redistribute it and/or modify it 
@@ -31,4 +30,3 @@
 
 
 (export define-record-type)
-;;; MOSVM2

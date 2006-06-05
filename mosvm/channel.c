@@ -236,7 +236,7 @@ MQO_BEGIN_PRIM( "send", send )
     REST_ARGS( channels );
     
     if( ! channels ){
-        channels = mqo_cons( mqo_vf_channel( mqo_active_process->output ),
+        channels = mqo_cons( mqo_vf_obj(  mqo_active_process->output ),
                              mqo_vf_null() );
     };
 
@@ -260,7 +260,7 @@ MQO_BEGIN_PRIM( "wait", wait )
     REST_ARGS( channels );
 
     if( ! channels ){
-        channels = mqo_cons( mqo_vf_channel( mqo_active_process->input ),
+        channels = mqo_cons( mqo_vf_obj( mqo_active_process->input ),
                              mqo_vf_null() );
     };
 

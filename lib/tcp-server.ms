@@ -31,5 +31,3 @@
   server)
 
 (export spawn-tcp-server)
-
-;;; MOSVM2

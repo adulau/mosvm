@@ -88,4 +88,3 @@
   (tc->list result))
 
 (export optimize)
-;;; MOSVM2

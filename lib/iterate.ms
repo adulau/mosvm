@@ -89,5 +89,3 @@
 (define (ignore-method . any))
 
 (export filter filter! fold for-each map find-tail list-index find any ignore-method)
-
-;;; MOSVM2

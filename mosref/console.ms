@@ -18,10 +18,8 @@
 (import "mosref/base")
 
 (import "lib/cfb")
-(import "lib/fuse")
 (import "lib/crypto-filter")
 (import "lib/buffer-channel")
-(import "lib/format")
 (import "lib/build")
 
 (export console-affiliation console-repl drone-exec make-drone-exe 
@@ -87,7 +85,7 @@
 
 (define (console-repl xmit recv)
   (define (display-result item)
-    (send (string-append ":: " (value->string item) *line-sep*)))
+    (send (string-append ":: " (format item) *line-sep*)))
 
   (define (display-failure key info context)
     (send (string-append (apply string-join 
