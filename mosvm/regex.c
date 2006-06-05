@@ -117,8 +117,59 @@ MQO_GENERIC_COMPARE( regex );
 MQO_GENERIC_FORMAT( regex );
 MQO_C_TYPE( regex );
 
+MQO_BEGIN_PRIM( "match-regex", match_regex )
+    REQ_REGEX_ARG( regex );
+    REQ_STRING_ARG( text );
+    OPT_STRING_ARG( flags );
+    NO_REST_ARGS( );
+   
+    RESULT( mqo_match_regex( regex, mqo_sf_string( text ), 
+                                        has_flags ? mqo_sf_string( flags )
+                                                  : NULL,
+                                        NULL, NULL ) );
+MQO_END_PRIM( match_regex )
+
+MQO_BEGIN_PRIM( "match-regex*", match_regexm )
+    REQ_REGEX_ARG( regex );
+    REQ_STRING_ARG( text );
+    OPT_STRING_ARG( flags );
+    NO_REST_ARGS( );
+
+    mqo_tc tc = mqo_make_tc( );
+    const char* str = mqo_sf_string( text );
+    const char* flagstr = has_flags ? mqo_sf_string( flags ) : NULL;
+    mqo_boolean has_matched = 0;
+
+    for(;;){
+        const char* nxt;
+        mqo_value m = mqo_match_regex( regex, str, flagstr, NULL, &nxt );
+        if( mqo_is_false( m ) ) break;
+        has_matched = 1;
+        mqo_tc_append( tc, m );
+        str = nxt;
+    }
+    
+    RESULT( has_matched ? mqo_car( tc ) : mqo_vf_false( ) );
+MQO_END_PRIM( match_regexm )
+
+MQO_BEGIN_PRIM( "make-regex", make_regex )
+    REQ_STRING_ARG( pattern );
+    OPT_STRING_ARG( flags );
+    NO_REST_ARGS( );
+
+    RESULT( 
+        mqo_vf_regex( mqo_make_regex( pattern, 
+                                      has_flags ? mqo_sf_string( flags ) 
+                                                : NULL ) ) 
+    );
+MQO_END_PRIM( make_regex )
+
 void mqo_init_regex_subsystem( ){
     MQO_I_TYPE( regex );
     mqo_es_rx = mqo_symbol_fs( mqo_regex_name );
+    
+    MQO_BIND_PRIM( make_regex );
+    MQO_BIND_PRIM( match_regexm );
+    MQO_BIND_PRIM( match_regex );
+    MQO_BIND_PRIM( regexq );
 }
-

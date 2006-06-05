@@ -68,23 +68,23 @@
    (define frag (url-frag url))
    
    (when scheme
-     (string-write buf scheme)
-     (string-write buf ":"))
+     (string-append! buf scheme)
+     (string-append! buf ":"))
 
    (when auth
-     (string-write buf "//")
-     (string-write buf auth))
+     (string-append! buf "//")
+     (string-append! buf auth))
 
    (when path
-     (string-write buf path))
+     (string-append! buf path))
 
    (when query
-     (string-write buf "?")
-     (string-write buf query))
+     (string-append! buf "?")
+     (string-append! buf query))
 
    (when frag
-     (string-write buf "#")
-     (string-write buf frag))
+     (string-append! buf "#")
+     (string-append! buf frag))
    
    buf)
 
