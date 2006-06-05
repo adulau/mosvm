@@ -35,28 +35,35 @@
 
 (define *spot-ect* 0)
 
+(define (send-line . strings)
+  (send (string-append @strings *line-sep*)))
+
 (define (spot-error . lines)
   (set! *spot-ect* (+ *spot-ect* 1))
   (let ((lines (cons (cons "s:  " *spot-s*) 
                       lines)))
     (for-each (lambda (line) 
-                (write "    ")
-                (write (car line))
+                (send "    ")
+                (send (car line))
                 (for-each (lambda (phrase)
-                            (show phrase))
+                            (send (format phrase)))
                           (cdr line))
-                (newline))
+                (send *line-sep*))
               lines)))
 
 (define (enable-spot-tests) (set! *spot-test?* #t))
 
 (define (disable-spot-tests) (set! *spot-test?* #f))
 
+(export *spot-s* *spot-v*)
+
 (define (do-s expr fn)
+  (unless *spot-test?* (return))
   (set! *spot-s* expr)
   (set! *spot-v* (fn)))
 
 (define (do-r expr fn)
+  (unless *spot-test?* (return))
   (let ((x (fn)))
     (if (not (equal? x *spot-v*))
       (spot-error (cons "r:  " expr)
@@ -64,38 +71,31 @@
                   (list "rv: " x)))))
 
 (define (do-t expr fn)
-    (let ((x (fn *spot-v*)))
-          (if (not x)
-            (spot-error (cons "t:  " expr)))))
+  (unless *spot-test?* (return))
+  (let ((x (fn *spot-v*)))
+    (if (not x)
+      (spot-error (cons "t:  " expr)))))
 
 (define (spot-report)
   (if (> *spot-ect* 0)
-    (begin
-      (write "Test cases failed:")
-      (show *spot-ect*)
-      (newline))
-    (begin
-      (write "All tests passed.")
-      (newline))))
+    (send-line "Test cases failed:" (format *spot-ect*))
+    (send-line "All tests passed.")))
 
 (define (main . ignored)
   (spot-report)
   (= *spot-ect* 0))
 
-(export *spot-test?* do-s do-r do-t spot-report main 
+(export do-s do-r do-t spot-report main 
         enable-spot-tests disable-spot-tests)
 
 (define-macro (s: expr . body)
-    (list 'do-s (list 'quote expr) 
-          (apply list 'function '(s-test) expr body)))
+    `(do-s ',(cons expr body) (function (s-test) ,expr ,@body)))
 
 (define-macro (r: expr . body)
-    (list 'do-r (list 'quote expr) 
-          (apply list 'function '(r-test) expr body)))
+    `(do-r ',(cons expr body) (function (r-test) ,expr ,@body)))
 
 (define-macro (t: expr . body)
-    (list 'do-t (list 'quote expr) 
-          (apply list 'function '(t-test _) expr body)))
+    `(do-t ',(cons expr body) (function (t-test _) ,expr ,@body)))
 
 (export s: r: t:)
 

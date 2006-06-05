@@ -53,7 +53,7 @@ clean:
 	rm -f $(MOSVM) $(MOSREF) $(MOSC)
 
 clean-seed:
-	rm -f lib/*mo bin/*mo core/*mo site/*mo
+	rm -f */*mo */*ma
 
 clean-stubs:
 	rm -f stubs/*
@@ -67,7 +67,7 @@ $(MOSVM_STUB): $(LIBTC) mosvm/*.[ch] mosvm/mosvm/*.[ch]
 $(GLUE): mosvm/glue.c mosvm/mosvm/*.[ch]
 	cd $(ROOT)/mosvm && $(MAKE)
 
-$(MOSC): $(MOSVM_STUB) $(GLUE) 
+$(MOSC): $(MOSVM_STUB) $(GLUE) lib/compile.ms bin/mosc.ms lib/mosc.ms
 	sh bin/build-app.sh $(MOSVM_STUB) bin/mosc $(MOSC)
 
 $(MOSVM): $(MOSC) $(GLUE) site/config.ms lib

@@ -335,27 +335,25 @@
                     (list 'get-global (list 'quote key))))))
 
     (cons 'function (lambda (env formals . body)
-                      (let ((name (car formals))
-                            (bind 'usen)
-                            (tail (last-pair formals)))
-                          (when (symbol? (cdr tail))
-                            (set! bind 'usea)
-                            (set-cdr! tail (list (cdr tail))))
-                          (let ((args (cdr formals)))
-                            (let ((in (make-actual-context env args))
-                                  (ct (- (length args)
-                                         (if (eq? bind 'usea)
-                                           1 0)))
-                                  (after (make-branch-symbol 'after)))
-                              (let ((body (compile-lisp-block in body)))
-                                (append 
-                                  (list 'asm 
+                      (define name (car formals))
+                      (define info (parse-formals (cdr formals)))
+                      
+                      (let ((bind (car info))
+                            (args (cadr info))
+                            (in (make-actual-context env (cadr info))))
+                      
+                        (let ((ct (- (length args)
+                                     (if (eq? bind 'usea) 1 0)))
+                              (after (make-branch-symbol 'after))
+                              (body (compile-lisp-block in body)))
+                          (append (list 'asm 
                                         (list 'clos name after)
                                         (list bind ct 
                                               (context-slot-count in)))
                                   body
                                   (list '(retn)
-                                        after))))))))))
+                                        after))))))))
+
 (set-macro! 'lambda (lambda (formals . body)
                       (apply list 'function 
                              (cons (make-branch-symbol 'anon-fn)
@@ -637,14 +635,14 @@
       (error 'compile
              "the define-macro form requires a form and a body"
              expr))
-    (let ((args (cadr expr))
+    (let ((formals (cadr expr))
           (body (cdr (cdr expr))))
-      (unless (pair? args)
+      (unless (pair? formals)
         (error 'compile
                "the define-macro form requires a list for its form"
                expr))
-      (let ((name (car args)))
-        (set! args (cdr args))
+      (let ((name (car formals))
+            (args (cdr formals)))
         (add-context-rule! env name (make-procedure name args body))
         '(begin)
         
@@ -671,9 +669,8 @@
 (define make-procedure
   (if *mosvm?*
     (lambda (name args body) 
-      ((assemble (compile (list (apply list 'function 
-                                       (cons name args) 
-                                       body))))))
+      (define src (apply list 'function (cons name args) body))
+      ((assemble (compile (list src)))))
     (lambda (name args body) (primitive-eval (apply list 'lambda args body)))))
 
 (define *branch-index* 0)
@@ -724,6 +721,31 @@
                  (list 'function? (list '? name))
                  (list '? name)
                  'refuse-method))))
+
+(define (parse-formals formals)
+  (define op 'usen)
+  (define rs (make-tc))
+  (define sg (make-tc))
+  (define mt #f)
+
+  (until (null? formals)
+    (cond ((symbol? formals)
+           (tc-append! rs formals)
+           (tc-append! sg #t)
+           (set! formals '())
+           (set! op 'usea))
+;          ((pair? (car formals))
+;           (let ((arg (car formals)))
+;             (tc-append! sg (car arg))
+;             (tc-append! rs (cadr arg))
+;             (set! formals '())
+;             (set! mt #t)))
+          (else
+            (tc-append! sg #t)
+            (tc-append! rs (car formals))
+            (set! formals (cdr formals)))))
+
+  (list op (tc->list rs) (and mt (tc->list sg))))
 
 (export reset-branch-index make-branch-symbol make-symbol symbol-starts-with?)
 

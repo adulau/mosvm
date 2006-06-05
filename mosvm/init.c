@@ -18,7 +18,7 @@
 
 #ifndef NDEBUG
 // All praise the BSD malloc..
-char* malloc_options = "ADFG";
+// char* malloc_options = "ADFG";
 #endif
 
 void mqo_init_mosvm( ){
