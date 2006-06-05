@@ -24,7 +24,8 @@
 (define req1 
   "GET /index.html HTTP/1.1\r\nHost: localhost:80\r\nAccept: */*\r\n\r\n")
 
-(define reqp (open-input-string req1))
+(define reqp (make-channel))
+(send req1 reqp)
 (define req (read-http-request reqp))
 
 (s: (http-request? req))
@@ -53,11 +54,11 @@
 (s: (http-request-header req "Accept"))
 (r: "*/*")
 
-(define resp (open-output-string))
+(define resp (make-channel))
 (write-http-response resp 200 "Peachy"
                      '("Content-Type: text/text")
                      "Life is peachy")
 
-(s: (get-output-string resp))
+(s: (wait resp))
 (r: "HTTP/1.1 200 Peachy\r\nContent-Type: text/text\r\n\r\nLife is peachy")
 

@@ -89,4 +89,3 @@
    buf)
 
 (export string->url url->string)
-;;; MOSVM2
