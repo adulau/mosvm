@@ -1,6 +1,6 @@
 (import "lib/test")
 (import "lib/cfb")
-(import "lib/crypto-port")
+(import "lib/crypto-filter")
 
 (enable-spot-tests)
 
@@ -19,28 +19,28 @@
 (define m2 "now is the time for all good people")
 (define m3 "abc")
 
-(s: (write m1 tp)
-    (read rp))
+(s: (send m1 tp)
+    (wait rp))
 (r: m1)
 
-(s: (write m2 tp)
-    (read rp))
+(s: (send m2 tp)
+    (wait rp))
 (r: m2)
 
-(s: (write m3 tp)
-    (read rp))
+(s: (send m3 tp)
+    (wait rp))
 (r: m3)
 
-(write m1 tp)
-(write m2 tp)
-(write m3 tp)
+(send m1 tp)
+(send m2 tp)
+(send m3 tp)
 
-(s: (read rp))
+(s: (wait rp))
 (t: m1)
 
-(s: (read rp))
+(s: (wait rp))
 (t: m2)
 
-(s: (read rp))
+(s: (wait rp))
 (t: m3)
 

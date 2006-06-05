@@ -87,3 +87,4 @@
 (s: b)
 (r: "hello")
 
+MOSVM2

@@ -1400,7 +1400,7 @@ MQO_BEGIN_PRIM( "string-skip", string_skip )
     NO_RESULT( );
 MQO_END_PRIM( string_skip );
 
-MQO_BEGIN_PRIM( "string-read", string_read )
+MQO_BEGIN_PRIM( "string-read!", string_read )
     REQ_STRING_ARG( string );
     OPT_INTEGER_ARG( max );
     NO_REST_ARGS( );

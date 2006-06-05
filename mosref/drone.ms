@@ -16,14 +16,14 @@
 (module "mosref/drone")
 
 (import "lib/cfb")
-(import "lib/fuse")
-(import "lib/crypto-port")
-(import "lib/format")
+(import "lib/crypto-filter")
+(import "lib/buffer-channel")
 
 (import "mosref/base")
 
-(define (drone-affiliation console-ecdh port)
+(define (drone-affiliation console-ecdh xmit recv)
   ;;;TODO: Configure timeout.
+  (define (read) (buffer-channel recv))
 
   (define drone-iv (make-iv))
   (define drone-ecdh (make-ecdh-key 384)) 
@@ -31,42 +31,42 @@
                                 (ecdh-shared-secret drone-ecdh console-ecdh)))
 
   ;;; Drone --> Console, via plaintext, Dp
-  (write (export-public-ecdh drone-ecdh) port)
+  (send (export-public-ecdh drone-ecdh) xmit)
 
   ;;; Drone --> Console, via KK, DD
-  (write (aes-encrypt aes-key drone-iv) port)
+  (send (aes-encrypt aes-key drone-iv) xmit)
 
   ;;; Console --> Drone, via KK, CC
-  (define console-iv (aes-decrypt aes-key (read 16 port)))
+  (define console-iv (aes-decrypt aes-key (read 16)))
  
   (define drone-key (make-cfb aes-key drone-iv aes-encrypt))
   (define console-key (make-cfb aes-key console-iv aes-encrypt))
   
-  (define drone-port (encrypt-output port drone-key cfb-encrypt))
-  (define console-port (decrypt-input port console-key cfb-decrypt))
+  (define report (encrypt-filter port drone-key cfb-encrypt))
+  (define command (decrypt-filter port console-key cfb-decrypt))
 
   ;;; Drone --> Console, via RK, CC
   (write console-iv drone-port)
 
   ;;; Console --> Drone, via CK, DD
-  (unless (string=? (read console-port) drone-iv)
+  (unless (string=? (wait console-port) drone-iv)
     (error 'aff "the console failed to confirm affiliation"))
 
-  (fuse-ports console-port drone-port))
+  (list report command))
 
-(define (drone-repl port)
+(define (drone-repl xmit recv)
   (define result (make-string))
   (define (format-context context)
     (string-append "("
                    (apply string-join 
                           " "
                           (symbol->string (function-name (car context)))
-                          (map value->string (cdr context)))
+                          (map format (cdr context)))
                    ")"))
   (define (format-error-info info)
     (cond ((null? info) "")
           ((string? (car info)) (car info))
-          (else (apply string-join " " (map value->string info)))))
+          (else (apply string-join " " (map format info)))))
 
   (define (fail-result error)
     (freeze `(fail ,(error-key error)
@@ -76,10 +76,11 @@
     (freeze `(succ ,result)))
   ;;; TODO: Add a tagging port for repl output.
   ;;; TODO: Add a caching port for repl input.
-  (until (closed? port)
+  (forever 
     (define message (read port))
+    (when (eq? message 'close) (return))
 
-    (unless (eof-object? message)
+    (when (string? message)
       (write (guard fail-result (succ-result ((thaw message)))) 
              port)))) 
 

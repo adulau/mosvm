@@ -19,7 +19,8 @@
 
 (import "lib/cfb")
 (import "lib/fuse")
-(import "lib/crypto-port")
+(import "lib/crypto-filter")
+(import "lib/buffer-channel")
 (import "lib/format")
 (import "lib/build")
 
@@ -28,36 +29,37 @@
 
 (define (make-console-ecdh) (make-ecdh-key *ecdh-keysize*))
 
-(define (console-affiliation session-ecdh port)
+(define (console-affiliation session-ecdh xmit recv)
   ;;;TODO: Configure timeout.
-
+  (define read (buffer-channel recv))
   (define console-iv (make-iv))
  
   ;;; Drone --> Console, via plaintext, Dp
-  (define drone-ecdh (import-ecdh (read 59 port)))
+  (define drone-ecdh (import-ecdh (read 59)))
   (define aes-key (make-aes-key 256 
                                 (ecdh-shared-secret session-ecdh drone-ecdh)))
 
   ;;; Drone --> Console, via KK, DD
-  (define drone-iv (aes-decrypt aes-key (read 16 port)))
+  (define drone-iv (aes-decrypt aes-key (read 16)))
 
   ;;; Console --> Drone, via KK, CC
-  (write (aes-encrypt aes-key console-iv) port)
+  (send (aes-encrypt aes-key console-iv) xmit)
  
   (define report-key (make-cfb aes-key drone-iv aes-encrypt))
   (define command-key (make-cfb aes-key console-iv aes-encrypt))
   
-  (define report-port (decrypt-input port report-key cfb-decrypt))
-  (define command-port (encrypt-output port command-key cfb-encrypt))
+  (define report (decrypt-filter transport report-key cfb-decrypt))
+  (define command (encrypt-filter transport command-key cfb-encrypt))
 
   ;;; Drone --> Console, via RK, CC
-  (unless (string=? (read report-port) console-iv)
+  (unless (string=? (wait report) console-iv)
     (error 'aff "the drone failed to confirm affiliation"))
 
   ;;; Console --> Drone, via CK, DD
-  (write drone-iv command-port)
+  (send drone-iv command)
 
-  (fuse-ports report-port command-port))
+  ;;; TODO: We should probably create a pseudo-stream type..
+  (list command report))
 
 (define (make-drone-exe console-addr console-portno console-ecdh platform)
   (build-exe platform
@@ -71,7 +73,7 @@
                    (open-tcp-connection ,console-addr ,console-portno)))
                (exit 0))))
 
-(define (drone-exec cmd port)
+(define (drone-exec cmd xmit recv)
   (cond 
     ((list? cmd)
      (set! cmd (freeze (assemble (optimize (compile cmd))))))
@@ -80,15 +82,15 @@
     ((string? cmd))
     (else
       (error 'mos "drone-exec accepts a frozen program, program or source")))
-  (write cmd port)
-  (thaw (read port)))
+  (send cmd xmit)
+  (thaw (wait recv)))
 
-(define (console-repl port)
+(define (console-repl xmit recv)
   (define (display-result item)
-    (write (string-append ":: " (value->string item) *line-sep*)))
+    (send (string-append ":: " (value->string item) *line-sep*)))
 
   (define (display-failure key info context)
-    (write (string-append (apply string-join 
+    (send (string-append (apply string-join 
                                  *line-sep*
                                  (string-join " "
                                               "Drone Error:" 
@@ -100,7 +102,7 @@
                           *line-sep*)))
 
   (define (quit-repl cmd)
-    (close port))
+    (send 'close xmit))
 
   (define (drone-cmd cmd)
     (define cmd-ok #t)
@@ -125,9 +127,11 @@
 
   (define default-cmd drone-cmd)
 
+  ;;TODO: We need a line-filter, here.
+
   (until (closed? port)
-    (write ">> ")
-    (define cmd (read))
+    (send ">> ")
+    (define cmd (wait))
     (if (eof-object? cmd)
      (close port)
      ((dict-ref cmds cmd default-cmd) cmd))))
