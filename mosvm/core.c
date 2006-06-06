@@ -25,6 +25,86 @@
 #include <arpa/inet.h>
 #endif
 
+MQO_BEGIN_PRIM( "xml-escape", xml_escape )
+    REQ_STRING_ARG( data );
+    NO_REST_ARGS( );
+    
+    const char* src = mqo_sf_string( data );
+    int ix, srclen = mqo_string_length( data );
+    mqo_string result = mqo_make_string( srclen );
+    
+    for( ix = 0; ix < srclen; ix ++ ){
+        char ch = src[ix];
+        switch( ch ){
+        case '\'':
+            mqo_format_cs( result, "&apos;" );
+            break;
+        case '"':
+            mqo_format_cs( result, "&quot;" );
+            break;
+        case '&':
+            mqo_format_cs( result, "&amp;" );
+            break;
+        case '<':
+            mqo_format_cs( result, "&lt;" );
+            break;
+        case '>':
+            mqo_format_cs( result, "&gt;" );
+            break;
+        default:
+            mqo_format_char( result, ch );
+        };
+    }
+    
+    RESULT( mqo_vf_string( result ) );
+MQO_END_PRIM( xml_escape )
+
+MQO_BEGIN_PRIM( "percent-encode", percent_encode )
+    REQ_STRING_ARG( data );
+    REQ_STRING_ARG( mask );
+    NO_REST_ARGS( );
+    
+    char* maskstr = mqo_sf_string( mask );
+
+    const char* src = mqo_sf_string( data );
+    int ix, srclen = mqo_string_length( data );
+    mqo_string result = mqo_make_string( srclen );
+    
+    for( ix = 0; ix < srclen; ix ++ ){
+        char ch = src[ix];
+        if( ch == '%' || strchr( maskstr, ch ) ){
+            mqo_format_char( result, '%' );
+            mqo_format_hex( result, ch );
+        }else{
+            mqo_format_char( result, ch );
+        }
+    }
+    
+    RESULT( mqo_vf_string( result ) );
+MQO_END_PRIM( percent_encode )
+
+MQO_BEGIN_PRIM( "percent-decode", percent_decode )
+    REQ_STRING_ARG( data );
+    NO_REST_ARGS( );
+
+    char* src = mqo_sf_string( data );
+    int srclen = mqo_string_length( data );
+    mqo_string result = mqo_make_string( srclen );
+    char ch;
+
+    while( ch = *src ){
+        src ++;
+        if( ch == '%' ){
+            mqo_boolean ok = 1;
+            ch = (unsigned char)mqo_parse_hex( &src, &ok );
+            if( ! ok )mqo_errf( mqo_es_vm, "sxs", "invalid escape", data, src );
+        }
+        mqo_format_char( result, ch );
+    }
+    
+    RESULT( mqo_vf_string( result ) );
+MQO_END_PRIM( percent_decode )
+
 void mqo_untree_cb( mqo_value value, mqo_tc tc ){
     mqo_tc_append( tc, value );
 }
@@ -1783,6 +1863,10 @@ void mqo_bind_core_prims( ){
     
     MQO_BIND_PRIM( error_key );
     MQO_BIND_PRIM( error_info );
+
+MQO_BIND_PRIM( xml_escape );
+MQO_BIND_PRIM( percent_encode );
+MQO_BIND_PRIM( percent_decode );
 
     mqo_es_parse = mqo_symbol_fs( "parse" );
     mqo_root_obj( (mqo_object) mqo_es_parse );
