@@ -5,24 +5,27 @@ include $(ROOT)/Makefile.cf
 TESTS=test-core test-quasi test-parse test-assemble test-freeze test-process test-buffer test-regex test-url test-http
 # test-compile is bugged atm..
 
+LIB_MOS = $(shell ls lib/*ms | sed -e 's,.ms,.mo,')
+CORE_MOS = $(shell ls core/*ms | sed -e 's,.ms,.mo,')
+MOSREF_MOS = $(shell ls mosref/*ms | sed -e 's,.ms,.mo,')
+
 all: $(MOSC) $(MOSVM) $(MOSREF) 
+lib_mos: $(LIB_MOS)
+core_mos: $(CORE_MOS)
+mosref_mos: $(MOSREF_MOS)
+
+$(MOSC): $(MOSVM_STUB) $(GLUE) lib/compile.ms bin/mosc.ms lib/mosc.ms site/config.ms
+	sh bin/build-app.sh $(MOSVM_STUB) bin/mosc $(MOSC)
+
+$(MOSVM): $(MOSVM_STUB) $(GLUE) site/config.ms core_mos lib_mos
+	sh bin/build-app.sh $(MOSVM_STUB) bin/mosvm $(MOSVM)
+
+$(MOSREF): $(MOSVM_STUB) site/config.ms lib_mos core_mos mosref_mos
+	sh bin/build-app.sh $(MOSVM_STUB) bin/mosref $(MOSREF)
+
 test: $(TESTS)
 test-%: test/%.mo $(MOSVM) lib mosref
 	$(MOSVM) $<
-
-import-all-lib.ms: $(MOSVM) lib/*.ms
-	echo '(import "lib/module")' >import-all-lib.ms
-	for x in `ls lib/*.ms | cut -d. -f 1`; do echo "(import \"$$x\")" >>import-all-lib.ms; done
-	echo '(define (main) (halt))' >>import-all-lib.ms
-
-share/symbols: $(MOSVM) import-all-lib.ms
-	$(MOSVM) -g import-all-lib.ms >share/symbols
-	
-$(MOSREF): $(MOSC) $(MOSVM) lib mosref
-	sh bin/build-app.sh $(MOSVM_STUB) bin/mosref $(MOSREF)
-
-repl:
-	rlwrap -b"()" -f share/symbols $(MOSVM) -x
 
 package: $(PACKAGE)
 
@@ -35,17 +38,19 @@ $(PACKAGE): $(MOSC) $(MOSVM) $(MOSREF) core lib mosref
 site/config.ms: bin/situation.sh
 	sh bin/situation.sh
 
-mosref: $(MOSC) bin/build-dir.sh lib core site mosref/*ms
-	sh bin/build-dir.sh mosref
-
-lib: $(MOSC) bin/build-dir.sh core site lib/*ms
-	sh bin/build-dir.sh lib
-
-core: $(MOSC) bin/build-dir.sh site core/*ms
-	sh bin/build-dir.sh core
-
 site: $(MOSC) bin/build-dir.sh core/*ms site/config.ms
 	sh bin/build-dir.sh site
+
+repl: share/symbols
+	rlwrap -b"()" -f share/symbols $(MOSVM) -x
+
+share/symbols: $(MOSVM) import-all-lib.ms
+	$(MOSVM) -g import-all-lib.ms >share/symbols
+	
+import-all-lib.ms: $(MOSVM) lib/*.ms
+	echo '(import "lib/module")' >import-all-lib.ms
+	for x in `ls lib/*.ms | cut -d. -f 1`; do echo "(import \"$$x\")" >>import-all-lib.ms; done
+	echo '(define (main) (halt))' >>import-all-lib.ms
 
 clean:
 	cd $(ROOT)/mosvm && $(MAKE) clean
@@ -66,12 +71,6 @@ $(MOSVM_STUB): $(LIBTC) mosvm/*.[ch] mosvm/mosvm/*.[ch]
 
 $(GLUE): mosvm/glue.c mosvm/mosvm/*.[ch]
 	cd $(ROOT)/mosvm && $(MAKE)
-
-$(MOSC): $(MOSVM_STUB) $(GLUE) lib/compile.ms bin/mosc.ms lib/mosc.ms
-	sh bin/build-app.sh $(MOSVM_STUB) bin/mosc $(MOSC)
-
-$(MOSVM): $(MOSC) $(GLUE) site/config.ms lib
-	sh bin/build-app.sh $(MOSVM_STUB) bin/mosvm $(MOSVM)
 
 %.ma: %.ms  bin/seed-mosc.sh lib/compile.ms lib/lib.ms lib/mosc.ms
 	sh bin/seed-mosc.sh $<
