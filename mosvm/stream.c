@@ -355,7 +355,11 @@ void mqo_stream_write_evt( mqo_stream stream ){
 void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
     mqo_stream next, stream;
     mqo_listener listener;
+#if defined( LINUX )
+    fd_set reads, errors, writes;
+#else
     struct fd_set reads, errors, writes;
+#endif
     int fd, maxfd = 0;
     
     FD_ZERO( &reads );

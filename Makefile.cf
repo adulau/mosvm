@@ -34,7 +34,6 @@ ifeq ($(ARCH),macppc)
 ARCH=ppc
 endif
 
-DO_CC=gcc
 ifdef USE_MZSCHEME
 DO_SCHEME=mzscheme -M errortrace -f $(ROOT)/lib/run-mzscheme.scm -C
 endif

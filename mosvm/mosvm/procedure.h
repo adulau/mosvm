@@ -19,8 +19,6 @@
 
 #include "memory.h"
 
-extern struct mqo_op_row mqo_op_table[];
-
 struct mqo_procedure_data;
 typedef struct mqo_procedure_data* mqo_procedure_x;
 

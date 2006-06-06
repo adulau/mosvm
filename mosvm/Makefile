@@ -29,13 +29,13 @@ LIBS+=$(LIBTC)
 endif
 
 $(MOSVM_STUB): $(REQS) mosvm.o
-	$(DO_CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) mosvm.o $(LIBS) -o $(MOSVM_STUB)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) mosvm.o $(LIBS) -o $(MOSVM_STUB)
 
 $(MOSASM): $(REQS) mosasm.o
-	$(DO_CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) mosasm.o $(LIBS) -o $(MOSASM)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) mosasm.o $(LIBS) -o $(MOSASM)
 	
 $(MOSLD): $(REQS) mosld.o
-	$(DO_CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) mosld.o $(LIBS) -o $(MOSLD)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) mosld.o $(LIBS) -o $(MOSLD)
 
 clean:
 	rm -f $(TOOLS) *.o *.core

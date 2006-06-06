@@ -24,7 +24,8 @@
        get-sxml-tag has-sxml-tag? has-sxml-attr? sxml-drill)
 
 (import "lib/iterate")
-(import "lib/port")
+;;TODO: We need to purge all uses of write, and replace all uses of counted
+;;      read.
 (import "lib/trace")
 
 ; All special XML syntaxes conveniently start with a <, or an &. Since we

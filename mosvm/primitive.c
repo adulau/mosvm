@@ -39,7 +39,7 @@ void mqo_format_primitive( mqo_string buf, mqo_primitive prim ){
 }
 
 mqo_pair mqo_arg_ptr = NULL;
-mqo_integer mqo_arg_ct = NULL;
+mqo_integer mqo_arg_ct = 0;
 
 void mqo_no_more_args( ){
     if( mqo_arg_ptr != NULL ){
