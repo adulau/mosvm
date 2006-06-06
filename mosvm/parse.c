@@ -340,8 +340,10 @@ mqo_value mqo_parse_value( char** r_str, mqo_boolean* r_succ ){
         str ++;
         ch = *(str++);
         if( ch == 'f' ){
+            *r_succ = 1;
             x = mqo_vf_false( );
         }else if( ch == 't' ){
+            *r_succ = 1;
             x = mqo_vf_true( );
         }else{
             mqo_parse_errmsg = mqo_em_badsharp;
