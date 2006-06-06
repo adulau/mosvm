@@ -309,7 +309,7 @@
   (expat parser src)
   (parser 'done))
 
-(define (make-sxml (<port> src))
+(define (make-sxml (<channel> src))
   (define parser (make-sxml-parser))
   (expat-port parser src)
   (parser 'done))

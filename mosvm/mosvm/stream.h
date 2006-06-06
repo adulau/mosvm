@@ -52,7 +52,7 @@ mqo_channel mqo_stream_input( mqo_stream s );
 mqo_channel mqo_stream_output( mqo_stream s );
 void mqo_set_stream_input( mqo_stream s, mqo_channel c );
 void mqo_set_stream_output( mqo_stream s, mqo_channel c );
-static inline mqo_channel mqo_listener_input( mqo_listener s ){ return s->conns; }
+static inline mqo_channel mqo_listener_output( mqo_listener s ){ return s->conns; }
 static inline void mqo_set_listener_input( mqo_listener s, mqo_channel c ){ s->conns = c; }
 #define REQ_STREAM_ARG( vn  ) REQ_TYPED_ARG( vn, stream );
 #define OPT_STREAM_ARG( vn  ) OPT_TYPED_ARG( vn, stream );

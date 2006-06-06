@@ -160,6 +160,8 @@ mqo_channel mqo_get_output( mqo_value x ){
         return mqo_channel_fv( x );
     }else if( mqo_is_process( x ) ){
         return (mqo_channel)mqo_process_output( mqo_process_fv( x ) );
+    }else if( mqo_is_listener( x ) ){
+        return mqo_listener_output( mqo_listener_fv( x ) );
     }else{
         return NULL;
     }
@@ -189,8 +191,6 @@ mqo_channel mqo_get_input( mqo_value x ){
         return mqo_stream_input( mqo_stream_fv( x ) );
     }else if( mqo_is_channel( x ) ){
         return mqo_channel_fv( x );
-    }else if( mqo_is_listener( x ) ){
-        return mqo_listener_input( mqo_listener_fv( x ) );
     }else if( mqo_is_process( x ) ){
         return (mqo_channel)mqo_process_input( mqo_process_fv( x ) );
     }else{

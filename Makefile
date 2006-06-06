@@ -42,12 +42,13 @@ site: $(MOSC) bin/build-dir.sh core/*ms site/config.ms
 	sh bin/build-dir.sh site
 
 repl: share/symbols
-	rlwrap -b"()" -f share/symbols $(MOSVM) -x
+	rlwrap -b"()" -f share/symbols $(MOSVM) -x 
 
-share/symbols: $(MOSVM) import-all-lib.ms
-	$(MOSVM) -g import-all-lib.ms >share/symbols
+share/symbols: 
+	$(MOSVM) -g import-all-lib.ms >share/symbols | cut -d ' '  -f 1
+
 	
-import-all-lib.ms: $(MOSVM) lib/*.ms
+import-all-lib.ms:
 	echo '(import "lib/module")' >import-all-lib.ms
 	for x in `ls lib/*.ms | cut -d. -f 1`; do echo "(import \"$$x\")" >>import-all-lib.ms; done
 	echo '(define (main) (halt))' >>import-all-lib.ms

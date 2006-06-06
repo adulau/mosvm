@@ -20,13 +20,7 @@
   (define server (tcp-listen portno))
   (spawn (function (tcp-server)
             (forever
-              (define conn (wait server))
-              (print (string-append "New connection is "
-                                      (format (input conn))  
-                                      " : " 
-                                      (format (output conn))
-                                      "\n"))
-              (with-io conn
+              (with-io (wait server)
                 (spawn fn)))))
   server)
 

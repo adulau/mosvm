@@ -280,10 +280,26 @@ MQO_BEGIN_PRIM( "active-process", active_process )
     RESULT( mqo_vf_process( mqo_active_process ) );
 MQO_END_PRIM( active_process )
 
+MQO_BEGIN_PRIM( "halt", halt )
+    NO_REST_ARGS( );
+    mqo_disable_process( mqo_active_process );
+    mqo_proc_loop( );
+    NO_RESULT( );
+MQO_END_PRIM( halt )
+
+MQO_BEGIN_PRIM( "pause", pause )
+    NO_REST_ARGS( );
+    MQO_CP = MQO_CP->cp;
+    MQO_RX = mqo_vf_null( );
+    mqo_proc_loop( );
+MQO_END_PRIM( pause )
+
 void mqo_init_process_subsystem( ){
     MQO_I_TYPE( process );
     MQO_I_TYPE( vm );
 
     MQO_BIND_PRIM( spawn );
+    MQO_BIND_PRIM( pause );
+    MQO_BIND_PRIM( halt );
     MQO_BIND_PRIM( active_process );
 }
