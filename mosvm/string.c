@@ -236,7 +236,7 @@ void mqo_string_alter(
     if( srclen ) memmove( dst, src, srclen );
 
     string->length = newlen;
-    string->pool[ newlen ] = 0;
+    string->pool[ string->origin + newlen ] = 0;
     AUDIT_STRING( string );
 }
 void mqo_string_prepend( 
