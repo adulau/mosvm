@@ -17,12 +17,12 @@
 ;; <?xml ... ?>
 ;; <! ... >
 
-
 ;TODO: Exporting all for test purposes.
+;
 (module "lib/xml")
-;(export make-sxml get-sxml-items get-sxml-attrs
-;       get-sxml-attr get-sxml-item get-sxml-item* 
-;       get-sxml-tag has-sxml-tag? has-sxml-attr? sxml-drill)
+(export make-sxml get-sxml-items get-sxml-attrs string->sxml
+       get-sxml-attr get-sxml-item get-sxml-item* 
+       get-sxml-tag has-sxml-tag? has-sxml-attr? sxml-drill)
 
 (import "lib/iterate")
 (import "lib/trace")
@@ -103,7 +103,10 @@
              (re-error e)))
      (if (string-begins-with? str "<!")
        (begin
-         (define scan (copy-string (string-tail str 2)))
+         ;(define scan (copy-string (string-tail str 2)))
+         (define scan str)
+         (string-read! str 2)
+
          (define tag  (parse-ident scan))
          (scanner-strip scan)
          (define atoms (parse-atoms scan))
@@ -118,7 +121,10 @@
 
   (if (string-begins-with? str "<?")
     (begin
-      (define scan (copy-string (string-tail str 2)))
+      ;(define scan (copy-string (string-tail str 2)))
+      (define scan str)
+      (string-read! str 2)
+
       (define tag  (parse-ident scan))
       (scanner-strip scan)
       (define attrs (parse-attrs scan))
@@ -134,7 +140,10 @@
 
   (if (string-begins-with? str "</")
     (begin
-      (define scan (copy-string (string-tail str 2)))
+      ;(define scan (copy-string (string-tail str 2)))
+      (define scan str)
+      (string-read! str 2)
+
       (define tag  (parse-ident scan))
       (scanner-strip scan)
       (parse-completion scan)
@@ -145,8 +154,11 @@
 (define (parse-begin str)
   (step "BEGIN" str)
   
-  (define scan (copy-string str))
-  (scanner-next scan) ;; Drop that <..
+  ;(define scan (copy-string str))
+  ;(scanner-next scan) ;; Drop that <..
+  
+  (define scan str)
+  (string-read! str 1)
 
   (define tag  (parse-ident scan))
 

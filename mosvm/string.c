@@ -209,6 +209,7 @@ void mqo_string_flush( mqo_string string ){
 void mqo_string_append(
     mqo_string string, const void* src, mqo_integer srclen 
 ){
+    //TODO: This should be using mqo_string_alter.
     AUDIT_STRING( string );
     mqo_string_expand( string, srclen );
     memmove( string->pool + string->origin + string->length, src, srclen );
@@ -221,6 +222,7 @@ void mqo_string_alter(
     const void* src, mqo_integer srclen
 ){
     AUDIT_STRING( string );
+    //TODO: This is all wrong..
     mqo_integer newlen = string->length + srclen - dstlen;
 
     mqo_string_expand( string, newlen );
