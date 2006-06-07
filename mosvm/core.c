@@ -1453,7 +1453,7 @@ MQO_BEGIN_PRIM( "empty-string?", empty_stringq )
     RESULT( mqo_vf_boolean( mqo_string_empty( string ) ) );
 MQO_END_PRIM( string_empty )
 
-MQO_BEGIN_PRIM( "string-skip-space", string_skip_space )
+MQO_BEGIN_PRIM( "string-skip-space!", string_skip_space )
     REQ_STRING_ARG( string );
     NO_REST_ARGS( );
     
@@ -1618,7 +1618,7 @@ MQO_BEGIN_PRIM( "string-prepend!", string_prependd )
         src = mqo_sf_string( str );
         srclen = mqo_string_length( str );
     }else if( mqo_is_integer( data ) ){
-        mqo_integer x = mqo_integer_fv( data );
+        mqo_byte x = mqo_integer_fv( data );
         src = &x;
         srclen = 1;
     }
@@ -1655,7 +1655,7 @@ MQO_BEGIN_PRIM( "string-append!", string_appendd )
         src = mqo_sf_string( str );
         srclen = mqo_string_length( str );
     }else if( mqo_is_integer( data ) ){
-        mqo_integer x = mqo_integer_fv( data );
+        mqo_byte x = mqo_integer_fv( data );
         src = &x;
         srclen = 1;
     }
@@ -1693,7 +1693,7 @@ MQO_BEGIN_PRIM( "string-insert!", string_insertd )
         src = mqo_sf_string( str );
         srclen = mqo_string_length( str );
     }else if( mqo_is_integer( data ) ){
-        mqo_integer x = mqo_integer_fv( data );
+        mqo_byte x = mqo_integer_fv( data );
         src = &x;
         srclen = 1;
     }

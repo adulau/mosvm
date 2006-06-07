@@ -17,15 +17,14 @@
 ;; <?xml ... ?>
 ;; <! ... >
 
-(module "lib/xml")
 
-(export make-sxml get-sxml-items get-sxml-attrs
-       get-sxml-attr get-sxml-item get-sxml-item* 
-       get-sxml-tag has-sxml-tag? has-sxml-attr? sxml-drill)
+;TODO: Exporting all for test purposes.
+(module "lib/xml")
+;(export make-sxml get-sxml-items get-sxml-attrs
+;       get-sxml-attr get-sxml-item get-sxml-item* 
+;       get-sxml-tag has-sxml-tag? has-sxml-attr? sxml-drill)
 
 (import "lib/iterate")
-;;TODO: We need to purge all uses of write, and replace all uses of counted
-;;      read.
 (import "lib/trace")
 
 ; All special XML syntaxes conveniently start with a <, or an &. Since we
@@ -33,10 +32,6 @@
 ; with a <..
 
 (define (parse-data data)
-  ;;; (write "Parsing DATA: ")
-  ;;; (write (string-head data 16))
-  ;;; (newline)
-
   (define tag-ix (string-find data "<" ))
   (if tag-ix 
     (guard (lambda (err)
@@ -84,14 +79,8 @@
     #f))
 
 (define-macro (step . rest) '(begin))
-
-;;; (define (step tag str)
-;;;   (write "    Trying ")
-;;;   (write tag)
-;;;   (write ": ")
-;;;   (write (string-head str 16))
-;;;   (newline))
-
+;(define (step phase str) (print phase) (dump-string str))
+  
 (define (parse-question scan)
   (define ch (scanner-next scan))
   (unless (= ch *qm-char*)
@@ -114,7 +103,7 @@
              (re-error e)))
      (if (string-begins-with? str "<!")
        (begin
-         (define scan (make-scanner (string-tail str 2)))
+         (define scan (copy-string (string-tail str 2)))
          (define tag  (parse-ident scan))
          (scanner-strip scan)
          (define atoms (parse-atoms scan))
@@ -129,7 +118,7 @@
 
   (if (string-begins-with? str "<?")
     (begin
-      (define scan (make-scanner (string-tail str 2)))
+      (define scan (copy-string (string-tail str 2)))
       (define tag  (parse-ident scan))
       (scanner-strip scan)
       (define attrs (parse-attrs scan))
@@ -145,18 +134,18 @@
 
   (if (string-begins-with? str "</")
     (begin
-      (define scan (make-scanner (string-tail str 2)))
+      (define scan (copy-string (string-tail str 2)))
       (define tag  (parse-ident scan))
       (scanner-strip scan)
       (parse-completion scan)
       (list (list 'end tag)
             (scanner->string scan)))
     #f))
-
+; TODO: We should not be copying -- we should attempt a parse-indent, and backfeed.
 (define (parse-begin str)
   (step "BEGIN" str)
   
-  (define scan (make-scanner str))
+  (define scan (copy-string str))
   (scanner-next scan) ;; Drop that <..
 
   (define tag  (parse-ident scan))
@@ -216,10 +205,10 @@
               (buf xml-context-buf set-xml-context-buf!))
 
 (define (make-sxml-parser)
-  (define context (make-xml-context #f '*TOP* '() (make-tc)))
+  (define context (make-xml-context #f '*TOP* '() (make-tc) (make-string)))
 
   (define (new-context tag attrs)
-    (make-xml-context context tag attrs (make-tc)))
+    (make-xml-context context tag attrs (make-tc) (make-string)))
 
   (define (new-sxml tag inv attrs)
     (unless (null? attrs)
@@ -242,7 +231,7 @@
     (unless buf
       (set! buf (make-string))
       (set-xml-context-buf! context buf))
-    (string-write buf text))
+    (string-append! buf text))
 
   (define (flush-buf)
     (define buf (xml-context-buf context))
@@ -304,10 +293,13 @@
            (expat func data)
            (set! data "")))))
 
-(define (make-sxml (<string> src))
+(define (string->sxml src)
   (define parser (make-sxml-parser))
   (expat parser src)
   (parser 'done))
+
+(define (make-sxml (<string> src))
+  (string->sxml src))
 
 (define (make-sxml (<channel> src))
   (define parser (make-sxml-parser))
@@ -469,6 +461,7 @@
   (tc->list values))
 
 (define (parse-attr scan)
+  (step "ATTR" scan)
   (define key (parse-ident scan))
   (if key 
     (begin
@@ -486,16 +479,19 @@
     #f))
 
 (define (parse-attrs scan)
+  (step "BEG-ATTRS" scan)
   (define attrs (make-tc))
   (define done #f)
 
   (until done
     (scanner-strip scan)
+    (step "ATTRS-STRIP" scan)
     (define attr (parse-attr scan))
     (if attr
       (tc-append! attrs attr)
       (set! done #t)))
 
+  (step "END-ATTRS" scan)
   (tc->list attrs))
 
 (define (parse-atom scan)
@@ -516,15 +512,13 @@
 
   (tc->list atoms))
 
-(define (scanner-empty? scanner) (empty-string? scanner))
-
 (define (scanner-next scanner)
   (if (empty-string? scanner)
     (error 'xml-inc "xml tag incomplete")
-    (string-read-byte scanner)))
+    (string-read-byte! scanner)))
 
 (define (scanner-strip scanner)
-  (string-skip-space scanner))
+  (string-skip-space! scanner))
 
 (define (scanner->string scanner)
   scanner)
