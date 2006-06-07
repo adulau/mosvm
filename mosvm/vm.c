@@ -37,13 +37,6 @@ mqo_integer mqo_trace_flag = 0;
 
 mqo_callframe mqo_make_callframe( ){
     mqo_callframe frame = MQO_OBJALLOC( callframe );
-    frame->ap = NULL;
-    frame->cp = NULL;
-    frame->ep = NULL;
-    frame->ip = NULL;
-    frame->count = 0;
-    frame->head = NULL;
-    frame->tail = NULL;
     return frame;
 }
 void mqo_trace_registers( ){

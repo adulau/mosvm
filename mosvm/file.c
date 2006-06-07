@@ -28,7 +28,6 @@ mqo_file mqo_make_file( mqo_string path, int fd ){
     mqo_file file = MQO_OBJALLOC( file );
     file->path = path;
     file->fd = fd;
-    file->closed = 0;
     return file;
 }
 void mqo_trace_file( mqo_file file ){

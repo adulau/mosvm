@@ -161,11 +161,8 @@ mqo_stream mqo_make_stream( mqo_integer fd ){
     s->cmd->source = mqo_vf_stream( s );
     s->evt = mqo_make_channel( );
     s->evt->source = mqo_vf_stream( s );
-    s->next = NULL;
     s->prev = mqo_last_stream;
-    s->error = 0;
     s->state = MQO_READY;
-    s->enabled = 0;
 #if defined( _WIN32 )||defined( __CYGWIN__ )
     unsigned long unblocking = 1;
     mqo_net_error( ioctlsocket( s->fd, FIONBIO, &unblocking ) );
@@ -182,9 +179,7 @@ mqo_listener mqo_make_listener( mqo_integer fd ){
     mqo_listener l = MQO_OBJALLOC( listener );
     l->fd = fd;
     l->conns = mqo_make_channel( );
-    l->next = NULL;
     l->prev = mqo_last_listener;
-    l->error = 0;
     
     if( mqo_last_listener ){
         mqo_last_listener->next = l;

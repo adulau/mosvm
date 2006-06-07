@@ -55,7 +55,6 @@ mqo_procedure mqo_make_procedure( mqo_word length ){
     mqo_procedure v = MQO_OBJALLOC2( procedure, tail );
 
     v->length = length;
-    memset( v->inst, 0, tail );
     
     while( length ) v->inst[ -- length ].proc = v;
 

@@ -93,7 +93,6 @@ mqo_tree mqo_make_tree( mqo_type type, mqo_key_fn key_fn ){
     mqo_tree tree = (mqo_tree)mqo_objalloc( 
         type, sizeof( struct mqo_tree_data ) );
     tree->key_fn = key_fn;
-    tree->root = NULL;
     return tree;
 }
 mqo_dict mqo_make_dict( ){

@@ -17,10 +17,6 @@
 #include "mosvm.h"
 mqo_channel mqo_make_channel( ){
     mqo_channel c = MQO_OBJALLOC( channel );
-    c->monitor = NULL;
-    c->head = c->tail = NULL;
-    c->prev = c->next = NULL;
-    c->source = 0;
     return c;
 }
 void mqo_trace_channel( mqo_channel channel ){

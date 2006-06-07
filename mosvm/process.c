@@ -55,12 +55,6 @@ mqo_process mqo_make_process(
 
 mqo_vm mqo_make_vm( ){
     mqo_vm vm = MQO_OBJALLOC( vm );
-    vm->ip = NULL;
-    vm->ap = NULL;
-    vm->cp = NULL;
-    vm->ep = NULL;
-    vm->gp = NULL;
-    vm->rx = 0;
     return vm;
 }
 

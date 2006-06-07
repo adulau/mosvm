@@ -78,8 +78,6 @@ mqo_symbol mqo_symbol_fs( const char* s ){
 
 mqo_string mqo_make_string( mqo_integer capacity ){
     mqo_string string = MQO_OBJALLOC( string );
-    string->origin = 0;
-    string->length = 0;
     string->pool = malloc( capacity + 1 );
     string->capacity = capacity;
     AUDIT_STRING( string );

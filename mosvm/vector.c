@@ -38,7 +38,6 @@ mqo_vector mqo_make_vector( mqo_integer length ){
     mqo_vector v = MQO_OBJALLOC2( vector, tail );
 
     v->length = length;
-    memset( v->data, 0,  tail );
     return v;
 }
 mqo_vector mqo_copy_vector( mqo_vector vo, mqo_integer ln ){

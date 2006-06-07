@@ -163,14 +163,13 @@ mqo_type mqo_make_type( mqo_value name, mqo_type parent ){
     mqo_type direct, type = MQO_OBJALLOC( type );
 
     if(! parent ){
-        direct = NULL;
     }else if(! parent->direct ){
+        type->direct = parent;
         direct = parent;
     }else{
-        direct = parent->direct;
+        type->direct = parent->direct;
     }
 
-    type->direct = direct;
     type->name = name;
     type->parent = parent;
 

@@ -23,9 +23,6 @@ mqo_pair mqo_make_pair( ){
 mqo_tc mqo_make_tc( ){
     mqo_tc tc = (mqo_tc)mqo_objalloc( mqo_tc_type,
                                       sizeof( struct mqo_pair_data ) );
-    tc->car = mqo_vf_null();
-    tc->cdr = mqo_vf_null();
-
     return tc;
 }
 mqo_pair mqo_cons( mqo_value car, mqo_value cdr ){

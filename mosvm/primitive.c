@@ -17,11 +17,9 @@
 #include "mosvm.h"
 
 mqo_primitive mqo_make_primitive( const char* name, mqo_prim_fn impl ){
-    mqo_symbol sym = mqo_symbol_fs( name );
     mqo_primitive prim = MQO_OBJALLOC( primitive );
-    prim->name = sym;
+    prim->name = mqo_symbol_fs( name );
     prim->impl = impl;
-    prim->code = prim->a = prim->b = 0;
     return prim;
 }
 void mqo_bind_primitive( const char* name, mqo_prim_fn impl ){
