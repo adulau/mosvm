@@ -223,29 +223,6 @@ MQO_BEGIN_PRIM( "abs", m_abs )
     RESULT( mqo_vf_integer( integer < 0 ?  -integer : integer ) );
 MQO_END_PRIM( m_abs )
 
-MQO_BEGIN_PRIM( "+", m_add )
-    REQ_INTEGER_ARG( v0 );
-    for(;;){
-        OPT_INTEGER_ARG( vN );
-        if( ! has_vN )break;
-        v0 += vN;
-    };
-    RESULT( mqo_vf_integer( v0 ) );
-MQO_END_PRIM( m_add )
-
-MQO_BEGIN_PRIM( "-", m_sub )
-    REQ_INTEGER_ARG( v0 );
-    int any = 0;
-    for(;;){
-        OPT_INTEGER_ARG( vN );
-        if( ! has_vN )break;
-        v0 -= vN;
-        any = 1;
-    };
-    if( ! any ) v0 = -v0;
-    RESULT( mqo_vf_integer( v0 ) );
-MQO_END_PRIM( m_sub )
-
 MQO_BEGIN_PRIM( "*", m_mul )
     REQ_INTEGER_ARG( v0 );
     for(;;){
@@ -1750,8 +1727,6 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( m_gte );    
     MQO_BIND_PRIM( m_eq );    
     MQO_BIND_PRIM( m_ne );    
-    MQO_BIND_PRIM( m_add );    
-    MQO_BIND_PRIM( m_sub );    
     MQO_BIND_PRIM( m_mul );    
     MQO_BIND_PRIM( m_div );    
     MQO_BIND_PRIM( m_abs );    

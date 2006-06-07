@@ -303,6 +303,7 @@ mqo_value mqo_opt_any( mqo_boolean* found ){
     if( mqo_arg_ptr ){
         mqo_value x = mqo_car( mqo_arg_ptr );
         mqo_arg_ptr = mqo_list_fv( mqo_cdr( mqo_arg_ptr ) );
+        *found = 1;
         return x;
     }else{
         *found = 0;

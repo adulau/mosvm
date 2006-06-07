@@ -88,7 +88,7 @@ MQO_BEGIN_PRIM( "-", minus )
     REQ_INTEGER_ARG( base );
 
     int any = 0;
-
+    
     for(;;){
         OPT_INTEGER_ARG( x );
         if( ! has_x )break;
