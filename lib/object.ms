@@ -89,26 +89,27 @@
             (? ,modif-name) 
             refuse-method))))
 
-  `(begin 
-     (define ,class-name  (make-class ',class-tag 
-                                      ,super-class 
-                                      ',(map-car class-fields)))
-     (define (,pred-name %value) (isa? %value ,class-name))
-     (define ,(car make-proto) (make-class-constructor 
-                                 ',class-name 
-                                 ,class-name
-                                 ',(cdr make-proto)))
-     ,@(map (lambda (field) 
-              (if (> (length field) 1)
-                (bind-field-accessor (cadr field) (car field))
-                '(begin)))
-            class-fields)
+  (append
+    '(begin)
+    `((define ,class-name  (make-class ',class-tag 
+                                       ,super-class 
+                                       ',(map-car class-fields))))
+    `((define (,pred-name %value) (isa? %value ,class-name)))
+    `((define ,(car make-proto) (make-class-constructor 
+                                  ',class-name 
+                                  ,class-name
+                                  ',(cdr make-proto))))
+    (map (lambda (field) 
+           (if (> (length field) 1)
+             (bind-field-accessor (cadr field) (car field))
+             '(begin)))
+         class-fields)
 
-     ,@(map (lambda (field) 
-              (if (> (length field) 2)
-                (bind-field-modifier (caddr field) (car field))
-                '(begin)))
-            class-fields)))
+    (map (lambda (field) 
+           (if (> (length field) 2)
+             (bind-field-modifier (caddr field) (car field))
+             '(begin)))
+         class-fields)))
 
 (export make-class
         class-fields make-class-constructor make-field-modifier  
