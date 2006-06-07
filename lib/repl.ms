@@ -30,8 +30,7 @@
     (define cmd (wait cmds))
     (when (eq? cmd 'close) (return))
     (guard traceback
-      (send (string-append ":: " 
-                           (format (exec cmd)) 
-                           *line-sep*)))))
+      (define data (format (exec cmd)))
+      (print (string-append ":: " data *line-sep*)))))
 
 (export repl)
