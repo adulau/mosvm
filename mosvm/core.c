@@ -1616,6 +1616,21 @@ MQO_BEGIN_PRIM( "append", append )
     RESULT( mqo_car( tc ) );
 MQO_END_PRIM( append )
 
+MQO_BEGIN_PRIM( "append!", appendd )
+    mqo_value head = NULL;
+    mqo_value* link = &head;
+
+    for(;;){
+        OPT_LIST_ARG( next );
+        if( ! has_next )break;
+        if( ! next )continue;
+        *link = mqo_vf_pair( next );
+        link = &( mqo_last_pair( next )->cdr );
+    }
+
+    LIST_RESULT( head );
+MQO_END_PRIM( appendd )
+
 MQO_BEGIN_PRIM( "string-append!", string_appendd )
     REQ_STRING_ARG( string )
     REQ_ANY_ARG( data )
@@ -1812,6 +1827,7 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( string_skip );
 
     MQO_BIND_PRIM( append );
+    MQO_BIND_PRIM( appendd );
     MQO_BIND_PRIM( substring );
     MQO_BIND_PRIM( string_head );
     MQO_BIND_PRIM( string_tail );
