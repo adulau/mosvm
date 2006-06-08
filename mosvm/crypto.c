@@ -34,8 +34,8 @@ MQO_END_TYPE( random )
 
 void mqo_format_random( mqo_string buf, mqo_random random ){
     mqo_format_begin( buf, random );
-    mqo_format_char( buf, ' ' );
-    mqo_format_cs( buf, random->descr->name );
+    mqo_string_append_byte( buf, ' ' );
+    mqo_string_append_cs( buf, random->descr->name );
     mqo_format_end( buf );
 }
 
@@ -53,8 +53,8 @@ MQO_GENERIC_GC( aes_key );
 
 void mqo_format_aes_key( mqo_string buf, mqo_aes_key key ){
     mqo_format_begin( buf, random );
-    mqo_format_char( buf, ' ' );
-    mqo_format_int( buf, key->keysize );
+    mqo_string_append_byte( buf, ' ' );
+    mqo_string_append_unsigned( buf, key->keysize );
     mqo_format_end( buf );
 }
 
@@ -76,7 +76,7 @@ mqo_integer mqo_crypto_err( mqo_integer result ){
     return result;
 }
 
-mqo_integer mqo_random_err( mqo_integer request, mqo_integer actual ){
+mqo_integer mqo_random_err( mqo_integer request, mqo_quad actual ){
     if( actual < request ){
         mqo_errf( mqo_es_crypto, "s", 
                   "the OS entropy provider could not provide sufficient"
@@ -159,9 +159,9 @@ mqo_random mqo_make_random( const struct ltc_prng_descriptor* descr, const void*
                                                 initlen, 
                                                 &( random->state ) ) );
     }else{
-        static char seed[ 1024 ];
+        static unsigned char seed[ 1024 ];
         int seed_cycles = 32;
-        char* seedptr = seed;
+        unsigned char* seedptr = seed;
 
         if( mqo_default_random ){
             //TODO
@@ -207,9 +207,11 @@ MQO_BEGIN_PRIM( "add-entropy", add_entropy )
     OPT_RANDOM_ARG( random );
     NO_REST_ARGS( );
 
-    mqo_crypto_err( random->descr->add_entropy( mqo_sf_string( entropy ),
-                                                mqo_string_length( entropy ),
-                                                &( random->state ) ) );
+    mqo_crypto_err( random->descr->add_entropy( 
+        (unsigned char*)mqo_sf_string( entropy ),
+        mqo_string_length( entropy ),
+        &( random->state ) ) 
+    );
 
     mqo_crypto_err( random->descr->ready( &( random->state ) ) );
 
@@ -256,7 +258,7 @@ MQO_BEGIN_PRIM( "export-random", export_random )
     OPT_RANDOM_ARG( random );
     NO_REST_ARGS( );
     
-    static char data[ 1024 ];
+    static unsigned char data[ 1024 ];
     unsigned long datalen = 1024;
     mqo_crypto_err( random->descr->pexport( data, &datalen, &( random->state ) ) );
 
@@ -293,7 +295,7 @@ MQO_BEGIN_PRIM( "make-aes-key", make_aes_key )
     if( ! has_data ){ data = mqo_vf_random( mqo_default_random ); }
     
     if( mqo_is_random( data ) ){
-        static char keydata[64];
+        static unsigned char keydata[64];
         mqo_read_random( mqo_random_fv( data ), keydata, len );
         key = mqo_make_aes_key( keydata, len, size );
     }else if(! mqo_is_string( data ) ){
@@ -321,8 +323,8 @@ MQO_BEGIN_PRIM( "aes-encrypt", aes_encrypt )
                   "plaintext cannot be longer than 16 bytes" );
     }
     
-    static char ps[16];
-    static char cs[16];
+    static unsigned char ps[16];
+    static unsigned char cs[16];
 
     memcpy( ps, mqo_sf_string( plaintext ), pslen );
     if( pslen < 16 ) mqo_read_random( random, ps + pslen, 16 - pslen );
@@ -342,8 +344,8 @@ MQO_BEGIN_PRIM( "aes-decrypt", aes_decrypt )
         mqo_errf( mqo_es_vm, "s", "ciphertext must be 16 bytes" );
     }
     
-    static char ps[16];
-    static char cs[16];
+    static unsigned char ps[16];
+    static unsigned char cs[16];
 
     memcpy( cs, mqo_sf_string( ciphertext ), cslen );
 
@@ -414,8 +416,10 @@ MQO_BEGIN_PRIM( "base64-encode", base64_encode )
     unsigned long pslen = mqo_string_length( plaintext );
     unsigned long cslen = ( pslen << 2 ) / 3 + 5; 
     mqo_string ciphertext = mqo_make_string( cslen );
-    mqo_crypto_err( base64_encode( mqo_sf_string( plaintext ), pslen,
-                                   mqo_sf_string( ciphertext ), &cslen ) );
+    mqo_crypto_err( base64_encode( 
+        (unsigned char*)mqo_sf_string( plaintext ), pslen,
+        (unsigned char*)mqo_sf_string( ciphertext ), &cslen 
+    ) );
     ciphertext->length = cslen; 
 
     STRING_RESULT(( ciphertext ) );
@@ -428,8 +432,10 @@ MQO_BEGIN_PRIM( "base64-decode", base64_decode )
     unsigned long cslen = mqo_string_length( ciphertext );
     unsigned long pslen = ( cslen * 3 ) >> 2; 
     mqo_string plaintext = mqo_make_string( pslen );
-    mqo_crypto_err( base64_decode( mqo_sf_string( ciphertext ), cslen,
-                                   mqo_sf_string( plaintext ), &pslen ) );
+    mqo_crypto_err( base64_decode( 
+        (unsigned char*)mqo_sf_string( ciphertext ), cslen,
+        (unsigned char*)mqo_sf_string( plaintext ), &pslen 
+    ) );
     plaintext->length = pslen; 
 
     STRING_RESULT(( plaintext ) );
@@ -455,7 +461,7 @@ MQO_BEGIN_PRIM( "import-ecdh", import_ecdh )
 
     mqo_ecdh_key key = mqo_make_ecdh_key( );
 
-    mqo_crypto_err( ecc_import( mqo_sf_string( data ), 
+    mqo_crypto_err( ecc_import( (unsigned char*)mqo_sf_string( data ), 
                                 mqo_string_length( data ),
                                 &( key->key ) ) );
 
@@ -466,7 +472,7 @@ MQO_BEGIN_PRIM( "export-public-ecdh", export_public_ecdh )
     REQ_ECDH_ARG( key );
     NO_REST_ARGS( );
 
-    static char buf[ 1024 ];
+    static unsigned char buf[ 1024 ];
     unsigned long buflen = 1024;
 
     mqo_crypto_err( ecc_export( buf, &buflen, PK_PUBLIC, &( key->key ) ) );
@@ -478,7 +484,7 @@ MQO_BEGIN_PRIM( "export-private-ecdh", export_private_ecdh )
     REQ_ECDH_ARG( key );
     NO_REST_ARGS( );
 
-    static char buf[ 1024 ];
+    static unsigned char buf[ 1024 ];
     unsigned long buflen = 1024;
 
     mqo_crypto_err( ecc_export( buf, &buflen, PK_PRIVATE, &( key->key ) ) );
@@ -491,7 +497,7 @@ MQO_BEGIN_PRIM( "ecdh-shared-secret", ecdh_shared_secret )
     REQ_ECDH_ARG( remote );
     NO_REST_ARGS( );
     
-    static char buf[ 1024 ];
+    static unsigned char buf[ 1024 ];
     unsigned long buflen = 1024;
 
     mqo_crypto_err( ecc_shared_secret( &( local->key ), 

@@ -37,19 +37,19 @@ mqo_vector mqo_make_vector( mqo_integer length ){
     return v;
 }
 
-void mqo_format_vector_contents( mqo_string s, mqo_vector v, mqo_boolean sp ){
+void mqo_format_vector_items( mqo_string s, mqo_vector v, mqo_boolean sp ){
     mqo_integer ln = mqo_vector_length( v );
     mqo_integer ix = 0;
 
     for( ix = 0; ix < ln; ix ++ ){
-        if( sp ) mqo_format_char( s, ' ' );
+        if( sp ) mqo_string_append_byte( s, ' ' );
         sp = 1;
-        mqo_format( s, mqo_vector_get( v, ix ) );
+        if( ! mqo_format_item( s, mqo_vector_get( v, ix ) ) )break;
     }
 }
 void mqo_format_vector( mqo_string s, mqo_vector v ){
     mqo_format_begin( s, v );
-    mqo_format_vector_contents( s, v, 1 ); 
+    mqo_format_vector_items( s, v, 1 ); 
     mqo_format_end( s );
 }
 
@@ -60,6 +60,7 @@ mqo_vector mqo_copy_vector( mqo_vector vo, mqo_integer ln ){
     }
     return vn;
 }
+
 mqo_integer mqo_vector_compare( mqo_vector a, mqo_vector b ){
     mqo_integer al = mqo_vector_length( a );
     mqo_integer bl = mqo_vector_length( b );

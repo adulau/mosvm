@@ -247,8 +247,8 @@ void mqo_iter_tree( mqo_tree tree, mqo_iter_mt iter, void* ctxt ){
 }
 
 void mqo_format_tree_cb( mqo_value value, mqo_string buf ){
-    mqo_format_char( buf, ' ' );
-    mqo_format( buf, value );
+    mqo_string_append_byte( buf, ' ' );
+    mqo_format_item( buf, value );
 }
 
 void mqo_format_tree( mqo_string buf, mqo_tree tree ){

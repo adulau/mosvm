@@ -20,7 +20,7 @@ mqo_value mqo_the_true;
 mqo_value mqo_the_false;
 
 void mqo_format_boolean( mqo_string buf, mqo_value v ){
-    mqo_format_cs( buf, v == mqo_the_false ? "#f" : "#t" );
+    mqo_string_append_cs( buf, v == mqo_the_false ? "#f" : "#t" );
 }
 mqo_integer mqo_boolean_compare( mqo_value a, mqo_value b ){
     if( a == b )return 0;

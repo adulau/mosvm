@@ -24,11 +24,11 @@
 //TODO: Add (disable-sigint) so the drone can block this.
 void mqo_handle_sigint( int sig ){
     mqo_string s = mqo_make_string( 128 );
-    mqo_format_nl( s );
-    mqo_format_cs( s, "Interrupted by user." );
-    mqo_format_nl( s );
+    mqo_string_append_newline( s );
+    mqo_string_append_cs( s, "Interrupted by user." );
+    mqo_string_append_newline( s );
     mqo_format_context( s, mqo_frame_context( MQO_CP ) );
-    mqo_format_nl( s );
+    mqo_string_append_newline( s );
     mqo_printstr( s );
     exit(909);
 }

@@ -452,8 +452,8 @@ void mqo_init_vm_subsystem( ){
 }
 void mqo_trace_ip( mqo_instruction ip ){
     mqo_string s = mqo_make_string( 80 );
-    mqo_format_hex( s, ip - ip->proc->inst );
-    mqo_format_cs( s, ": " );
+    mqo_string_append_hex( s, ip - ip->proc->inst );
+    mqo_string_append_cs( s, ": " );
     mqo_format_instruction( s, ip );
     mqo_prim_fn p = ip->prim->impl;
 
@@ -472,15 +472,16 @@ void mqo_trace_ip( mqo_instruction ip ){
     }
     
     if( ap ){
-        mqo_format_cs( s, " -- " );
-        mqo_format_pair( s, MQO_AP->head );
+        mqo_string_append_cs( s, " -- " );
+        mqo_format_value( s, mqo_vf_obj( (mqo_object) MQO_AP->head ), 32, 3 );
     }
     if( rx ){
-        mqo_format_cs( s, " :: " );
-        mqo_format( s, MQO_RX );
+        mqo_string_append_cs( s, " :: " );
+        mqo_format_value( s, MQO_RX, 32, 3 );
     }
 
-    mqo_format_nl( s );
+    mqo_string_append_newline( s );
+    //TODO: This might be better directed to a channel, or stderr..
     mqo_printstr( s );
     mqo_objfree( s );
 }

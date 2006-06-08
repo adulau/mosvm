@@ -44,8 +44,7 @@ void mqo_space( ){
 }
 void mqo_show( mqo_value v ){
     mqo_string s = mqo_make_string( 64 );
-    mqo_format( s, v );
-    mqo_printstr( s );
+    mqo_format_value( s, v, 32, 16 );
     mqo_objfree( s );
 }
 
@@ -60,11 +59,16 @@ MQO_END_PRIM( print )
 
 MQO_BEGIN_PRIM( "format", format )
     REQ_ANY_ARG( value );
+    OPT_INTEGER_ARG( breadth );
+    OPT_INTEGER_ARG( depth );
     OPT_STRING_ARG( buffer );
     NO_REST_ARGS( );
     
     if( ! has_buffer ) buffer = mqo_make_string( 64 );
-    mqo_format( buffer, value );
+    if( ! has_breadth ) breadth = 32;
+    if( ! has_depth ) depth = 3;
+
+    mqo_format_value( buffer, value, breadth, depth );
 
     STRING_RESULT( buffer );
 MQO_END_PRIM( format )

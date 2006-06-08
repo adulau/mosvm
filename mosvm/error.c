@@ -21,9 +21,9 @@ int mqo_abort_on_error = 0;
 
 void mqo_format_error( mqo_string buf, mqo_error e ){
     mqo_format_begin( buf, e );
-    mqo_format_char( buf, ' ' );
-    mqo_format_sym( buf, e->key );
-    mqo_format_items( buf, e->info, 1 );
+    mqo_string_append_byte( buf, ' ' );
+    mqo_string_append_sym( buf, e->key );
+    mqo_format_list_items( buf, e->info, 1 );
     mqo_format_end( buf );
 }
 
@@ -31,13 +31,13 @@ int mqo_format_context( mqo_string buf, mqo_list context  ){
     if( context == NULL )return 0; 
     
     if( mqo_format_context( buf, mqo_list_fv( mqo_cdr( context ) ) ) ){ 
-        mqo_format_indent( buf, 11 ); 
+        mqo_string_append_indent( buf, 11 ); 
     }else{ 
-        mqo_format_cs( buf, "TRACEBACK: " ); 
+        mqo_string_append_cs( buf, "TRACEBACK: " ); 
     };
     
-    mqo_format( buf, mqo_car( context ) );
-    mqo_format_nl( buf );
+    mqo_format_value( buf, mqo_car( context ), 32, 3 );
+    mqo_string_append_newline( buf );
 
     return 1;
 }
@@ -45,18 +45,18 @@ int mqo_format_context( mqo_string buf, mqo_list context  ){
 void mqo_format_traceback( mqo_string buf, mqo_error e ){
     mqo_pair p;
     
-    mqo_format_cs( buf, "ERROR: " );
-    mqo_format_sym( buf, e->key );
+    mqo_string_append_cs( buf, "ERROR: " );
+    mqo_string_append_sym( buf, e->key );
 
     p = e->info;
 
     if( p ){
         mqo_value v = mqo_car( e->info );
         if( mqo_is_string( v ) ){
-            mqo_format_cs( buf, "--" );
-            mqo_format_str( buf, mqo_string_fv( v ) );
-            mqo_format_nl( buf );
-            mqo_format_cs( buf, "       " );
+            mqo_string_append_cs( buf, "--" );
+            mqo_string_append_str( buf, mqo_string_fv( v ) );
+            mqo_string_append_newline( buf );
+            mqo_string_append_cs( buf, "       " );
             
             if( mqo_is_list( mqo_cdr( p ) ) ){
                 p = mqo_list_fv( mqo_cdr( p ) );
@@ -64,13 +64,13 @@ void mqo_format_traceback( mqo_string buf, mqo_error e ){
                 p = NULL;
             }
         }else{
-            mqo_format_cs( buf, " :: " );
+            mqo_string_append_cs( buf, " :: " );
         };
 
-        mqo_format_items( buf, p, 0 );
+        mqo_format_list_items( buf, p, 0 );
     };
 
-    mqo_format_nl( buf );
+    mqo_string_append_newline( buf );
     mqo_format_context( buf, e->context );
 }
 
@@ -188,8 +188,8 @@ mqo_guard mqo_make_guard(
 }
 void mqo_format_guard( mqo_string buf, mqo_guard guard ){
     mqo_format_begin( buf, guard );
-    mqo_format_char( buf, ' ' );
-    mqo_format_func( buf, guard->fn );
+    mqo_string_append_byte( buf, ' ' );
+    mqo_format_item( buf, guard->fn );
     mqo_format_end( buf );
 }
 void mqo_trace_guard( mqo_guard guard ){
@@ -213,6 +213,7 @@ MQO_BEGIN_PRIM( "error", error )
     mqo_throw_error( err );
 MQO_END_PRIM( error )
 
+//TODO: Accept a string or channel to send the traceback to.
 MQO_BEGIN_PRIM( "traceback", traceback )
     REQ_ERROR_ARG( error );
     NO_REST_ARGS( );

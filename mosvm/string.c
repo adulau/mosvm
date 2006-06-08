@@ -119,17 +119,17 @@ mqo_value mqo_get_global( mqo_symbol name ){
 void mqo_format_string( mqo_string buf, mqo_string str ){
     //TODO: Improve with ellision, scored length, escaping unprintables.
     AUDIT_STRING( str );
-    mqo_format_char( buf, '"' );
+    mqo_string_append_byte( buf, '"' );
     const char* ptr = mqo_string_head( str );
     mqo_integer len = mqo_string_length( str );
     if( len > 64 ){
         len = 64;
         mqo_string_append( buf, ptr, len );
-        mqo_format_cs( buf, "..." );
+        mqo_string_append_cs( buf, "..." );
     }else{
         mqo_string_append( buf, ptr, len );
     };
-    mqo_format_char( buf, '"' );
+    mqo_string_append_byte( buf, '"' );
 }
 
 MQO_GENERIC_TRACE( string );
@@ -146,7 +146,7 @@ void mqo_trace_symbol( mqo_symbol symbol ){
     if( symbol->global )mqo_grey_val( symbol->value );    
 }
 void mqo_format_symbol( mqo_string buf, mqo_symbol sym ){
-    mqo_format_sym( buf, sym ); 
+    mqo_string_append_sym( buf, sym ); 
 }
 void mqo_free_symbol( mqo_symbol sym ){
     assert( 0 );
@@ -351,4 +351,87 @@ mqo_boolean mqo_string_empty( mqo_string str ){
     AUDIT_STRING( str );
     return ! str->length;
 }
+void mqo_string_append_newline( mqo_string buf ){
+#if defined(_WIN32)||defined(__CYGWIN__)
+    mqo_string_append_str( buf, "\r\n" );
+#else
+    mqo_string_append_byte( buf, '\n' );
+#endif
+}
+
+void mqo_string_append_hexnibble( mqo_string buf, mqo_quad digit ){
+    if( digit > 9 ){
+        mqo_string_append_byte( buf, 'A' + digit - 10 );
+    }else{
+        mqo_string_append_byte( buf, '0' + digit );
+    }
+}
+
+void mqo_string_append_hexbyte( mqo_string buf, mqo_quad byte ){
+    mqo_string_append_hexnibble( buf, byte / 16 );
+    mqo_string_append_hexnibble( buf, byte % 16 );
+}
+void mqo_string_append_hexword( mqo_string buf, mqo_quad word ){
+    mqo_string_append_hexbyte( buf, word / 256 );
+    mqo_string_append_hexbyte( buf + 2, word % 256 );
+}
+void mqo_string_append_hexquad( mqo_string buf, mqo_quad word ){
+    mqo_string_append_hexword( buf, word / 65536 );
+    mqo_string_append_hexword( buf + 4, word % 65536 );
+}
+void mqo_string_append_indent( mqo_string buf, mqo_integer depth ){
+    while( ( depth-- ) > 0 ) mqo_string_append_byte( buf, ' ' );
+}
+void mqo_string_append_unsigned( mqo_string str, mqo_quad number ){
+    static char buf[256];
+    buf[255] = 0;
+    int i = 255;
+
+    do{
+        buf[ --i ] = '0' + number % 10;
+    }while( number /= 10 );
+   
+    mqo_string_append( str, buf + i, 255 - i );
+};
+void mqo_string_append_signed( mqo_string str, mqo_integer number ){
+    if( number < 0 ){
+        mqo_string_append_byte( str, '-' );
+        number = -number;
+    }
+    mqo_string_append_unsigned( str, number );
+}
+void mqo_string_append_hex( mqo_string str, mqo_quad number ){
+    static char buf[256];
+    buf[255] = 0;
+    int i = 255;
+    
+    do{
+        int digit = number % 16;
+        if( digit > 9 ){
+            buf[ -- i ] = 'A' + digit - 10;
+        }else{
+            buf[ --i ] = '0' + digit;
+        }
+    }while( number /= 16 );
+   
+    mqo_string_append( str, buf + i, 255 - i ); 
+}
+void mqo_string_append_str( mqo_string buf, mqo_string s ){
+    mqo_string_append( buf, mqo_sf_string( s ), mqo_string_length( s ) );
+}
+void mqo_string_append_sym( mqo_string buf, mqo_symbol s ){
+    mqo_string_append_str( buf, s->string );
+}
+void mqo_string_append_addr( mqo_string buf, mqo_integer i ){
+    //TODO: Replace.
+    if( i ){
+        mqo_string_append_hex( buf, (mqo_quad)i );
+    }else{
+        mqo_string_append_cs( buf, "null" );
+    }
+}
+void mqo_string_append_cs( mqo_string buf, const char* c ){
+    mqo_string_append( buf, c, strlen( c ) );
+}
+
 

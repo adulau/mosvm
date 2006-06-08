@@ -200,16 +200,17 @@ void mqo_trace_type( mqo_type type ){
 }
 
 void mqo_format_type( mqo_string buf, mqo_type type ){
-    mqo_format_char( buf, '<' );
-    mqo_format( buf, type->name );
-    mqo_format_char( buf, '>' );
+    mqo_string_append_byte( buf, '<' );
+    //TODO: Clean up -- type->name type should be symbol..
+    mqo_string_append_sym( buf, mqo_symbol_fv( type->name ) );
+    mqo_string_append_byte( buf, '>' );
 }
 
 void mqo_generic_format( void* bbuf, mqo_value value ){
     mqo_string buf = bbuf; 
     mqo_format_begin( buf, mqo_obj_fv( value ) );
-    mqo_format_char( buf, ' ' );
-    mqo_format_addr( buf, value );
+    mqo_string_append_byte( buf, ' ' );
+    mqo_string_append_addr( buf, value );
     mqo_format_end( buf );
 }
 
@@ -218,7 +219,7 @@ MQO_GENERIC_FREE( type );
 MQO_C_TYPE( type );
 
 void mqo_format_null( mqo_string buf, mqo_value null ){
-    mqo_format_cs( buf, "null" );
+    mqo_string_append_cs( buf, "null" );
 }
 
 MQO_GENERIC_COMPARE( null );
@@ -229,7 +230,7 @@ MQO_GENERIC_COMPARE( imm );
 MQO_GENERIC_GC( imm );
 
 void mqo_format_imm( mqo_string s, mqo_quad imm ){ 
-    mqo_format_int( s, imm >> 1 ); 
+    mqo_string_append_unsigned( s, imm >> 1 ); 
 };
 
 struct mqo_type_data mqo_imm_type_data = { 

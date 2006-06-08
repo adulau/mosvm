@@ -82,7 +82,7 @@ void mqo_trace_pair( mqo_pair p ){
     mqo_grey_val( mqo_cdr( p ) );
 }
 
-void mqo_format_items( void* bbuf, mqo_pair p, mqo_boolean sp ){
+void mqo_format_list_items( void* bbuf, mqo_pair p, mqo_boolean sp ){
     mqo_string buf = bbuf;
     if( p == NULL )return;
     
@@ -90,17 +90,17 @@ void mqo_format_items( void* bbuf, mqo_pair p, mqo_boolean sp ){
         mqo_value car = mqo_car( p );
         mqo_value cdr = mqo_cdr( p );
     
-        if( sp )mqo_format_char( buf, ' ' );
+        if( sp )mqo_string_append_byte( buf, ' ' );
         sp = 1;
-        mqo_format( buf, car );
+        if( ! mqo_format_item( buf, car ) )break;
 
         if( mqo_is_null( cdr ) ){
             return;
         }else if( mqo_is_pair( cdr ) ){
             p = mqo_pair_fv( cdr );
         }else{
-            mqo_format_cs( buf, " . " );
-            mqo_format( buf, cdr );
+            mqo_string_append_cs( buf, " . " );
+            if( ! mqo_format_item( buf, cdr ) )break;
             return;
         }
     }
@@ -131,11 +131,11 @@ done:
 
 void mqo_format_pair( void* bbuf, mqo_pair p ){
     mqo_string buf = bbuf;
-    mqo_format_char( buf, '(' );
+    mqo_string_append_byte( buf, '(' );
     if( p ){
-        mqo_format_items( buf, p, 0 );
+        mqo_format_list_items( buf, p, 0 );
     }
-    mqo_format_char( buf, ')' );
+    mqo_string_append_byte( buf, ')' );
 }
 
 void mqo_free_pair( mqo_pair p ){

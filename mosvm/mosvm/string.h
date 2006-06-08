@@ -82,4 +82,18 @@ void mqo_string_wrote( mqo_string string, mqo_integer len );
 void mqo_string_skip( mqo_string string, mqo_integer offset );
 mqo_boolean mqo_string_empty( mqo_string str );
 
+void mqo_string_append_newline( mqo_string buf );
+void mqo_string_append_hexnibble( mqo_string buf, mqo_quad digit );
+void mqo_string_append_hexbyte( mqo_string buf, mqo_quad byte );
+void mqo_string_append_hexword( mqo_string buf, mqo_quad word );
+void mqo_string_append_hexquad( mqo_string buf, mqo_quad word );
+void mqo_string_append_indent( mqo_string buf, mqo_integer depth );
+void mqo_string_append_unsigned( mqo_string str, mqo_quad number );
+void mqo_string_append_signed( mqo_string str, mqo_integer number );
+void mqo_string_append_hex( mqo_string str, mqo_quad number );
+void mqo_string_append_str( mqo_string buf, mqo_string s );
+void mqo_string_append_sym( mqo_string buf, mqo_symbol s );
+void mqo_string_append_addr( mqo_string buf, mqo_integer i );
+void mqo_string_append_cs( mqo_string buf, const char* c );
+
 #endif

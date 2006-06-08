@@ -35,20 +35,20 @@ void mqo_format_instruction( mqo_string buf, mqo_instruction instr ){
     mqo_value b = instr->b;
     mqo_integer c = mqo_instruction_code( prim );
     
-    mqo_format_char( buf, '(' );
-    mqo_format_sym( buf, mqo_prim_name( prim ) );
+    mqo_string_append_byte( buf, '(' );
+    mqo_string_append_sym( buf, mqo_prim_name( prim ) );
 
     if( prim->a ){
-        mqo_format_char( buf, ' ' );
-        mqo_format( buf, instr->a );
+        mqo_string_append_byte( buf, ' ' );
+        if( ! mqo_format_item( buf, instr->a ) )goto done;
     }
 
     if( prim->b ){
-        mqo_format_char( buf, ' ' );
-        mqo_format( buf, instr->b );
+        mqo_string_append_byte( buf, ' ' );
+        mqo_format_item( buf, instr->b );
     }
-
-    mqo_format_char( buf, ')' );
+done:
+    mqo_string_append_byte( buf, ')' );
 }
 mqo_procedure mqo_make_procedure( mqo_word length ){
     size_t tail = sizeof( struct mqo_instruction_data ) * length;

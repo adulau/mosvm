@@ -23,7 +23,7 @@ MQO_BEGIN_TYPE( multimethod )
     mqo_value     signature;
     mqo_value     func;
     mqo_value     next;
-    mqo_value     name;
+    mqo_symbol    name;
 MQO_END_TYPE( multimethod )
 
 #define REQ_MULTIMETHOD_ARG( vn ) REQ_TYPED_ARG( vn, multimethod )

@@ -27,15 +27,15 @@ void mqo_trace_tag( mqo_tag t ){
     mqo_grey_val( t->info );
 }
 void mqo_format_tag( mqo_string buf, mqo_tag t ){
-    mqo_format_char( buf, '<' );
-    mqo_format_sym( buf, t->name );
+    mqo_string_append_byte( buf, '<' );
+    mqo_string_append_sym( buf, t->name );
     if( mqo_is_pair( t->info ) ){
-        mqo_format_items( buf, mqo_pair_fv( t->info ), 1 );
+        mqo_format_list_items( buf, mqo_pair_fv( t->info ), 1 );
     }else if( t->info ){
-        mqo_format_cs( buf, " . " );
-        mqo_format( buf, t->info );
-    }
-    mqo_format_char( buf, '>' );
+        mqo_string_append_cs( buf, " . " );
+        mqo_format_item( buf, t->info );
+    };
+    mqo_string_append_byte( buf, '>' );
 }
 MQO_GENERIC_COMPARE( tag );
 MQO_GENERIC_FREE( tag );
@@ -48,11 +48,11 @@ mqo_cell mqo_make_cell( mqo_tag tag, mqo_value repr ){
     return cell;
 }
 void mqo_format_cell( mqo_string buf, mqo_cell c ){
-    mqo_format_char( buf, '[' );
-    mqo_format_sym( buf, c->tag->name );
-    // TODO: fix.. mqo_format_char( buf, ' ' );
-    // mqo_format( buf, c->repr );
-    mqo_format_char( buf, ']' );
+    mqo_string_append_byte( buf, '[' );
+    mqo_string_append_sym( buf, c->tag->name );
+    mqo_string_append_byte( buf, ' ' );
+    mqo_format_item( buf, c->repr );
+    mqo_string_append_byte( buf, ']' );
 }
 void mqo_trace_cell( mqo_cell c ){
     mqo_grey_obj( (mqo_object) c->tag );

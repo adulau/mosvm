@@ -70,7 +70,7 @@ static inline mqo_value mqo_set_cdr( mqo_pair pair, mqo_value x ){
     assert( pair );
     pair->cdr = x; 
 }
-void mqo_format_items( void* b, mqo_pair p, mqo_boolean sp );
+void mqo_format_list_items( void* b, mqo_pair p, mqo_boolean sp );
 static inline mqo_list mqo_opt_list( mqo_boolean* has ){
     mqo_value v = mqo_opt_any( has );
     return ( *has ) ? mqo_req_list( v ) : NULL;

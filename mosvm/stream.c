@@ -410,15 +410,6 @@ void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
     if(!( mqo_first_stream || mqo_first_listener )){
         mqo_disable_process( mqo_stream_monitor );
         return;
-////    }else{
-////        mqo_format_cs( buf, "Waiting on:" );
-////        for( stream = mqo_first_stream; stream; stream = next ){
-////            next = stream->next;
-////            mqo_format_cs( buf, " " );
-////            mqo_format( buf, mqo_vf_integer( stream->fd ) );
-////        }
-////        mqo_format_nl( buf );
-////        mqo_printstr( buf );
     }
    
     struct timeval* timeout;

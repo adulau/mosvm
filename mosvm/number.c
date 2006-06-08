@@ -17,7 +17,7 @@
 #include "mosvm.h"
 
 void mqo_format_number( mqo_string buf, mqo_value v ){
-    mqo_format_int( buf, mqo_integer_fv( v ) );
+    mqo_string_append_signed( buf, mqo_integer_fv( v ) );
 }
 
 mqo_integer mqo_number_compare( mqo_value a, mqo_value b ){

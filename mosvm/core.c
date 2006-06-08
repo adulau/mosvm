@@ -37,22 +37,22 @@ MQO_BEGIN_PRIM( "xml-escape", xml_escape )
         char ch = src[ix];
         switch( ch ){
         case '\'':
-            mqo_format_cs( result, "&apos;" );
+            mqo_string_append_cs( result, "&apos;" );
             break;
         case '"':
-            mqo_format_cs( result, "&quot;" );
+            mqo_string_append_cs( result, "&quot;" );
             break;
         case '&':
-            mqo_format_cs( result, "&amp;" );
+            mqo_string_append_cs( result, "&amp;" );
             break;
         case '<':
-            mqo_format_cs( result, "&lt;" );
+            mqo_string_append_cs( result, "&lt;" );
             break;
         case '>':
-            mqo_format_cs( result, "&gt;" );
+            mqo_string_append_cs( result, "&gt;" );
             break;
         default:
-            mqo_format_char( result, ch );
+            mqo_string_append_byte( result, ch );
         };
     }
     
@@ -73,10 +73,10 @@ MQO_BEGIN_PRIM( "percent-encode", percent_encode )
     for( ix = 0; ix < srclen; ix ++ ){
         char ch = src[ix];
         if( ch == '%' || strchr( maskstr, ch ) ){
-            mqo_format_char( result, '%' );
-            mqo_format_hex( result, ch );
+            mqo_string_append_byte( result, '%' );
+            mqo_string_append_hex( result, ch );
         }else{
-            mqo_format_char( result, ch );
+            mqo_string_append_byte( result, ch );
         }
     }
     
@@ -99,7 +99,7 @@ MQO_BEGIN_PRIM( "percent-decode", percent_decode )
             ch = (unsigned char)mqo_parse_hex( &src, &ok );
             if( ! ok )mqo_errf( mqo_es_vm, "sxs", "invalid escape", data, src );
         }
-        mqo_format_char( result, ch );
+        mqo_string_append_byte( result, ch );
     }
     
     RESULT( mqo_vf_string( result ) );
@@ -1617,7 +1617,7 @@ MQO_BEGIN_PRIM( "append", append )
 MQO_END_PRIM( append )
 
 MQO_BEGIN_PRIM( "append!", appendd )
-    mqo_value head = NULL;
+    mqo_value head = 0;
     mqo_value* link = &head;
 
     for(;;){
@@ -1628,7 +1628,7 @@ MQO_BEGIN_PRIM( "append!", appendd )
         link = &( mqo_last_pair( next )->cdr );
     }
 
-    LIST_RESULT( head );
+    RESULT( head );
 MQO_END_PRIM( appendd )
 
 MQO_BEGIN_PRIM( "string-append!", string_appendd )

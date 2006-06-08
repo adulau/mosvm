@@ -23,7 +23,7 @@ mqo_multimethod mqo_make_multimethod(
     m->signature = signature;
     m->func = func;
     m->next = next;
-    m->name = mqo_function_name( func );
+    m->name = mqo_req_symbol( mqo_function_name( func ) );
     return m;
 }
 
@@ -31,7 +31,7 @@ void mqo_trace_multimethod( mqo_multimethod m ){
     mqo_grey_val( m->signature );
     mqo_grey_val( m->func );
     mqo_grey_val( m->next );
-    mqo_grey_val( m->name );
+    mqo_grey_obj( (mqo_object) m->name );
 }
 
 mqo_boolean mqo_isa( mqo_value x, mqo_value t ){
@@ -69,8 +69,8 @@ mqo_value mqo_reduce_function( mqo_value fn, mqo_list args ){
 
 void mqo_format_multimethod( mqo_string buf, mqo_multimethod multimethod ){
     mqo_format_begin( buf, multimethod );
-    mqo_format_char( buf, ' ' );
-    mqo_format( buf, multimethod->name );
+    mqo_string_append_byte( buf, ' ' );
+    mqo_string_append_sym( buf, multimethod->name );
     mqo_format_end( buf );
 }
 

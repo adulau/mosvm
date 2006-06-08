@@ -39,10 +39,10 @@ void mqo_free_file( mqo_file file ){
 }
 void mqo_format_file( mqo_string buf, mqo_file file ){
     mqo_format_begin( buf, file );
-    mqo_format_cs( buf, file->closed ? "closed" : "open" );
+    mqo_string_append_cs( buf, file->closed ? "closed" : "open" );
     if( file->path ){
-        mqo_format_char( buf, ' ' );
-        mqo_format_str( buf, file->path );
+        mqo_string_append_byte( buf, ' ' );
+        mqo_string_append_str( buf, file->path );
     };
     mqo_format_end( buf );
 }
