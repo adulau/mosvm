@@ -58,11 +58,12 @@ void mqo_trace_cell( mqo_cell c ){
     mqo_grey_obj( (mqo_object) c->tag );
     mqo_grey_val( c->repr );
 }
-mqo_integer mqo_cell_compare( mqo_cell a, mqo_cell b ){
+/* mqo_integer mqo_cell_compare( mqo_cell a, mqo_cell b ){
     mqo_integer d = a->tag - b->tag;
     if( d )return d;
     return mqo_cmp_eqv( a->repr, b->repr ); 
-}
+} */
+MQO_GENERIC_COMPARE( cell );
 MQO_GENERIC_FREE( cell );
 MQO_C_TYPE( cell );
 
