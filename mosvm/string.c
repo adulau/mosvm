@@ -120,7 +120,15 @@ void mqo_format_string( mqo_string buf, mqo_string str ){
     //TODO: Improve with ellision, scored length, escaping unprintables.
     AUDIT_STRING( str );
     mqo_format_char( buf, '"' );
-    mqo_format_str( buf, str );
+    const char* ptr = mqo_string_head( str );
+    mqo_integer len = mqo_string_length( str );
+    if( len > 64 ){
+        len = 64;
+        mqo_string_append( buf, ptr, len );
+        mqo_format_cs( buf, "..." );
+    }else{
+        mqo_string_append( buf, ptr, len );
+    };
     mqo_format_char( buf, '"' );
 }
 
@@ -206,11 +214,6 @@ void mqo_string_flush( mqo_string string ){
     string->pool[ string->origin = string->length = 0 ] = 0;
     AUDIT_STRING( string );
 }
-void mqo_string_append(
-    mqo_string string, const void* src, mqo_integer srclen 
-){
-    mqo_string_alter( string, mqo_string_length( string ), 0, src, srclen );
-}
 void mqo_string_alter( 
     mqo_string string, mqo_integer dstofs, mqo_integer dstlen, 
     const void* src, mqo_integer srclen
@@ -241,7 +244,25 @@ void mqo_string_alter(
 void mqo_string_prepend( 
     mqo_string string, const void* src, mqo_integer srclen
 ){
-    mqo_string_alter( string, 0, 0, src, srclen );
+    if( srclen < string->origin ){
+        string->origin -= srclen;
+        string->length += srclen;
+        memmove( string->pool + string->origin, src, srclen );
+    }else{
+        mqo_string_alter( string, 0, 0, src, srclen );
+    }
+}
+void mqo_string_append(
+    mqo_string string, const void* src, mqo_integer srclen 
+){
+    mqo_integer endpos = string->length + string->origin;
+
+    if( srclen < ( string->capacity - endpos ) ){
+        string->length += srclen;
+        memmove( string->pool + endpos, src, srclen );
+    }else{
+        mqo_string_alter( string, string->length, 0, src, srclen );
+    }
 }
 char* mqo_sf_string( mqo_string string ){
     string->pool[ string->origin + string->length ] = 0;
