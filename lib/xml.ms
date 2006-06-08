@@ -37,11 +37,12 @@
                (re-error err))
              (define info (error-info err))
              (error 'xml-inc (car info) data))
-           (parse-tag (string-head data tag-ix)
-                      (string-tail data tag-ix)))
+           (parse-tag (string-read! data tag-ix)
+                      data))
     (list data #f "")))
 
 (define (parse-tag pre tag)
+    (unless pre (error 'wtf pre tag))
     (cons pre
           (or (parse-cdata tag)
               (parse-comment tag)
@@ -55,25 +56,28 @@
   (step "CDATA" str)
   (if (string-begins-with? str "<![CDATA[")
     (begin 
+      (string-skip! str 9)
       (define cdata-len (string-find str "]]>"))
-      (if cdata-len
-        (set! cdata-len (- cdata-len 9))
+      (unless cdata-len
         (error 'xml-inc "CDATA section incomplete"))
-      (list (substring str 9 cdata-len)
-            (substring str (+ 12 cdata-len) 
-                       (- (string-length str) 12 cdata-len))))
+      (define cdata (string-read! str cdata-len))
+      (string-skip! str 3)
+      (list cdata
+            str))
     #f))
 
 (define (parse-comment str)
   (step "COMMENT" str)
   (if (string-begins-with? str "<!--")
     (begin
+      (string-skip! str 4)
       (define end (string-find str "-->"))
       (unless end
         (error 'xml-inc "Comment incomplete"))
-      (list (list 'comment (substring str 4 (- end 4)))
-            (substring str (+ end 3) 
-                       (- (string-length str) 3 end))))
+      (define cmt (string-read! str end))
+      (string-skip! str 3)
+      (list (list 'comment cmt)
+            str))
     #f))
 
 (define-macro (step . rest) '(begin))
@@ -103,7 +107,7 @@
        (begin
          ;(define scan (copy-string (string-tail str 2)))
          (define scan str)
-         (string-read! str 2)
+         (string-skip! str 2)
 
          (define tag  (parse-ident scan))
          (scanner-strip scan)
@@ -121,7 +125,7 @@
     (begin
       ;(define scan (copy-string (string-tail str 2)))
       (define scan str)
-      (string-read! str 2)
+      (string-skip! str 2)
 
       (define tag  (parse-ident scan))
       (scanner-strip scan)
@@ -140,7 +144,7 @@
     (begin
       ;(define scan (copy-string (string-tail str 2)))
       (define scan str)
-      (string-read! str 2)
+      (string-skip! str 2)
 
       (define tag  (parse-ident scan))
       (scanner-strip scan)
@@ -156,7 +160,7 @@
   ;(scanner-next scan) ;; Drop that <..
   
   (define scan str)
-  (string-read! str 1)
+  (string-skip! str 1)
 
   (define tag  (parse-ident scan))
 
@@ -174,11 +178,10 @@
 
 (define (parse-stroke scan)
   (define ch (scanner-next scan))
-  (if (= ch *stroke-char*)
-    #t
-    (begin
-      (scanner-drop scan ch)
-      #f)))
+  (when (= ch *stroke-char*)
+    (return #t))
+  (scanner-drop scan ch)
+  #f)
     
 (define (expat event-fn data)
 ;;; Anatomy of a BEGIN event: <a href='123'>

@@ -1446,7 +1446,7 @@ MQO_BEGIN_PRIM( "string-skip-space!", string_skip_space )
     NO_RESULT( );
 MQO_END_PRIM( string_skip_space );
 
-MQO_BEGIN_PRIM( "string-skip", string_skip )
+MQO_BEGIN_PRIM( "string-skip!", string_skip )
     REQ_STRING_ARG( string );
     REQ_INTEGER_ARG( offset );
     NO_REST_ARGS( );
@@ -1463,11 +1463,7 @@ MQO_BEGIN_PRIM( "string-read!", string_read )
     NO_REST_ARGS( );
     if( ! has_max ) max = mqo_string_length( string );
     void* data = mqo_string_read( string, &max );
-    if( max == 0 ){
-        RESULT( mqo_vf_false( ) );
-    }else{
-        RESULT( mqo_vf_string( mqo_string_fm( data, max ) ) );
-    }
+    RESULT( mqo_vf_string( mqo_string_fm( data, max ) ) );
 MQO_END_PRIM( string_read );
 
 MQO_BEGIN_PRIM( "string-append-byte!", string_append_byte )
