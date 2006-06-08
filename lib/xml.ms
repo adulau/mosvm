@@ -17,10 +17,8 @@
 ;; <?xml ... ?>
 ;; <! ... >
 
-;TODO: Exporting all for test purposes.
-;
 (module "lib/xml")
-(export make-sxml get-sxml-items get-sxml-attrs string->sxml
+(export get-sxml-items get-sxml-attrs string->sxml
        get-sxml-attr get-sxml-item get-sxml-item* 
        get-sxml-tag has-sxml-tag? has-sxml-attr? sxml-drill)
 
@@ -291,31 +289,9 @@
           ((cdata) (on-cdata-event (car event-data)))
           ((tag)   (on-tag-event   (car event-data) (cdr event-data))))))))
 
-(define (expat-port func port)
-  (define data "")
-  (until (closed? port)
-    (define more (read 256 port))
-    (unless (eof-object? more)
-      (set! data (string-append data more))
-      (guard (lambda (err)
-               (unless (eq? (error-key err) 'xml-inc)
-                 (re-error err))
-               (set! data (cadr (error-info err))))
-               
-           (expat func data)
-           (set! data "")))))
-
 (define (string->sxml src)
   (define parser (make-sxml-parser))
   (expat parser src)
-  (parser 'done))
-
-(define (make-sxml (<string> src))
-  (string->sxml src))
-
-(define (make-sxml (<channel> src))
-  (define parser (make-sxml-parser))
-  (expat-port parser src)
   (parser 'done))
 
 (define (get-sxml-items sxml)

@@ -250,7 +250,6 @@ void mqo_stream_read_evt( mqo_stream stream ){
     }else{
         put = 0;
         buf = mqo_string_fv( mqo_channel_tail( stream->evt ) );
-        mqo_string_expand( buf, 1024 );
     }
     
     int rs = stream->fd ? recv( stream->fd, mqo_string_tail( buf ), 1024, 0 )

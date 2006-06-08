@@ -172,30 +172,32 @@ void mqo_compact_string( mqo_string str ){
             memmove( str->pool, 
                     str->pool + str->origin, 
                     str->length );
+            str->pool[str->length + 1] = 0;
         };
-        str->pool[str->length + 1] = 0;
         str->origin = 0;
     };
     AUDIT_STRING( str );
 }
-void mqo_string_expand( mqo_string string, mqo_integer incr ){
+void mqo_string_expand( mqo_string string, mqo_integer newlen ){
     AUDIT_STRING( string );
-    mqo_integer head = string->origin;
-    mqo_integer tail = string->capacity - head - string->length;
+    mqo_integer incr = newlen - string->length;
+    if( incr < 0 )return;
 
+    mqo_integer head = string->origin;
+
+    mqo_integer tail = string->capacity - head - string->length;
     if( tail > incr )return;
 
     mqo_compact_string( string );
 
     if(( tail + head )> incr )return;
     
-    mqo_integer req_cap = string->length + incr;
-    mqo_integer new_cap = string->capacity; 
+    mqo_integer newcap = string->capacity; 
 
-    while( new_cap < req_cap ) new_cap <<= 1;
+    while( newcap < newlen ) newcap <<= 1;
 
-    string->pool = realloc( string->pool, new_cap + 1 );
-    string->capacity = new_cap;
+    string->pool = realloc( string->pool, newcap + 1 );
+    string->capacity = newcap;
     
     AUDIT_STRING( string );
 }
@@ -207,20 +209,17 @@ void mqo_string_flush( mqo_string string ){
 void mqo_string_append(
     mqo_string string, const void* src, mqo_integer srclen 
 ){
-    //TODO: This should be using mqo_string_alter.
-    AUDIT_STRING( string );
-    mqo_string_expand( string, srclen );
-    memmove( string->pool + string->origin + string->length, src, srclen );
-    string->length += srclen;
-    string->pool[ string->origin +  string->length ] = 0;
-    AUDIT_STRING( string );
+    mqo_string_alter( string, mqo_string_length( string ), 0, src, srclen );
 }
 void mqo_string_alter( 
     mqo_string string, mqo_integer dstofs, mqo_integer dstlen, 
     const void* src, mqo_integer srclen
 ){
+    //TODO: This is still naive -- there are situations where the head could
+    //      be moved upwards, and the tail moved downwards, without needing
+    //      to totally alter the string.
+    
     AUDIT_STRING( string );
-    //TODO: This is all wrong..
     mqo_integer newlen = string->length + srclen - dstlen;
 
     mqo_string_expand( string, newlen );
