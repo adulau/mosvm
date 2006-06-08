@@ -17,6 +17,26 @@
 #include "mosvm.h"
 #include <string.h>
 
+#define MQO_MIN_VECTOR_LEN 64
+#define MQO_MIN_VECTOR_SZ ( sizeof( struct mqo_vector_data ) + 64 * sizeof( mqo_value ) ) 
+
+struct mqo_pool_data mqo_vector_scrap_data;
+mqo_pool mqo_vector_scrap = &mqo_vector_scrap_data;
+
+mqo_vector mqo_make_vector( mqo_integer length ){
+    mqo_vector v;
+    size_t tail = sizeof( mqo_value ) * length;
+    
+    if( length <= MQO_MIN_VECTOR_LEN ){
+        v = (mqo_vector) mqo_scavenge( mqo_vector_type, mqo_vector_scrap, MQO_MIN_VECTOR_SZ );
+    }else{
+        v = MQO_OBJALLOC2( vector, tail );
+    }
+
+    v->length = length;
+    return v;
+}
+
 void mqo_format_vector_contents( mqo_string s, mqo_vector v, mqo_boolean sp ){
     mqo_integer ln = mqo_vector_length( v );
     mqo_integer ix = 0;
@@ -33,13 +53,6 @@ void mqo_format_vector( mqo_string s, mqo_vector v ){
     mqo_format_end( s );
 }
 
-mqo_vector mqo_make_vector( mqo_integer length ){
-    size_t tail = sizeof( mqo_value ) * length;
-    mqo_vector v = MQO_OBJALLOC2( vector, tail );
-
-    v->length = length;
-    return v;
-}
 mqo_vector mqo_copy_vector( mqo_vector vo, mqo_integer ln ){
     mqo_vector vn = mqo_make_vector( ln );
     while( ln-- ){
@@ -68,7 +81,14 @@ void mqo_trace_vector( mqo_vector v ){
     }
 }
 
-MQO_GENERIC_FREE( vector );
+void mqo_free_vector( mqo_vector vector ){
+    if( vector->length <= MQO_MIN_VECTOR_LEN ){
+        mqo_unpool_obj( (mqo_object) vector );
+        mqo_pool_obj( (mqo_object) vector, mqo_vector_scrap );
+    }else{
+        mqo_objfree( vector );
+    }
+}
 MQO_C_TYPE( vector );
 
 void mqo_init_vector_subsystem( ){
