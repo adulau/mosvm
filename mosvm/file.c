@@ -185,8 +185,18 @@ MQO_BEGIN_PRIM( "read-file", read_file )
     REQ_FILE_ARG( file );
     OPT_INTEGER_ARG( quantity );
     NO_REST_ARGS( );
+
+    if( ! has_quantity ) quantity = MQO_MAX_IMM; 
+    mqo_string data = mqo_read_file( file, quantity );
+    mqo_value result;
+
+    if( quantity && (! mqo_string_length( data ) ) ){
+        result = mqo_vf_false( );
+    }else{
+        result = mqo_vf_string( data );
+    }
     
-    STRING_RESULT( mqo_read_file( file, quantity ) );
+    RESULT( result );
 MQO_END_PRIM( read_file )
 
 MQO_BEGIN_PRIM( "close-file", close_file )
