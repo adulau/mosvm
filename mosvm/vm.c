@@ -35,9 +35,11 @@ mqo_value       MQO_RX;
 
 mqo_integer mqo_trace_flag = 0;
 
+struct mqo_pool_data mqo_callframe_scrap_data;
+mqo_pool mqo_callframe_scrap = &mqo_callframe_scrap_data;
+
 mqo_callframe mqo_make_callframe( ){
-    mqo_callframe frame = MQO_OBJALLOC( callframe );
-    return frame;
+    return (mqo_callframe) mqo_scavenge( mqo_callframe_type, mqo_callframe_scrap, sizeof( struct mqo_callframe_data ) );
 }
 void mqo_trace_registers( ){
     mqo_grey_obj( (mqo_object) MQO_AP );
@@ -409,7 +411,10 @@ void mqo_trace_callframe( mqo_callframe cf ){
     mqo_grey_obj( (mqo_object) cf->tail );
 }
 
-MQO_GENERIC_FREE( callframe );
+void mqo_free_callframe( mqo_object obj ){
+    mqo_unpool_obj( obj );
+    mqo_pool_obj( obj, mqo_callframe_scrap );
+}
 MQO_GENERIC_COMPARE( callframe );
 MQO_GENERIC_FORMAT( callframe );
 MQO_C_TYPE2( callframe, "call-frame" )

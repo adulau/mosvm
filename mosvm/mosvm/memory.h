@@ -368,4 +368,9 @@ void mqo_no_more_args( );
 
 mqo_type mqo_make_type( mqo_value name, mqo_type parent );
 mqo_type mqo_direct_type( mqo_value value );
+
+void mqo_unpool_obj( mqo_object obj );
+void mqo_pool_obj( mqo_object obj, mqo_pool pool );
+mqo_object mqo_scavenge( mqo_type type, mqo_pool pool, mqo_quad size );
+
 #endif

@@ -48,6 +48,18 @@ mqo_quad mqo_object_ct = 0;
 mqo_quad mqo_old_objects = MQO_MIN_OLDS;
 mqo_quad mqo_new_objects = 0;
 
+mqo_object mqo_scavenge( mqo_type type, mqo_pool pool, mqo_quad size ){
+    mqo_object obj;
+    if( obj = pool->head ){
+        mqo_unpool_obj( obj );
+        bzero( obj, size );
+        obj->type = type;
+        mqo_pool_obj( obj, mqo_blacks );
+        return obj;
+    }else{
+        return mqo_objalloc( type, size );
+    }
+}
 mqo_object mqo_objalloc( mqo_type type, mqo_quad size ){
     #ifdef MQO_COUNT_GC
     mqo_object_ct ++;
@@ -69,7 +81,6 @@ mqo_object mqo_objalloc( mqo_type type, mqo_quad size ){
     // assert( ! ( ((mqo_quad)obj) & 1 ) );
     return obj;
 }
-
 void mqo_objfree( void* obj ){
     #ifdef MQO_COUNT_GC
     mqo_object_ct --;
@@ -105,16 +116,20 @@ void mqo_trace_object( mqo_object obj ){
     mqo_grey_obj( (mqo_object)obj->type );
     obj->type->trace( obj );
 }
-
+//mqo_integer mqo_since = 0;
 void mqo_collect_window( ){
+    //mqo_since ++;
     if( mqo_new_objects > mqo_old_objects )mqo_collect_garbage( );
 }
 void mqo_collect_garbage( ){
+    //printf( "Beginning GC at %i; old %i v. new %i..\n", mqo_since, mqo_old_objects, mqo_new_objects );
     mqo_object obj;
 
+    //mqo_since = 
     mqo_old_objects = mqo_new_objects = 0;
 
     for( obj = mqo_roots->head; obj; obj = obj->next ){
+        mqo_old_objects++;
         mqo_trace_object( obj );
     }
     
@@ -124,6 +139,7 @@ void mqo_collect_garbage( ){
     mqo_trace_timeouts();
 
     while( obj = mqo_greys->head ){
+        mqo_old_objects++;
         mqo_unpool_obj( obj );
         mqo_pool_obj( obj, mqo_whites );
         mqo_trace_object( obj );
@@ -137,6 +153,7 @@ void mqo_collect_garbage( ){
     mqo_whites = mqo_blacks;
     mqo_blacks = temp;
 
+    //printf( ".. GC Complete, kept %i..\n", mqo_old_objects );
     if( mqo_old_objects < MQO_MIN_OLDS ) mqo_old_objects = MQO_MIN_OLDS;
 }
 

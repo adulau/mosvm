@@ -17,13 +17,14 @@
 #include "mosvm.h"
 #include <stdarg.h>
 
+struct mqo_pool_data mqo_pair_scrap_data;
+mqo_pool mqo_pair_scrap = &mqo_pair_scrap_data;
+
 mqo_pair mqo_make_pair( ){
-    return MQO_OBJALLOC( pair );
+    return (mqo_pair) mqo_scavenge( mqo_pair_type, mqo_pair_scrap, sizeof( struct mqo_pair_data ) );
 }
 mqo_tc mqo_make_tc( ){
-    mqo_tc tc = (mqo_tc)mqo_objalloc( mqo_tc_type,
-                                      sizeof( struct mqo_pair_data ) );
-    return tc;
+    return (mqo_tc) mqo_scavenge( mqo_tc_type, mqo_pair_scrap, sizeof( struct mqo_pair_data ) );
 }
 mqo_pair mqo_cons( mqo_value car, mqo_value cdr ){
     mqo_pair c = mqo_make_pair( );
@@ -137,7 +138,10 @@ void mqo_format_pair( void* bbuf, mqo_pair p ){
     mqo_format_char( buf, ')' );
 }
 
-MQO_GENERIC_FREE( pair );
+void mqo_free_pair( mqo_pair p ){
+    mqo_unpool_obj( (mqo_object)p );
+    mqo_pool_obj( (mqo_object)p, mqo_pair_scrap );
+}
 MQO_GENERIC_COMPARE( pair );
 MQO_C_TYPE( pair );
 MQO_C_SUBTYPE( tc, pair );
