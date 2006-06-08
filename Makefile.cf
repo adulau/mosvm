@@ -94,7 +94,11 @@ endif
 ifdef COMPACT
 CFLAGS+=-Os -DNDEBUG
 else
+ifdef FAST
+CFLAGS+=-O2 -DNDEBUG
+else
 CFLAGS+=-g 
+endif
 endif
 
 LIBTC=$(ROOT)/crypt/libtomcrypt.a
