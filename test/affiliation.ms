@@ -1,5 +1,4 @@
 (import "lib/test")
-(import "lib/fuse")
 (import "mosref/drone")
 (import "mosref/console")
 

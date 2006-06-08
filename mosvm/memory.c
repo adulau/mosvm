@@ -43,7 +43,7 @@ void mqo_pool_obj( mqo_object obj, mqo_pool pool ){
 mqo_quad mqo_object_ct = 0;
 #endif
 
-#define MQO_MIN_OLDS 4096
+#define MQO_MIN_OLDS 32767
 
 mqo_quad mqo_old_objects = MQO_MIN_OLDS;
 mqo_quad mqo_new_objects = 0;
