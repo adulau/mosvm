@@ -122,13 +122,7 @@ void mqo_format_string( mqo_string buf, mqo_string str ){
     mqo_string_append_byte( buf, '"' );
     const char* ptr = mqo_string_head( str );
     mqo_integer len = mqo_string_length( str );
-    if( len > 64 ){
-        len = 64;
         mqo_string_append( buf, ptr, len );
-        mqo_string_append_cs( buf, "..." );
-    }else{
-        mqo_string_append( buf, ptr, len );
-    };
     mqo_string_append_byte( buf, '"' );
 }
 

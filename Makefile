@@ -42,7 +42,7 @@ site: $(MOSC) bin/build-dir.sh core/*ms site/config.ms
 	sh bin/build-dir.sh site
 
 repl: share/symbols
-	rlwrap -b"()" -f share/symbols $(MOSVM) -x 
+	rlwrap -b"()" -f share/symbols $(MOSVM) 
 
 share/symbols: 
 	$(MOSVM) -g import-all-lib.ms >share/symbols | cut -d ' '  -f 1

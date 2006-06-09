@@ -142,7 +142,8 @@
             headers)
   (string-append! buf *crlf*)
   (string-append! buf body)
-  (send buf port))
+  (send buf port)
+  (send 'close port))
 
 (define (spawn-http-server portno http-responder)
   (define (serve-http-session)
