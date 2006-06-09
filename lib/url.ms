@@ -27,7 +27,7 @@
               (query url-query)
               (frag url-frag))
 
-(export <url> make-url url-scheme url-auth url-path url-query url-frag)
+(export <url> make-url url-scheme url-auth url-path url-query url-frag url?)
 
 (define *url-regex* 
   ;; This beast of a regex is courtesy of the W3C.  
