@@ -52,7 +52,7 @@ MQO_GENERIC_COMPARE( aes_key );
 MQO_GENERIC_GC( aes_key );
 
 void mqo_format_aes_key( mqo_string buf, mqo_aes_key key ){
-    mqo_format_begin( buf, random );
+    mqo_format_begin( buf, key );
     mqo_string_append_byte( buf, ' ' );
     mqo_string_append_unsigned( buf, key->keysize );
     mqo_format_end( buf );
