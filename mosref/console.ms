@@ -46,8 +46,8 @@
   (define report-key (make-cfb aes-key drone-iv aes-encrypt))
   (define command-key (make-cfb aes-key console-iv aes-encrypt))
   
-  (define report (decrypt-filter transport report-key cfb-decrypt))
-  (define command (encrypt-filter transport command-key cfb-encrypt))
+  (define report (decrypt-filter recv report-key cfb-decrypt))
+  (define command (encrypt-filter xmit command-key cfb-encrypt))
 
   ;;; Drone --> Console, via RK, CC
   (unless (string=? (wait report) console-iv)
@@ -104,7 +104,7 @@
 
   (define (drone-cmd cmd)
     (define cmd-ok #t)
-    (guard (lambda (e) (write (string-append "Parse Error: " 
+    (guard (lambda (e) (send (string-append "Parse Error: " 
                                              (car (error-info e))
                                              *line-sep*))
                        (set! cmd-ok #f))

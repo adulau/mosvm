@@ -23,7 +23,7 @@
 
 (define (drone-affiliation console-ecdh xmit recv)
   ;;;TODO: Configure timeout.
-  (define (read) (buffer-channel recv))
+  (define read (buffer-channel recv))
 
   (define drone-iv (make-iv))
   (define drone-ecdh (make-ecdh-key 384)) 
@@ -42,14 +42,14 @@
   (define drone-key (make-cfb aes-key drone-iv aes-encrypt))
   (define console-key (make-cfb aes-key console-iv aes-encrypt))
   
-  (define report (encrypt-filter port drone-key cfb-encrypt))
-  (define command (decrypt-filter port console-key cfb-decrypt))
+  (define report (encrypt-filter xmit drone-key cfb-encrypt))
+  (define command (decrypt-filter recv console-key cfb-decrypt))
 
   ;;; Drone --> Console, via RK, CC
-  (write console-iv drone-port)
+  (send console-iv report)
 
   ;;; Console --> Drone, via CK, DD
-  (unless (string=? (wait console-port) drone-iv)
+  (unless (string=? (wait command) drone-iv)
     (error 'aff "the console failed to confirm affiliation"))
 
   (list report command))
@@ -77,12 +77,12 @@
   ;;; TODO: Add a tagging port for repl output.
   ;;; TODO: Add a caching port for repl input.
   (forever 
-    (define message (read port))
+    (define message (wait recv))
     (when (eq? message 'close) (return))
 
     (when (string? message)
-      (write (guard fail-result (succ-result ((thaw message)))) 
-             port)))) 
+      (send (guard fail-result (succ-result ((thaw message)))) 
+             xmit)))) 
 
 (export drone-repl drone-affiliation)
 
