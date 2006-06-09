@@ -21,21 +21,32 @@
 
 (import "mosref/base")
 
+(import "lib/iterate")
+(define (step label . items)
+  (print (string-append "  DRONE: "
+                        (apply string-append label (map format items))
+                        "..."
+                        *line-sep*)))
+
 (define (drone-affiliation console-ecdh xmit recv)
   ;;;TODO: Configure timeout.
   (define read (buffer-channel recv))
 
+  (step "Preparing keys")
   (define drone-iv (make-iv))
   (define drone-ecdh (make-ecdh-key 384)) 
   (define aes-key (make-aes-key 256 
                                 (ecdh-shared-secret drone-ecdh console-ecdh)))
 
+  (step "Sending Drone Public Key")
   ;;; Drone --> Console, via plaintext, Dp
   (send (export-public-ecdh drone-ecdh) xmit)
 
+  (step "Sending Drone IV")
   ;;; Drone --> Console, via KK, DD
   (send (aes-encrypt aes-key drone-iv) xmit)
 
+  (step "Reading Console IV")
   ;;; Console --> Drone, via KK, CC
   (define console-iv (aes-decrypt aes-key (read 16)))
  
@@ -45,9 +56,11 @@
   (define report (encrypt-filter xmit drone-key cfb-encrypt))
   (define command (decrypt-filter recv console-key cfb-decrypt))
 
+  (step "Confirming Console IV")
   ;;; Drone --> Console, via RK, CC
   (send console-iv report)
 
+  (step "Waiting for Console to confirm Drone IV")
   ;;; Console --> Drone, via CK, DD
   (unless (string=? (wait command) drone-iv)
     (error 'aff "the console failed to confirm affiliation"))

@@ -25,21 +25,31 @@
 (export console-affiliation console-repl drone-exec make-drone-exe 
         make-console-ecdh)
 
+(import "lib/iterate")
+(define (step label . items)
+  (print (string-append "CONSOLE: "
+                        (apply string-append label (map format items)) 
+                        "..." 
+                        *line-sep*)))
+
 (define (make-console-ecdh) (make-ecdh-key *ecdh-keysize*))
 
 (define (console-affiliation session-ecdh xmit recv)
   ;;;TODO: Configure timeout.
   (define read (buffer-channel recv))
   (define console-iv (make-iv))
- 
+
+  (step "Reading Drone Public Key")
   ;;; Drone --> Console, via plaintext, Dp
   (define drone-ecdh (import-ecdh (read 59)))
   (define aes-key (make-aes-key 256 
                                 (ecdh-shared-secret session-ecdh drone-ecdh)))
 
+  (step "Reading Drone IV")
   ;;; Drone --> Console, via KK, DD
   (define drone-iv (aes-decrypt aes-key (read 16)))
 
+  (step "Transmitting Console IV")
   ;;; Console --> Drone, via KK, CC
   (send (aes-encrypt aes-key console-iv) xmit)
  
@@ -49,10 +59,12 @@
   (define report (decrypt-filter recv report-key cfb-decrypt))
   (define command (encrypt-filter xmit command-key cfb-encrypt))
 
+  (step "Waiting for Drone to confirm Console IV")
   ;;; Drone --> Console, via RK, CC
   (unless (string=? (wait report) console-iv)
     (error 'aff "the drone failed to confirm affiliation"))
 
+  (step "Confirming Drone IV")
   ;;; Console --> Drone, via CK, DD
   (send drone-iv command)
 
