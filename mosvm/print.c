@@ -45,6 +45,7 @@ void mqo_space( ){
 void mqo_show( mqo_value v ){
     mqo_string s = mqo_make_string( 64 );
     mqo_format_value( s, v, 32, 16 );
+    mqo_printstr( s );
     mqo_objfree( s );
 }
 
