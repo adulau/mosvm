@@ -42,9 +42,9 @@
 
 ;; This filter will accept plaintext, and will render a string of ciphertext.
 ;;TODO: This needs to forward errors as fail messages.
-(define (encrypt-filter port key encrypt)
+(define (encrypt-filter out key encrypt)
   (define block-size (key-block-size key))
-  (define out (make-channel))
+  (define in (make-channel))
 
   (define encrypt-cipher-text
     (if block-size
@@ -62,5 +62,5 @@
               (define evt (wait in))
               (if (string? evt) (encrypt-cipher-text evt)
                                 (send evt out)))))
-  out)
+  in)
 
