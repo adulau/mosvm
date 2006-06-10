@@ -347,7 +347,7 @@
 
 (define (has-sxml-attr? sxml key value)
   (define x (get-sxml-attr sxml key))
-  (eqv? x value))
+  (equal? x value))
 
 (define (sxml-drill sxml . tests)
   (define test #f)
