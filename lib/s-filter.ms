@@ -14,10 +14,14 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
 (module "lib/s-filter")
+(import "lib/filter")
 (import "lib/iterate")
 
-(define (s-filter in)
-  (define out (make-channel))
+;; TODO:
+;; (define-filter (fail-forward fwd) ...)
+
+
+(define-filter (s-filter)
   (define buf (make-string 80)) 
   
   (define (parse)
@@ -33,17 +37,12 @@
        (send (string->exprs buf) out)
        (flush-string buf)))
 
-  (spawn (function (s-reader)
-            (forever
-               (define next (wait in))
-
-               (when (eq? next 'close)
-                 (send next out)
-                 (return))
-
-               (when (string? next)
-                 (string-append! buf next)
-                 (parse)))))
-  out)
+  (forever
+    (define next (wait in))
+    (if (string? next)
+      (begin 
+        (string-append! buf next)
+        (parse))
+      (send next out))))
 
 (export s-filter)
