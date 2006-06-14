@@ -560,8 +560,8 @@ void mqo_init_crypto_subsystem( ){
 #else
 #  error "Could not find a PRNG suitable for mqo_default_random."
 #endif
-    mqo_symbol_fs( "*default-random*" )->value = 
-        mqo_vf_random(  mqo_default_random );
+    mqo_set_global( mqo_symbol_fs( "*default-random*" ), 
+                    mqo_vf_random( mqo_default_random ) );
     mqo_root_obj( (mqo_object)mqo_default_random );
 
     MQO_BIND_PRIM( make_random );
