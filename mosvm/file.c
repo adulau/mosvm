@@ -39,7 +39,7 @@ void mqo_free_file( mqo_file file ){
 }
 void mqo_format_file( mqo_string buf, mqo_file file ){
     mqo_format_begin( buf, file );
-    mqo_string_append_cs( buf, file->closed ? "closed" : "open" );
+    mqo_string_append_cs( buf, file->closed ? " closed" : " open" );
     if( file->path ){
         mqo_string_append_byte( buf, ' ' );
         mqo_string_append_str( buf, file->path );
@@ -61,9 +61,11 @@ mqo_string mqo_read_file( mqo_file file, mqo_quad max ){
     while( total < max ){
         mqo_quad amt = max - total;
         if( amt > 1024 ) amt = 1024;
-        
+       
+        // mqo_printf( "sin", "MQO_READ_FILE: amt: ", amt );
         mqo_integer r = mqo_os_error( read( file->fd, buf, amt ) );
         if( ! r )break; // End of file..
+        total += r;
         mqo_string_append( data, buf, r );
     }
     
@@ -186,7 +188,8 @@ MQO_BEGIN_PRIM( "read-file", read_file )
     OPT_INTEGER_ARG( quantity );
     NO_REST_ARGS( );
 
-    if( ! has_quantity ) quantity = MQO_MAX_IMM; 
+    if( ! has_quantity )quantity = MQO_MAX_IMM; 
+    // mqo_printf( "sisxn", "READ-FILE, quantity: ", quantity, " file: ", file );
     mqo_string data = mqo_read_file( file, quantity );
     mqo_value result;
 
