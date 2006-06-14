@@ -14,9 +14,9 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
 (module "lib/line-filter")
+(import "lib/filter")
 
-(define (line-filter in)
-  (define out (make-channel))
+(define-filter (line-filter)
   (define buf (make-string 80)) 
 
   (define (parse)
@@ -24,18 +24,20 @@
       (define next (string-read-line! buf))
       (if next (send next out)
                (return))))
-  
-  (spawn (function (next-line)
-            (forever
-               (define next (wait in))
-               (when (eq? next 'close)
-                 (send next out)
-                 (return))
-               (when (string? next)
-                 (string-append! buf next)
-                 (parse)))
-            (send buf out)
-            (close out)))
-  out)
+ 
+  (define (line-loop)
+    (forever
+      (define next (wait in))
+      (when (eq? next 'close)
+        (send next out)
+        (return))
+      (when (string? next)
+        (string-append! buf next)
+        (parse))))
+
+  (line-loop)
+
+  (send buf out)
+  (send 'close out))
 
 (export line-filter)
