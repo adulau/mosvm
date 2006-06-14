@@ -4,42 +4,13 @@
   + Any reference to an identifier not bound in builtins, imports is identified
     during compilation as an error.
 
-- ?/??/????, HTTP Client
-  + (http-get http-url) -> str ??? Headers
-  + (http-post http-url) -> str
-  + (http-head http-url) -> str
-  + (http-options http-url) -> str
-  + (write-http-request port http-request) 
-  + (read-http-response port) -> http-response
-
-- ?/??/????, Signals Added to Dispatch
-  + (schedule period repeat process message) -> signal
-  + Renamed resume to signal
-  + (signal process value)
-    The supplied value is placed in the signal queue for the specified process
-  + (signal-pending? process)
-    Returns true if there is a signal pending for the specified process; the
-    process argument may be omitted.
-  + (read-signal)
-    If a signal is pending for the process, returns the next signal; otherwise
-    suspends the process until a signal is received.
-
-- ?/??/????, Hardening of lib/crypto-port.ms
-  + Added (md5-hash string) -> string to crypto prims.
-  + Modified lib/crypto-port to include an md5-hash in the header of the 
-    message content, and a md5-hash of the header and the content hash, for
-    message integrity validation.
-  + Altered string->exprs to report an incomplete expr as incomplete, with
-    what character is still expected.
-  + Altered header transmission to handle multi-block headers.
-
-- ?/??/????, Broken lib/lib
+- 6/03/2006, Broken lib/lib
   + Broke lib/lib into smaller components and integrated them with lib/compile,
     lib/assemble, lib/optimize and lib/freeze to fix the make-procedure
     reliance on lib/eval.
   + Fixed test-compile
 
-- ?/??/????, Buffer Merged With String
+- 5/27/2006, Buffer Merged With String
   * Modified string to be internally identical to the buffer type.
   * Removed the buffer type, and altered all functions matching *buffer* to 
     *string*; note that write-buffer and read-buffer are now string-write and
@@ -49,7 +20,7 @@
   * Replaced all uses of buffer-empty? to empty-string?
   * Added copy-string
   * Removed lib/scan, since strings with prepend can do the same, faster.
-  + Modified lib/xml to pass a single buffer around, instead of copying
+  * Modified lib/xml to pass a single buffer around, instead of copying
     and making buffers repeatedly.
 
 - 5/15/2006, Accelerated XML Parsing
