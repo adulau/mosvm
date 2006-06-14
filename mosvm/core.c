@@ -1850,6 +1850,7 @@ void mqo_bind_core_prims( ){
     
     MQO_BIND_PRIM( error_key );
     MQO_BIND_PRIM( error_info );
+    MQO_BIND_PRIM( error_context );
 
 MQO_BIND_PRIM( xml_escape );
 MQO_BIND_PRIM( percent_encode );
