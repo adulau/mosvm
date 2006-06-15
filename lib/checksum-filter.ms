@@ -33,6 +33,6 @@
     (when (string? evt)
       (define c (string-read-quad! evt))
       (unless (= c (checksum evt))
-        (set! evt  (list 'fail 'crc evt) out))
-    (send evt out))))
+        (set! evt  (list 'fail 'crc evt) out)))
+    (send evt out)))
 

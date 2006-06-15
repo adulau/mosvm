@@ -27,11 +27,12 @@
 
 (import "lib/iterate")
 
-(define (step label . items)
-  (print (string-append "CONSOLE: "
-                        (apply string-append label (map format items)) 
-                        "..." 
-                        *line-sep*)))
+(define-macro (step . rest) '(begin))
+;(define (step label . items)
+;  (print (string-append "CONSOLE: "
+;                        (apply string-append label (map format items)) 
+;                        "..." 
+;                        *line-sep*)))
 
 (define (make-console-ecdh) (make-ecdh-key *ecdh-keysize*))
 

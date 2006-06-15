@@ -12,7 +12,7 @@
 (define control (make-channel))
 
 (define death-rattle (make-channel))
-(timeout 5000 death-rattle 'timeout)
+(define death-timeout (timeout 5000 death-rattle 'timeout))
 
 (define sync (make-channel))
 (spawn (lambda ()
@@ -93,3 +93,4 @@
 (s: (wait death-rattle console-recv))
 (r: 'close)
 
+(cancel-timeout death-timeout)

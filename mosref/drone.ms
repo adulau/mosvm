@@ -22,11 +22,13 @@
 (import "mosref/base")
 
 (import "lib/iterate")
-(define (step label . items)
-  (print (string-append "  DRONE: "
-                        (apply string-append label (map format items))
-                        "..."
-                        *line-sep*)))
+
+(define-macro (step . rest) '(begin))
+;(define (step label . items)
+;  (print (string-append "  DRONE: "
+;                        (apply string-append label (map format items))
+;                        "..."
+;                        *line-sep*)))
 
 (define (drone-affiliation console-ecdh xmit recv)
   ;;;TODO: Configure timeout.
