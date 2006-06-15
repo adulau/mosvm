@@ -19,6 +19,12 @@
 
 ; Configure the doom channel..
 
+(define-filter (trace-filter tag)
+    (forever 
+      (define msg (wait in))
+      (print (string-append tag ": " (format msg) *line-sep*))
+      (send msg out)))
+
 (define (wait/doom . rest)
   (define doom (make-channel))
   (define time (timeout 1000 doom 
@@ -66,4 +72,59 @@
 
 (s: (send 'foo in))
 (t: (expect out 'foo))
+
+; Test Crypto-Filter Module (and Copy-Filter)
+(import "lib/cfb")
+(import "lib/crypto-filter")
+(import "lib/copy-filter")
+
+(define iv "themagicinitvect")
+(define ky (make-aes-key 256))
+
+(define tx (make-cfb ky iv aes-encrypt))
+(define rx (make-cfb ky iv aes-encrypt))
+
+(define in (make-channel))
+(define out (input-chain in 
+                         (copy-filter)
+                         (encrypt-filter (lambda (block) 
+                                           (cfb-encrypt tx block)))
+                         (decrypt-filter (lambda (block) 
+                                           (cfb-decrypt rx block)))))
+
+(define m1 "transmission-001")
+(define m2 "now is the time for all good people")
+(define m3 "abc")
+
+(s: (send iv in))
+(t: (expect out iv))
+
+(s: (send 'foo in))
+(t: (expect out 'foo))
+
+(define in (make-channel))
+(define out (input-chain in 
+                         (copy-filter)
+                         ;(trace-filter "plaintext")
+                         (block-split-filter (key-block-size tx))
+                         (encrypt-filter (lambda (block) 
+                                           (cfb-encrypt tx block)))
+                         ;(trace-filter "ciphertext" )
+                         (decrypt-filter (lambda (block) 
+                                           (cfb-decrypt rx block)))
+                         (block-merge-filter (key-block-size rx))))
+
+(s: (send m2 in))
+(t: (expect out m2))
+
+(s: (send m3 in))
+(t: (expect out m3))
+
+(s: (send m1 in)
+    (send m2 in)
+    (send m3 in))
+
+(t: (expect out m1))
+(t: (expect out m2))
+(t: (expect out m3))
 

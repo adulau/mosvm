@@ -14,53 +14,24 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
 (module "lib/crypto-filter")
-
+(import "lib/filter")
 (export decrypt-filter encrypt-filter)
 
-;; This filter will accept ciphertext, and will render blocks of plaintext.
-;;TODO: This needs to forward errors as fail messages.
-(define (decrypt-filter in key decrypt)
-  (define block-size (key-block-size key))
-  (define out (make-channel))
+; Decrypts each block as it arrives, and forwards.
 
-  (define add-cipher-text
-    (if block-size
-      (let ((cipher-text (make-string)))
-        (function (decrypt-cipher-blocks data)
-          (string-append! cipher-text data)
-          (while (> (string-length cipher-text) block-size)
-            (send (decrypt (string-read cipher-text block-size)) out))))
-      (function (decrypt-stream-cipher data)
-        (send (decrypt key data) out))))
+(define-filter (decrypt-filter decrypt)
+  (forever
+    (define evt (wait in))
+    (if (string? evt) 
+      (send (decrypt evt) out)
+      (send evt out))))
 
-  (spawn (function (decrypt-input-loop)
-            (forever
-              (define evt (wait in))
-              (if (string? evt) (add-cipher-text evt)
-                                (send evt out)))))
-  out)
+; Encrypts each block as it arrives, and forwards.
 
-;; This filter will accept plaintext, and will render a string of ciphertext.
-;;TODO: This needs to forward errors as fail messages.
-(define (encrypt-filter out key encrypt)
-  (define block-size (key-block-size key))
-  (define in (make-channel))
-
-  (define encrypt-cipher-text
-    (if block-size
-        (function (encrypt-blocks data)
-          (define work (copy-string data))
-          (define data (make-string))
-          (until (empty-string? work)
-            (string-append! data (encrypt key (string-read! work block-size))))
-          (send data out))
-        (function (encrypt-stream data)
-          (send (encrypt key data) out))))
-
-  (spawn (function (encrypt-output-loop)
-            (forever
-              (define evt (wait in))
-              (if (string? evt) (encrypt-cipher-text evt)
-                                (send evt out)))))
-  in)
+(define-filter (encrypt-filter encrypt)
+  (forever
+    (define evt (wait in))
+    (if (string? evt) 
+      (send (encrypt evt) out)
+      (send evt out))))
 
