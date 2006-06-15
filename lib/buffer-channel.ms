@@ -14,22 +14,28 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
 (module "lib/buffer-channel")
+(import "lib/filter")
 
 (define (buffer-channel channel)
+  (buffer-channel/2 channel (make-channel)))
+
+(define (buffer-channel/2 channel debris)
   (define buffer (make-string))
   (define (more)
     (define evt (wait channel))
     ;;; TODO: We need to do something about fail events.
-    (cond 
-      ((string? evt) (string-append! buffer evt))
-      ((eq? evt 'close) (error 'closed 
-                               "channel closed while refilling the buffer." 
-                               channel))))
+    (if (string? evt)
+      (string-append! buffer evt)
+      (begin
+        (if (eq? evt 'close)
+          (error 'closed "channel closed while refilling the buffer." channel)
+          (send evt debris)))))
+
   (function (read-channel-buffer amt)
     ;;; TODO: We need to use timeouts, here.            
     (while (< (string-length buffer) amt)
       (more))
     (string-read! buffer amt)))
 
-(export buffer-channel)
+(export buffer-channel buffer-channel/2)
 
