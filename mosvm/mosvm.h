@@ -45,6 +45,7 @@
 
 void mqo_init_mosvm( );
 void mqo_init_crypto_subsystem( );
+void mqo_init_crc32_subsystem( );
 void mqo_bind_core_prims( );
 mqo_value mqo_make_mote( mqo_type type );
 int mqo_argc;

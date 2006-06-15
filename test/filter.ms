@@ -128,3 +128,25 @@
 (t: (expect out m2))
 (t: (expect out m3))
 
+(import "lib/checksum-filter")
+
+(define in (make-channel))
+(define out (input-chain in 
+                         (copy-filter)
+                         (prepend-checksum-filter crc32)
+                         (check-checksum-filter crc32)))
+
+(s: (send m2 in))
+(t: (expect out m2))
+
+(s: (send m3 in))
+(t: (expect out m3))
+
+(s: (send m1 in)
+    (send m2 in)
+    (send m3 in))
+
+(t: (expect out m1))
+(t: (expect out m2))
+(t: (expect out m3))
+
