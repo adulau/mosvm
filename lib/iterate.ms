@@ -47,16 +47,6 @@
          (set! lists (map-cdr lists)))
   (tc->list tc))
 
-(define (find-tail fn list)
-  (define done #f)
-  (until done 
-    (cond ((null? list)    (set! done #t))
-          ((fn (car list)) (set! done #t))
-          (else (set! list (cdr list)))))
-  (if (null? list)
-    #f
-    list))
-
 (define (list-index fn . lists)
   (define done #f)
   (define index 0)
@@ -68,6 +58,13 @@
                (else (set! index (+ index 1))
                      (set! lists (map-cdr lists)))))
   index)
+
+(define (find-tail fn list)
+  (until (null? list)
+    (when (fn (car list))
+      (return list))
+    (set! list (cdr list)))
+  #f)
 
 (define (find fn list)
   (set! list (find-tail fn list))

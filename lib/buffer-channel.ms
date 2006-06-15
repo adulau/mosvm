@@ -26,10 +26,7 @@
     ;;; TODO: We need to do something about fail events.
     (if (string? evt)
       (string-append! buffer evt)
-      (begin
-        (if (eq? evt 'close)
-          (error 'closed "channel closed while refilling the buffer." channel)
-          (send evt debris)))))
+      (send evt debris)))
 
   (function (read-channel-buffer amt)
     ;;; TODO: We need to use timeouts, here.            

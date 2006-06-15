@@ -31,12 +31,13 @@
                
                This output channel is returned by the input-chain function."
 
-"output-chain -- The output-chain function, given an output channel and zero or more
-               filters, connects the filters together in such a way that when 
-               a message is sent to the input channel, it will propagate
-               through the filters until it arrives in a final output channel.
+"output-chain -- The output-chain function, given an output channel and zero 
+                 or more filters, connects the filters together in such a 
+                 way that when a message is sent to the input channel, it 
+                 will propagate through the filters until it arrives in a 
+                 final output channel.
                
-               This input channel is returned by the input-chain function."
+                 This input channel is returned by the input-chain function."
 
 "error-on-fail -- Given a message, raises an error if a failure was signalled,
                using the (fail info ...) or (fail info ... error) convention.
@@ -106,7 +107,8 @@
             (send (list 'fail 
                         (error-key err)
                         @(error-info err)
-                        err))
+                        err)
+                  ,channel)
             ,channel)
           ,@body))
 

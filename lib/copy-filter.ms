@@ -12,26 +12,19 @@
 ; You should have received a copy of the GNU Lesser General Public License 
 ; along with this library; if not, write to the Free Software Foundation, 
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
-; under the terms of the GNU Lesser General Public License, version 2.1
-; as published by the Free Software Foundation.
 
-(module "lib/repl")
+; This filter will copy any strings prior to forwarding.  This is extremely
+; useful when dealing with crypto filters, because they operate in a 
+; destructive fashion.
+;
+(module "lib/copy-filter")
+(import "lib/filter")
+(export copy-filter)
 
-(import "lib/optimize")
-(import "lib/compile")
-(import "lib/eval")
-(import "lib/line-filter")
-(import "lib/s-filter")
-
-(define (repl)
-  (define cmds (input-chain (input) (line-filter) (s-filter)))
-
+(define-filter (copy-filter)
   (forever
-    (send ">> ")
-    (define cmd (wait cmds))
-    (when (eq? cmd 'close) (return))
-    (guard traceback
-      (define data (format (exec cmd)))
-      (print (string-append ":: " data *line-sep*)))))
+    (define evt (wait in))
+    (when (string? evt)
+      (set! evt (copy-string evt)))
+    (send evt out)))
 
-(export repl)

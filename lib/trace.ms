@@ -14,6 +14,7 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
 (module "lib/trace")
+(import "lib/filter")
 
 (define-macro (trace . stmts)
     `(guard (lambda (err) (disable-trace)
@@ -26,4 +27,10 @@
 (define-macro (trap . stmts)
     `(guard (lambda (err) err) ,@stmts))
 
-(export trace trap)
+(define-filter (trace-filter tag)
+    (forever 
+      (define msg (wait in))
+      (print (string-append tag ": " (format msg) *line-sep*))
+      (send msg out)))
+
+(export trace trap trace-filter)
