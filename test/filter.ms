@@ -114,6 +114,9 @@
                                            (cfb-decrypt rx block)))
                          (block-merge-filter (key-block-size rx))))
 
+(s: (send m1 in))
+(t: (expect out m1))
+
 (s: (send m2 in))
 (t: (expect out m2))
 
@@ -135,6 +138,48 @@
                          (copy-filter)
                          (prepend-checksum-filter crc32)
                          (check-checksum-filter crc32)))
+
+(s: (send m1 in))
+(t: (expect out m1))
+
+(s: (send m2 in))
+(t: (expect out m2))
+
+(s: (send m3 in))
+(t: (expect out m3))
+
+(s: (send m1 in)
+    (send m2 in)
+    (send m3 in))
+
+(t: (expect out m1))
+(t: (expect out m2))
+(t: (expect out m3))
+
+; This is the transmission flow for MOSREF.
+
+(define iv "themagicinitvect")
+(define ky (make-aes-key 256))
+
+(define tx (make-cfb ky iv aes-encrypt))
+(define rx (make-cfb ky iv aes-encrypt))
+
+(define in (make-channel))
+(define out (input-chain in 
+                         (copy-filter)
+                         ;(trace-filter "plaintext")
+                         (prepend-checksum-filter crc32)
+                         (block-split-filter (key-block-size tx))
+                         (encrypt-filter (lambda (block) 
+                                           (cfb-encrypt tx block)))
+                         ;(trace-filter "ciphertext" )
+                         (decrypt-filter (lambda (block) 
+                                           (cfb-decrypt rx block)))
+                         (block-merge-filter (key-block-size rx))
+                         (check-checksum-filter crc32)))
+
+(s: (send m1 in))
+(t: (expect out m1))
 
 (s: (send m2 in))
 (t: (expect out m2))
