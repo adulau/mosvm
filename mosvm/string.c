@@ -16,6 +16,7 @@
 
 #include "mosvm.h"
 #include <string.h>
+#include <ctype.h>
 
 #ifdef AUDIT_STRINGS
 #define AUDIT_STRING( x ) mqo_audit_string( x );
@@ -117,12 +118,35 @@ mqo_value mqo_get_global( mqo_symbol name ){
 }
 
 void mqo_format_string( mqo_string buf, mqo_string str ){
-    //TODO: Improve with ellision, scored length, escaping unprintables.
+    //TODO: Improve with ellision, scored length.
     AUDIT_STRING( str );
     mqo_string_append_byte( buf, '"' );
     const char* ptr = mqo_string_head( str );
-    mqo_integer len = mqo_string_length( str );
-        mqo_string_append( buf, ptr, len );
+    mqo_integer i, len = mqo_string_length( str );
+    for( i =0; i < len; i ++ ){
+        unsigned char ch = *(ptr + i );
+        switch( ch ){
+        case '\r':
+            mqo_string_append_cs( buf, "\\r" );
+            break;
+        case '\n':
+            mqo_string_append_cs( buf, "\\n" );
+            break;
+        case '\t':
+            mqo_string_append_cs( buf, "\\t" );
+            break;
+        case '"':
+            mqo_string_append_cs( buf, "\\\"" );
+            break;
+        default:
+            if( isprint( ch ) ){
+                mqo_string_append_byte( buf, ch );
+            }else{
+                mqo_string_append_byte( buf, '\\' );
+                mqo_string_append_unsigned( buf, ch );
+            }
+        }
+    };
     mqo_string_append_byte( buf, '"' );
 }
 
