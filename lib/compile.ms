@@ -280,6 +280,8 @@
                    (tc-splice! tc (compile-lisp-block n-env body))
                    (cons 'asm (tc->list tc)))))
     (cons 'set!  (lambda (env term . body)
+                   (unless (symbol? term)
+                     (error 'compile "set! requires a symbol term" term))
                    (let ((addr (context-symbol-addr env term))
                          (tc (make-tc)))
                      (tc-splice! tc (compile-lisp-block env body))
