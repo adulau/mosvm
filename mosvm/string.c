@@ -218,7 +218,7 @@ void mqo_string_expand( mqo_string string, mqo_integer newlen ){
 
     if(( tail + head )> incr )return;
     
-    mqo_integer newcap = string->capacity; 
+    mqo_integer newcap = string->capacity + 1; 
 
     while( newcap < newlen ) newcap <<= 1;
 
