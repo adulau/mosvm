@@ -1579,6 +1579,36 @@ MQO_BEGIN_PRIM( "string-alter!", string_alterd )
     NO_RESULT( );
 MQO_END_PRIM( string_alterd )
 
+MQO_BEGIN_PRIM( "byte->string", byte_to_string );
+    REQ_INTEGER_ARG( byte )
+    NO_REST_ARGS( );
+
+    mqo_string str = mqo_make_string( 4 );
+    mqo_string_append_byte( str, byte );
+    
+    STRING_RESULT( str );
+MQO_END_PRIM( byte_to_string )
+
+MQO_BEGIN_PRIM( "word->string", word_to_string );
+    REQ_INTEGER_ARG( word )
+    NO_REST_ARGS( );
+
+    mqo_string str = mqo_make_string( 4 );
+    mqo_string_append_word( str, word );
+    
+    STRING_RESULT( str );
+MQO_END_PRIM( word_to_string )
+
+MQO_BEGIN_PRIM( "quad->string", quad_to_string );
+    REQ_INTEGER_ARG( quad )
+    NO_REST_ARGS( );
+
+    mqo_string str = mqo_make_string( 4 );
+    mqo_string_append_quad( str, quad );
+    
+    STRING_RESULT( str );
+MQO_END_PRIM( quad_to_string )
+
 MQO_BEGIN_PRIM( "string-prepend!", string_prependd )
     REQ_STRING_ARG( string )
     REQ_ANY_ARG( data )
@@ -1816,15 +1846,25 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( flush_string );
     MQO_BIND_PRIM( empty_stringq );
     MQO_BIND_PRIM( string_append );
-    MQO_BIND_PRIM( string_read );
-    MQO_BIND_PRIM( string_read_line );
-    MQO_BIND_PRIM( string_append_byte );
-    MQO_BIND_PRIM( string_read_byte );
-    MQO_BIND_PRIM( string_append_word );
-    MQO_BIND_PRIM( string_read_word );
-    MQO_BIND_PRIM( string_append_quad );
-    MQO_BIND_PRIM( string_read_quad );
     MQO_BIND_PRIM( string_skip );
+
+    MQO_BIND_PRIM( string_append_byte ); //DEPRECATE
+    MQO_BIND_PRIM( string_append_word ); //DEPRECATE
+    MQO_BIND_PRIM( string_append_quad ); //DEPRECATE
+    MQO_BIND_PRIM( string_read_byte ); //DEPRECATE
+    MQO_BIND_PRIM( string_read_word ); //DEPRECATE
+    MQO_BIND_PRIM( string_read_quad ); //DEPRECATE
+
+    MQO_BIND_PRIM( string_read ); //DEPRECATE FOR STRING_TAKED
+    MQO_BIND_PRIM( string_read_line ); //DEPRECATE FOR STRING_SPLIT_LINED
+
+    MQO_BIND_PRIM( byte_to_string );
+    MQO_BIND_PRIM( word_to_string );
+    MQO_BIND_PRIM( quad_to_string );
+
+    // MQO_BIND_PRIM( string_to_byte );
+    // MQO_BIND_PRIM( string_to_word );
+    // MQO_BIND_PRIM( string_to_quad );
 
     MQO_BIND_PRIM( append );
     MQO_BIND_PRIM( appendd );

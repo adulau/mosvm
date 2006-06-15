@@ -26,6 +26,7 @@
         make-console-ecdh)
 
 (import "lib/iterate")
+
 (define (step label . items)
   (print (string-append "CONSOLE: "
                         (apply string-append label (map format items)) 
@@ -37,6 +38,7 @@
 (define (console-affiliation session-ecdh xmit recv)
   ;;;TODO: Configure timeout.
   (define read (buffer-channel recv))
+
   (define console-iv (make-iv))
 
   (step "Reading Drone Public Key")
@@ -52,12 +54,9 @@
   (step "Transmitting Console IV")
   ;;; Console --> Drone, via KK, CC
   (send (aes-encrypt aes-key console-iv) xmit)
- 
-  (define report-key (make-cfb aes-key drone-iv aes-encrypt))
-  (define command-key (make-cfb aes-key console-iv aes-encrypt))
   
-  (define report (decrypt-filter recv report-key cfb-decrypt))
-  (define command (encrypt-filter xmit command-key cfb-encrypt))
+  (define report (make-mosref-recv recv aes-key drone-iv))
+  (define command (make-mosref-xmit xmit aes-key console-iv))
 
   (step "Waiting for Drone to confirm Console IV")
   ;;; Drone --> Console, via RK, CC

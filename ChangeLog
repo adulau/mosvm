@@ -4,11 +4,33 @@
   + Any reference to an identifier not bound in builtins, imports is identified
     during compilation as an error.
 
+- 7/14/2006, Formal Filters
+  With the introduction of channels, a number of similar operations have been
+  cluttering up the Mosquito Library.  The new lib/filter module provides a
+  unified way to describe and arrange these filter operations.
+
+  * Added the (define-filter formals stmt ...) macro to lib/filter
+  * Added the (input-chain channel filter ...) function to lib/filter
+  * Added the (output-chain channel filter ...) function to lib/filter
+  * Added the (error-on-fail message_ function to lib/filter
+  * Modified s-filter from lib/filter to use the new define-filter form.
+  * Modified line-filter from lib/filter to use the new define-filter form.
+  * Modified repl from lib/repl to use input-chain to arrange s-filter and
+    line-filter to parse input.
+  * Added (crc32 string), which calculates the CRC32 of a given string.
+  * Added lib/checksum-filter, which prepends a checksum to each string, and
+    checks the checksum.
+  * Added quad->string, word->string, byte->string prims.
+  * Revised MOSREF's affiliation and transport protocols to use the new 
+    filters and CRC32.
+  * Added test/filter to test the functions listed above.
+  * Updated 
+
 - 6/03/2006, Broken lib/lib
-  + Broke lib/lib into smaller components and integrated them with lib/compile,
+  * Broke lib/lib into smaller components and integrated them with lib/compile,
     lib/assemble, lib/optimize and lib/freeze to fix the make-procedure
     reliance on lib/eval.
-  + Fixed test-compile
+  * Fixed test-compile
 
 - 5/27/2006, Buffer Merged With String
   * Modified string to be internally identical to the buffer type.

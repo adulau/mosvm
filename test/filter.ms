@@ -17,14 +17,6 @@
 
 (enable-spot-tests)
 
-; Configure the doom channel..
-
-(define-filter (trace-filter tag)
-    (forever 
-      (define msg (wait in))
-      (print (string-append tag ": " (format msg) *line-sep*))
-      (send msg out)))
-
 (define (wait/doom . rest)
   (define doom (make-channel))
   (define time (timeout 1000 doom 
@@ -37,6 +29,20 @@
   (equal? value (wait/doom channel)))
 
 (import "lib/filter")
+
+;; Our identity filter..
+
+(define-filter (identity-filter)
+    (forever
+      (send (wait in) out)))
+
+;; Linking in to in..
+(define in (make-channel))
+(define mid (input-chain in (identity-filter)))
+(define out (input-chain mid (identity-filter)))
+
+(s: (send "test" in))
+(t: (expect out "test"))
 
 ;; Test Block-Filter Module
 (import "lib/block-filter")

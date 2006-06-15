@@ -56,7 +56,7 @@ void mqo_format_traceback( mqo_string buf, mqo_error e ){
             mqo_string_append_cs( buf, "--" );
             mqo_string_append_str( buf, mqo_string_fv( v ) );
             mqo_string_append_newline( buf );
-            mqo_string_append_cs( buf, "       " );
+            mqo_string_append_cs( buf, "      " );
             
             if( mqo_is_list( mqo_cdr( p ) ) ){
                 p = mqo_list_fv( mqo_cdr( p ) );
@@ -64,10 +64,22 @@ void mqo_format_traceback( mqo_string buf, mqo_error e ){
                 p = NULL;
             }
         }else{
-            mqo_string_append_cs( buf, " :: " );
+            mqo_string_append_cs( buf, " ::" );
         };
-
-        mqo_format_list_items( buf, p, 0 );
+    
+        mqo_value x = mqo_vf_list( p );
+        while( x ){
+            if( mqo_is_pair( x ) ){
+                p = mqo_pair_fv( x );
+                mqo_string_append_byte( buf, ' ' );
+                mqo_format_value( buf, mqo_car( p ), 32, 3 );
+                x = mqo_cdr( p );
+            }else{
+                mqo_string_append_cs( buf, " . " );
+                mqo_format_value( buf, x, 32, 3 );
+                x = 0;
+            };
+        };
     };
 
     mqo_string_append_newline( buf );

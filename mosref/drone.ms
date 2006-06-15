@@ -50,11 +50,8 @@
   ;;; Console --> Drone, via KK, CC
   (define console-iv (aes-decrypt aes-key (read 16)))
  
-  (define drone-key (make-cfb aes-key drone-iv aes-encrypt))
-  (define console-key (make-cfb aes-key console-iv aes-encrypt))
-  
-  (define report (encrypt-filter xmit drone-key cfb-encrypt))
-  (define command (decrypt-filter recv console-key cfb-decrypt))
+  (define report (make-mosref-xmit xmit aes-key drone-iv))
+  (define command (make-mosref-recv recv aes-key console-iv))
 
   (step "Confirming Console IV")
   ;;; Drone --> Console, via RK, CC

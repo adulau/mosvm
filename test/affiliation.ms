@@ -24,10 +24,10 @@
          (send 'console-ready sync)))
 
 (when (eq? (wait death-rattle sync) 'timeout)
-  (error 'test "Failed to affiliate within an acceptable timeout"))
+  (error 'test "Failed to affiliate within an acceptable timeout. (0)"))
 
 (when (eq? (wait death-rattle sync) 'timeout)
-  (error 'test "Failed to affiliate within an acceptable timeout"))
+  (error 'test "Failed to affiliate within an acceptable timeout. (1)"))
 
 (define drone-xmit (car drone-port))
 (define drone-recv (cadr drone-port))
