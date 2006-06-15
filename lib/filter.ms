@@ -76,7 +76,7 @@
       (if err 
         (re-error err) 
         (apply error message)))
-    value))
+    message))
 
 (define (output-chain recv . filters)
   (define xmit #f)
@@ -106,7 +106,7 @@
             (send (list 'fail 
                         (error-key err)
                         @(error-info err)
-                        error))
+                        err))
             ,channel)
           ,@body))
 
