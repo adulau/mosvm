@@ -15,6 +15,12 @@
    portable way to get secure random bits to feed a PRNG (Tom St Denis)
 */
 
+#ifdef DEVRANDOM 
+#ifdef LTC_NO_FILE
+#error Ephemeral Security does not recommend using LTC with DEVRANDOM and LTC_NO_FILE
+#endif
+#endif
+
 #ifdef DEVRANDOM
 /* on *NIX read /dev/random */
 static unsigned long rng_nix(unsigned char *buf, unsigned long len, 
