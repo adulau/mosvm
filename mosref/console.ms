@@ -69,6 +69,7 @@
   (send drone-iv command)
 
   ;;; TODO: We should probably create a pseudo-stream type..
+  (step "Affiliation complete.")
   (list command report))
 
 (define (make-drone-exe console-addr console-portno console-ecdh platform)
@@ -93,7 +94,7 @@
     (else
       (error 'mos "drone-exec accepts a frozen program, program or source")))
   (send cmd xmit)
-  (thaw (wait recv)))
+  (thaw (error-on-fail (wait recv))))
 
 (define (console-repl xmit recv)
   (define (display-result item)
@@ -122,7 +123,7 @@
                        (set! cmd-ok #f))
            (set! cmd (string->exprs cmd)))
     (when cmd-ok
-      (define result (drone-exec cmd port))
+      (define result (drone-exec cmd xmit recv))
       (define result-type (car result))
       (set! result (cdr result))
       (case result-type
@@ -139,11 +140,11 @@
 
   ;;TODO: We need a line-filter, here.
 
-  (until (closed? port)
+  (forever
     (send ">> ")
     (define cmd (wait))
-    (if (eof-object? cmd)
-     (close port)
+    (if (eq? cmd 'close)
+     (return (send 'close))
      ((dict-ref cmds cmd default-cmd) cmd))))
 
 ;;; >> (define listener (spawn-mosref-listener "foo.com" 9191))

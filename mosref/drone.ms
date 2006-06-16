@@ -64,6 +64,7 @@
   (unless (string=? (wait command) drone-iv)
     (error 'aff "the console failed to confirm affiliation"))
 
+  (step "Affiliation complete.")
   (list report command))
 
 (define (drone-repl xmit recv)

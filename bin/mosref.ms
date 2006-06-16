@@ -87,7 +87,7 @@
             (number->string console-port)
             "..." )
 
-(define console-listener (serve-tcp console-port))
+(define console-listener (tcp-listen console-port))
 (define drone-port #f)
 
 (until drone-port
@@ -98,11 +98,13 @@
            (unless (eq? (error-key e) 'aff) (re-error e))
            (write-line "Client failed to affiliate; rejected."))
          (set! drone-port 
-           (console-affiliation console-ecdh (wrap-socket client-descr)))))
+           (console-affiliation console-ecdh 
+                                (input client)
+                                (output client)))))
 
 (write-line "Client confirmed as drone by affiliation; closing listener...")
 
-(close-descr console-listener)
+; TODO: Doesn't work (send 'close console-listener)
 
 (write-line "Welcome to MOSREF; all instructions shall be evaluated on the"
             " drone, with results reported to the console.")
