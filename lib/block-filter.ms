@@ -73,7 +73,7 @@
   (define buffer (make-string 256))
 
   (define (feed)
-    (while (> (string-length buffer) block-size)
+    (while (>= (string-length buffer) block-size)
       (send (string-read! buffer block-size) out)))
 
   (forever

@@ -36,13 +36,13 @@
     (cfb-encrypt xmit-cfb block))
 
   (output-chain xmit
-                (trace-filter "xmit-ciphertext-block")
+                ;(trace-filter "xmit-ciphertext-block")
                 (encrypt-filter xmit-encrypt)
-                (trace-filter "xmit-plaintext-block")
+                ;(trace-filter "xmit-plaintext-block")
                 (block-split-filter xmit-block-size)
-                (trace-filter "xmit-plaintext w/cs")
+                ;(trace-filter "xmit-plaintext w/cs")
                 (prepend-checksum-filter crc32)
-                (trace-filter "xmit-plaintext")
+                ;(trace-filter "xmit-plaintext")
                 (copy-filter)))
 
 (define (make-mosref-recv recv recv-key recv-iv)

@@ -23,14 +23,14 @@
 (define drone-xmit (make-channel))
 (define console-xmit (make-channel))
 (define drone-recv (input-chain console-xmit 
-                                (trace-filter "drone-recv")
+                                ;(trace-filter "drone-recv")
                                 (fuzz-filter) 
-                                (trace-filter "drone-recv/fz")
+                                ;(trace-filter "drone-recv/fz")
                                 ))
 (define console-recv (input-chain drone-xmit 
-                                  (trace-filter "console-recv")
+                                  ;(trace-filter "console-recv")
                                   (fuzz-filter) 
-                                  (trace-filter "console-recv/fz")
+                                  ;(trace-filter "console-recv/fz")
                                   ))
 
 (define sync (make-channel))

@@ -30,7 +30,12 @@
 (define-filter (trace-filter tag)
     (forever 
       (define msg (wait in))
-      (print (string-append tag ": " (format msg) *line-sep*))
+      (print (string-append tag ": " 
+                            (if (string? msg)
+                              (string-append (format (string-length msg))
+                                             "/")
+                              "")
+                            (format msg) *line-sep*))
       (send msg out)))
 
 (export trace trap trace-filter)
