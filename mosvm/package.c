@@ -252,6 +252,8 @@ mqo_string mqo_freeze( mqo_value root ){
             // Do nothing -- strings do not contain references.
         }else if( mqo_is_symbol( value ) ){
             // Do nothing -- symbols do not contain references.
+        }else if( mqo_is_integer( value ) ){
+            //Do nothing -- integers do not contain references.
         }else if( mqo_is_procedure( value ) ){
             // Hoo boy. Here we go..
             mqo_procedure proc = mqo_procedure_fv( value );
