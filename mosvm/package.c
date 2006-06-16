@@ -129,6 +129,7 @@ mqo_value mqo_thaw_mem( const void* mem, mqo_quad memlen ){
     while( record_ix < record_ct ){
         switch( next_byte() ){
         case PKG_IOBJ:  // Integer
+            next_quad( );
             break;
         case PKG_PAIR:  // Pair
             pair = mqo_pair_fv( mqo_vector_get( values, record_ix ) );

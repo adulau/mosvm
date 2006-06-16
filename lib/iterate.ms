@@ -29,6 +29,13 @@
 
 (define filter! filter)
 
+(define (all fn . lists)
+  (until (memq '() lists)
+         (unless (apply fn (map-car lists))
+           (return #f))
+         (set! lists (map-cdr lists)))
+  #t)
+
 (define (fold fn acc . lists)
   (until (memq '() lists)
          (set! acc (apply fn (append (map-car lists) (list acc))))
@@ -85,4 +92,4 @@
 
 (define (ignore-method . any))
 
-(export filter filter! fold for-each map find-tail list-index find any ignore-method)
+(export all filter filter! fold for-each map find-tail list-index find any ignore-method)
