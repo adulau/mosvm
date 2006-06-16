@@ -25,66 +25,57 @@
 
 (define b (make-string 1024))
 
-(s: (string-read b))
+(s: (string-read! b))
 (r: #f)
 
-(s: (string-write b "hello"))
-(r: #f)
+(s: (string-append! b "hello"))
 
-(s: (string-read b))
+(s: (string-read! b))
 (r: "hello")
 
-(s: (string-read b))
+(s: (string-read! b))
 (r: #f)
 
-(s: (string-write-byte b 42))
-(r: #f)
+(s: (string-append-byte! b 42))
 
-(s: (string-read-byte b))
+(s: (string-read-byte! b))
 (r: 42)
 
-(s: (string-read-byte b))
+(s: (string-read-byte! b))
 (r: #f)
 
-(s: (string-write-word b 1042))
-(r: #f)
+(s: (string-append-word! b 1042))
 
-(s: (string-read-word b))
+(s: (string-read-word! b))
 (r: 1042)
 
-(s: (string-read-word b))
+(s: (string-read-word! b))
 (r: #f)
 
-(s: (string-write-quad b -1))
-(r: #f)
+(s: (string-append-quad! b -1))
 
-(s: (string-read-quad b))
+(s: (string-read-quad! b))
 (r: -1)
 
-(s: (string-read-quad b))
+(s: (string-read-quad! b))
 (r: #f)
 
-(s: (string-write b "hello"))
-(r: #f)
+(s: (string-append! b "hello"))
 
-(s: (string-write b ", world"))
-(r: #f)
+(s: (string-append! b ", world"))
 
-(s: (string-read b))
+(s: (string-read! b))
 (r: "hello, world")
 
-(s: (string-write b "hello"))
-(r: #f)
+(s: (string-append! b "hello"))
 
 (s: b)
 (r: "hello")
 
 (define b (make-string 1))
 
-(s: (string-write b "hello"))
-(r: #f)
+(s: (string-append! b "hello"))
 
 (s: b)
 (r: "hello")
 
-MOSVM2
