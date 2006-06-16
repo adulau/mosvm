@@ -17,7 +17,7 @@
 (import "lib/filter")
 (import "lib/buffer-channel")
 
-(export block-merge-filter block-split-filter)
+(export block-merge-filter block-split-filter fragment-filter)
 
 (define (pad-length message-length block-size)
   ; flash -- the incomplete final block of a message.
@@ -68,4 +68,19 @@
          (send message out)))
       (else
         (send message out)))))
+
+(define-filter (fragment-filter block-size)
+  (define buffer (make-string 256))
+
+  (define (feed)
+    (while (> (string-length buffer) block-size)
+      (send (string-read! buffer block-size) out)))
+
+  (forever
+    (define evt (wait in))
+    (cond ((string? evt)
+           (string-append! buffer evt)
+           (feed))
+          (else
+            (send evt out)))))
 

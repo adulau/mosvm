@@ -18,7 +18,7 @@
 (import "lib/block-filter")
 (import "lib/checksum-filter")
 (import "lib/copy-filter")
-;(import "lib/trace")
+(import "lib/trace")
 
 (export *sprng* *ecdh-keysize* *sig-length* make-iv)
 
@@ -36,24 +36,25 @@
     (cfb-encrypt xmit-cfb block))
 
   (output-chain xmit
-                ;(trace-filter "xmit-ciphertext-block")
+                (trace-filter "xmit-ciphertext-block")
                 (encrypt-filter xmit-encrypt)
-                ;(trace-filter "xmit-plaintext-block")
+                (trace-filter "xmit-plaintext-block")
                 (block-split-filter xmit-block-size)
-                ;(trace-filter "xmit-plaintext w/cs")
+                (trace-filter "xmit-plaintext w/cs")
                 (prepend-checksum-filter crc32)
-                ;(trace-filter "xmit-plaintext")
+                (trace-filter "xmit-plaintext")
                 (copy-filter)))
 
 (define (make-mosref-recv recv recv-key recv-iv)
   (define recv-block-size (key-block-size recv-key))
   (define recv-cfb (make-cfb recv-key recv-iv aes-encrypt))
-  (define (recv-encrypt block)
-    (cfb-decrypt recv-cfb block))
+  (define (recv-decrypt block) (cfb-decrypt recv-cfb block))
 
   (input-chain recv
+               ;(trace-filter "recv-ciphertext-data")
+               (fragment-filter recv-block-size)
                ;(trace-filter "recv-ciphertext-block")
-               (decrypt-filter recv-encrypt)
+               (decrypt-filter recv-decrypt)
                ;(trace-filter "recv-plaintext-block")
                (block-merge-filter recv-block-size)
                ;(trace-filter "recv-plaintext w/cs")
