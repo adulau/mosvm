@@ -724,9 +724,16 @@ MQO_END_PRIM( freeze );
 MQO_BEGIN_PRIM( "string-append", string_append )
     mqo_string s0 = mqo_make_string( 128 );
     for(;;){
-        OPT_STRING_ARG( sN );
+        OPT_ANY_ARG( sN );
         if(! has_sN ) break;
-        mqo_string_append( s0, mqo_sf_string( sN ), mqo_string_length( sN ) );
+        if( mqo_is_string( sN ) ){
+            mqo_string s = mqo_string_fv( sN );
+            mqo_string_append( s0, mqo_sf_string( s ), mqo_string_length( s ) );
+        }else if( mqo_is_integer( sN ) ){
+            mqo_string_append_byte( s0, mqo_integer_fv( sN ) );
+        }else{
+            mqo_errf( mqo_es_vm, "sx", "expected string or byte", sN );
+        }
     }
     STRING_RESULT( s0 );
 MQO_END_PRIM( string_append );

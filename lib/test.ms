@@ -52,6 +52,20 @@
 
 (export *spot-s* *spot-v*)
 
+(define (equivalent? v1 v2)
+  (cond
+    ((equal? v1 v2) #t)
+    ((not (eq? (type v1) 
+               (type v2))) #f)
+    ((vector? v1)
+     (equivalent (vector->list v1)
+                 (vector->list v2)))
+    ((pair? v1)
+      (and (equivalent? (car v1) (car v2))
+           (equivalent? (cdr v1) (cdr v2))))
+    (else
+      #f)))
+
 (define (do-s expr fn)
   (unless *spot-test?* (return))
   (set! *spot-s* expr)
@@ -73,7 +87,7 @@
                         (list "sv: " *spot-v*)))
            (fn)))
   (when *spot-k*
-    (if (not (equal? x *spot-v*))
+    (if (not (equivalent? x *spot-v*))
       (spot-fail (cons "r:  " expr)
                  (list "sv: " *spot-v*)
                  (list "rv: " x)))))
