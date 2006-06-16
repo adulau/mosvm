@@ -110,16 +110,16 @@
 (r: '((unquote (a b c))))
 
 (s: (string->exprs ",@a"))
-(r: '((unquote-splicing a)))
+(r: '((unquote (scatter a))))
 
 (s: (string->exprs ",@alpha"))
-(r: '((unquote-splicing alpha)))
+(r: '((unquote (scatter alpha))))
 
 (s: (string->exprs ",@()"))
-(r: '((unquote-splicing ())))
+(r: '((unquote (scatter ()))))
 
 (s: (string->exprs ",@(a b c)"))
-(r: '((unquote-splicing (a b c))))
+(r: '((unquote (scatter (a b c)))))
 
 (s: (string->exprs ";\n"))
 (r: '())

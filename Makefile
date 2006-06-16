@@ -2,7 +2,7 @@ ROOT=.
 include $(ROOT)/Makefile.cf
 
 # A list of unit test targets. All unit tests are to be compiled by MOSVM.
-TESTS=test-core test-quasi test-parse test-assemble test-freeze test-process test-buffer test-regex test-url test-http
+TESTS=test-core test-quasi test-parse test-freeze test-buffer test-regex test-url test-http
 # test-compile is bugged atm..
 
 LIB_MOS = $(shell ls lib/*ms | sed -e 's,.ms,.mo,')
