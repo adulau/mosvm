@@ -532,20 +532,26 @@ void mqo_init_crypto_subsystem( ){
 // descriptors are available.
 
 // Random Number Generators and Pseudo Random Number Generators
+#ifdef NDEBUG
+#define check_init ;
+#else
+#define check_init assert
+#endif
+
 #ifdef YARROW
-    assert( register_prng( &yarrow_desc ) >= 0 );
+    check_init( register_prng( &yarrow_desc ) >= 0 );
 #endif
 #ifdef RC4
-    assert( register_prng( &rc4_desc ) >= 0 );
+    check_init( register_prng( &rc4_desc ) >= 0 );
 #endif
 #ifdef FORTUNA
-    assert( register_prng( &fortuna_desc ) >= 0 );
+    check_init( register_prng( &fortuna_desc ) >= 0 );
 #endif
 #ifdef SOBER128
-    assert( register_prng( &sober128_desc ) >= 0 );
+    check_init( register_prng( &sober128_desc ) >= 0 );
 #endif
 #if defined( SPRNG )
-    assert( register_prng( &sprng_desc ) >= 0 );
+    check_init( register_prng( &sprng_desc ) >= 0 );
 #else
 #   error "MOSVM requires that libtomcrypt provides SPRNG"
 #endif
