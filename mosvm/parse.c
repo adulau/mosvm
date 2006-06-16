@@ -119,16 +119,23 @@ mqo_symbol mqo_parse_sym( char** r_str, mqo_boolean* r_succ ){
     
     char ch = *str;
     int any = 0;
-    // Only alphabetics and *<>=! lead multi-character symbols.  Everything
-    // else is treated like a special operator, like "'", "`", ",", or @ 
 
-    for(;;){
-        ch = *str;
-        if( isspace( ch )||(ch == '.')||(ch == ')')||( ! isprint( ch ))) break;
+    for(;;)switch( *str ){
+    case ';':
+    case '.':
+    case ')':
+    case ' ':
+    case '\r':
+    case '\n':
+    case '\t':
+    case '\0':
+        goto done;
+    default:
+        if( ! isprint( ch ) ) goto done;
         any = 1;
-        str ++;
+        str++;
     }
-
+done:
     *r_succ = any;
     *r_str = str;
     if( any ){
