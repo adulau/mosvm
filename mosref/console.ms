@@ -75,16 +75,26 @@
 (define (make-drone-exe console-addr console-portno console-ecdh platform)
   (build-exe platform
              `((import "mosref/drone")
-               (import "lib/tcp-server")
+               (define conn (tcp-connect ,console-addr ,console-portno))
+               (define xmit (input conn))
+               (define recv (output conn))
                (drone-repl
                  (drone-affiliation 
                    (import-ecdh
                      (base64-decode ,(base64-encode (export-public-ecdh 
                                                       console-ecdh))))
-                   (open-tcp-connection ,console-addr ,console-portno)))
+                   (input conn)
+                   (output conn)))
                (exit 0))))
 
-(define (drone-exec cmd xmit recv)
+(define (drone-spawn cmd bridge)
+  (define lane (make-lane bridge))
+  (define recv (lane-recv lane))
+  (define xmit (lane-xmit lane))
+  (send cmd xmit)
+  (list xmit recv))
+
+(define (drone-exec cmd bridge)
   (cond 
     ((list? cmd)
      (set! cmd (freeze (assemble (optimize (compile cmd))))))
@@ -93,10 +103,11 @@
     ((string? cmd))
     (else
       (error 'mos "drone-exec accepts a frozen program, program or source")))
-  (send cmd xmit)
-  (thaw (error-on-fail (wait recv))))
+  (thaw (wait (cadr (drone-spawn cmd bridge)))))
 
 (define (console-repl xmit recv)
+  (define bridge (make-bridge xmit recv))
+
   (define (display-result item)
     (send (string-append ":: " (format item) *line-sep*)))
 
@@ -123,14 +134,15 @@
                        (set! cmd-ok #f))
            (set! cmd (string->exprs cmd)))
     (when cmd-ok
-      (define result (drone-exec cmd xmit recv))
-      (define result-type (car result))
-      (set! result (cdr result))
-      (case result-type
-        ((succ) 
-         (for-each display-result result))
-        ((fail) 
-         (apply display-failure result)))))
+      (define result (drone-exec cmd bridge))
+      ;(define result-type (car result))
+      ;(set! result (cdr result))
+      ;(case result-type
+      ;  ((succ) 
+      ;   (for-each display-result result))
+      ;  ((fail) 
+      ;   (apply display-failure result)))
+      (display-result result)))
 
   (define cmds 
     (dict (cons (string-append ".quit" *line-sep*)
