@@ -26,7 +26,7 @@
 (define b (make-string 1024))
 
 (s: (string-read! b))
-(r: #f)
+(r: "")
 
 (s: (string-append! b "hello"))
 
@@ -34,7 +34,7 @@
 (r: "hello")
 
 (s: (string-read! b))
-(r: #f)
+(r: "")
 
 (s: (string-append-byte! b 42))
 
