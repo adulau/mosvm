@@ -43,9 +43,10 @@ void mqo_pool_obj( mqo_object obj, mqo_pool pool ){
 mqo_quad mqo_object_ct = 0;
 #endif
 
-#define MQO_MIN_OLDS 32767
+#define MQO_MIN_TOLERANCE 16384
+#define MQO_MAX_TOLERANCE 65535
 
-mqo_quad mqo_old_objects = MQO_MIN_OLDS;
+mqo_quad mqo_new_tolerance = MQO_MIN_TOLERANCE;
 mqo_quad mqo_new_objects = 0;
 
 mqo_object mqo_scavenge( mqo_type type, mqo_pool pool, mqo_quad size ){
@@ -106,7 +107,7 @@ void mqo_grey_obj( mqo_object obj ){
     if( pool == mqo_whites )return;
     if( pool == mqo_roots )return;
     
-    mqo_old_objects ++;
+    mqo_new_tolerance++;
 
     mqo_unpool_obj( obj );
     mqo_pool_obj( obj, mqo_greys );
@@ -119,17 +120,16 @@ void mqo_trace_object( mqo_object obj ){
 //mqo_integer mqo_since = 0;
 void mqo_collect_window( ){
     //mqo_since ++;
-    if( mqo_new_objects > mqo_old_objects )mqo_collect_garbage( );
+    if( mqo_new_objects > mqo_new_tolerance )mqo_collect_garbage( );
 }
 void mqo_collect_garbage( ){
     //printf( "Beginning GC at %i; old %i v. new %i..\n", mqo_since, mqo_old_objects, mqo_new_objects );
     mqo_object obj;
 
-    //mqo_since = 
-    mqo_old_objects = mqo_new_objects = 0;
+    mqo_new_tolerance = mqo_new_objects = 0;
 
     for( obj = mqo_roots->head; obj; obj = obj->next ){
-        mqo_old_objects++;
+        mqo_new_tolerance++;
         mqo_trace_object( obj );
     }
     
@@ -139,7 +139,7 @@ void mqo_collect_garbage( ){
     mqo_trace_timeouts();
 
     while( obj = mqo_greys->head ){
-        mqo_old_objects++;
+        mqo_new_tolerance++;
         mqo_unpool_obj( obj );
         mqo_pool_obj( obj, mqo_whites );
         mqo_trace_object( obj );
@@ -154,7 +154,12 @@ void mqo_collect_garbage( ){
     mqo_blacks = temp;
 
     //printf( ".. GC Complete, kept %i..\n", mqo_old_objects );
-    if( mqo_old_objects < MQO_MIN_OLDS ) mqo_old_objects = MQO_MIN_OLDS;
+
+    if( mqo_new_tolerance < MQO_MIN_TOLERANCE ){
+        mqo_new_tolerance = MQO_MIN_TOLERANCE;
+    }else if( mqo_new_tolerance > MQO_MAX_TOLERANCE ){
+        mqo_new_tolerance = MQO_MAX_TOLERANCE;
+    }
 }
 
 void mqo_generic_trace( mqo_object obj ){}
