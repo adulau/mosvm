@@ -31,10 +31,10 @@
     (forever 
       (define msg (wait in))
       (print (string-append tag ": " 
-                            (if (string? msg)
-                              (string-append (format (string-length msg))
-                                             "/")
-                              "")
+                            ;(if (string? msg)
+                            ;  (string-append (format (string-length msg))
+                            ;                 " / ")
+                            ;  "")
                             (format msg) *line-sep*))
       (send msg out)))
 
