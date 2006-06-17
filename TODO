@@ -32,10 +32,6 @@
   Only lists need to be decorated by line during read.
   Likewise, only calls need to be decorated by line.
 
-+ Replace show with format
-  mqo_format( mqo_buffer buf, mqo_value v, mqo_integer depth );
-  mqo_show -> new buf, mqo_format( buf, v, ct ), print buf;
-
 + Add udp-connect
 
 + Add udp-listen
@@ -48,3 +44,5 @@
                     (dict '('&' . "&amp;") '('<' . "&lt;")))
   (string-translate "&lt;foo&gt;" 
                     (dict (cons '&' (dict (cons 'a' (dict (cons 'm' (cons 'p' ..
+
++ Use Bridges for MOSREF command and report.

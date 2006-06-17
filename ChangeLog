@@ -4,6 +4,17 @@
   + Any reference to an identifier not bound in builtins, imports is identified
     during compilation as an error.
 
+- 7/16/2006, Channel Bridges
+  For MOSREF, we need the ability to multiplex multiple channels across a single
+  channel.  The bridge module provides the necessary capabilities.
+
+  * Added the lib/bridge module
+  * Added (make-bridge xmit recv) -> bridge to lib/bridge
+  * Added (make-lane xmit recv) -> lane to lib/bridge
+  * Added (bridge-lanes bridge) -> channel of lane to lib/bridge
+  * Added (lane-recv bridge) -> channel of string to lib/bridge
+  * Added (lane-xmit bridge) -> channel of string to lib/bridge
+
 - 7/14/2006, Formal Filters
   With the introduction of channels, a number of similar operations have been
   cluttering up the Mosquito Library.  The new lib/filter module provides a
