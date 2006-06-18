@@ -744,17 +744,21 @@ MQO_BEGIN_PRIM( "assq", assq )
     NO_REST_ARGS( );
     
     mqo_value v;
-
-    while( list ){
-        v = mqo_car( list );
-        if( mqo_is_pair( v ) ){
-        //TODO: Should this be an error?
-            if( mqo_eqv( mqo_car( mqo_pair_fv( v ) ), key ) ){
-                RESULT( v );
+    if( list ){
+        for(;;){
+            v = mqo_car( list );
+            if( mqo_is_pair( v ) ){
+                //TODO: Should this be an error?
+                if( mqo_eqv( mqo_car( mqo_pair_fv( v ) ), key ) ){
+                    RESULT( v );
+                }
             }
+
+            //TODO: Should this be an error?
+            v = mqo_cdr( list );
+            if( ! mqo_is_pair( v ) )break;
+            list = mqo_list_fv( v );
         }
-        //TODO: Should this be an error?
-        list = mqo_list_fv( mqo_cdr( list ) );
     }
 
     RESULT( mqo_vf_false() );
@@ -766,17 +770,20 @@ MQO_BEGIN_PRIM( "assoc", assoc )
     NO_REST_ARGS( );
     
     mqo_value v;
-
-    while( list ){
-        v = mqo_car( list );
-        if( mqo_is_pair( v ) ){
-        //TODO: Should this be an error?
-            if( mqo_eq( mqo_car( mqo_pair_fv( v ) ), key ) ){
-                RESULT( v );
+    if( list ){
+        for(;;){
+            v = mqo_car( list );
+            if( mqo_is_pair( v ) ){
+                //TODO: Should this be an error?
+                if( mqo_eq( mqo_car( mqo_pair_fv( v ) ), key ) ){
+                    RESULT( v );
+                }
             }
+            //TODO: Should this be an error?
+            v = mqo_cdr( list  );
+            if( ! mqo_is_pair( v ) )break;
+            list = mqo_list_fv( v );
         }
-        //TODO: Should this be an error?
-        list = mqo_list_fv( mqo_cdr( list ) );
     }
 
     RESULT( mqo_vf_false() );
