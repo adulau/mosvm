@@ -164,6 +164,26 @@ MQO_BEGIN_PRIM( "make-regex", make_regex )
     );
 MQO_END_PRIM( make_regex )
 
+MQO_BEGIN_PRIM( "string-read-regex!", string_read_regex )
+    REQ_STRING_ARG( text );
+    REQ_REGEX_ARG( regex );
+    OPT_STRING_ARG( flags );
+
+    NO_REST_ARGS( );
+   
+    const char* endp = NULL;
+    const char* str = mqo_sf_string( text );
+    const char* flagstr = has_flags ? mqo_sf_string( flags ) : NULL;
+        
+    mqo_value m = mqo_match_regex( regex, str, flagstr, NULL, &endp );
+
+    if( ! mqo_is_false( m ) ){
+        mqo_string_skip( text, endp - str );
+    }
+
+    RESULT( m );
+MQO_END_PRIM( string_read_regex )
+
 void mqo_init_regex_subsystem( ){
     MQO_I_TYPE( regex );
     mqo_es_rx = mqo_symbol_fs( mqo_regex_name );
@@ -172,4 +192,5 @@ void mqo_init_regex_subsystem( ){
     MQO_BIND_PRIM( match_regexm );
     MQO_BIND_PRIM( match_regex );
     MQO_BIND_PRIM( regexq );
+    MQO_BIND_PRIM( string_read_regex );
 }
