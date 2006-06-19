@@ -285,6 +285,9 @@ MQO_BEGIN_PRIM( "pause", pause )
     NO_REST_ARGS( );
     MQO_CP = MQO_CP->cp;
     MQO_RX = mqo_vf_null( );
+    mqo_process p = mqo_active_process;
+    mqo_disable_process( p );
+    mqo_enable_process( p );
     mqo_proc_loop( );
 MQO_END_PRIM( pause )
 
