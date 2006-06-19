@@ -1677,22 +1677,26 @@ MQO_END_PRIM( appendd )
 
 MQO_BEGIN_PRIM( "string-append!", string_appendd )
     REQ_STRING_ARG( string )
-    REQ_ANY_ARG( data )
-    NO_REST_ARGS( )
     
     void* src; mqo_integer srclen;
-
-    if( mqo_is_string( data ) ){
-        mqo_string str = mqo_string_fv( data );
-        src = mqo_sf_string( str );
-        srclen = mqo_string_length( str );
-    }else if( mqo_is_integer( data ) ){
-        mqo_byte x = mqo_integer_fv( data );
-        src = &x;
-        srclen = 1;
+   
+    for(;;){
+        OPT_ANY_ARG( data );
+        if( ! has_data ){ 
+            break;
+        }else if( mqo_is_string( data ) ){
+            mqo_string str = mqo_string_fv( data );
+            src = mqo_sf_string( str );
+            srclen = mqo_string_length( str );
+        }else if( mqo_is_integer( data ) ){
+            mqo_byte x = mqo_integer_fv( data );
+            src = &x;
+            srclen = 1;
+        }else{
+            mqo_errf( mqo_es_vm, "sx", "expected string or character", data );
+        }
+        mqo_string_append( string, src, srclen );
     }
-
-    mqo_string_append( string, src, srclen );
     
     NO_RESULT( );
 MQO_END_PRIM( string_appendd )
