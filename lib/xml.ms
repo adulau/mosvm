@@ -18,7 +18,7 @@
 ;; <! ... >
 
 (module "lib/xml")
-(export get-sxml-items get-sxml-attrs string->sxml
+(export get-sxml-items get-sxml-attrs string->sxml sxml->string
        get-sxml-attr get-sxml-item get-sxml-item* 
        get-sxml-tag has-sxml-tag? has-sxml-attr? sxml-drill)
 
@@ -199,19 +199,20 @@
   (define out (make-channel))
 
   (spawn (function (sxml-parse)
-           (until (empty-string? data) 
-              (define r (parse-data data))
-              (define head (car r))
-              (define item (cadr r))
-              (define tail (cadr (cdr r)))
-              (unless (string=? head "") (send (list 'cdata head) out))
-              (set! data tail)
-              (cond
-                ((string? item) (when (> (string-length item) 0)
-                                  (send (list 'cdata item) out)))
-                ((pair? item) (send item out))))
+           (fail-on-error out 
+             (until (empty-string? data) 
+                (define r (parse-data data))
+                (define head (car r))
+                (define item (cadr r))
+                (define tail (cadr (cdr r)))
+                (unless (string=? head "") (send (list 'cdata head) out))
+                (set! data tail)
+                (cond
+                  ((string? item) (when (> (string-length item) 0)
+                                    (send (list 'cdata item) out)))
+                  ((pair? item) (send item out))))
 
-           (send '(done) out)))
+             (send '(done) out))))
   
   out)
 
@@ -516,4 +517,40 @@
 (define (scanner-drop scanner ch)
   (string-prepend! scanner ch))
 
-;;; MOSVM2
+(define (sxml->string sxml)
+  (define buf (make-string 16384))
+  (string-append! buf "<?xml version='1.0'?>")
+  
+  (define (format-item x)
+    (cond ((string? x) (format-cdata x))
+          (else (format-tag x))))
+
+  (define (format-tag x)
+    (string-append! buf "<")
+    (string-append! buf (symbol->string (car x)))
+    (for-each format-attr (get-sxml-attrs x))
+    (define items (get-sxml-items x))
+    (cond
+      ((null? items) (string-append! buf " />"))
+      (else (string-append! buf ">")
+            (for-each format-item items)
+            (string-append! buf "</" (symbol->string (car x)) ">"))))
+
+  (define (format-cdata x)
+    (if (string-find x "<")
+      (string-append! buf "<![CDATA[" x "]]>")
+      (string-append! buf x)))
+
+  (define (format-attr x)
+    ; attributes must be escaped prior to transmission -- we make a best
+    ; effort, here..
+    (define val (cdr x)) 
+    (string-append! buf " " (symbol->string (car x)))
+    (if (string-find val "'")
+      (string-append! buf "=\"" val "\"")
+      (string-append! buf "='" val "'")))
+
+  (for-each format-item (get-sxml-items sxml))
+
+  buf)
+
