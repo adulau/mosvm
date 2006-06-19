@@ -4,6 +4,25 @@
   + Any reference to an identifier not bound in builtins, imports is identified
     during compilation as an error.
 
+- ?/??/????, More Effort on XML Parsing Speed
+  * Added (string-read-regex! string regex), which advances the string origin
+    past the end of the match, and returns the match.
+    
+    >> (define sentence "The quick brown fox jumped over the lazy dog")
+    >> (define word "^ *([^ ]+)")
+    >> (string-regex-match! sentence word)
+    -- ("The")
+    >> sentence
+    >> " quick brown fox jumped over the lazy dog"
+    >> (string-regex-match! sentence word)
+    -- ("quick")
+    >> sentence
+    >> " brown fox jumped over the lazy dog"
+
+  * Altered the S-XML processor to use channels and coroutines to simplify
+    the processor state machine.  Empirical 15 - 20% speed improvement, 20%
+    memory consumption reduction.
+
 - 7/16/2006, Channel Bridges
   For MOSREF, we need the ability to multiplex multiple channels across a single
   channel.  The bridge module provides the necessary capabilities.

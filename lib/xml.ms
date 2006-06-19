@@ -23,13 +23,14 @@
        get-sxml-tag has-sxml-tag? has-sxml-attr? sxml-drill)
 
 (import "lib/iterate")
-(import "lib/trace")
+(import "lib/filter")
 
 ; All special XML syntaxes conveniently start with a <, or an &. Since we
 ; parse entities in a final pass, this means all interesting syntax starts
 ; with a <..
 
 (define (parse-data data)
+  (pause)
   (define tag-ix (string-find data "<" ))
   (if tag-ix 
     (guard (lambda (err)
@@ -183,119 +184,117 @@
   (scanner-drop scan ch)
   #f)
     
-(define (expat event-fn data)
+(define (spawn-sxml-parser data)
 ;;; Anatomy of a BEGIN event: <a href='123'>
 ;;; '(begin tag-name . tag-attrs)
 ;;; Anatomy of a TAG event: <br />
-;;; '(begin tag-name . tag-attrs)
+;;; '(tag tag-name . tag-attrs)
 ;;; Anatomy of a END event: </a>
 ;;; '(end tag-name)
 ;;; Anatomy of a VER event: <?xml version="1.0"?>
 ;;; '(ver . ver-attrs)
 ;;; Anatomy of a DECL event: <!DOCTYPE who-really-cares>
 ;;; '(decl . decl-frags)
-  (until (string=? data "")
-    (define r (parse-data data))
-    (define head (car r))
-    (define item (cadr r))
-    (define tail (cadr (cdr r)))
-    (unless (string=? head "") 
-      (event-fn (list 'cdata head)))
-    (set! data tail)
-    (cond
-      ((string? item) (when (> (string-length item) 0)
-                        (event-fn (list 'cdata item))))
-      ((pair? item) (set! report (event-fn item))))))
 
+  (define out (make-channel))
 
-(define-class xml-context <object>
-              (make-xml-context loc tag attrs inv buf)
-              xml-context?
-              (tag xml-context-tag)
-              (attrs xml-context-attrs)
-              (inv xml-context-inv)
-              (loc xml-context-loc)
-              (buf xml-context-buf set-xml-context-buf!))
+  (spawn (function (sxml-parse)
+           (until (empty-string? data) 
+              (define r (parse-data data))
+              (define head (car r))
+              (define item (cadr r))
+              (define tail (cadr (cdr r)))
+              (unless (string=? head "") (send (list 'cdata head) out))
+              (set! data tail)
+              (cond
+                ((string? item) (when (> (string-length item) 0)
+                                  (send (list 'cdata item) out)))
+                ((pair? item) (send item out))))
 
-(define (make-sxml-parser)
-  (define context (make-xml-context #f '*TOP* '() (make-tc) (make-string)))
-
-  (define (new-context tag attrs)
-    (make-xml-context context tag attrs (make-tc) (make-string)))
-
-  (define (new-sxml tag inv attrs)
-    (unless (null? attrs)
-      (set! inv (cons (cons '* attrs)
-                      inv)))
-    (cons tag inv))
-
-  (define (context->sxml)
-    (define sxml (new-sxml (xml-context-tag context)
-                           (tc->list (xml-context-inv context))
-                           (xml-context-attrs context)))
-    (set! context (xml-context-loc context))
-    sxml)
-
-  (define (add-sxml sxml)
-    (tc-append! (xml-context-inv context) sxml))
-
-  (define (add-text text)
-    (define buf (xml-context-buf context))
-    (unless buf
-      (set! buf (make-string))
-      (set-xml-context-buf! context buf))
-    (string-append! buf text))
-
-  (define (flush-buf)
-    (define buf (xml-context-buf context))
-    (when buf
-      (define text (strip buf))
-      (unless (string=? text "")
-        (add-sxml buf))
-      (set-xml-context-buf! context #f)))
-
-  (define (on-tag-event tag attrs)
-    (flush-buf)
-    (add-sxml (new-sxml tag '() attrs)))
-
-  (define (on-cdata-event text)
-    (add-text text))
-
-  (define (on-begin-event tag attrs)
-    (flush-buf)
-    (set! context (new-context tag attrs)))
-
-  (define (on-end-event tag)
-    (flush-buf)
-    (unless (eq? tag (xml-context-tag context))
-      (error 'xml-conform "Unmatched close tag." tag (xml-context-tag context)))
-    (add-sxml (context->sxml)))
+           (send '(done) out)))
   
-  (define (on-cdata-event data)
-    (add-text data))
+  out)
 
-  (lambda (event)
-    (if (eq? event 'done)
-      (begin
-        ;;TODO: Assert context is #f.
-        (define sxml #f)
-        (until (not context)
-          (set! sxml (context->sxml))
-          (when context (add-sxml sxml)))
-        sxml)
-      (begin
-        (define event-key (car event))
-        (define event-data (cdr event))
-        (case event-key 
-          ((begin) (on-begin-event (car event-data) (cdr event-data)))
-          ((end)   (on-end-event   (car event-data)))
-          ((cdata) (on-cdata-event (car event-data)))
-          ((tag)   (on-tag-event   (car event-data) (cdr event-data))))))))
+(define (cddr list)
+  (cdr (cdr list)))
 
+(define (spawn-sxml-processor in)
+  (define event #f)
+
+  (define (next-event)
+    (set! event (wait in)))
+
+  (define (sxml-top)
+    (define tag #f)
+
+    (define (await-root)
+      (define event (wait in))
+      (case (car event)
+        ((tag)   (set! tag (sxml-tag event)))
+        ((begin) (set! tag (sxml-begin event)))
+        ((cdata) (await-root)) ;Any CDATA outside of the root is ignored. 
+        ((decl)  (await-root)) ;Our SXML Parser does not bother with decls.
+        ((pi)    (await-root)) ;Our SXML Parser assumes XML 1.0, 8-bit encoding.
+        ((comment)) ; Comments are not important, here.
+        (else (error 'sxml "expected root element" event))))
+
+    (define (await-done)
+      (define event (wait in))
+      (case (car event)
+        ((done)) ;The Done event signals the end of the document.
+        ((cdata) (await-done)) ;Any CDATA outside of the root is ignored. 
+        ((decl)  (await-done)) ;Our SXML Parser does not bother with decls.
+        ((comment)) ; Comments are not important, here.
+        (else (error 'sxml "expected document completion" event))))
+    
+    (await-root)
+    (await-done)
+    (list '*TOP* tag))
+
+  (define (sxml-tag event)
+    (define tag (cadr event))
+    (define attrs (cddr event))
+    (cons tag (sxml-attr-portion attrs)))
+
+  (define (sxml-attr-portion attrs)
+    (when (null? attrs) (return '()))
+    (list (cons '* (map sxml-attr-item attrs))))
+
+  (define (sxml-attr-item attr)
+    (cons (string->symbol (car attr)) (cdr attr)))
+ 
+  (define (sxml-begin event)
+    (define tag (cadr event))
+    (define attrs (cddr event))
+    (define contents (apply make-tc 
+                            (string->symbol tag)
+                            (sxml-attr-portion attrs)))
+    (forever
+      (define event (wait in))
+      (case (car event)
+        ((tag)   (tc-append! contents (sxml-tag event)))
+        ((begin) (tc-append! contents (sxml-begin event)))
+        ((cdata) (tc-append! contents (sxml-cdata event)))
+        ((decl)) ; Ignore.
+        ((comment)) ; Comments are not important, here.
+        ((end)   (if (equal? tag (cadr event))
+                   (return (tc->list contents))
+                   (error (error 'sxml "expected end tag" tag event))))
+        (else (error 'sxml "expected element" event)))))
+
+  (define (sxml-cdata event)
+    (cadr event))
+
+  (define out (make-channel))
+
+  (spawn (function (sxml-process)
+           (fail-on-error out (send (sxml-top) out))))
+
+  out)
+    
 (define (string->sxml src)
-  (define parser (make-sxml-parser))
-  (expat parser src)
-  (parser 'done))
+  (error-on-fail
+    (wait (spawn-sxml-processor (spawn-sxml-parser src)))))
 
 (define (get-sxml-items sxml)
   (if (pair? sxml)
@@ -409,7 +408,7 @@
 
   (if (empty-string? ident)
     #f
-    (string->symbol ident)))
+    ident))
 
 (define (parse-idents scan)
   (define idents (make-tc))
