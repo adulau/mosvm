@@ -59,7 +59,7 @@
         ((string? evt)
          (string-append! buffer evt))
         (else 
-          (set! last-line evt)
+          (set! last-line buffer)
           (return evt)))))
 
   (define (next-block size)
@@ -70,6 +70,7 @@
            (string-append! buffer evt))
           (else
             (return evt)))))
+
     (string-read! buffer size))
 
   (when (not (string? (next-line)))
@@ -153,9 +154,12 @@
              (unless (eq? (error-key e) 'http) 
                (re-error e))
              (define info (error-info e))
-             (write-http-response out (cadr info) (car info)
-                                  '("Content-Type: text/plain")
-                                  (car info))))
+             (guard traceback ;;; This is a hail mary -- there's a good chance that
+                              ;;; the connection is in an inconsistent state. We'll
+                              ;;; punch out some data, and bail.
+                    (write-http-response out (cadr info) (car info)
+                                         '("Content-Type: text/plain")
+                                         (car info)))))
        (define req (read-http-request in))
        (set-http-request-input! req out)
        (http-responder req)
