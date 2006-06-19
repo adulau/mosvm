@@ -23,6 +23,17 @@
     the processor state machine.  Empirical 15 - 20% speed improvement, 20%
     memory consumption reduction.
 
+  * Added (sxml->string sxml) -> string to lib/xml; a relatively fast XML
+    formatter.
+    
+    >> (sxml->string `(*TOP (html (head (title ,page-title))
+                                  (body (h2 ,page-title)
+                                        (div (* class "content")
+                                             ,@page-contents)
+                                        (div (* class "menu")
+                                             ,@page-menu)))))
+    -- "<?xml version='1.0'><html><head><title>The Title</title>..."
+
 - 7/16/2006, Channel Bridges
   For MOSREF, we need the ability to multiplex multiple channels across a single
   channel.  The bridge module provides the necessary capabilities.
