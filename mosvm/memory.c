@@ -43,21 +43,37 @@ void mqo_pool_obj( mqo_object obj, mqo_pool pool ){
 mqo_quad mqo_object_ct = 0;
 #endif
 
-#define MQO_MIN_TOLERANCE 16384
-#define MQO_MAX_TOLERANCE 65535
+#define MQO_MIN_TOLERANCE 1024
+#define MQO_MAX_TOLERANCE 16384
+#define MQO_MAX_SCRAP     16384
 
 mqo_quad mqo_new_tolerance = MQO_MIN_TOLERANCE;
 mqo_quad mqo_new_objects = 0;
 
+void mqo_discard( mqo_object obj, mqo_pool pool ){
+    mqo_unpool_obj( obj );
+
+    if( pool->count < MQO_MAX_SCRAP ){
+        mqo_pool_obj( obj, pool );
+        pool->count ++;
+    }else{
+        free( obj );
+    }
+}
 mqo_object mqo_scavenge( mqo_type type, mqo_pool pool, mqo_quad size ){
     mqo_object obj;
-    if( obj = pool->head ){
+
+    if( pool->head ){
+        obj = pool->head;
         mqo_unpool_obj( obj );
         bzero( obj, size );
         obj->type = type;
         mqo_pool_obj( obj, mqo_blacks );
+        //mqo_printf( "sxn", "Hit for ", type );
+        pool->count --;
         return obj;
     }else{
+        //mqo_printf( "sxn", "Miss for ", type );
         return mqo_objalloc( type, size );
     }
 }

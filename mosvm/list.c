@@ -139,8 +139,7 @@ void mqo_format_pair( void* bbuf, mqo_pair p ){
 }
 
 void mqo_free_pair( mqo_pair p ){
-    mqo_unpool_obj( (mqo_object)p );
-    mqo_pool_obj( (mqo_object)p, mqo_pair_scrap );
+    mqo_discard( (mqo_object)p, mqo_pair_scrap );
 }
 MQO_GENERIC_COMPARE( pair );
 MQO_C_TYPE( pair );

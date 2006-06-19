@@ -84,8 +84,7 @@ void mqo_trace_vector( mqo_vector v ){
 
 void mqo_free_vector( mqo_vector vector ){
     if( vector->length <= MQO_MIN_VECTOR_LEN ){
-        mqo_unpool_obj( (mqo_object) vector );
-        mqo_pool_obj( (mqo_object) vector, mqo_vector_scrap );
+        mqo_discard( (mqo_object) vector, mqo_vector_scrap );
     }else{
         mqo_objfree( vector );
     }

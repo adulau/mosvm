@@ -412,8 +412,7 @@ void mqo_trace_callframe( mqo_callframe cf ){
 }
 
 void mqo_free_callframe( mqo_object obj ){
-    mqo_unpool_obj( obj );
-    mqo_pool_obj( obj, mqo_callframe_scrap );
+    mqo_discard( obj, mqo_callframe_scrap );
 }
 MQO_GENERIC_COMPARE( callframe );
 MQO_GENERIC_FORMAT( callframe );

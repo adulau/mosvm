@@ -208,6 +208,7 @@ struct mqo_object_data {
 
 struct mqo_pool_data {
     mqo_object head;
+    mqo_quad count;
 };
 
 void mqo_set_pool( mqo_object obj, mqo_pool pool );
@@ -372,5 +373,6 @@ mqo_type mqo_direct_type( mqo_value value );
 void mqo_unpool_obj( mqo_object obj );
 void mqo_pool_obj( mqo_object obj, mqo_pool pool );
 mqo_object mqo_scavenge( mqo_type type, mqo_pool pool, mqo_quad size );
+void mqo_discard( mqo_object obj, mqo_pool pool );
 
 #endif
