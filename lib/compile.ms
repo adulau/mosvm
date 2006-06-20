@@ -485,6 +485,14 @@
 (set-macro! 'quote (lambda (value)
                      `(asm (ldc ,value))))
 
+(define (kmap fn ls)
+  (cond
+    ((null? ls) '())
+    ((pair? ls) (cons (fn (car ls)) (kmap fn (cdr ls))))
+    (else (fn ls))))
+
+;;; TODO: This does not handle `(x . ,y)
+
 (set-macro! 'quasiquote (lambda (form)
                          (define temps '())
 
@@ -523,7 +531,7 @@
                                     (parse-qq form))))
                                  
                          (define (parse-qq form)
-                           (cons 'list (map parse-qq-term form)))
+                           (cons 'list (kmap parse-qq-term form)))
                          
                          (parse-qq form)))
                     
