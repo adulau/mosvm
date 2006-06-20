@@ -116,7 +116,8 @@
               (cond 
                 ((set? set0) (set->list set0))
                 ((tc? set0) (tc->list set0))
-                (else set0)))
+                ((list? set0) set0)
+                (else '())))
       '()))
 
 (define-macro (put-clue db . parameters)
