@@ -104,11 +104,11 @@
   (if (null? sets) 
     #t
     (let ((set (car sets)))
-      (if (set? set)
-        (and (set-member? set item)
-             (member* item (cdr sets)))
-        (and (memq item set)
-             (member* item (cdr sets)))))))
+      (and (cond ((set? set)  (set-member? set item))
+                 ((tc? set)   (memq item (tc->list set)))
+                 ((pair? set) (memq item set))
+                 (else #f))
+           (member* item (cdr sets))))))
 
 (define (clue-union set0 . sets)
   (or (filter (lambda (item)
