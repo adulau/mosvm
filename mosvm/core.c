@@ -931,6 +931,34 @@ MQO_BEGIN_PRIM( "tc-append!", tc_append )
     RESULT( mqo_vf_tc( tc ) );
 MQO_END_PRIM( tc_append )
 
+MQO_BEGIN_PRIM( "tc-remove!", tc_remove )
+    REQ_TC_ARG( tc );
+    REQ_ANY_ARG( item );
+    NO_REST_ARGS( );
+
+    mqo_list prev = NULL;
+    mqo_list list = mqo_list_fv( mqo_car( tc ) );
+
+    while( list ){
+        if( mqo_eq( mqo_car( list ), item ) ){
+            mqo_list next = mqo_list_fv( mqo_cdr( list ) );
+
+            if( prev == NULL ){
+                mqo_set_car( tc, mqo_vf_list( next ) );
+            }else{
+                mqo_set_cdr( prev, mqo_vf_list( next ) );
+            };
+
+            if( ! next ){ mqo_set_cdr( tc, mqo_vf_list( prev ) ); };
+        };
+
+        prev = list;
+        list = mqo_list_fv( mqo_cdr( list ) );
+    }
+
+    NO_RESULT( );
+MQO_END_PRIM( tc_remove )
+
 MQO_BEGIN_PRIM( "tc-prepend!", tc_prepend )
     REQ_TC_ARG( tc );
     REQ_ANY_ARG( item );
@@ -1824,6 +1852,7 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( make_tc );
     MQO_BIND_PRIM( tc_splice );
     MQO_BIND_PRIM( tc_append );
+    MQO_BIND_PRIM( tc_remove );
     MQO_BIND_PRIM( tc_prepend );
     MQO_BIND_PRIM( tc_to_list );
     MQO_BIND_PRIM( tc_next );

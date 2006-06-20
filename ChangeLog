@@ -34,6 +34,8 @@
                                              ,@page-menu)))))
     -- "<?xml version='1.0'><html><head><title>The Title</title>..."
 
+  * Added (tc-remove! tc item) to core primitives.
+
 - 7/16/2006, Channel Bridges
   For MOSREF, we need the ability to multiplex multiple channels across a single
   channel.  The bridge module provides the necessary capabilities.
