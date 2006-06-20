@@ -21,7 +21,8 @@
 (import "lib/tcp-server")
 
 (define-class http-request <object>
-              (make-http-request method headers url version body input output)
+              (make-http-request method headers url version body input output
+                                 cookies-cache)
               http-request?
               (method http-request-method)
               (headers http-request-headers)
@@ -29,7 +30,9 @@
               (version http-request-version)
               (body http-request-body)
               (input http-request-input set-http-request-input!)
-              (output http-request-output))
+              (output http-request-output)
+              (cookies-cache http-request-cookies-cache
+                             set-http-request-cookies-cache!))
 
 (define (http-request-arg http-request key)
   (define args (http-url-args (http-request-url http-request)))
@@ -38,9 +41,59 @@
 (define (http-request-header http-request key)
   (dict-ref (http-request-headers http-request) key))
 
+(define (split-morsels x)
+  (apply append! (map (lambda (x) (string-split* x ";"))
+                      (string-split* x ","))))
+
+(define (http-request-cookie http-request key)
+  (dict-ref (http-request-cookies http-request) key))
+
+(define (parse-http-request-cookies http-request)
+  (define cookies (dict))
+
+  (define (parse-http-morsel morsel)
+    (when (string-begins-with? morsel "$")
+      (return)) ; Meta information is for the weak.
+    (set! morsel (string-split morsel "="))
+    (when (null? (cdr morsel))
+      (return)) ; Didn't assign anything?
+    ;TODO: Probably should url-decode..
+    (dict-set! cookies (strip (car morsel))
+                       (strip (cadr morsel))))
+  
+  (define (parse-http-cookie header)
+    (for-each parse-http-morsel (split-morsels header)))
+
+  (define cookie-headers (http-request-header http-request "Cookie"))
+
+  (cond
+    ((list? cookie-headers) (for-each parse-http-cookie cookie-headers))
+    ((string? cookie-headers) (parse-http-cookie cookie-headers)))
+
+  (set-http-request-cookies-cache! http-request cookies)
+  cookies)
+
+(define (http-request-cookies http-request)
+  (define cache (http-request-cookies-cache http-request))
+  (if cache cache (parse-http-request-cookies http-request)))
+    
+(define (http-response-cookie cookie)
+  (define key (car cookie))
+  (define value (cadr cookie))
+  (define max-age (if (> (length cookie 2))
+                    (cadr (cdr cookie))
+                    3600))
+
+  (string-append "Set-cookie: " key "=" value ";Max-Age=" 
+                 (integer->string max-age)))
+
+(define (http-response-cookies . cookies)
+  (map http-response-cookie cookies))
+
 (export <http-request> http-request? http-request-method http-request-headers
         http-request-url http-request-version http-request-body 
         http-request-input http-request-output http-request-header 
+        http-request-cookie 
         http-request-arg)
 
 (define *http-word* (make-regex "[^[:space:]]+"))
@@ -97,7 +150,12 @@
           (define match (match-regex *http-header* last-line))
           (unless match
             (error 'http "header line malformed" 400 last-line))
-          (dict-set! headers (car match) (cadr match))))))
+          (define key (car match))
+          (define val (cadr match))
+          (define old (dict-ref headers key))
+          (if old
+            (append! old val)
+            (dict-set! headers key (list val)))))))
 
   (read-headers)
 
@@ -106,7 +164,8 @@
     (error 'http "transfer encodings unimplemented" 501))
 
   (define body #f)
-  (define content-length (dict-ref headers "Content-Length"))
+  (define content-length (car (or (dict-ref headers "Content-Length")
+                                  '(#f))))
   (define content-type #f)
 
   (when content-length
@@ -117,7 +176,8 @@
     (set! body (next-block content-length))
     (unless (string? body)
       (error 'http "content body malformed" 400 body))
-    (set! content-type (dict-ref headers "Content-Type"))
+    (set! content-type (car (or (dict-ref headers "Content-Type")
+                                '(#f))))
     (when (equal? content-type "application/x-www-form-urlencoded")
       (set! url (string-append url "?" body))))
 
@@ -125,7 +185,7 @@
 
   ;TODO: Do we want to channel-prepend any excess in the buffer?
 
-  (make-http-request method headers url version body #f input))  
+  (make-http-request method headers url version body #f input #f))  
 
 (define *crlf* "\r\n")
 
@@ -154,18 +214,20 @@
              (unless (eq? (error-key e) 'http) 
                (re-error e))
              (define info (error-info e))
-             (guard traceback ;;; This is a hail mary -- there's a good chance that
-                              ;;; the connection is in an inconsistent state. We'll
-                              ;;; punch out some data, and bail.
+             (guard traceback 
+                    ;;; This is a hail mary -- there's a good chance that
+                    ;;; the connection is in an inconsistent state. We'll
+                    ;;; punch out some data, and bail.
                     (write-http-response out (cadr info) (car info)
                                          '("Content-Type: text/plain")
-                                         (car info)))))
+                                         (car info))))
        (define req (read-http-request in))
        (set-http-request-input! req out)
        (http-responder req)
-       (send 'close))
+       (send 'close)))
 
   (spawn-tcp-server portno serve-http-session))
 
-(export read-http-request write-http-response spawn-http-server)
-;;; MOSVM2
+(export read-http-request write-http-response spawn-http-server
+        http-request-cookies http-response-cookie http-response-cookies)
+
