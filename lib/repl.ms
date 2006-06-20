@@ -22,16 +22,25 @@
 (import "lib/eval")
 (import "lib/line-filter")
 (import "lib/s-filter")
+(import "lib/filter")
+(import "lib/trace")
 
 (define (repl)
-  (define cmds (input-chain (input) (line-filter) (s-filter)))
+  (define cmds (input-chain (input) 
+                            (line-filter) 
+                            (s-filter)))
 
   (forever
     (send ">> ")
-    (define cmd (wait cmds))
+    (define cmd #f)
+    (until cmd
+      (guard (lambda (x) 
+               (traceback x)
+               (set! cmd #f))
+        (set! cmd (error-on-fail (wait cmds)))))
     (when (eq? cmd 'close) (return))
     (guard traceback
       (define data (format (exec cmd)))
-      (print (string-append ":: " data *line-sep*)))))
+      (send (string-append ":: " data *line-sep*)))))
 
 (export repl)

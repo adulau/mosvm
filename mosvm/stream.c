@@ -342,7 +342,18 @@ void mqo_stream_write_evt( mqo_stream stream ){
             };
         }
     }else{
-        mqo_errf( mqo_es_vm, "sx", "bad write command", cmd );
+        mqo_channel_append( 
+            stream->evt, 
+            mqo_vf_list( 
+                mqo_listf( 
+                    4, 
+                    mqo_vf_symbol( mqo_ss_fail ),  
+                    mqo_string_fs( "streams only accept strings and 'close" ),
+                    stream,
+                    cmd 
+                )
+            )
+        );
     }
 }
 
