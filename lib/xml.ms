@@ -329,7 +329,9 @@
 
 (define (get-sxml-attr sxml key)
   (define attr (assq key (get-sxml-attrs sxml)))
-  (if attr (cdr attr) #f))
+  (unless attr (return #f))
+  (define val (cdr attr))
+  (if (pair? val) (cdr val) val))
 
 (define (get-sxml-item sxml index)
   (if (integer? index)
@@ -549,7 +551,12 @@
     ; attributes must be escaped prior to transmission -- we make a best
     ; effort, here..
     (define val (cdr x)) 
+    ; So people can do (* (x 1)); the . is annoying as all hell...
+    (if (pair? val) 
+      (set! val (car val)))
+
     (string-append! buf " " (symbol->string (car x)))
+
     (if (string-find val "'")
       (string-append! buf "=\"" val "\"")
       (string-append! buf "='" val "'")))
