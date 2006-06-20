@@ -35,6 +35,8 @@
     -- "<?xml version='1.0'><html><head><title>The Title</title>..."
 
   * Added (tc-remove! tc item) to core primitives.
+  * Modified lib/clue to use tconcs instead of sets for collections of records
+    with identical values for a given parameter.
 
 - 7/16/2006, Channel Bridges
   For MOSREF, we need the ability to multiplex multiple channels across a single

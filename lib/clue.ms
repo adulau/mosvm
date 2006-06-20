@@ -67,25 +67,25 @@
 (define (put-record-in-index index record value)
   (define row (dict-ref (clue-index-records-by-value index) value))
   (unless row
-    (set! row (set))
+    (set! row (make-tc))
     (dict-set! (clue-index-records-by-value index) value row))
-  (set-add! row record)
+  (tc-append! row record)
   (set-add! (clue-index-records index) record))
 
 (define (drop-record-from-index index record value)
   (define row (dict-ref (clue-index-records-by-value index) value))
-  (when row (set-remove! row record))
+  (when row (tc-remove! row record))
   (set-remove! (clue-index-records index) record))
 
 (define (move-record-in-index index record old-value new-value)
   (define old-row (dict-ref (clue-index-records-by-value index) old-value))
   (define new-row (dict-ref (clue-index-records-by-value index) new-value))
   (unless (eq? old-row new-row)
-    (when old-row (set-remove! old-row record))
+    (when old-row (tc-remove! old-row record))
     (unless new-row 
-      (set! new-row (set))
+      (set! new-row (make-tc))
       (dict-set! (clue-index-records-by-value index) new-value new-row))
-    (set-add! new-row record)))
+    (tc-append! new-row record)))
 
 (define (new-clue-record db parameters)
   (define record (make-clue-record db parameters))
@@ -104,16 +104,19 @@
   (if (null? sets) 
     #t
     (let ((set (car sets)))
-      (and (set? set)
-           (set-member? set item)
-           (member* item (cdr sets))))))
+      (if (set? set)
+        (and (set-member? set item)
+             (member* item (cdr sets)))
+        (and (memq item set)
+             (member* item (cdr sets)))))))
 
 (define (clue-union set0 . sets)
-  (or (if (set? set0)
-        (filter (lambda (item)
+  (or (filter (lambda (item)
                   (member* item sets))
-                (set->list set0))
-        set0)
+              (cond 
+                ((set? set0) (set->list set0))
+                ((tc? set0) (tc->list set0))
+                (else set0)))
       '()))
 
 (define-macro (put-clue db . parameters)
