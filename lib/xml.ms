@@ -275,7 +275,10 @@
       (case (car event)
         ((tag)   (tc-append! contents (sxml-tag event)))
         ((begin) (tc-append! contents (sxml-begin event)))
-        ((cdata) (tc-append! contents (sxml-cdata event)))
+        ((cdata) 
+         (let ((r (sxml-cdata event)))
+           (when r
+             (tc-append! contents r))))
         ((decl)) ; Ignore.
         ((comment)) ; Comments are not important, here.
         ((end)   (if (equal? tag (cadr event))
@@ -284,7 +287,8 @@
         (else (error 'sxml "expected element" event)))))
 
   (define (sxml-cdata event)
-    (cadr event))
+    (set! event (strip (cadr event)))
+    (if (empty-string? event) #f event))
 
   (define out (make-channel))
 
