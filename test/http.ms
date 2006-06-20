@@ -22,7 +22,7 @@
 (enable-spot-tests)
 
 (define req1 
-  "GET /index.html HTTP/1.1\r\nHost: localhost:80\r\nAccept: */*\r\n\r\n")
+  "GET /index.html HTTP/1.1\r\nCookie: $Version=1; Alpha=abc; Beta=123;\r\nHost: localhost:80\r\nAccept: */*\r\n\r\n")
 
 (define reqp (make-channel))
 (send req1 reqp)
@@ -53,6 +53,15 @@
 
 (s: (http-request-header req "Accept"))
 (r: "*/*")
+
+(s: (http-request-cookie req "Alpha"))
+(r: "abc")
+
+(s: (http-request-cookie req "Beta"))
+(r: "123")
+
+(s: (http-request-cookie req "Charlie"))
+(r: #f)
 
 (define resp (make-channel))
 (write-http-response resp 200 "Peachy"
