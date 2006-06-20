@@ -105,17 +105,19 @@
 (define (flow-arg-req/0 req)
   req)
 
-(define (flow-html-ok req html)
-  (write-http-response 
-    req 
-    200 "OK" '("Content-Type: text/html")
-
-    (if (list? html)
-      (sxml->string html)
-      html)))
+(define (flow-ok req head body)
+  (write-http-response req 200 "OK" head (if (list? body)
+                                           (sxml->string body)
+                                           body)))
 
 (define-macro (html-ok html)
-  `(flow-html-ok ^flow-req^ ,html))
+  `(flow-ok ^flow-req^ '("Content-type: text/html") ,html))
+
+(define-macro (css-ok html)
+  `(flow-ok ^flow-req^ '("Content-type: text/css") ,html))
+
+(define-macro (xml-ok html)
+  `(flow-ok ^flow-req^ '("Content-type: text/xml") ,html))
 
 ;;; The Flowlet Macro
 ;;;
@@ -170,9 +172,9 @@
         flow-arg-query/0 flow-arg-query/1 flow-arg-query/2
         flow-arg-req/0
         flow-arg-scheme/0  
-        flow-html-ok
+        flow-ok
         ;flow-arg-url/0
-        html-ok
+        html-ok css-ok xml-ok
         flowlet
         false-on-error
         )

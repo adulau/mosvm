@@ -561,7 +561,9 @@
       (string-append! buf "=\"" val "\"")
       (string-append! buf "='" val "'")))
 
-  (for-each format-item (get-sxml-items sxml))
+  (if (and (pair? sxml) (eq? (car sxml) '*TOP*))
+    (for-each format-item (get-sxml-items sxml))
+    (format-item sxml))
 
   buf)
 
