@@ -38,6 +38,12 @@
   * Modified lib/clue to use tconcs instead of sets for collections of records
     with identical values for a given parameter.
 
+  * Fix -- streams now report invalid input as fail messages to output.
+  * Fix -- the repl now reports fail input as an error to help detecting bad
+           output from the above.
+  * Fix -- the repl uses send instead of print, now, to improve linearity of
+           console output.
+
 - 7/16/2006, Channel Bridges
   For MOSREF, we need the ability to multiplex multiple channels across a single
   channel.  The bridge module provides the necessary capabilities.
