@@ -93,8 +93,7 @@
 (export <http-request> http-request? http-request-method http-request-headers
         http-request-url http-request-version http-request-body 
         http-request-input http-request-output http-request-header 
-        http-request-cookie 
-        http-request-arg)
+        set-http-request-input!  http-request-cookie http-request-arg)
 
 (define *http-word* (make-regex "[^[:space:]]+"))
 (define *http-header* (make-regex "^([^:]+):[[:space:]]+(.*)$"))
@@ -223,8 +222,7 @@
                                          (car info))))
        (define req (read-http-request in))
        (set-http-request-input! req out)
-       (http-responder req)
-       (send 'close)))
+       (http-responder req)))
 
   (spawn-tcp-server portno serve-http-session))
 

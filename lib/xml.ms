@@ -331,7 +331,7 @@
   (define attr (assq key (get-sxml-attrs sxml)))
   (unless attr (return #f))
   (define val (cdr attr))
-  (if (pair? val) (cdr val) val))
+  (if (pair? val) (car val) val))
 
 (define (get-sxml-item sxml index)
   (if (integer? index)

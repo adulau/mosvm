@@ -49,10 +49,10 @@
 (r: "HTTP/1.1")
 
 (s: (http-request-header req "Host"))
-(r: "localhost:80")
+(r: '("localhost:80"))
 
 (s: (http-request-header req "Accept"))
-(r: "*/*")
+(r: '("*/*"))
 
 (s: (http-request-cookie req "Alpha"))
 (r: "abc")
