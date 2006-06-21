@@ -135,18 +135,24 @@
 
 (export put-clue new-clue-record)
 
-(define-macro (find-clue db . parameters)
-   (if (null? parameters)
-     `(set->list (clue-db-records ,db))
-     `(let ((db ,db))
-        (clue-union ,@(map (lambda (parameter)
+(define (find-clue-records db . parameters)
+  (if (null? parameters)
+    (set->list (clue-db-records db))
+    (apply clue-union (map (lambda (parameter)
                              (if (not (pair? parameter))
-                               `(clue-records-with-key 
-                                  db (quote ,parameter))
-                               `(clue-records-with-parameter 
-                                  db (quote ,(car parameter))
-                                     ,(cadr parameter))))
-                           parameters)))))
+                               (clue-records-with-key db parameter)
+                               (clue-records-with-parameter db (car parameter)
+                                                            (cadr parameter))))
+                           parameters))))
+                            
+
+(define-macro (find-clue db . parameters)
+   `(find-clue-records db ,@(map (lambda (parameter)
+                                   (if (not (pair? parameter))
+                                     `(quote ,parameter)
+                                     `(list (quote ,(car parameter))
+                                            ,(cadr parameter))))
+                                 parameters)))
 
 ; (find-clue db (last-name "Doe")) -> ( [record (first-name "Bob") (last-name "Doe")] [record (first-name "Abel") (last-name "Doe")] )
 
@@ -164,7 +170,7 @@
         '())))
 
 (export find-clue clue-union clue-records-with-parameter clue-records-with-key
-        clue-db-records)
+        clue-db-records find-clue-records)
 
 (define (get-clue-record-value record key)
   (cond 
