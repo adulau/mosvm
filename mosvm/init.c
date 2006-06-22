@@ -47,6 +47,7 @@ void mqo_init_mosvm( ){
     mqo_init_multimethod_subsystem( );
     mqo_init_file_subsystem( );
     mqo_init_crc32_subsystem( );
+    mqo_init_shell_subsystem( );
 
     mqo_bind_core_prims( );
 }

@@ -4,7 +4,32 @@
   + Any reference to an identifier not bound in builtins, imports is identified
     during compilation as an error.
 
-- ?/??/????, More Effort on XML Parsing Speed
+- 6/22/2006, Shell Commands
+  * Added (spawn-command path ?arg-list ?env-list) -> stream to primitives. 
+    Note that this will not work on windows, since Windows does not make it 
+    easy to interact with the input and output of a command.
+    
+    >> (define x (spawn-command "/bin/cat"))
+    -- [stream 80FC160]
+    >> (send "Alpha" x)
+    >> (wait x)
+    -- "Alpha"
+    >> (send "Beta" x)
+    >> (wait x)
+    -- "Beta"
+    >> (send 'close x)
+    >> (wait x)
+    -- close
+    
+  * Added the *environ* global variable, which contains a list of assignments
+    commonly found in environ(7) on POSIX systems.
+
+  * Added (run-command command-string), which runs a command in the host
+    environment's shell, and waits for a return.  Unlike spawn-command, this
+    will work on Windows.  Caution should be exercised, this command will halt
+    all processes in a virtual machine until it completes.
+
+- 6/20/2006, More Effort on XML Parsing Speed
   * Added (string-read-regex! string regex), which advances the string origin
     past the end of the match, and returns the match.
     
@@ -43,6 +68,9 @@
            output from the above.
   * Fix -- the repl uses send instead of print, now, to improve linearity of
            console output.
+  * Added find-clue-record, a function that accomplishes the same thing as
+    the find-clue macro -- for programmatic creation of clue queries.
+  * Amended test/http for the recent changes to http-request-header
 
 - 7/16/2006, Channel Bridges
   For MOSREF, we need the ability to multiplex multiple channels across a single
