@@ -29,6 +29,8 @@
 
 (export <url> make-url url-scheme url-auth url-path url-query url-frag url?)
 
+(define *url-delims* ":/?#")
+
 (define *url-regex* 
   ;; This beast of a regex is courtesy of the W3C.  
   (make-regex "^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)([?]([^#]*))?(#(.*))?"))
@@ -68,23 +70,23 @@
    (define frag (url-frag url))
    
    (when scheme
-     (string-append! buf scheme)
+     (string-append! buf (percent-encode scheme *url-delims*))
      (string-append! buf ":"))
 
    (when auth
      (string-append! buf "//")
-     (string-append! buf auth))
+     (string-append! buf (percent-encode auth *url-delims*)))
 
    (when path
-     (string-append! buf path))
+     (string-append! buf (percent-encode path *url-delims*)))
 
    (when query
      (string-append! buf "?")
-     (string-append! buf query))
+     (string-append! buf (percent-encode query *url-delims*)))
 
    (when frag
      (string-append! buf "#")
-     (string-append! buf frag))
+     (string-append! buf (percent-encode frag *url-delims*)))
    
    buf)
 

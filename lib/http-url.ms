@@ -85,7 +85,7 @@
 
   (when host
     (when user
-      (string-write buf (percent-encode user "@/:"))
+      (string-write buf user)
       (string-write buf "@"))
 
     (string-write buf host)    
@@ -100,8 +100,7 @@
   (define path (http-url-path url))
   (if path
     (apply string-join "/" ""
-           (map (lambda (node) (percent-encode node "/#"))
-                (http-url-path url)))
+           (http-url-path url))
     #f))
 
 (define (url-query (<http-url> url))
@@ -110,9 +109,7 @@
     (apply string-join 
            "&"
            (map (lambda (p)
-                  (string-append (percent-encode (car p) "#&=")
-                                 "="
-                                 (percent-encode (cdr p) "#&=")))
+                  (string-append (car p) "=" (cdr p)))
                 (dict->list args)))
     #f))
 
