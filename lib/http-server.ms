@@ -116,16 +116,15 @@
 
   (define (next-block size)
     (until (>= (string-length buffer) size)
-      (define evt (wait input)
-        (cond
-          ((string? evt)
-           (string-append! buffer evt))
-          ((eq? evt 'close)
-           ; For certain badly behaved browsers..
-           (set! size 0))
-          (else
-            (error 'bad-receipt evt)
-            (return evt)))))
+      (define evt (wait input))
+      (cond
+        ((string? evt)
+         (string-append! buffer evt))
+        ((eq? evt 'close)
+         ; For certain badly behaved browsers..
+         (set! size 0))
+        (else
+          (return evt))))
 
     (string-read! buffer size))
 
