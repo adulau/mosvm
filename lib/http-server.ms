@@ -124,6 +124,7 @@
            ; For certain badly behaved browsers..
            (set! size 0))
           (else
+            (error 'bad-receipt evt)
             (return evt)))))
 
     (string-read! buffer size))
