@@ -49,6 +49,7 @@
     (set! host (vector-ref results 2))
     (when host (set! host (percent-decode host)))
     (set! portno (vector-ref results 4))
+    (when portno (set! portno (percent-decode portno)))
     (cond 
       (portno (set! portno (string->integer portno)))
       (host (set! portno 80))))
