@@ -96,7 +96,7 @@ MQO_BEGIN_PRIM( "percent-decode", percent_decode )
         src ++;
         if( ch == '%' ){
             mqo_boolean ok = 1;
-            ch = (unsigned char)mqo_parse_hex( &src, &ok );
+            ch = (unsigned char)mqo_parse_hex2( &src, &ok );
             if( ! ok )mqo_errf( mqo_es_vm, "sxs", "invalid escape", data, src );
         }
         mqo_string_append_byte( result, ch );

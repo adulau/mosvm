@@ -65,6 +65,36 @@ mqo_quad mqo_parse_dec( char** r_str, mqo_boolean* r_succ ){
     return result;
 }
 
+mqo_quad mqo_parse_hex2( char** r_str , mqo_boolean* r_succ ){
+    char* str = *r_str;
+    mqo_quad result = 0;
+    int i = 2;
+
+    while( i-- ){
+        char ch = *str;
+
+        if(( ch >= '0' )&&( ch <= '9' )){
+            result = ( result << 4 ) | ( ch - '0' );
+        }else if(( ch >= 'A' )&&( ch <= 'F' )){
+            result = ( result << 4 ) | ( 10 + ch - 'A' );
+        }else if(( ch >= 'a' )&&( ch <= 'f' )){
+            result = ( result << 4 ) | ( 10 + ch - 'a' );
+        }else{
+            *r_succ = 0;
+            mqo_parse_errmsg = mqo_em_nodigits;
+            mqo_parse_incomplete = ch == 0;
+            return 0;
+        }
+        
+        str++;
+    };
+
+    *r_succ = 1; 
+    *r_str = str; 
+    
+    return result;
+}
+
 mqo_quad mqo_parse_hex( char** r_str, mqo_boolean* r_succ ){
     char* str = *r_str;
     mqo_quad result = 0;
