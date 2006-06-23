@@ -120,6 +120,9 @@
         (cond
           ((string? evt)
            (string-append! buffer evt))
+          ((eq? evt 'close)
+           ; For certain badly behaved browsers..
+           (set! size 0))
           (else
             (return evt)))))
 
