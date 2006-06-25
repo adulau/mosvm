@@ -25,6 +25,7 @@
 
 mqo_quad mqo_parse_dec( char** r_str, mqo_boolean* r_succ );
 mqo_quad mqo_parse_hex( char** r_str, mqo_boolean* r_succ );
+mqo_quad mqo_parse_hex2( char** r_str, mqo_boolean* r_succ );
 mqo_integer mqo_parse_int( char** r_str, mqo_boolean* r_succ );
 
 mqo_symbol mqo_parse_sym( char** r_str, mqo_boolean* r_succ );
