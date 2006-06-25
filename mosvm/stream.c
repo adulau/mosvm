@@ -584,7 +584,7 @@ MQO_BEGIN_PRIM( "tcp-connect", tcp_connect )
     addr.sin_port = htons( portno );
 
     int fd = mqo_net_error( socket( AF_INET, SOCK_STREAM, IPPROTO_TCP ) );
-
+/*
 #if defined( _WIN32 )||defined( __CYGWIN__ )
     unsigned long unblocking = 1;
     mqo_net_error( ioctlsocket( fd, FIONBIO, &unblocking ) );
@@ -593,7 +593,7 @@ MQO_BEGIN_PRIM( "tcp-connect", tcp_connect )
     unsigned long unblocking = 1;
     mqo_net_error( ioctl( fd, FIONBIO, &unblocking ) );
 #endif
-
+*/
     mqo_net_error( connect( fd, (struct sockaddr*)&addr, sizeof( addr ) ) );
     
     mqo_stream s = mqo_make_stream( fd );
