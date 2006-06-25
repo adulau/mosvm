@@ -38,8 +38,11 @@ void mqo_handle_sigint( int sig ){
 void mqo_run( mqo_value func ){
     // TODO: Retire when process is back in.
     mqo_process p = mqo_spawn_func( func );
-#ifndef _WIN32
+#ifdef _WIN32
     // TODO: win32 does not have a default stdio.
+    mqo_set_process_output( p, (mqo_object) mqo_make_channel( ) );
+    mqo_set_process_input( p, (mqo_object) mqo_make_channel( ) );
+#else
     mqo_set_process_output( p, (mqo_object) mqo_stream_input( mqo_stdio ) );
     mqo_set_process_input( p, (mqo_object) mqo_stream_output( mqo_stdio ) );
 #endif
