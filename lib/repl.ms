@@ -25,14 +25,18 @@
 (import "lib/filter")
 (import "lib/trace")
 
-(define (repl)
-  (define cmds (input-chain (input) 
-                            (line-filter) 
-                            (s-filter)))
+(define (repl-syntax-err err)
+  (send (string-append "SYNTAX: " (car (error-info err)) *line-sep* ">> ")))
 
+(define (repl)
+  (define cmds 
+    (input-chain (input) 
+                 (line-filter) 
+                 (s-filter :promptN "   "
+                           :errfn repl-syntax-err)))
   (forever
-    (send ">> ")
     (define cmd #f)
+    (send ">> ")
     (until cmd
       (guard (lambda (x) 
                (traceback x (output))

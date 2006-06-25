@@ -20,8 +20,26 @@
 ;; TODO:
 ;; (define-filter (fail-forward fwd) ...)
 
+;; TODO: put in lib/options
+(define (option options key default)
+  (define rest (memq key options))
+  (if rest (cadr rest) default))
 
-(define-filter (s-filter)
+(define-macro (define-option key)
+  `(define ,key ',key))
+
+(define-option :prompt0)
+(define-option :promptN)
+(define-option :errfn)
+
+(export :prompt0 :promptN :errfn)
+
+(define-filter (s-filter . opts)
+  (define prompt0 (option opts :prompt0 #f))
+  (define promptN (option opts :promptN #f))
+  (define errfn (option opts :errfn #f))
+
+  (define ct 0)
   (define buf (make-string 80)) 
   
   (define (parse)
@@ -29,16 +47,20 @@
              (define key (error-key err))
              (define info (error-info err))
              (case key
-               ((inc) (send "   ")
-                      (string-append! buf *line-sep*))
-               ((parse) (send (string-append "!! " (car info) *line-sep* ">> "))
-                        (flush-string buf))
+               ((inc) (string-append! buf *line-sep*))
+               ((and parse errfn) (errfn err)
+                                  (flush-string buf))
                (else (traceback err))))
        (send (string->exprs buf) out)
        (flush-string buf)))
 
   (forever
+    (cond 
+      ((empty-string? buf) (if prompt0 (send prompt0)))
+      (promptN (send promptN)))
+
     (define next (wait in))
+
     (if (string? next)
       (begin 
         (string-append! buf next)

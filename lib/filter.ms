@@ -13,12 +13,6 @@
 ; along with this library; if not, write to the Free Software Foundation, 
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
-;(document (filter ...)
-;          (input-chain ...)
-;          (output-chain ...)
-;          (error-on-fail ...)
-;          (fail-on-error ...))
-
 "filter -- A process that waits for data from an input channel, and 
            sends data to an output channel.  Filters are constructed using
            a constructor function, then wired together using either the 
