@@ -16,14 +16,19 @@
 (module "mosref/console")
 
 (import "mosref/base")
+(import "mosref/endpoint")
 
 (import "lib/cfb")
 (import "lib/crypto-filter")
 (import "lib/buffer-channel")
 (import "lib/build")
 
-(export console-affiliation console-repl drone-exec make-drone-exe 
-        make-console-ecdh)
+(import "lib/with-io")
+(import "lib/line-filter")
+(import "lib/s-filter")
+(import "lib/package-filter")
+
+(export console-affiliation console-repl make-drone-exe make-console-ecdh)
 
 (import "lib/iterate")
 
@@ -75,99 +80,72 @@
 (define (make-drone-exe console-addr console-portno console-ecdh platform)
   (build-exe platform
              `((import "mosref/drone")
+               (import "mosref/endpoint")
                (define conn (tcp-connect ,console-addr ,console-portno))
-               (define xmit (input conn))
-               (define recv (output conn))
-               (drone-repl
-                 (drone-affiliation 
-                   (import-ecdh
-                     (base64-decode ,(base64-encode (export-public-ecdh 
-                                                      console-ecdh))))
-                   (input conn)
-                   (output conn)))
-               (exit 0))))
+               (apply spawn-endpoint 
+                      drone-endpoint
+                      (drone-affiliation 
+                        (import-ecdh
+                          (base64-decode ,(base64-encode (export-public-ecdh 
+                                                           console-ecdh))))
+                        (input conn)
+                        (output conn))))))
 
-(define (drone-spawn cmd bridge)
-  (define lane (make-lane bridge))
-  (define recv (lane-recv lane))
-  (define xmit (lane-xmit lane))
-  (send cmd xmit)
+;;TODO: import handler.
+(define (console-endpoint) (send 'close))
+
+;; transmits the supplied program to be executed on the remote endpoint of
+;; the supplied transport.
+
+(define (mosref-spawn program endpoint)
+  (define lane (make-lane endpoint))
+  (define xmit (output-chain (lane-xmit lane)
+                             (freeze-filter)))
+  (define recv (input-chain (lane-recv lane)
+                            (thaw-filter)))
+  (send program xmit)
   (list xmit recv))
 
-(define (drone-exec cmd bridge)
-  (cond 
-    ((list? cmd)
-     (set! cmd (freeze (assemble (optimize (compile cmd))))))
-    ((program? cmd) 
-     (set! cmd (freeze cmd)))
-    ((string? cmd))
-    (else
-      (error 'mos "drone-exec accepts a frozen program, program or source")))
-  (thaw (wait (cadr (drone-spawn cmd bridge)))))
+(define (mosref-eval expr endpoint)
+  (define program 
+    (guard (lambda (e) (error 'eval-compile e))
+      (assemble (compile `((send (begin ,@expr)))))))
+
+  (define conn (mosref-spawn program endpoint))
+  (wait (cadr conn)))
 
 (define (console-repl xmit recv)
-  (define bridge (make-bridge xmit recv))
+  (define endpoint (spawn-endpoint console-endpoint xmit recv))
 
   (define (display-result item)
     (send (string-append ":: " (format item) *line-sep*)))
 
-  (define (display-failure key info context)
-    (send (string-append (apply string-join 
-                                 *line-sep*
-                                 (string-join " "
-                                              "Drone Error:" 
-                                              (symbol->string key)
-                                              info)
-                                 (map (lambda (item) 
-                                        (string-append "             " item))
-                                      context))
-                          *line-sep*)))
+  (define (display-failure key info trace)
+    (send trace))
 
   (define (quit-repl cmd)
     (send 'close xmit))
 
   (define (drone-cmd cmd)
-    (define cmd-ok #t)
-    (guard (lambda (e) (send (string-append "Parse Error: " 
-                                             (car (error-info e))
-                                             *line-sep*))
-                       (set! cmd-ok #f))
-           (set! cmd (string->exprs cmd)))
-    (when cmd-ok
-      (define result (drone-exec cmd bridge))
-      ;(define result-type (car result))
-      ;(set! result (cdr result))
-      ;(case result-type
-      ;  ((succ) 
-      ;   (for-each display-result result))
-      ;  ((fail) 
-      ;   (apply display-failure result)))
-      (display-result result)))
+    (display-result (mosref-eval cmd endpoint)))
 
   (define cmds 
-    (dict (cons (string-append ".quit" *line-sep*)
+    (dict (cons 'quit
                 quit-repl)))
+
+  (define (console-err-fn err)
+    (send (string-append "SYNTAX: " (cadr err) *line-sep*)))
 
   (define default-cmd drone-cmd)
 
-  ;;TODO: We need a line-filter, here.
-
-  (forever
-    (send ">> ")
-    (define cmd (wait))
-    (if (eq? cmd 'close)
-     (return (send 'close))
-     ((dict-ref cmds cmd default-cmd) cmd))))
-
-;;; >> (define listener (spawn-mosref-listener "foo.com" 9191))
-;;; :: #f
-;;; >> (define session (make-drone-session listener))
-;;; :: #f
-;;; >> (write-data-file "drone.exe" (make-drone-exe listener "win32"))
-;;; :: #f
-;;; >> (define drone (await-drone session))
-;;; ;; run the drone.exe program on the remote host
-;;; :: #f
-;;; >> (drone-exec '((write-data-file "/tmp/flag" "Claimed")) drone) 
-;;; :: (ok . #f)
+  (with-input (input-chain (input) 
+                           (line-filter)
+                           (s-filter :promptN "   "
+                                     :errfn console-err-fn))
+    (forever
+      (send ">> ")
+      (define cmd (wait))
+      (if (eq? cmd 'close)
+        (return (send 'close))
+        ((dict-ref cmds cmd default-cmd) cmd)))))
 

@@ -17,24 +17,24 @@
 (import "mosref/console")
 (import "lib/tcp-server")
 
-(define unparsed-args (apply make-tc (cdr (argv))))
+(define unparsed-args (apply make-tc (argv)))
 
 (define (next-arg) (tc-next! unparsed-args))
 (define (more-args?) (not (tc-empty? unparsed-args)))
 
-(define (write-lines . lines)
-  (write (apply string-join *line-sep* 
-                (map (lambda (i) (if (pair? i)
-                                   (string-join " " i)
-                                   i))
-                     lines))))
+(define (send-lines . lines)
+  (send (apply string-join *line-sep* 
+               (map (lambda (i) (if (pair? i)
+                                  (string-join " " i)
+                                  i))
+                    lines))))
 
-(define (write-line . items)
-  (write (apply string-append items))
-  (newline))
+(import "lib/trace")
+(define (send-line . items)
+  (send (string-append (apply string-append items) *line-sep*)))
 
 (define (show-usage)
-  (write-lines 
+  (send-lines 
     "USAGE: mosref console-addr:console-port drone-platform drone-path"
     "       console-addr -- The hostname or address of the console."
     "       console-port -- The tcp port that the console will listen to."
@@ -47,8 +47,8 @@
 
 (define (parse-error message)
   (show-usage)
-  (write-line "ERROR: " message)
-  (exit 1)) 
+  (send-line "ERROR: " message)
+  (halt)) 
 
 (define (missing-error type purpose)
   (unless (more-args?)
@@ -61,9 +61,11 @@
   (parse-error (string-append "Format for console host must be address:port")))
 
 (define console-addr (car console))
-(define console-port (guard (lambda (e) 
-                              (parse-error (car (error-info e))))
-                            (string->integer (cadr console))))
+(define console-port (if (string=? (cadr console) "*")
+                       (random-integer 10000 30000)
+                       (guard (lambda (e) 
+                                (parse-error (car (error-info e))))
+                              (string->integer (cadr console)))))
 
 (missing-error "platform" "drone compilation")
 (define drone-platform (next-arg))
@@ -76,14 +78,14 @@
 
 (define console-ecdh (make-console-ecdh))
 
-(write-line "Writing drone to " drone-path "...")
+(send-line "Writing drone to " drone-path "...")
 
 (write-data-file drone-path (make-drone-exe console-addr
                                             console-port
                                             console-ecdh
                                             drone-platform ))
 
-(write-line "Starting listener on port " 
+(send-line "Starting listener on port " 
             (number->string console-port)
             "..." )
 
@@ -92,24 +94,23 @@
 
 (until drone-port
   ;TODO: We need a timeout.
-  (define client-descr (read-descr console-listener))
-  (write-line "Client connected to port; awaiting affiliation...")
+  (define client (wait console-listener))
+  (send-line "Client connected to port; awaiting affiliation...")
   (guard (lambda (e) 
            (unless (eq? (error-key e) 'aff) (re-error e))
-           (write-line "Client failed to affiliate; rejected."))
+           (send-line "Client failed to affiliate; rejected."))
          (set! drone-port 
            (console-affiliation console-ecdh 
                                 (input client)
                                 (output client)))))
 
-(write-line "Client confirmed as drone by affiliation; closing listener...")
+(send-line "Client confirmed as drone by affiliation; closing listener...")
 
 ; TODO: Doesn't work (send 'close console-listener)
 
-(write-line "Welcome to MOSREF; all instructions shall be evaluated on the"
+(send-line "Welcome to MOSREF; all instructions shall be evaluated on the"
             " drone, with results reported to the console.")
 
-(write-line "To exit MOSREF; enter .quit")
+(send-line "To exit MOSREF; enter .quit")
 
-(console-repl drone-port)
-
+(apply console-repl drone-port)

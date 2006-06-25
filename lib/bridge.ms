@@ -30,7 +30,7 @@
               (xmit lane-xmit)
               (recv lane-recv))
 
-(define *bridge-tag-size* 4)
+(define *bridge-tag-size* 8)
 
 (define-macro (later . stmts)
     `(spawn (function (later-thunk) ,@stmts)))
@@ -103,6 +103,9 @@
   (later
     (forever
       (define evt (wait l-xmit))
+      (print "Got event: ")
+      (print (format evt))
+      (print *line-sep*)
       (when (string? evt)
         (send (string-append "!" xmit-tag evt) b-xmit)))))
 

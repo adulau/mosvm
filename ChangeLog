@@ -12,17 +12,15 @@
   + Added (spawn-scanner), which starts a process which accepts commands to
     scan new hosts, and outputs gathered information.
 
-- ?/??/????, Win2k Catchup
-  + Stubs from OpenBSD, Darwin, Linux, Win32 integrated into the distribution
-    again.
-  + bin/mosref works again.
-
-- ?/??/????, Breakdown of Traceback
-  + The (traceback error) primitive now yields a string.
-  + (traceback-why error) -> string yields the first portion of a traceback.
-  + (traceback-where error) -> string yields the second portion of a traceback.
-  + Added (drone-invoke drone program) -> (command report)
-  + Modified drones to work with drone-invoke.
+- ?/??/????, MOSREF Restoration
+  * MOSREF now creates binaries for distribution again.
+  * MOSREF employs bridges and endpoints, making it more flexible for adding
+    new plugins.
+  + Added peril option to freeze-filter -- use peril function when a value
+    cannot be safely frozen for transmission.
+  + Modified MOSREF drone eval responses to decorate with 'result, or 
+    'formatted when the result cannot be frozen.
+  + Modified MOSREF drone eval to filter output messages with 'output
 
 - 6/24/2006, Win32 Restoration
   * MOSVM now compiles and operates under win32, with the absence of *stdio*,
@@ -38,6 +36,8 @@
 
   * Fixed a bug with guards where the guard statement's result is emplyed as
     an argument.
+
+  * Modified the REPL to forward tracebacks correctly.
 
 - 6/22/2006, Shell Commands
   * Added (spawn-command path ?arg-list ?env-list) -> stream to primitives. 

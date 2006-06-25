@@ -25,7 +25,7 @@
     (send (freeze (wait in)) out)))
 
 ; Thaws each block as it arrives, and forwards.
-(define-filter (thaw-filter encrypt)
+(define-filter (thaw-filter)
   (forever
     (define evt (wait in))
     (if (string? evt) 

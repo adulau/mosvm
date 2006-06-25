@@ -17,11 +17,14 @@
 
 (import "lib/cfb")
 (import "lib/buffer-channel")
-(import "mosref/base")
 (import "lib/iterate")
 (import "lib/crypto-filter")
 (import "lib/package-filter")
 (import "lib/tag-filter")
+(import "lib/package-filter")
+(import "lib/with-io")
+
+(import "mosref/base")
 
 ;(define-macro (step . rest) '(begin))
 (define (step label . items)
@@ -67,60 +70,17 @@
   (step "Affiliation complete.")
   (list report command))
 
-(import "lib/bridge")
-(import "lib/with-io")
+;; Holy complicated, batman!
+(define (drone-endpoint) 
+  (with-input (input-chain (input)
+                           (thaw-filter))
+    (with-output (output-chain (output)
+                               (freeze-filter))
+      (define x (wait))
+      (print "Got command: ")
+      (print (format x))
+      (print *line-sep*)
+      (x))))
 
-(define (drone-repl xmit recv)
-  (define bridge   (make-bridge xmit recv))
-  (define lanes    (bridge-lanes bridge))
-
-  (forever
-    (define lane (wait lanes))
-    (define xmit (lane-xmit lane))
-    (define recv (lane-recv lane))
-    (define program (thaw (wait recv)))
-    (set! xmit (output-chain xmit (freeze-filter)))
-    (spawn
-      (lambda ()
-        (with-input recv 
-          (with-output (output-chain xmit (tag-filter 'output))
-            (guard (lambda (error) (send (cons 'error
-                                               (traceback error))
-                                         xmit))
-
-              (send (cons 'result (program)) xmit))))))))
-
-;;;(define (drone-repl xmit recv)
-;;;  (define result (make-string))
-;;;  (define (format-context context)
-;;;    (string-append "("
-;;;                   (apply string-join 
-;;;                          " "
-;;;                          (symbol->string (function-name (car context)))
-;;;                          (map format (cdr context)))
-;;;                   ")"))
-;;;  (define (format-error-info info)
-;;;    (cond ((null? info) "")
-;;;          ((string? (car info)) (car info))
-;;;          (else (apply string-join " " (map format info)))))
-;;;
-;;;  (define (fail-result error)
-;;;    (freeze `(fail ,(error-key error)
-;;;                   ,(format-error-info (error-info error))
-;;;                   ,(map format-context (cdr (error-context error))))))
-;;;  (define (succ-result result)
-;;;    (freeze `(succ ,result)))
-;;;  ;;; TODO: Add a tagging port for repl output.
-;;;  ;;; TODO: Add a caching port for repl input.
-;;;  ;;;
-;;;  ;;;
-;;;  (forever 
-;;;    (define message (wait recv))
-;;;    (when (eq? message 'close) (return))
-;;;
-;;;    (when (string? message)
-;;;      (send (guard fail-result (succ-result ((thaw message)))) 
-;;;             xmit)))) 
-;;;
-(export drone-repl drone-affiliation)
+(export drone-affiliation drone-endpoint)
 
