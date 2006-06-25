@@ -236,7 +236,7 @@ MQO_BEGIN_PRIM( "traceback", traceback )
     mqo_format_traceback( s, error );
 
     if( has_dest ){
-        mqo_channel_append( dest, s );
+        mqo_channel_append( dest, mqo_vf_string( s ) );
     }else{
         mqo_printstr( s );
         mqo_objfree( s );
