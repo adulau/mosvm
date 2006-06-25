@@ -64,6 +64,8 @@ mqo_stream mqo_spawn_cmd( mqo_string path, mqo_list arg, mqo_list var ){
 
     int fds[2];
 
+    arg = mqo_cons( mqo_vf_string( path ), mqo_vf_list( arg ) );
+
     mqo_os_error( socketpair( AF_LOCAL, SOCK_STREAM, 0, fds ) ); 
 
     char** argv = mqo_make_argv( arg, argc );
