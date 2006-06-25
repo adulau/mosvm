@@ -76,6 +76,7 @@ int mqo_format_item( mqo_string s, mqo_value v ){
 void mqo_format_value( 
     mqo_string s, mqo_value v, mqo_quad breadth, mqo_quad depth 
 ){
+    //printf( "BREADTH: %i, DEPTH: %i\n", breadth, depth );
     mqo_format_depth = depth;
     mqo_format_breadth = breadth;
     mqo_format_re_breadth = breadth;

@@ -923,15 +923,9 @@ MQO_BEGIN_PRIM( "tc-append!", tc_append )
     REQ_ANY_ARG( item );
     NO_REST_ARGS( );
 
-    item = mqo_vf_pair( mqo_cons( item, mqo_vf_null() ) );
+    mqo_tc_append( tc, item );
 
-    if( mqo_is_null( mqo_car( tc ) ) ){
-        mqo_set_car( tc, item );
-    }else{
-        mqo_set_cdr( mqo_pair_fv( mqo_cdr( tc ) ), item );
-    };
-
-    mqo_set_cdr( tc, item );
+    assert( mqo_car( mqo_pair_fv( mqo_cdr( tc ) ) )  == item );
     RESULT( mqo_vf_tc( tc ) );
 MQO_END_PRIM( tc_append )
 
