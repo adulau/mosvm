@@ -35,11 +35,11 @@
     (define cmd #f)
     (until cmd
       (guard (lambda (x) 
-               (traceback x (input))
+               (traceback x (output))
                (set! cmd #f))
         (set! cmd (error-on-fail (wait cmds)))))
     (when (eq? cmd 'close) (return))
-    (guard traceback
+    (guard (lambda (x) (traceback x (output)))
       (define data (format (exec cmd)))
       (send (string-append ":: " data *line-sep*)))))
 
