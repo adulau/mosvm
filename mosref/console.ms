@@ -34,7 +34,7 @@
 
 ;(define-macro (step . rest) '(begin))
 (define (step label . items)
-  (print (string-append "CONSOLE: "
+  (print (string-append "  CONSOLE: "
                         (apply string-append label (map format items)) 
                         "..." 
                         *line-sep*)))
@@ -81,6 +81,8 @@
   (build-exe platform
              `((import "mosref/drone")
                (import "mosref/endpoint")
+               (import "lib/cons-filter") ;TODO: Should be forwarded..
+               (import "lib/format-filter") ;TODO: Should be forwarded..
                (define conn (tcp-connect ,console-addr ,console-portno))
                (apply spawn-endpoint 
                       drone-endpoint
@@ -97,7 +99,7 @@
 ;; transmits the supplied program to be executed on the remote endpoint of
 ;; the supplied transport.
 
-(define (mosref-spawn program endpoint)
+(define (spawn-drone-program program endpoint)
   (define lane (make-lane endpoint))
   (define xmit (output-chain (lane-xmit lane)
                              (freeze-filter)))
@@ -106,42 +108,86 @@
   (send program xmit)
   (list xmit recv))
 
-(define (mosref-eval expr endpoint)
-  (define program 
-    (guard (lambda (e) (error 'eval-compile e))
-      (assemble (compile `((send (begin ,@expr)))))))
+(define *repl-program*
+  (assemble 
+    (optimize 
+      (compile
+        `((export nothing) ;; All private..
+          (define err-output (output-chain (output)
+                                           (cons-filter 'err)))
+          (define res-output (output-chain (output)
+                                           (cons-filter 'res)
+                                           (format-filter 'fmt)))
+          (define out-output (output-chain (output)
+                                           (cons-filter 'out)
+                                           (format-filter 'fmt)))
+          (define (fwd-traceback err)
+            (define s (make-string))
+            (traceback err s)
+            (send s err-output))
+          
+          (with-output out-output
+          (spawn (function (drone-repl-process)
+                    (forever 
+                      (guard fwd-traceback (send ((wait)) 
+                                           res-output)))))))))))
 
-  (define conn (mosref-spawn program endpoint))
-  (wait (cadr conn)))
+(define (spawn-drone-repl endpoint)
+  (spawn-drone-program *repl-program* endpoint))
 
 (define (console-repl xmit recv)
   (define endpoint (spawn-endpoint console-endpoint xmit recv))
+  (define repl (spawn-drone-repl endpoint))
+  (define repl-xmit (car repl))
+  (define repl-recv (cadr repl))
+ 
+  (define (display-syntax-error err)
+    (send (string-append "SYNTAX: " (cadr err) *line-sep*)))
+
+  (define (display-compile-error err)
+    (traceback err (output))
+    #f)
+
+  (define (display-remote-error errmsg)
+    (send errmsg)
+    #f)
 
   (define (display-result item)
-    (send (string-append ":: " (format item) *line-sep*)))
+    (send (string-append ":: " item *line-sep*)))
 
-  (define (display-failure key info trace)
-    (send trace))
+  (define (display-output item)
+    (send (string-append "-- " item *line-sep*)))
+
+  (spawn (lambda ()
+           (forever
+             (define evt (wait repl-recv))
+             (cond 
+               ((eq? evt 'close) (return))
+               ((not (pair? evt))) ;TODO: Bad, bad news..
+               ((eq? (car evt) 'err) (display-remote-error (cdr evt)))
+               ((eq? (car evt) 'res) (display-result (cdr evt)))
+               ((eq? (car evt) 'out) (display-output (cdr evt)))))))
+               ;TODO: else, also bad, bad news.
 
   (define (quit-repl cmd)
     (send 'close xmit))
 
-  (define (drone-cmd cmd)
-    (display-result (mosref-eval cmd endpoint)))
+  (define (eval-expr expr)
+    (define prog (guard display-compile-error
+                   (assemble (optimize (compile expr)))))
+    (unless prog (return))
+    (send prog repl-xmit))
 
   (define cmds 
     (dict (cons 'quit
                 quit-repl)))
 
-  (define (console-err-fn err)
-    (send (string-append "SYNTAX: " (cadr err) *line-sep*)))
-
-  (define default-cmd drone-cmd)
+  (define default-cmd eval-expr)
 
   (with-input (input-chain (input) 
                            (line-filter)
                            (s-filter :promptN "   "
-                                     :errfn console-err-fn))
+                                     :errfn display-syntax-error))
     (forever
       (send ">> ")
       (define cmd (wait))

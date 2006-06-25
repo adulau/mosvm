@@ -18,7 +18,7 @@
 (import "lib/block-filter")
 (import "lib/checksum-filter")
 (import "lib/copy-filter")
-(import "lib/trace")
+;(import "lib/trace")
 
 (export *sprng* *ecdh-keysize* *sig-length* make-iv)
 

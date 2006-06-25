@@ -226,20 +226,23 @@ MQO_BEGIN_PRIM( "error", error )
     mqo_throw_error( err );
 MQO_END_PRIM( error )
 
-//TODO: Accept a string or channel to send the traceback to.
 MQO_BEGIN_PRIM( "traceback", traceback )
     REQ_ERROR_ARG( error );
-    OPT_CHANNEL_ARG( dest );
+    OPT_ANY_ARG( dest );
     NO_REST_ARGS( );
     
-    mqo_string s = mqo_make_string( 128 );
-    mqo_format_traceback( s, error );
-
-    if( has_dest ){
-        mqo_channel_append( dest, mqo_vf_string( s ) );
-    }else{
+    if( ! has_dest ){
+        mqo_string s = mqo_make_string( 128 );
+        mqo_format_traceback( s, error );
         mqo_printstr( s );
         mqo_objfree( s );
+    }else if( mqo_is_channel( dest ) ){
+        mqo_string s = mqo_make_string( 128 );
+        mqo_format_traceback( s, error );
+        mqo_channel_append( mqo_channel_fv( dest ), mqo_vf_string( s ) );
+    }else{
+        mqo_string s = mqo_req_string( dest );
+        mqo_format_traceback( s, error );
     }
 
     NO_RESULT( );

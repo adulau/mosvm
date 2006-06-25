@@ -28,8 +28,8 @@
 ;; eventually serve modules from a specified directory at the drone's request.
 
 (define (spawn-endpoint endpoint xmit recv)
-  (set! xmit (output-chain xmit (trace-filter "XMIT")))
-  (set! recv (input-chain  recv (trace-filter "RECV")))
+  ;(set! xmit (output-chain xmit (trace-filter "XMIT")))
+  ;(set! recv (input-chain  recv (trace-filter "RECV")))
   (define bridge (make-bridge xmit recv))
   (define lanes (bridge-lanes bridge))
 

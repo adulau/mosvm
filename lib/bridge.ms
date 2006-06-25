@@ -103,9 +103,6 @@
   (later
     (forever
       (define evt (wait l-xmit))
-      (print "Got event: ")
-      (print (format evt))
-      (print *line-sep*)
       (when (string? evt)
         (send (string-append "!" xmit-tag evt) b-xmit)))))
 

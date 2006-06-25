@@ -16,17 +16,7 @@
 (module "lib/s-filter")
 (import "lib/filter")
 (import "lib/iterate")
-
-;; TODO:
-;; (define-filter (fail-forward fwd) ...)
-
-;; TODO: put in lib/options
-(define (option options key default)
-  (define rest (memq key options))
-  (if rest (cadr rest) default))
-
-(define-macro (define-option key)
-  `(define ,key ',key))
+(import "lib/options")
 
 (define-option :prompt0)
 (define-option :promptN)

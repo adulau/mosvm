@@ -111,6 +111,4 @@
 (send-line "Welcome to MOSREF; all instructions shall be evaluated on the"
             " drone, with results reported to the console.")
 
-(send-line "To exit MOSREF; enter .quit")
-
 (apply console-repl drone-port)

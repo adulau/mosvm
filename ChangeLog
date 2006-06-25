@@ -16,11 +16,14 @@
   * MOSREF now creates binaries for distribution again.
   * MOSREF employs bridges and endpoints, making it more flexible for adding
     new plugins.
-  + Added peril option to freeze-filter -- use peril function when a value
-    cannot be safely frozen for transmission.
-  + Modified MOSREF drone eval responses to decorate with 'result, or 
-    'formatted when the result cannot be frozen.
-  + Modified MOSREF drone eval to filter output messages with 'output
+  * Added lib/options, a library for constructing Common Lisp named arguments;
+    slow but versatile.
+  * Modified traceback to also permit tracing back into a string.
+  * MOSREF now spawns an eval process on the drone, instead of doing a complete
+    spawn every time it wants to eval.  The eval process sends feedback
+    asynchronously to the drone, via the bridge.
+  * Added lib/cons-filter
+  * Added lib/format-filter
 
 - 6/24/2006, Win32 Restoration
   * MOSVM now compiles and operates under win32, with the absence of *stdio*,

@@ -70,17 +70,16 @@
   (step "Affiliation complete.")
   (list report command))
 
-;; Holy complicated, batman!
+(define (format-fallback item)
+  (list fmt (car item) (format (cdr item))))
+
 (define (drone-endpoint) 
   (with-input (input-chain (input)
                            (thaw-filter))
+    (define command (wait))
     (with-output (output-chain (output)
                                (freeze-filter))
-      (define x (wait))
-      (print "Got command: ")
-      (print (format x))
-      (print *line-sep*)
-      (x))))
+      (command))))
 
 (export drone-affiliation drone-endpoint)
 
