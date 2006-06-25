@@ -289,7 +289,7 @@ void mqo_stream_read_evt( mqo_stream stream ){
 
 void mqo_listener_read_evt( mqo_listener listener ){
     struct sockaddr_storage sa;
-    int sl = sizeof( sa );
+    mqo_quad sl = sizeof( sa );
 
     int conn = accept( listener->fd, (struct sockaddr*)&sa, &sl );
     if( conn == -1 ){

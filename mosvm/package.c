@@ -26,6 +26,8 @@
 #ifdef _WIN32
 // We need hton and ntoh
 #include <winsock2.h>
+#else
+#include <arpa/inet.h>
 #endif
 mqo_symbol mqo_es_pkg;
 

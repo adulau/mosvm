@@ -21,6 +21,8 @@
 #ifdef _WIN32
 // We need hton and ntoh
 #include <winsock2.h>
+#else
+#include <arpa/inet.h>
 #endif
 
 #ifdef AUDIT_STRINGS
