@@ -18,6 +18,11 @@
 #include <string.h>
 #include <ctype.h>
 
+#ifdef _WIN32
+// We need hton and ntoh
+#include <winsock2.h>
+#endif
+
 #ifdef AUDIT_STRINGS
 #define AUDIT_STRING( x ) mqo_audit_string( x );
 void mqo_audit_string( mqo_string string ){
@@ -371,7 +376,7 @@ mqo_boolean mqo_string_empty( mqo_string str ){
 }
 void mqo_string_append_newline( mqo_string buf ){
 #if defined(_WIN32)||defined(__CYGWIN__)
-    mqo_string_append_str( buf, "\r\n" );
+    mqo_string_append_cs( buf, "\r\n" );
 #else
     mqo_string_append_byte( buf, '\n' );
 #endif

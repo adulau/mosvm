@@ -23,6 +23,10 @@
 #define PKG_STR     4
 #define PKG_SYM     5
 
+#ifdef _WIN32
+// We need hton and ntoh
+#include <winsock2.h>
+#endif
 mqo_symbol mqo_es_pkg;
 
 const char* mqo_mem_underflow = "memory underflow";

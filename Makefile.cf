@@ -65,6 +65,7 @@ ifeq ($(OS),MinGW)
 PLATFORM = winnt-$(ARCH)
 CFLAGS += -I/mingw/include
 LIBRX=/mingw/lib/libregex.a
+LIBS += -lwsock32
 EXE=.exe
 HAS_DEVRANDOM=no
 PKG=.zip

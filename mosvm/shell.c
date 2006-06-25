@@ -19,7 +19,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <sys/socket.h>
 #include <sys/types.h>
 #include "mosvm.h"
 
@@ -56,6 +55,9 @@ char** mqo_make_argv( mqo_list arglist, int ct ){
 
     return argv;
 }
+#ifndef _WIN32
+#include <sys/socket.h>
+// spawn_cmd not defined for win32, yet.
 mqo_stream mqo_spawn_cmd( mqo_string path, mqo_list arg, mqo_list var ){
     int argc = mqo_scan_argv( arg );
     int varc = mqo_scan_argv( var );
@@ -93,6 +95,7 @@ MQO_BEGIN_PRIM( "spawn-command", spawn_command );
     
     STREAM_RESULT( mqo_spawn_cmd( path, args, env ) );
 MQO_END_PRIM( spawn_command );
+#endif
 
 MQO_BEGIN_PRIM( "run-command", run_command );
     REQ_STRING_ARG( command );
@@ -102,7 +105,11 @@ MQO_BEGIN_PRIM( "run-command", run_command );
 MQO_END_PRIM( spawn_command );
 
 void mqo_init_shell_subsystem( ){
+#ifndef _WIN32
+// spawn_cmd not defined for win32, yet.
     MQO_BIND_PRIM( spawn_command );
+#endif
+
     MQO_BIND_PRIM( run_command );
     char** env = environ;
     mqo_tc tc = mqo_make_tc( );

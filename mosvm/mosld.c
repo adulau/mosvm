@@ -21,6 +21,11 @@
 
 #include "mosvm.h"
 
+#ifdef _WIN32
+// We need hton and ntoh
+#include <winsock2.h>
+#endif
+
 #define GLUESIG		"mvf2"
 #define GLUELEN		4
 

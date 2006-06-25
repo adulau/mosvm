@@ -24,6 +24,7 @@
 #if defined(_WIN32)||defined(__CYGWIN__)
 #include <sys/time.h>
 #include <winsock2.h>
+#include <errno.h>
 #define MQO_EWOULDBLOCK WSAEWOULDBLOCK
 #else
 #ifdef LINUX
@@ -237,7 +238,12 @@ void mqo_close_stream( mqo_stream stream ){
     mqo_disable_stream( stream );
     mqo_channel_append( stream->evt, mqo_vf_symbol( mqo_ss_close ) );
     stream->state = MQO_CLOSED;
+#ifdef _WIN32
+    // No non-socket streams on win32..
+    closesocket( stream->fd );
+#else
     close( stream->fd );
+#endif
 }
 
 void mqo_stream_read_evt( mqo_stream stream ){
@@ -251,20 +257,26 @@ void mqo_stream_read_evt( mqo_stream stream ){
         put = 0;
         buf = mqo_string_fv( mqo_channel_tail( stream->evt ) );
     }
-    
+
+#ifdef _WIN32
+    // No non-socket streams on win32..
+    int rs = recv( stream->fd, mqo_string_tail( buf ), 1024, 0 );
+#else
     int rs = stream->fd ? recv( stream->fd, mqo_string_tail( buf ), 1024, 0 )
                         : read( stream->fd, mqo_string_tail( buf ), 1024 );
-    
+#endif    
 
     if( rs > 0 ){
         mqo_string_wrote( buf, rs );
         if( put ){ mqo_channel_append( stream->evt, mqo_vf_string( buf ) ); }
     }else if( rs == -1 ){
 #if defined(_WIN32)||defined(__CYGWIN__)
-        int errno = WSAGetLastError();
-#endif
+        // Lies.. Why does select lie to us so?
+        if( WSAGetLastError() == EAGAIN )return;
+#else
         // Lies.. Why does select lie to us so?
         if( errno == EAGAIN )return;
+#endif
         
         mqo_stream_net_error( stream );
         
@@ -277,7 +289,7 @@ void mqo_stream_read_evt( mqo_stream stream ){
 
 void mqo_listener_read_evt( mqo_listener listener ){
     struct sockaddr_storage sa;
-    socklen_t sl = sizeof( sa );
+    int sl = sizeof( sa );
 
     int conn = accept( listener->fd, (struct sockaddr*)&sa, &sl );
     if( conn == -1 ){
@@ -292,6 +304,11 @@ void mqo_listener_read_evt( mqo_listener listener ){
 int mqo_stream_send( mqo_stream stream, void* data, mqo_quad datalen ){
     int result;
 
+#ifdef _WIN32
+    //There are no non-socket streams on win32..
+    result = send( stream->fd, data, datalen, 0 );
+    if( result == -1 ) mqo_stream_net_error( stream );
+#else
     if( stream->fd ){
         result = send( stream->fd, data, datalen, 0 );
         if( result == -1 ) mqo_stream_net_error( stream );
@@ -299,6 +316,7 @@ int mqo_stream_send( mqo_stream stream, void* data, mqo_quad datalen ){
         result = write( STDOUT_FILENO, data, datalen );
         if( result == -1 ) mqo_stream_error( stream, errno );
     };
+#endif
 
     return result; 
 }
@@ -400,7 +418,9 @@ void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
                 use = 1;
             };
             if( mqo_is_stream_writing( stream ) ){
+#ifndef _WIN32
                 if( fd == STDIN_FILENO ) fd = STDOUT_FILENO;
+#endif
                 FD_SET( fd, &writes );
                 use = 1;
             };
@@ -447,7 +467,9 @@ void mqo_activate_netmon( mqo_process monitor, mqo_object context ){
         if( FD_ISSET( fd, &reads ) || FD_ISSET( fd, &errors ) ){
             mqo_stream_read_evt( stream );
         };
+#ifndef _WIN32
         fd = fd ? fd : STDOUT_FILENO;
+#endif
         if( FD_ISSET( fd, &writes ) ){
             mqo_stream_write_evt( stream );
         };

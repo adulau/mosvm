@@ -9,7 +9,7 @@ all: $(TOOLS)
 
 REQS=$(OBJECTS)
 
-LIBS=$(LIBRX)
+LIBS += $(LIBRX)
 
 ifeq ($(OS),Darwin)
 

@@ -15,7 +15,6 @@
  */
 
 #include "mosvm.h"
-#include <sys/time.h>
 
 
 mqo_timeout mqo_first_timeout = NULL;
@@ -41,13 +40,23 @@ void mqo_get_now( mqo_quad* secs, mqo_quad* nsecs ){
 
 */
 
+#ifdef _WIN32
+#include <windows.h>
+void mqo_get_now( mqo_quad* secs, mqo_quad* nsecs ){
+    mqo_quad ms = GetTickCount( );
+    *secs = ms / 1000;
+    // 1,000,00 nanoseconds per millisecond
+    *nsecs = ( ms % 1000 ) * 1000000; 
+}
+#else
+#include <sys/time.h>
 void mqo_get_now( mqo_quad* secs, mqo_quad* nsecs ){
     struct timeval ts;
     gettimeofday( &ts, NULL );
     *secs = ts.tv_sec;
     *nsecs = ts.tv_usec * 1000;
 }
-
+#endif
 mqo_timeout mqo_make_timeout( 
     mqo_quad ms, mqo_channel channel, mqo_value signal  
 ){

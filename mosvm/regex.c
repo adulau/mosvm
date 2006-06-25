@@ -16,6 +16,9 @@
 
 #include <regex.h>
 #include "mosvm.h"
+#ifdef _WIN32
+#include <malloc.h>
+#endif
 
 mqo_symbol mqo_es_rx;
 

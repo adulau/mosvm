@@ -17,6 +17,10 @@
 #include "mosvm.h"
 #include <string.h>
 
+#ifdef _WIN32
+#include <malloc.h>
+#endif
+
 void mqo_unpool_obj( mqo_object obj ){
     if( obj->pool ){
         if( obj->prev ){
@@ -66,7 +70,11 @@ mqo_object mqo_scavenge( mqo_type type, mqo_pool pool, mqo_quad size ){
     if( pool->head ){
         obj = pool->head;
         mqo_unpool_obj( obj );
+#ifdef _WIN32
+        memset( obj, 0, size );
+#else
         bzero( obj, size );
+#endif
         obj->type = type;
         mqo_pool_obj( obj, mqo_blacks );
         //mqo_printf( "sxn", "Hit for ", type );
@@ -88,7 +96,11 @@ mqo_object mqo_objalloc( mqo_type type, mqo_quad size ){
 
     mqo_object obj = (mqo_object) malloc( size );
     //TODO: Remove all inits of = NULL;
-    bzero( obj, size );
+#ifdef _WIN32
+        memset( obj, 0, size );
+#else
+        bzero( obj, size );
+#endif
 
     //TODO: MQO_RESTORE: if(! obj )mqo_errf( mqo_es_mem, "sxi", "out of memory", type, size );
     assert( obj );
