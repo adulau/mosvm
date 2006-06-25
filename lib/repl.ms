@@ -35,7 +35,7 @@
     (define cmd #f)
     (until cmd
       (guard (lambda (x) 
-               (traceback x)
+               (traceback x (input))
                (set! cmd #f))
         (set! cmd (error-on-fail (wait cmds)))))
     (when (eq? cmd 'close) (return))

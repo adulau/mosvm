@@ -4,6 +4,41 @@
   + Any reference to an identifier not bound in builtins, imports is identified
     during compilation as an error.
 
+- ?/??/????, Integration of the Massive Interface
+  + Integration with Massive to provide a portable, simple graphic interface
+  to MOSVM applications.
+
+- ?/??/????, Brutal Scanner
+  + Added (spawn-scanner), which starts a process which accepts commands to
+    scan new hosts, and outputs gathered information.
+
+- ?/??/????, Win2k Catchup
+  + Stubs from OpenBSD, Darwin, Linux, Win32 integrated into the distribution
+    again.
+  + bin/mosref works again.
+
+- ?/??/????, Breakdown of Traceback
+  + The (traceback error) primitive now yields a string.
+  + (traceback-why error) -> string yields the first portion of a traceback.
+  + (traceback-where error) -> string yields the second portion of a traceback.
+  + Added (drone-invoke drone program) -> (command report)
+  + Modified drones to work with drone-invoke.
+
+- 6/24/2006, Win32 Restoration
+  * MOSVM now compiles and operates under win32, with the absence of *stdio*,
+    and spawn-command.  Asynchronous I/O under win32 requires a considerable 
+    amount of time and effort -- time that is not available to EphSec.
+    
+    For win32 developers with netcat installed in their PATH, the winrepl
+    script will use netcat to fork off a window and spawn a REPL process.
+
+  * Added an optional argument to traceback, a channel to output the traceback
+    to.  When omitted, the traceback will be printed, which is the current
+    behavior.
+
+  * Fixed a bug with guards where the guard statement's result is emplyed as
+    an argument.
+
 - 6/22/2006, Shell Commands
   * Added (spawn-command path ?arg-list ?env-list) -> stream to primitives. 
     Note that this will not work on windows, since Windows does not make it 

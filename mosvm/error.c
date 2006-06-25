@@ -42,13 +42,10 @@ int mqo_format_context( mqo_string buf, mqo_list context  ){
     return 1;
 }
 
-void mqo_format_traceback( mqo_string buf, mqo_error e ){
-    mqo_pair p;
-    
-    mqo_string_append_cs( buf, "ERROR: " );
+void mqo_format_why( mqo_string buf, mqo_error e ){
     mqo_string_append_sym( buf, e->key );
 
-    p = e->info;
+    mqo_pair p = e->info;
 
     if( p ){
         mqo_value v = mqo_car( e->info );
@@ -81,7 +78,10 @@ void mqo_format_traceback( mqo_string buf, mqo_error e ){
             };
         };
     };
-
+}
+void mqo_format_traceback( mqo_string buf, mqo_error e ){
+    mqo_string_append_cs( buf, "ERROR: " );
+    mqo_format_why( buf, e );
     mqo_string_append_newline( buf );
     mqo_format_context( buf, e->context );
 }
@@ -120,6 +120,7 @@ void mqo_throw_error( mqo_error e ){
         MQO_IP = g->ip;
         
         MQO_AP = mqo_make_callframe( );
+        MQO_AP->ap = g->ap;
         MQO_AP->cp = MQO_CP;
         MQO_AP->ep = MQO_EP;
         MQO_AP->ip = MQO_IP;
@@ -228,15 +229,21 @@ MQO_END_PRIM( error )
 //TODO: Accept a string or channel to send the traceback to.
 MQO_BEGIN_PRIM( "traceback", traceback )
     REQ_ERROR_ARG( error );
+    OPT_CHANNEL_ARG( dest );
     NO_REST_ARGS( );
     
     mqo_string s = mqo_make_string( 128 );
     mqo_format_traceback( s, error );
-    mqo_printstr( s );
-    mqo_objfree( s );
+
+    if( has_dest ){
+        mqo_channel_append( dest, s );
+    }else{
+        mqo_printstr( s );
+        mqo_objfree( s );
+    }
 
     NO_RESULT( );
-MQO_END_PRIM( error )
+MQO_END_PRIM( traceback )
 
 MQO_BEGIN_PRIM( "re-error", re_error )
     REQ_ERROR_ARG( error );

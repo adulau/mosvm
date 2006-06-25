@@ -22,20 +22,60 @@
 ;;; may be used with lib/http-server and spawn-http-server
 
 (define (spawn-flow portno flow)
+  (define sids (dict))
+
   (spawn-http-server portno
     (function (flow-broker req)
-      (define reqs (make-channel))
+        (define (new-session)
+          (define reqs (make-channel))
+          
+          (print "Sending request; ")
+          (print (url->string (http-request-url req)))
+          (print " to new session ")
+          (print (format reqs))
+          (print "\n")
+
+          (send req reqs)
+          (flow (make-flow-sid sids reqs) reqs))
+
+      (define sid (http-request-cookie req "sid"))
+      (when (not sid) (return (new-session)))
+
+      (define reqs (dict-ref sids sid))
+      (when (not reqs) (return (new-session)))
+    
+      ;(define old-input (http-request-input req))
+      ;(define new-input (make-channel))
+
+      ;(set-http-request-input! req new-input)
+      ;(send (wait new-input) old-input)
+    
+      (print "Sending request; ")
+      (print (url->string (http-request-url req)))
+      (print " to existing session ")
+      (print (format reqs))
+      (print "\n")
+
       (send req reqs)
-      (flow reqs))))
+      )))
 
 (define-macro (define-flow formals . body)
   `(define ,formals
-     (lambda (^flow-in^)
-       (define ^flow-sid^ (make-flow-sid))
+     (lambda (^flow-sid^ ^flow-in^)
        ,@body)))
 
-(define (make-flow-sid) ;TODO
-  #f)
+(define (make-flow-sid dict cmd)
+  (forever
+    (define sid (string-append (format (random-integer 0 *max-imm*))
+                               "-"
+                               (format (random-integer 0 *max-imm*))
+                               "-"
+                               (format (random-integer 0 *max-imm*))
+                               "-"
+                               (format (random-integer 0 *max-imm*))))
+    (unless (dict-ref dict sid)
+      (dict-set! dict sid cmd)
+      (return sid))))
 
 (define (flow-arg-auth/0 req)
   (url-auth (http-request-url req)))
@@ -105,19 +145,23 @@
 (define (flow-arg-req/0 req)
   req)
 
-(define (flow-ok req head body)
-  (write-http-response req 200 "OK" head (if (list? body)
-                                           (sxml->string body)
-                                           body)))
+(define (flow-ok sid req head body)
+  (write-http-response req 
+                       200 "OK" 
+                       (cons (string-append "Set-cookie: sid=" sid)
+                             head)
+                       (if (list? body)
+                         (sxml->string body)
+                         body)))
 
 (define-macro (html-ok html)
-  `(flow-ok ^flow-req^ '("Content-type: text/html") ,html))
+  `(flow-ok ^flow-sid^ ^flow-req^ '("Content-type: text/html") ,html))
 
 (define-macro (css-ok html)
-  `(flow-ok ^flow-req^ '("Content-type: text/css") ,html))
+  `(flow-ok ^flow-sid^ ^flow-req^ '("Content-type: text/css") ,html))
 
 (define-macro (xml-ok html)
-  `(flow-ok ^flow-req^ '("Content-type: text/xml") ,html))
+  `(flow-ok ^flow-sid^ ^flow-req^ '("Content-type: text/xml") ,html))
 
 ;;; The Flowlet Macro
 ;;;
@@ -156,9 +200,18 @@
   (define (process-flow-vars flow-vars)
     (map process-flow-var flow-vars))
 
-  `(let ((^flow-req^ (wait ^flow-in^)))
+  `(begin
+     (print "Waiting on ")
+     (print (format ^flow-in^))
+     (print "\n")
+     (let ((^flow-req^ (wait ^flow-in^)))
      (let ,(process-flow-vars flow-vars)
-       ,@flow-body)))
+     (print "Got ")
+     (print (format ^flow-req^))
+     (print "\n")
+       ,@flow-body
+     (print "Exiting flow.")  
+       ))))
 
 (define-macro (false-on-error . body)
   `(guard (lambda x #f)

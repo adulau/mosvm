@@ -28,12 +28,14 @@
   (define (line-loop)
     (forever
       (define next (wait in))
-      (when (eq? next 'close)
-        (send next out)
-        (return))
-      (when (string? next)
-        (string-append! buf next)
-        (parse))))
+      (cond 
+        ((string? next)
+         (string-append! buf next)
+         (parse))
+        ((eq? next 'close)
+         (return))
+        (else
+          (send next out)))))
 
   (line-loop)
 

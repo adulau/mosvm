@@ -1,3 +1,145 @@
++ A Generational Garbage Collector
+  * Move every x->y=z statement to mqo_set_(typeof x)_y( x, z );
+
+  * Add mqo_dirty_obj( x ) to all mqo_set_... modifiers that act on 
+    a reference.  
+  
+  * On creation of a new object, it is placed in mqo_ephemeral_pool
+
+  * mqo_grey_obj should only operate on mqo_black_obj
+
+  * mqo_tree_nodes should become full fledged objects, so the entire tree does
+    not become dirty because they became dirty.
+
+    #define mqo_white_pool mqo_fixture_pool
+    #define mqo_black_pool mqo_grey_pool
+
+    mqo_pool mqo_fixture_pool, mqo_ephemeral_pool, mqo_dirty_pool;
+    
+    mqo_boolean mqo_is_dirty( mqo_object x ){
+        return x->pool == mqo_dirty_fixtures;
+    }
+
+    mqo_boolean mqo_is_fixture( mqo_object x ){
+        return x->pool == mqo_fixture_pool;
+    }
+
+    mqo_boolean mqo_is_ephemeral( mqo_object x ){
+        return x->pool == mqo_ephemeral_pool;
+    }
+    
+  * An ephemeral cannot be in the root set, because it really complicates
+    dirty obj.  The Register Machine, Process Scheduler, Timer Scheduler, and
+    others, should be "always dirty".
+    
+    The root of the codex should be "always dirty", but its nodes aren't.
+
+    void mqo_dirty_obj( mqo_object x, mqo_object y ){
+        //TODO: If an ephemeral is in the root set when it 
+        // Q: Why don't we mark ephemerals that are root referenced as dirty?
+        // A: Because they might fall out of the root set before the next
+        //    GC cycle.  If they are still in the root set, they will ..
+
+        // Dirty Fixtures, and Ephemerals, cannot become (more) dirty.
+        if( ! mqo_is_fixture( x ) )return;
+   
+        // Only references to Ephemerals can make an object dirty.
+        if( ! mqo_is_ephemeral( y )return;
+        
+        // X has a reference to Y, and will be relevant to the next
+        // mqo_minor_gc
+
+        mqo_pool_obj( x, mqo_dirty_fixtures );
+    }
+    
+    mqo_quad mqo_minor_cycles = 0;
+    mqo_quad mqo_major_cycles = 0;
+    mqo_quad mqo_minor_period = 16384;
+    mqo_quad mqo_major_period = 16384;
+
+    void mqo_gc_window( ){
+        if( mqo_minor_cycles > mqo_minor_period ){
+            mqo_minor_cycles = 0;
+            mqo_minor_gc( );
+
+            // Majors must always be preceded by minors.
+
+            if( mqo_major_cycles > mqo_major_period ){
+                mqo_major_cycles = 0;
+                mqo_major_gc( );
+            }else{
+                mqo_major_cycles++;
+            }
+        }else{
+            mqo_minor_cycles++;
+        }
+    }
+
+    void mqo_minor_gc( ){
+        mqo_object this;
+       
+        // For each dirty fixture, offer its references greyness.
+        while( this = mqo_dirty_fixtures->head ){
+            mqo_set_pool( this, mqo_fixture_pool );
+            this->type->trace( this );
+        }
+
+        while( this = mqo_grey_pool->head ){
+            mqo_set_pool( this, mqo_white_pool );
+            this->type->trace( this );
+        }
+
+        while( this = mqo_ephemeral_pool->head ){
+            this->type->free( this );
+            assert( this->pool != mqo_ephemeral_pool );
+        }
+    }
+
+    void mqo_major_gc( ){
+        mqo_object this;
+            
+        //Exchange mqo_fixture_pool and mqo_ephemeral_pools.
+        mqo_pool p = mqo_fixture_pool;
+        mqo_fixture_pool = mqo_ephemeral_pool;
+        mqo_ephemeral_pool = p;
+        
+        //Ensure any objects referenced by the virtual machine's internal
+        //structures are grey'd.
+
+        mqo_trace_root_streams();
+        mqo_trace_root_registers();
+        mqo_trace_root_processes();
+        mqo_trace_root_timers();
+
+        //TODO: What other roots do we have?
+    
+        while( this = mqo_grey_pool->head ){
+            mqo_set_pool( this, mqo_white_pool );
+            this->type->trace( this );
+        }
+
+        while( this = mqo_ephemeral_pool->head ){
+            this->type->free( this );
+            assert( this->pool != mqo_ephemeral_pool );
+        }
+    }
+
+    void mqo_trace_root_object( mqo_object root ){
+        if( mqo_is_ephemeral( root ) ){
+            mqo_grey_pool( root );
+        }else{
+            root->type->trace( root );
+        }
+    }
+
+    void mqo_trace_root_streams( ){
+        mqo_stream this = mqo_first_stream;
+        while( this ){
+            mqo_trace_root_object( this );     
+            this = this->next;
+        }
+    }
+
 -------------------------------------------------------------------------------
 +  the TRY macro
   (try err

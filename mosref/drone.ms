@@ -16,12 +16,12 @@
 (module "mosref/drone")
 
 (import "lib/cfb")
-(import "lib/crypto-filter")
 (import "lib/buffer-channel")
-
 (import "mosref/base")
-
 (import "lib/iterate")
+(import "lib/crypto-filter")
+(import "lib/package-filter")
+(import "lib/tag-filter")
 
 ;(define-macro (step . rest) '(begin))
 (define (step label . items)
@@ -79,12 +79,16 @@
     (define xmit (lane-xmit lane))
     (define recv (lane-recv lane))
     (define program (thaw (wait recv)))
+    (set! xmit (output-chain xmit (freeze-filter)))
     (spawn
       (lambda ()
         (with-input recv 
-          (with-output xmit
-            (guard traceback
-              (send (program) xmit))))))))
+          (with-output (output-chain xmit (tag-filter 'output))
+            (guard (lambda (error) (send (cons 'error
+                                               (traceback error))
+                                         xmit))
+
+              (send (cons 'result (program)) xmit))))))))
 
 ;;;(define (drone-repl xmit recv)
 ;;;  (define result (make-string))
