@@ -23,7 +23,7 @@
 (define has-util
   (if *in-win32*
     (function (has-util/win32 name)
-      (member name '("nc" "rlwrap")))
+      (member name '("nc")))
 
     (function (has-util/posix name)
       (= (run-command (string-append "which " name " >/dev/null")) 0))))
