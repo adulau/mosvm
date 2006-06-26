@@ -24,6 +24,74 @@
 #include <string.h>
 #include <errno.h>
 
+extern char** environ;
+
+mqo_boolean mqo_file_exists( mqo_string path ){
+    struct stat s;
+
+    int r = stat( mqo_sf_string( path ), &s );
+
+    if( r == 0 ){
+        return  S_ISREG( s.st_mode );
+    }else{
+        return 0;
+    }
+}
+
+mqo_string mqo_locate_util( mqo_string utilname ){
+    char ** env;
+
+    for( env = environ; *env; env ++ ){
+        char* pathstr = *env;
+        if( strlen( pathstr ) < 5 )continue;
+        if( memcmp( pathstr, "PATH=", 5 ) )continue;
+
+        mqo_pair tc = mqo_make_tc( );
+        
+        pathstr += 5;
+
+        while( *pathstr ){
+#ifdef _WIN32
+            size_t endp = strcspn( pathstr, ";\0" ); 
+#else 
+            size_t endp = strcspn( pathstr, ":\0" ); 
+#endif
+        if( endp )mqo_tc_append( tc, mqo_vf_string( mqo_string_fm( pathstr, endp) ) );
+        pathstr += endp;
+        if( ! *pathstr )break;
+        pathstr++;
+        }
+
+        return mqo_locate_file( utilname, mqo_list_fv( mqo_car( tc ) ) );
+    };
+
+    return NULL;
+}
+
+mqo_string mqo_locate_file( mqo_string filename, mqo_list paths ){
+    struct stat s;
+    mqo_quad namelen = mqo_string_length( filename );
+
+    while( paths ){
+        mqo_string path = mqo_req_string( mqo_car( paths ) );
+        mqo_quad pathlen = mqo_string_length( path );
+        mqo_string n = mqo_make_string( namelen + pathlen + 1 );
+        mqo_string_append_str( n, path );
+#ifdef _WIN32
+        mqo_string_append_byte( n, '\\' );
+#else
+        mqo_string_append_byte( n, '/' );
+#endif
+        mqo_string_append_str( n, filename );
+        
+        if(( stat( mqo_sf_string( n ), &s ) == 0 )&&( S_ISREG( s.st_mode ) ))return n;
+        mqo_objfree( (mqo_object)n );
+
+        paths = mqo_req_list( mqo_cdr( paths ) );
+    }
+
+    return NULL;
+}
 mqo_file mqo_make_file( mqo_string path, int fd ){
     mqo_file file = MQO_OBJALLOC( file );
     file->path = path;
@@ -280,6 +348,13 @@ MQO_BEGIN_PRIM( "path-mtime", path_mtime )
     RESULT( mqo_vf_integer( mtime ) );
 MQO_END_PRIM( path_mtime )
 
+MQO_BEGIN_PRIM( "locate-path", locate_path )
+    REQ_STRING_ARG( filename );
+    REST_ARGS( paths );
+    
+    STRING_RESULT( mqo_locate_file( filename, paths ) );
+MQO_END_PRIM( locate_path )
+
 MQO_BEGIN_PRIM( "path-exists?", path_existsq )
     REQ_STRING_ARG( path )
     NO_REST_ARGS( );
@@ -293,15 +368,7 @@ MQO_BEGIN_PRIM( "file-path?", file_pathq )
     REQ_STRING_ARG( path )
     NO_REST_ARGS( );
 
-    struct stat s;
-
-    int r = stat( mqo_sf_string( path ), &s );
-
-    if( r == 0 ){
-        RESULT( mqo_vf_boolean( S_ISREG( s.st_mode ) ) );
-    }else{
-        RESULT( mqo_vf_false( ) );
-    }
+    BOOLEAN_RESULT( mqo_file_exists( path ) );
 MQO_END_PRIM( file_pathq )
 
 MQO_C_TYPE( file );
@@ -335,6 +402,7 @@ void mqo_init_file_subsystem( ){
     MQO_BIND_PRIM( path_mtime );
     MQO_BIND_PRIM( path_existsq );
     MQO_BIND_PRIM( file_pathq );
+    MQO_BIND_PRIM( locate_path );
 }
 
 

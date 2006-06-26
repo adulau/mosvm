@@ -50,23 +50,32 @@ void mqo_run( mqo_value func ){
 }
 
 int main( int argc, const char** argv ){
+    mqo_init_mosvm( );
+    mqo_list linked;
+    mqo_string mosvm;
+
 #ifdef _WIN32
     char name[MAX_PATH];
-    if (GetModuleFileName(NULL,name,sizeof(name))==0){
-        mqo_errf(
-            mqo_es_vm, "s", "windows cannot identify the location of mosvm"
-        );
-        return EXIT_FAILURE;
+    if (GetModuleFileName(NULL,name,sizeof(name))!=0){
+        mosvm = mqo_string_fs( name );
     }
-    argv[0]=name;
 #else
     signal( SIGINT, mqo_handle_sigint );
     // SIGPIPE is the devil; mosvm's write operations check for errors.
     signal( SIGPIPE, SIG_IGN );
+    mosvm = mqo_string_fs( argv[0] );
+    if( ! mqo_file_exists( mosvm ) ) mosvm = mqo_locate_util( mosvm );
 #endif
+    if( ! mosvm ){
+        mqo_errf(
+            mqo_es_vm, "s", "cannot identify the location of mosvm"
+        );
+        return EXIT_FAILURE;
+    }
 
-    mqo_init_mosvm( );
-    
+    linked = mqo_thaw_tail( mqo_sf_string( mosvm ) );
+    mqo_root_obj( (mqo_object) linked );
+
     mqo_argv = mqo_make_tc( );
     mqo_argc = 0;
     int i, mqo_show_globals = 0;
@@ -85,9 +94,6 @@ int main( int argc, const char** argv ){
 
     mqo_argv = mqo_list_fv( mqo_car( mqo_argv ) );
     mqo_root_obj( (mqo_object) mqo_argv );
-
-    mqo_list linked = mqo_thaw_tail( argv[0] );
-    mqo_root_obj( (mqo_object) linked );
 
     if( ! linked ){
         if( mqo_argv ){

@@ -34,6 +34,10 @@ void mqo_write_file( mqo_file file, const void* data, mqo_integer datalen );
 void mqo_close_file( mqo_file file );
 mqo_file mqo_open_file( const char* path, const char* flags, mqo_integer mode );
 
+mqo_boolean mqo_file_exists( mqo_string filename );
+mqo_string mqo_locate_file( mqo_string filename, mqo_list paths );
+mqo_string mqo_locate_util( mqo_string utilname );
+
 #define REQ_FILE_ARG( vn  ) REQ_TYPED_ARG( vn, file );
 #define OPT_FILE_ARG( vn  ) OPT_TYPED_ARG( vn, file );
 #define FILE_RESULT( x  ) TYPED_RESULT( file, x );

@@ -15,6 +15,8 @@
 - ?/??/????, MOSVM Installer
   * Add an install.ms script for unix users.
   * Add an install target for unix users.
+  * Added the (locate-file file-name path ..) -> file-path primitive.
+  * Modified the MOSVM stub loader to locate itself by analyzing the path.
   + Add the -mwindows flag for mosvm to prevent creating a console.
   + Add a mosvm.lnk for windows users.
   + Add a mosref.lnk for windows users.
