@@ -27,7 +27,8 @@
 (define (env-is name val)
     (equal? (get-env name) val))
 
-(define *in-win32*   (string-begins-with? *platform* "win32"))
+(define *in-winnt*   (string-begins-with? *platform* "winnt"))
+(define *in-win32*   *in-winnt*)
 (define *in-posix*   (not *in-win32*))
 (define *in-x11*     (has-env "DISPLAY"))
 

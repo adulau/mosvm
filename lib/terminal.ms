@@ -18,15 +18,12 @@
 (module "lib/terminal")
 (import "lib/env")
 
-(define *in-x11*     (has-env "DISPLAY"))
 (define *in-screen*  (env-is  "TERMINAL" "screen"))
-(define *in-win32*   (string-begins-with? *platform* "win32"))
-(define *in-posix*   (not *in-win32*))
 
 (define has-util
   (if *in-win32*
     (function (has-util/win32 name)
-      (member name '("nc")))
+      (member name '("nc" "rlwrap")))
 
     (function (has-util/posix name)
       (= (run-command (string-append "which " name " >/dev/null")) 0))))
@@ -57,7 +54,7 @@
                  (string-append "screen -t " title " " inner-cmd))
                 ((and *in-x11* *has-xterm*)
                  (string-append "xterm -T " title " -e " inner-cmd))
-                ((*in-win32*)
+                (*in-win32*
                  (string-append "cmd /c \"title " title " && " inner-cmd "\""))
                 (else
                   (error 'term "Cannot determine how to get a new window."))))

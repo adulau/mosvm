@@ -197,7 +197,11 @@ mqo_listener mqo_make_listener( mqo_integer fd ){
 
 void mqo_close_listener( mqo_listener l ){
     if( ! l->fd )return;
+#ifndef _WIN32
     mqo_net_error( close( l->fd ) );
+#else
+    mqo_net_error( closesocket( l->fd ) );
+#endif
     l->fd = 0;
 
     //TODO: Should we send 'close to l->conns ?

@@ -15,12 +15,23 @@
 ;  
 
 (import "lib/repl")
+(import "lib/with-io")
+(import "lib/terminal")
 
-(case (argc)
-  ((0) (repl)(exit))
+(export nothing)
+
+(define (do-mosvm)
+  (case (argc)
+    ((0) (repl)
+         (exit))
   (else  
     (let ((r (load (car (argv)))))
       (if (? main)
         (apply main (cdr (argv))))
-        r)))
+        r))))
+
+(if *in-win32*
+  (with-io (spawn-terminal "MOSVM")
+    (do-mosvm))
+  (do-mosvm))  
 
