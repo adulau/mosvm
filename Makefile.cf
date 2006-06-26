@@ -63,6 +63,7 @@ endif
 
 ifeq ($(OS),MinGW)
 PLATFORM = winnt-$(ARCH)
+CFLAGS += -mwindows
 CFLAGS += -I/mingw/include
 LIBRX=/mingw/lib/libregex.a
 LIBS += -lwsock32
@@ -72,6 +73,7 @@ PKG=.zip
 endif
 
 ifeq ($(OS),Cygwin)
+CFLAGS += -mwindows
 CFLAGS += -mno-cygwin
 CFLAGS += -I/mingw/include
 LIBRX=/mingw/lib/libregex.a
