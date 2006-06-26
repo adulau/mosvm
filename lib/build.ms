@@ -81,12 +81,15 @@
   (define string (make-string))
   (string-append! string (read-platform-stub platform))
 
-  (for-each (function (glue-dep item) (glue string item))
+  (for-each (function (glue-dep item) 
+              (glue string item))
             (map build-module (code-dependencies main)))
 
   (if (pair? main)
-    (glue string (freeze (assemble (optimize (compile main)))))
-    (glue string (build-module main)))
+    (glue string (freeze (assemble (optimize (compile main))))))
+
+  ; code-dependencies tells us that this is already a dependency.
+  ;  (glue string (build-module main)))
 
   string)
 
