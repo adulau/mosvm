@@ -95,7 +95,7 @@ void mqo_report_net_error( ){
 
 void mqo_signal_net_error( ){
 }
-
+//TODO: This should be more generic..
 mqo_integer mqo_net_error( mqo_integer k ){
     if( k == -1 )mqo_report_net_error( );
     return k;
@@ -193,6 +193,29 @@ mqo_listener mqo_make_listener( mqo_integer fd ){
     mqo_last_listener = l;
     
     return l;
+}
+
+void mqo_close_listener( mqo_listener l ){
+    if( ! l->fd )return;
+    mqo_net_error( close( l->fd ) );
+    l->fd = 0;
+
+    //TODO: Should we send 'close to l->conns ?
+    
+    mqo_listener prev = l->prev;
+    mqo_listener next = l->next;
+
+    if( prev ){
+        prev->next = next;
+    }else{
+        mqo_first_listener = next;
+    }
+
+    if( next ){
+        next->prev = prev;
+    }else{
+        mqo_last_listener = prev;
+    }
 }
 
 void mqo_enable_stream( mqo_stream stream ){
@@ -530,6 +553,13 @@ void mqo_trace_network( ){
     }
 }
 
+MQO_BEGIN_PRIM( "close-listener", close_listener )
+    REQ_LISTENER_ARG( listener );
+    NO_REST_ARGS( );
+    mqo_close_listener( listener );
+    NO_RESULT( );
+MQO_END_PRIM( close_listener );
+
 MQO_BEGIN_PRIM( "tcp-listen", tcp_listen )
     REQ_INTEGER_ARG( portno );
     NO_REST_ARGS( );
@@ -629,6 +659,7 @@ void mqo_init_stream_subsystem( ){
     MQO_BIND_PRIM( tcp_connect );
     MQO_BIND_PRIM( resolve_addr );
     MQO_BIND_PRIM( stream_closedq );
+    MQO_BIND_PRIM( close_listener );
 
     mqo_stream_monitor = mqo_make_process( 
         (mqo_proc_fn) mqo_activate_netmon, 

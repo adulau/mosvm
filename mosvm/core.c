@@ -1780,6 +1780,9 @@ MQO_BEGIN_PRIM( "copy-string", copy_string )
 MQO_END_PRIM( copy_string )
 
 void mqo_bind_core_prims( ){
+    mqo_set_global( mqo_symbol_fs( "*platform*" ), 
+                    mqo_vf_string( mqo_string_fs( MQO_PLATFORM ) ) );
+
     MQO_BIND_PRIM( integerq );
     MQO_BIND_PRIM( listq );
     MQO_BIND_PRIM( cons );

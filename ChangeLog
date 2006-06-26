@@ -12,7 +12,16 @@
   + Added (spawn-scanner), which starts a process which accepts commands to
     scan new hosts, and outputs gathered information.
 
-- ?/??/????, MOSREF Restoration
+- ?/??/????, Spawn Terminal
+  * Added lib/terminal, a module that provides a way to spawn a new terminal
+    in a variety of environments.
+  * Added the *platform* global variable to core -- *platform* matches the
+    MOSVM platform identifier for the current virtual machine.
+  * Added the (close-listener listener) primitive.
+  * Added lib/env, a module that provides convenient access to the environment
+    variables found in *environ*
+
+- 6/25/2006, MOSREF Restoration
   * MOSREF now creates binaries for distribution again.
   * MOSREF employs bridges and endpoints, making it more flexible for adding
     new plugins.

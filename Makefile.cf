@@ -125,4 +125,5 @@ ifeq ($(HAS_DEVRANDOM),yes)
 CFLAGS += -DDEVRANDOM
 endif
 
+CFLAGS += -DMQO_PLATFORM=\"$(PLATFORM)\"
 endif
