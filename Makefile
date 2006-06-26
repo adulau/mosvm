@@ -69,6 +69,9 @@ $(LIBTC): crypt/src/* crypt/src/*/* crypt/src/*/*/*
 $(MOSVM_STUB): $(LIBTC) mosvm/*.[ch] mosvm/mosvm/*.[ch]
 	cd $(ROOT)/mosvm && $(MAKE)
 
+strip:
+	strip $(MOSVM_STUB)
+
 $(GLUE): mosvm/glue.c mosvm/mosvm/*.[ch]
 	cd $(ROOT)/mosvm && $(MAKE)
 
