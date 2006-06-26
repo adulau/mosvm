@@ -114,7 +114,7 @@ PACKAGEDIR=$(PACKAGENAME)
 PACKAGE=$(PACKAGEDIR)$(PKG) 
 
 ifeq ($(PKG),.zip)
-PACKAGECMD=zip -r $(PACKAGE) $(PACKAGEDIR)
+PACKAGECMD=cp `which rlwrap` `which nc` $(PACKAGEDIR) && zip -r $(PACKAGE) $(PACKAGEDIR)
 endif
 
 ifeq ($(PKG),.tar.gz)
