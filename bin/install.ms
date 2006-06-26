@@ -106,6 +106,6 @@
 (write-data-file mosvm-bin (build-exe *platform* "bin/mosvm")) 
 (write-data-file mosref-bin (build-exe *platform* "bin/mosref")) 
 
-(chmod "-R 0755" bin-dir mod-dir stub-dir mod-bin-dir)
+(chmod "-R 0755" mod-dir stub-dir mod-bin-dir)
 
-(chmod "0755" mosvm-bin mosref-bin)
+(chmod "0755" bin-dir mosvm-bin mosref-bin)
