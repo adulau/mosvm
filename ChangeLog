@@ -12,6 +12,14 @@
   + Added (spawn-scanner), which starts a process which accepts commands to
     scan new hosts, and outputs gathered information.
 
+- ?/??/????, MOSVM Installer
+  * Add an install.ms script for unix users.
+  * Add an install target for unix users.
+  + Add the -mwindows flag for mosvm to prevent creating a console.
+  + Add a mosvm.lnk for windows users.
+  + Add a mosref.lnk for windows users.
+
+
 - ?/??/????, Spawn Terminal
   * Added lib/terminal, a module that provides a way to spawn a new terminal
     in a variety of environments.
@@ -20,6 +28,7 @@
   * Added the (close-listener listener) primitive.
   * Added lib/env, a module that provides convenient access to the environment
     variables found in *environ*
+  * Modified bin/mosvm to use lib/terminal on win32 hosts.
 
 - 6/25/2006, MOSREF Restoration
   * MOSREF now creates binaries for distribution again.
