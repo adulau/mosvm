@@ -98,8 +98,7 @@
     (define evt (wait src))
     (when (eq? evt 'done) (return))
     (when (eq? (car evt) 'connect)
-      (set! evt (cdr evt))
-      (foc-service (foc-address (car evt)) (cadr evt)))))
+      (apply collate-addr-port (cdr evt)))))
 
 (define (scan hosts ports conns lapse)
   (collate-scan-results (spawn-scanners hosts ports conns lapse)))
@@ -149,8 +148,11 @@
      q4))
 
 (define (format-ipv4 i)
+  (define (ub i)
+    (if (< i 0) (+ i 256) i))
+
   (define buf (make-string 16))
-  (string-append! buf (format (>> i 24)))
+  (string-append! buf (format (ub (>> i 24))))
   (string-append! buf ".")
   (set! i (& i $FFFFFF))
   (string-append! buf (format (>> i 16)))

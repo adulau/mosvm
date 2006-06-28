@@ -16,7 +16,7 @@
 (module "lib/defdb")
 (import "lib/clue")
 
-(export define-table define-foc define-field)
+(export define-table define-foc define-field define-new)
 
 (define-macro (define-table type)
   `(begin
@@ -33,6 +33,13 @@
      (if (null? record)
          (put-clue ,(make-symbol 'table: type) ,@fl)
          (car record))))
+
+(define-macro (define-new type . fields)
+  (define fl (map (lambda (fn) (list fn fn))
+                  fields))
+
+  `(define (,(make-symbol 'new- type) ,@fields)
+     (put-clue ,(make-symbol 'table: type) ,@fl)))
 
 (define-macro (define-field type field)
   `(begin
