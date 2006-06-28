@@ -16,7 +16,11 @@
 
 (import "lib/module")
 
-(define print (if *mosvm?* write display))
+(unless *mosvm?*
+  (define print display))
+
+(when *mosvm?*
+  (define (newline) (print "\n")))
   
 (define (main module)
   (for-each (lambda (x) (print x) (print " "))
