@@ -1,11 +1,12 @@
 (module "mosref/brutal")
+(import "lib/with-io")
 
-; Brutally aggressive, brutally simple, or just a brute's idea of a port
+; Brutally aggressive, brutally simple, or just a brutal's idea of a port
 ; scanner..
 
-(define (brute hosts ports lapse)
-  (define (brute/host host)
-    (define (brute/host-port port)
+(define (brutal hosts ports lapse)
+  (define (brutal/host host)
+    (define (brutal/host-port port)
       (define conn (guard (function (signal-refusal x)
                             ;(send (list 'refused host port))
                             #f)
@@ -13,13 +14,16 @@
 
       (unless conn (return))
 
-      (timeout lapse (output conn) 'timeout)
+      (define timer (timeout lapse (output conn) 'timeout))
 
       (define evt (wait conn))
-      (when (eq? evt 'timeout) (return))
 
-      (send (list (wait conn) host port))
-      (send 'close conn))
+      (when (eq? evt 'timeout) 
+        (send 'close conn)
+        (return))
+    
+      (cancel-timeout timer)
+      (send (list conn host port)))
 
     (define addr host)
 
@@ -29,14 +33,16 @@
         (return (send (list 'not-found host)))))
         
     (if (list? ports)
-      (for-each brute/host-port ports)
-      (brute/host-port host ports)))
+      (for-each brutal/host-port ports)
+      (brutal/host-port host ports)))
 
-  (if (list? hosts)
-    (for-each brute/host hosts)
-    (brute/host hosts))
+  (with-output (make-channel)
+    (spawn (function (brute) 
+             (if (list? hosts)
+               (for-each brutal/host hosts)
+               (brutal/host hosts))
   
-  (send (list 'done hosts ports lapse)))
+             (send (list 'done hosts ports lapse))))))
 
 (define (integer-range first last)
   (when (> first last)
