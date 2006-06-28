@@ -19,10 +19,10 @@
 (import "mosref/model")
 
 (define (pairs a b y)
-  ;(set! a (shuffle a))
+  (set! a (shuffle a))
   (define b0 b)
   (until (null? a)
-    ;(define b (shuffle b0))
+    (define b (shuffle b0))
     (define b b0)
     (define aa (car a))
     (set! a (cdr a))
