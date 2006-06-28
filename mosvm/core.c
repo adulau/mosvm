@@ -131,6 +131,35 @@ MQO_BEGIN_PRIM( "string->integer", string_to_integer )
     RESULT( mqo_vf_integer( i ) );
 MQO_END_PRIM( string_to_integer )
 
+MQO_BEGIN_PRIM( "vector->list", vector_to_list )
+    REQ_VECTOR_ARG( v );
+    NO_REST_ARGS( );
+     
+    mqo_pair p = NULL;
+    mqo_quad l = mqo_vector_length( v );
+    
+    while( l ){
+        p = mqo_cons( mqo_vector_get( v, --l ), mqo_vf_list( p ) );
+    }
+
+    LIST_RESULT( p );
+MQO_END_PRIM( vector_to_list )
+
+MQO_BEGIN_PRIM( "list->vector", list_to_vector )
+    REQ_LIST_ARG( p );
+    NO_REST_ARGS( );
+     
+    mqo_vector v = mqo_make_vector( mqo_list_length( p ) ); 
+    mqo_quad i = 0;
+
+    while( p ){
+        mqo_vector_put( v, i++, mqo_car( p ) );
+        p = mqo_req_list( mqo_cdr( p ) );
+    }
+    
+    RESULT( mqo_vf_vector( v ) );
+MQO_END_PRIM( list_to_vector )
+
 MQO_BEGIN_PRIM( "cadr", cadr )
     REQ_PAIR_ARG( pair )
     NO_REST_ARGS( )
@@ -449,7 +478,7 @@ MQO_BEGIN_PRIM( "set-cdr!", set_cdr )
 MQO_END_PRIM( set_cdr )
 
 MQO_BEGIN_PRIM( "vector", vector )
-    mqo_vector vt = mqo_make_vector( mqo_arg_ct );
+    mqo_vector vt = mqo_make_vector( mqo_arg_ct - 1 );
     mqo_integer ix = 0;
     for(;;){
         OPT_ANY_ARG( item );
@@ -1861,6 +1890,9 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( tc_clear );
 
     MQO_BIND_PRIM( string_to_exprs );
+
+    MQO_BIND_PRIM( vector_to_list );
+    MQO_BIND_PRIM( list_to_vector );
 
     MQO_BIND_PRIM( set );
     MQO_BIND_PRIM( set_addd );
