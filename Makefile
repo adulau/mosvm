@@ -14,13 +14,13 @@ core_mos: $(CORE_MOS)
 mosref_mos: $(MOSREF_MOS)
 
 $(MOSC): $(MOSVM_STUB) $(GLUE) lib/compile.ms bin/mosc.ms lib/mosc.ms site/config.ms
-	sh bin/build-app.sh $(MOSVM_STUB) bin/mosc $(MOSC)
+	IN_BOOTSTRAP=1 sh bin/build-app.sh $(MOSVM_STUB) bin/mosc $(MOSC)
 
-$(MOSVM): $(MOSVM_STUB) $(GLUE) site/config.ms core_mos lib_mos
-	sh bin/build-app.sh $(MOSVM_STUB) bin/mosvm $(MOSVM)
+$(MOSVM): $(MOSC) $(GLUE) site/config.ms core_mos lib_mos
+	IN_BOOTSTRAP=1 USE_MOSC=1 sh bin/build-app.sh $(MOSVM_STUB) bin/mosvm $(MOSVM)
 
-$(MOSREF): $(MOSVM_STUB) site/config.ms lib_mos core_mos mosref_mos
-	sh bin/build-app.sh $(MOSVM_STUB) bin/mosref $(MOSREF)
+$(MOSREF): $(MOSC) site/config.ms lib_mos core_mos mosref_mos
+	USE_MOSVM=1 USE_MOSC=1 sh bin/build-app.sh $(MOSVM_STUB) bin/mosref $(MOSREF)
 
 test: $(TESTS)
 test-%: test/%.mo $(MOSVM) lib mosref
@@ -57,8 +57,10 @@ clean:
 	rm -f *.tar.gz *.zip *.core tags build/bin/* examples/*mo test/*mo 
 	rm -f $(MOSVM) $(MOSREF) $(MOSC)
 
+# These files are required by casual developers who do not want to use another
+# scheme interpreter to build mosc.
 clean-seed:
-	rm -f */*mo */*ma
+	rm -f */*mo */*ma */*mf
 
 clean-stubs:
 	rm -f stubs/*

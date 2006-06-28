@@ -19,7 +19,7 @@
 (import "lib/filter")
 (export format-filter)
 
-(define-filter (format-filter tag)
+(define-filter (format-filter)
   (forever
     (send (format (wait in)) out)))
 

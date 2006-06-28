@@ -9,6 +9,12 @@
   to MOSVM applications.
 
 - ?/??/????, Brutal Scanner
+  * Added (| integer mask ...) -> integer, which performs a bit-wise or.
+  * Added (& integer mask ...) -> integer, which performs a bit-wise and.
+  * Added (<< integer offset) -> integer, which performs a bit-wise shift-left.
+  * Added (>> integer offset) -> integer, which performs a bit-wise shift-or.
+  * Added (^ integer offset) -> integer, which performs a bit-wise shift-or.
+  + Added (! integer offset) -> integer, which returns a bit complement.
   + Added (spawn-scanner), which starts a process which accepts commands to
     scan new hosts, and outputs gathered information.
 

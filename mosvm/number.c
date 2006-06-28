@@ -99,10 +99,66 @@ MQO_BEGIN_PRIM( "-", minus )
     INTEGER_RESULT( any ? base : - base );
 MQO_END_PRIM( minus )
 
+MQO_BEGIN_PRIM( "&", bit_and )
+    REQ_INTEGER_ARG( base );
+    for(;;){
+        OPT_INTEGER_ARG( x );
+        if( ! has_x )break;
+        base &= x;
+    }
+    INTEGER_RESULT( base );
+MQO_END_PRIM( bit_and )
+
+MQO_BEGIN_PRIM( "|", bit_or )
+    REQ_INTEGER_ARG( base );
+    for(;;){
+        OPT_INTEGER_ARG( x );
+        if( ! has_x )break;
+        base |= x;
+    }
+    INTEGER_RESULT( base );
+MQO_END_PRIM( bit_or )
+
+MQO_BEGIN_PRIM( "^", bit_xor )
+    REQ_INTEGER_ARG( base );
+    for(;;){
+        OPT_INTEGER_ARG( x );
+        if( ! has_x )break;
+        base ^= x;
+    }
+    INTEGER_RESULT( base );
+MQO_END_PRIM( bit_xor )
+
+MQO_BEGIN_PRIM( "<<", bit_left )
+    REQ_INTEGER_ARG( base );
+    REQ_INTEGER_ARG( offset );
+    NO_REST_ARGS( );
+    INTEGER_RESULT( base << offset );
+MQO_END_PRIM( bit_left )
+
+MQO_BEGIN_PRIM( ">>", bit_right )
+    REQ_INTEGER_ARG( base );
+    REQ_INTEGER_ARG( offset );
+    NO_REST_ARGS( );
+    INTEGER_RESULT( base >> offset );
+MQO_END_PRIM( bit_right )
+
+MQO_BEGIN_PRIM( "!", bit_not )
+    REQ_INTEGER_ARG( base );
+    NO_REST_ARGS( );
+    INTEGER_RESULT( base ^ 0xFFFFFFFF );
+MQO_END_PRIM( bit_not )
+
 void mqo_init_number_subsystem( ){
     MQO_I_TYPE( number );
     MQO_BIND_PRIM( plus );
     MQO_BIND_PRIM( minus );
+    MQO_BIND_PRIM( bit_and );
+    MQO_BIND_PRIM( bit_or );
+    MQO_BIND_PRIM( bit_xor );
+    MQO_BIND_PRIM( bit_left );
+    MQO_BIND_PRIM( bit_right );
+    MQO_BIND_PRIM( bit_not );
     mqo_set_global( 
         mqo_symbol_fs( "*max-int*" ), mqo_vf_integer( MQO_MAX_INT ) );
     mqo_set_global( 
