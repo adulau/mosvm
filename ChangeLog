@@ -14,19 +14,25 @@
   * Added (<< integer offset) -> integer, which performs a bit-wise shift-left.
   * Added (>> integer offset) -> integer, which performs a bit-wise shift-or.
   * Added (^ integer offset) -> integer, which performs a bit-wise shift-or.
-  + Added (! integer offset) -> integer, which returns a bit complement.
+  * Added (! integer offset) -> integer, which returns a bit complement.
   + Added (spawn-scanner), which starts a process which accepts commands to
     scan new hosts, and outputs gathered information.
 
-- ?/??/????, MOSVM Installer
+- 6/28/2006, Second Generation Bootstrap
+  * Modified the build process to permit building MOSVM without a supporting
+    scheme compiler if either a previous installation of MOSVM is available,
+    or if the Mosquito Lisp dependencies of MOSC and MOSVM have not changed.
+
+  * Added display fix for bin/manifest under MOSVM, submitted by Ari Johnson.
+
+- 6/27/2006, MOSVM Installer
   * Add an install.ms script for unix users.
   * Add an install target for unix users.
   * Added the (locate-file file-name path ..) -> file-path primitive.
   * Modified the MOSVM stub loader to locate itself by analyzing the path.
   * Add the -mwindows flag for mosvm to prevent creating a console.
-  * Fix for bin/manifest under MOSVM, submitted by Ari Johnson.
 
-- ?/??/????, Spawn Terminal
+- 6/26/2006, Spawn Terminal
   * Added lib/terminal, a module that provides a way to spawn a new terminal
     in a variety of environments.
   * Added the *platform* global variable to core -- *platform* matches the
