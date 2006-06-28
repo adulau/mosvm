@@ -147,7 +147,7 @@
                             
 
 (define-macro (find-clue db . parameters)
-   `(find-clue-records db ,@(map (lambda (parameter)
+   `(find-clue-records ,db ,@(map (lambda (parameter)
                                    (if (not (pair? parameter))
                                      `(quote ,parameter)
                                      `(list (quote ,(car parameter))
