@@ -155,6 +155,17 @@ mqo_integer mqo_resolve( mqo_string name ){
     return addr;
 }
 
+void mqo_unblock( mqo_integer fd ){
+#if defined( _WIN32 )||defined( __CYGWIN__ )
+    unsigned long unblocking = 1;
+    mqo_net_error( ioctlsocket( fd, FIONBIO, &unblocking ) );
+#else
+    // mqo_net_error( fcntl( fd, F_SETFL, O_NONBLOCK ) );
+    unsigned long unblocking = 1;
+    if( fd )mqo_net_error( ioctl( fd, FIONBIO, &unblocking ) );
+#endif
+}
+
 mqo_stream mqo_make_stream( mqo_integer fd ){
     mqo_stream s = MQO_OBJALLOC( stream );
     s->fd = fd;
@@ -164,14 +175,6 @@ mqo_stream mqo_make_stream( mqo_integer fd ){
     s->evt->source = mqo_vf_stream( s );
     s->prev = mqo_last_stream;
     s->state = MQO_READY;
-#if defined( _WIN32 )||defined( __CYGWIN__ )
-    unsigned long unblocking = 1;
-    mqo_net_error( ioctlsocket( s->fd, FIONBIO, &unblocking ) );
-#else
-    // mqo_net_error( fcntl( fd, F_SETFL, O_NONBLOCK ) );
-    unsigned long unblocking = 1;
-    if( fd )mqo_net_error( ioctl( fd, FIONBIO, &unblocking ) );
-#endif
 
     return s;
 }
@@ -323,6 +326,7 @@ void mqo_listener_read_evt( mqo_listener listener ){
         //TODO: We blissfully ignore errors during accept..
         //TODO: We do need to report the catastrophic event of EMFILE or ENFILE
     }else{
+        mqo_unblock( conn );
         mqo_channel_append( 
             listener->conns, mqo_vf_stream( mqo_make_stream( conn ) ) );
     }
@@ -628,6 +632,8 @@ MQO_BEGIN_PRIM( "tcp-connect", tcp_connect )
     mqo_net_error( ioctl( fd, FIONBIO, &unblocking ) );
 #endif
 */
+    //TODO: Is this safe on win32?
+    mqo_unblock( fd );
     mqo_net_error( connect( fd, (struct sockaddr*)&addr, sizeof( addr ) ) );
     
     mqo_stream s = mqo_make_stream( fd );
@@ -679,6 +685,7 @@ void mqo_init_stream_subsystem( ){
     //TODO: fork a pipe.
 #else
     // On Unix, *stdin* is a stream. On WIN32, *stdio* is a filthy word..
+    mqo_unblock( STDIN_FILENO );
     mqo_stdio = mqo_make_stream( 0 );
     mqo_root_obj( (mqo_object) mqo_stdio );
     mqo_set_global( mqo_symbol_fs( "*stdio*"), mqo_vf_stream( mqo_stdio ) );

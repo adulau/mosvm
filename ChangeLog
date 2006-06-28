@@ -15,6 +15,8 @@
   * Added (>> integer offset) -> integer, which performs a bit-wise shift-or.
   * Added (^ integer offset) -> integer, which performs a bit-wise shift-or.
   * Added (! integer offset) -> integer, which returns a bit complement.
+  * Added a Knuth / Fisher-Yates shuffle module, lib/shuffle.
+  * Added list->vector and vector->list primitives.
   + Added (spawn-scanner), which starts a process which accepts commands to
     scan new hosts, and outputs gathered information.
 

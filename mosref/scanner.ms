@@ -15,80 +15,109 @@
 
 (module "mosref/scanner")
 (import "lib/with-io")
+(import "lib/shuffle")
 (import "mosref/model")
 
-(define (populate-services)
+(define (pairs a b y)
+  ;(set! a (shuffle a))
+  (define b0 b)
+  (until (null? a)
+    ;(define b (shuffle b0))
+    (define b b0)
+    (define aa (car a))
+    (set! a (cdr a))
+    (until (null? b)
+      (send (list aa (car b)) y)
+      (set! b (cdr b)))
+    ;(pause)
+    ))
+
+(define (terminator ct msg out)
+  (lambda ()
+    ;(print "Count is: ")
+    ;(print (format ct))
+    ;(print *line-sep*)
+    (cond
+      ((<= ct 1) ;(print "Sending terminator message\n")
+                 (send msg out)
+                 (return))
+      (else (set! ct (- ct 1))))))
+
+(define-macro (repeat count . body)
+  `(let ((%ctr ,count))
+     (until (<= %ctr 0)
+       (set! %ctr (- %ctr 1))
+       ,@body)))
+
+(define (scan/host-port host port lapse yield)
+  ;(print (string-append "Scanning " (format host) ":" (format port) "...\n"))
+  (define conn (guard (lambda x #f) 
+                 (tcp-connect host port)))
+  (unless conn (return))
+  (define t (timeout lapse (output conn) 'timeout))
+  (define evt (wait conn))
+  (send 'close conn)
+  (when (eq? evt 'timeout) (return))
+  (cancel-timeout t)
+  (when (eq? evt 'connect)
+    (send (list 'connect host port) yield)))
+
+; Given a list of hosts, a list of ports, a number of worker threads to spawn
+; and a timeout in milliseconds to wait for any given connection attempt -- 
+; spawns the required threads and yields a channel that will report each
+; successful connection, and, when all possible combinations have been tried,
+; a done.
+
+(define (spawn-scanners hosts ports conns lapse)
+  (define work (make-channel))
+  (define yield (make-channel))
+  (define terminate (terminator conns 'done yield))
+   
+  (pairs hosts ports work)
+  (repeat conns (send 'halt work)
+                (send 'halt work))
+
+  (repeat conns
+    ;(print "Pre-launch..\n")
+    (spawn (function (scanner-process)
+              ;(print "Launching scanner..\n")
+              (forever
+                ;(print "Waiting for work.")
+                (define evt (wait work))
+                (when (eq? evt 'halt) 
+                  ;(print "Out of work.\n")
+                  (terminate)
+                  (return))
+                (scan/host-port (car evt) (cadr evt) lapse yield)
+                ))))
+
+  yield)
+
+(define (collate-scan-results src)
   (forever
-    (define evt (wait))
-    (define cmd (car evt))
-    (define args (cdr evt))
-    (cond ((eq? cmd 'done)
-           (return))
-          ((stream? cmd)
-           (send 'close cmd)
-           (foc-service (foc-address (car args)) (cadr args))))))
-           
-(define (scan-report)
-  (define (scan-report/service service)
+    (define evt (wait src))
+    (when (eq? evt 'done) (return))
+    (when (eq? (car evt) 'connect)
+      (set! evt (cdr evt))
+      (foc-service (foc-address (car evt)) (cadr evt)))))
+
+(define (scan hosts ports conns lapse)
+  (collate-scan-results (spawn-scanners hosts ports conns lapse)))
+
+(define (services-report)
+  (define (services-report/service service)
     `(svc (* (port ,(format (service-port service))))))
 
-  (define (scan-report/address address)
+  (define (services-report/address address)
     (define ip (address-ip address))
 
     (when (integer? ip)
       (set! ip (format-ipv4 ip)))
     
     `(addr (* (ip ,ip))
-           ,@(map scan-report/service (find-service-by-address address))))
+           ,@(map services-report/service (find-service-by-address address))))
  
-  `(scan ,@(map scan-report/address (find-clue table:address))))
-
-(define (scan hosts ports timeout)
-  (with-input (output (brutal hosts ports timeout))
-    (populate-services)))
-
-; Brutally aggressive, brutally simple, or just a brutal's idea of a port
-; scanner..
-
-(define (brutal hosts ports lapse)
-  (define (brutal/host host)
-    (define (brutal/host-port port)
-      (define conn (guard (function (signal-refusal x)
-                            ;(send (list 'refused host port))
-                            #f)
-                          (tcp-connect addr port)))
-
-      (unless conn (return))
-
-      (define timer (timeout lapse (output conn) 'timeout))
-
-      (define evt (wait conn))
-
-      (when (eq? evt 'timeout) 
-        (send 'close conn)
-        (return))
-    
-      (cancel-timeout timer)
-      (send (list conn host port)))
-
-    (define addr host)
-
-    (when (string? addr)
-      (set! addr (guard (lambda (x) #f) (resolve-addr host)))
-      (unless addr
-        (return (send (list 'not-found host)))))
-        
-    (if (list? ports)
-      (for-each brutal/host-port ports)
-      (brutal/host-port host ports)))
-
-  (with-output (make-channel)
-    (spawn (function (brute) 
-             (if (list? hosts)
-               (for-each brutal/host hosts)
-               (brutal/host hosts))
-  
-             (send (list 'done hosts ports lapse))))))
+  `(scan ,@(map services-report/address (find-clue table:address))))
 
 (define (integer-range first last)
   (when (> first last)
@@ -133,4 +162,4 @@
   (string-append! buf (format i))
   buf)
 
-(export scan scan-report port-range addr-range cidr ipv4 format-ipv4)
+(export scan services-report port-range addr-range cidr ipv4 format-ipv4)
