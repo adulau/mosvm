@@ -241,13 +241,24 @@ MQO_BEGIN_PRIM( "list-ref", list_ref )
     REQ_PAIR_ARG( list );
     REQ_INTEGER_ARG( index );
     NO_REST_ARGS( );
-
+    
+    RESULT( mqo_car( mqo_list_ref( list, index ) ) );
+    /*
     while( list && index > 0 ){
         index --; list = mqo_req_list( mqo_cdr( list ));
     }
     if( list == NULL )mqo_errf( mqo_es_vm, "s", "index past end of list" );
     RESULT( mqo_car( list ) );
+    */
 MQO_END_PRIM( list_ref )
+
+MQO_BEGIN_PRIM( "list-refp", list_refp )
+    REQ_PAIR_ARG( list );
+    REQ_INTEGER_ARG( index );
+    NO_REST_ARGS( );
+
+    LIST_RESULT( mqo_list_ref( list, index ) );
+MQO_END_PRIM( list_refp )
 
 MQO_BEGIN_PRIM( "abs", m_abs )
     REQ_INTEGER_ARG( integer );
@@ -356,7 +367,7 @@ MQO_END_PRIM( make_vector )
 
 MQO_BEGIN_PRIM( "list-index", list_index )
     REQ_ANY_ARG( item );
-    REQ_PAIR_ARG( list );
+    REQ_LIST_ARG( list );
     NO_REST_ARGS( );
     mqo_integer ix = 0;
 
@@ -1838,6 +1849,7 @@ void mqo_bind_core_prims( ){
     MQO_BIND_PRIM( string_ref );
     MQO_BIND_PRIM( list_index );
     MQO_BIND_PRIM( list_ref );
+    MQO_BIND_PRIM( list_refp );
     MQO_BIND_PRIM( m_lt );    
     MQO_BIND_PRIM( m_gt );    
     MQO_BIND_PRIM( m_lte );    

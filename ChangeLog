@@ -8,7 +8,28 @@
   + Integration with Massive to provide a portable, simple graphic interface
   to MOSVM applications.
 
-- ?/??/????, Brutal Scanner
+- ?/??/????, MOSREF Prod
+  * Added (list-refp list index) -> pair, similar to list-ref, except it
+    returns the index'th pair in the list.
+
+    >> (define a '(v w x y z))
+    :: (v w x y z)
+    >> (define b (list-refp a 2))
+    :: (x y z)
+    >> (set-car! b 101)
+    >> b
+    :: (101 y z)
+    >> a
+    :: (v w 101 y z)
+
+  * Added the lib/args-fu module, which provides functionality useful for
+    constructing complicated keyword argument parsers common with Common Lisp
+    environments.  See mosref/prod.ms for examples of usage.
+  + Added mosref/prod, an expert system for interrogating network services
+    discovered by mosref/scanner and classifying their response for the
+    operator.
+
+- 6/28/2006, MOSREF Scanner
   * Added (| integer mask ...) -> integer, which performs a bit-wise or.
   * Added (& integer mask ...) -> integer, which performs a bit-wise and.
   * Added (<< integer offset) -> integer, which performs a bit-wise shift-left.
@@ -17,8 +38,8 @@
   * Added (! integer offset) -> integer, which returns a bit complement.
   * Added a Knuth / Fisher-Yates shuffle module, lib/shuffle.
   * Added list->vector and vector->list primitives.
-  + Added (spawn-scanner), which starts a process which accepts commands to
-    scan new hosts, and outputs gathered information.
+  * Added (scan host-list port-list conns timeout) to mosref/scanner, which
+    will populate the recon database with contacts as they are found.
 
 - 6/28/2006, Second Generation Bootstrap
   * Modified the build process to permit building MOSVM without a supporting
