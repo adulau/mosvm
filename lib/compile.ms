@@ -78,7 +78,12 @@
 
 (define (make-top-context)
   (define top (make-actual-context #f '()))
-  (set-context-rules! top (apply dict (mosvm-syntax)))
+  (define syn (apply dict (mosvm-syntax)))
+  (let ((old-set-macro set-macro!))
+    (set! set-macro! (lambda (key func)
+                       (dict-set! syn key func)
+                       (old-set-macro key func))))
+  (set-context-rules! top syn)
   top)
 
 (define (is-top-context? context)
@@ -621,10 +626,16 @@
     (for-each compile-imported-macro 
               (filter is-macro? code)))
 
-  (define (compile-import expr) 
+  ;; For scheme bootstraps, we try to analyze the code statically, because importing it
+  ;; may be a problem.  This is an ugly hack, and has been around way, way too long..
+  
+  (define (compile-import/scheme expr) 
     (define id (cadr expr))
     (for-each compile-dependency (code-dependencies id)))
-    
+  
+  (define (compile-import/mosvm expr)
+    (import (cadr expr)))
+
   (define (is-import? expr) 
     (and (pair? expr)
          (= (length expr) 2)
@@ -634,7 +645,11 @@
   (define (isnt-import? expr)
     (not (is-import? expr)))
 
-  (for-each compile-import (filter is-import? code)))
+  (let ((compile-import (if *mosvm?* 
+                          compile-import/mosvm 
+                          compile-import/scheme)))
+
+    (for-each compile-import (filter is-import? code))))
 
 (define (compile-macros env code)
   (define (isnt-macro? expr)

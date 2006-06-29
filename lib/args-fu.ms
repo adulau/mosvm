@@ -62,20 +62,18 @@
 
 ; Constructs an expression that will yield each of the arguments specified.
 ; head-1 head-2 key-a key-b key-c tail-1 tail-2 tail-3
+;
+; The resulting expression must be eval'd.
 
 (define (args-fu head keys tail terms)
   (define head-terms '())
   (when head 
     (set! head-terms terms)
     (set! terms (head-fu head terms)))
-  (print (format head-terms))
-  (print *line-sep*)
 
   (define tail-terms (if tail
                        (tail-fu tail terms)
                        '()))
-  (print (format tail-terms))
-  (print *line-sep*)
 
   (define key-terms (if keys
                       (map (lambda (term)
@@ -84,11 +82,24 @@
                                (cons 'quote term)
                                (cons 'list term)))
                            (key-fu keys terms))))
-  (print (format key-terms))
-  (print *line-sep*)
+  (append head-terms key-terms tail-terms))
+
+;; Useful for macros, this result does not need to be eval'd, but does not
+;; evaluate any of its terms.
+(define (parse-fu head keys tail terms)
+  (define head-terms '())
+  (when head 
+    (set! head-terms terms)
+    (set! terms (head-fu head terms)))
+
+  (define tail-terms (if tail
+                       (tail-fu tail terms)
+                       '()))
+
+  (define key-terms (if keys 
+                      (map cdr (key-fu keys terms))
+                      '()))
 
   (append head-terms key-terms tail-terms))
 
-
-
-(export args-fu head-fu tail-fu key-fu)
+(export args-fu head-fu tail-fu key-fu parse-fu)
