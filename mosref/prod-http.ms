@@ -31,8 +31,8 @@
 
 ;; There are very few http-v0 servers alive today..
 (tcp-response http-v0
-              isnt: http-v1
               to: http-get-root
+              isnt: http-v1
               head: "HTTP/0")
 
 ;; TODO: response checks for HTTP/1.1 and HTTP/1.0 for boutique http servers.

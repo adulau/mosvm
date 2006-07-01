@@ -50,7 +50,8 @@
                     (func stimulus-func)
                     (responses stimulus-responses))
 
-(export stimulus-id stimulus-proto stimulus-ports stimulus-func stimulus-responses
+(export stimulus-id stimulus-proto stimulus-ports stimulus-func 
+        stimulus-responses stimulus?
         tcp-stimulus find-tcp-stimuli register-stimulus 
         *tcp-stimuli-by-id* *tcp-stimuli-by-port*)
 
@@ -61,7 +62,7 @@
     (define row (dict-ref port-table port))
     (unless row
       (set! row (make-tc))
-      (dict-set! id-table port-table row))
+      (dict-set! port-table port row))
     (tc-append! row rule))
   (for-each register-stimulus/port ports))
 
@@ -70,13 +71,14 @@
   (if row (tc->list row) '()))
 
 (define (find-tcp-stimuli port)
-  (find-tcp-stimuli *tcp-stimuli-by-port* port))
+  (find-stimuli *tcp-stimuli-by-port* port))
 
 (define-macro (tcp-stimulus . args)
   (define (parse-tcp-stimulus id ports stim)
-    `(register-stimulus *tcp-stimuli-by-id* *tcp-stimuli-by-port* 'tcp ',id ',ports
-       (function (,(make-symbol 'stim- id) stream)
-          (send ,stim stream))))
+    `(register-stimulus *tcp-stimuli-by-id* *tcp-stimuli-by-port* 
+                        'tcp ',id ',ports
+                        (function (,(make-symbol 'stim- id) stream)
+                                  (send ,stim stream))))
 
   (apply parse-tcp-stimulus (parse-fu 1 '(ports:) 1 args)))
 
@@ -101,19 +103,39 @@
 (define-macro (tcp-response . args)
   (define (parse-tcp-response id to is isnt type frag) 
     (define (compile-is is)
-      `(unless (memq ,is tags) 
+      `(unless (memq ',is tags) 
+         ;(print "Failed Is: ")
+         ;(print (format ',is))
+         ;(print " for: ")
+         ;(print (format ',id))
+         ;(print *line-sep*)
          (return tags)))
 
     (define (compile-isnt isnt)
-      `(when (memq ,isnt tags) 
+      `(when (memq ',isnt tags) 
+         ;(print "Failed Isnt: ")
+         ;(print (format ',isnt))
+         ;(print " for: ")
+         ;(print (format ',id))
+         ;(print *line-sep*)
          (return tags)))
 
     (define (compile-head head)
-      `(unless (string-begins-with? response ,head)
+      `(unless (string-begins-with? response ',head)
+         ;(print "Failed Head: ")
+         ;(print (format ',head))
+         ;(print " for: ")
+         ;(print (format ',id))
+         ;(print *line-sep*)
          (return tags)))
 
     (define (compile-frag frag)
-      `(unless (string-begins-with? response ,frag)
+      `(unless (string-find response ',frag)
+         ;(print "Failed Frag: ")
+         ;(print (format ',frag))
+         ;(print " for: ")
+         ;(print (format ',id))
+         ;(print *line-sep*)
          (return tags)))
 
     (unless (= (length to) 1)
@@ -125,23 +147,26 @@
     (unless (string? frag)
       (error 'prod "expected string" frag))
    
-    `(register-response (dict-ref *tcp-stimuli-by-port* ',to)
+    `(register-response (dict-ref *tcp-stimuli-by-id* ',(car to))
                         'tcp
                         ',id
-                        `(function (,(make-symbol 'resp- id) response tags)
-                                   ,@(map compile-is is)
-                                   ,@(map compile-isnt isnt)
-                                   ,(case type
-                                      ((head:) (compile-head frag))
-                                      ((frag:) (compile-frag frag)))
-                                   (cons ',id tags))))
-  
+                        (function (,(make-symbol 'resp- id) response tags)
+                                  ,@(map compile-is is)
+                                  ,@(map compile-isnt isnt)
+                                  ,(case type
+                                     ((head:) (compile-head frag))
+                                     ((frag:) (compile-frag frag)))
+                                  (cons ',id tags))))
+ 
     (apply parse-tcp-response (parse-fu 1 '(to: is: isnt:) 2 args)))
 
 (define (analyze-response stimulus response)
   (define tags '())
-  (define (run-response-rule rule) (set! tags (rule tags)))
-  (for-each run-response-rule (stimulus-responses stimulus)))
+  (define (run-response-rule rule) 
+    (set! tags (rule response tags)))
+
+  (for-each run-response-rule (tc->list (stimulus-responses stimulus)))
+  tags)
 
 (export tcp-response register-response analyze-response)
 

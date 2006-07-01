@@ -25,10 +25,10 @@
 "HTTP/1.1 301 Moved Permanently\r\nDate: Thu, 29 Jun 2006 14:05:00 GMT\r\nServer: Apache/1.3.33 (Unix) mod_gzip/1.3.26.1a mod_perl/1.29\r\nLocation: http://slashdot.org/\r\nConnection: close\r\nContent-Type: text/html; charset=iso-8859-1\r\n\r\n<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n<HTML><HEAD>\r\n<TITLE>301 Moved Permanently</TITLE>\r\n</HEAD><BODY>\r\n<H1>Moved Permanently</H1>\r\nThe document has moved <A HREF=\"http://slashdot.org/\">here</A>.<P>\r\n<HR>\r\n<ADDRESS>Apache/1.3.33 Server at www.slashdot.org Port 8080</ADDRESS>\r\n</BODY></HTML>\r\n\r\n")
 
 (define stimulus #f)
-(s: (set! stimulus (find-tcp-stimulus 80)))
+(s: (set! stimulus (car (find-tcp-stimuli 80))))
 (t: (stimulus? _))
 
-(s: (analyze-response stimulus response))
+(s: (analyze-response stimulus apache-response))
 (t: (memq 'http-v1 _))
 (t: (memq 'http-apache _))
 (t: (memq 'http-apache-v1 _))
