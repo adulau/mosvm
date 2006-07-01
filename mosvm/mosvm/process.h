@@ -52,7 +52,8 @@ void mqo_disable_process( mqo_process process );
 
 void mqo_proc_loop( );
 
-mqo_process mqo_spawn_func( mqo_value func );
+mqo_process mqo_spawn_call( mqo_pair call );
+mqo_process mqo_spawn_thunk( mqo_value func );
 
 mqo_object mqo_process_input( mqo_process process );
 mqo_object mqo_process_output( mqo_process process );

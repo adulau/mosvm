@@ -18,31 +18,47 @@
 ; port, compiles and outputs a frozen file.
 
 (import "lib/build")
-(import "lib/mosc")
 
-(define (mosc/module name)
-  (mosc name))
+(define (main . args)
+  (define exe-target #f)
+  (define mods (make-tc))
+  
+  (define (parse-fail msg)
+    (print (string-append "MOSC: " msg *line-sep*)))
+  
+  (define (parse-args args)
+    (when (null? args) (return))
+  
+    (define arg (car args))
+    (set! args (cdr args))
+  
+    (cond 
+      ((string=? arg "-exe")
+       (when (null? args) (parse-fail "Expected file name after -exe."))
+       (set! exe-target (car args))
+       (set! args (cdr args)))
+      ((string-begins-with? arg "-")
+       (parse-fail (string-append "Unrecognized option: " arg)))
+      (else (tc-append! mods arg))) 
+  
+    (parse-args args))
+  
+  (parse-args args)
 
-(define (mosc/program name)
-  (if (string-ends-with? name ".ms")
-    (set! name (substring name 0 (- (string-length name) 3))))
-  (define exe (string-append name (if (string=? *platform* "winnt-x86")
-                                    ".exe"
-                                    "")))
-  (print (string-append "Compiling " name " to " exe *line-sep*))
-  (write-data-file exe (build-exe *platform* name)))
-
-(define (mosc/run args)
-  (cond 
-    ((null? args)
-     (print "mosc [-c] module")
-     (print *line-sep*))
-    ((string=? (car args) "-c")
-     (mosc/program (cadr args)))
-    (else (mosc/module (car args)))))
-
-(define main
-  (if *mosvm?* 
-    (begin (mosc/run (argv)) (exit 0))
-    mosc))
-
+  (define old-build-module build-module)
+  (set! build-module (lambda (item)
+                       (print (string-append "BUILD: " item *line-sep*))
+                       (old-build-module item)))
+  (set! mods (tc->list mods))
+  (set! mods (apply build-modules mods))
+  
+  (when exe-target
+    ; This is pretty brute force..
+    (write-data-file exe-target 
+      (build-exe *platform* (map (lambda (item)
+                                   (list 'import item))
+                                 (filter (lambda (item)
+                                           (not (string-begins-with? item 
+                                                                     "core/")))
+                                         mods))))))
+  

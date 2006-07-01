@@ -14,29 +14,11 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA  
 ;  
 
-(import "lib/repl")
-(import "lib/with-io")
-(import "lib/terminal")
+; This stripped down version of MOSC is intended for use during bootstrap
+; by a Scheme host environment.
 
-;TODO: Add a function to alter argv.
+(import "lib/mosc")
 
 (define (main . args)
-  (set! main #f)
-  ;We only want to run this main once..
-  
-  (define (do-mosvm)
-    (case (length args)
-      ((0) (repl)
-           (exit))
-      (else  
-        (let ((r (load (car args))))
-          ; If main was reset, we should invoke it.
-          (if main
-            (main (cdr args))
-            r)))))
-
-  (if *in-win32*
-    (with-io (spawn-terminal "MOSVM")
-             (do-mosvm))
-    (do-mosvm)))
+  (for-each mosc args))
 

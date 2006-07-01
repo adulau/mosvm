@@ -26,9 +26,9 @@ fi
 PROG_MF=$PROG.mf
 PROG_MS=$PROG.ms
 
-# This will not catch all possible changes that would require a manifest rebuild;
-# but inter-module imports are generally stable and the really-clean target purges
-# all manifests.
+# This will not catch all possible changes that would require a manifest 
+# rebuild; but inter-module imports are generally stable and the really-clean 
+# target purges all manifests.
 
 if [ ! -s $PROG_MF ]||[ $PROG_MS -nt $PROG_MF ]; then
     if [ "x$DO_SCHEME" = x ]; then
@@ -67,7 +67,7 @@ for DEP in $DEPS; do
                 fi
 
                 echo "Compiling $DEP_MS to $DEP_MA.."
-                cd $BASE && $DO_SCHEME bin/mosc.ms $DEP_MS || exit 1
+                cd $BASE && $DO_SCHEME bin/mosc.scm $DEP_MS || exit 1
             fi
             echo "Assembling $DEP_MA to $DEP_MO.."
             cd $BASE && $BIN/mosasm $DEP_MA $DEP_MO || exit 1

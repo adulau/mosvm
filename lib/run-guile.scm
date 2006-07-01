@@ -50,6 +50,21 @@
 (define (guile-main args)
   (apply main (cdr args)))
 
+(define (set . items)
+  (define s (make-hash-table 31))
+  (for-each (lambda (v) (dict-set! s v #t))
+            items)
+  s)
+
+(define (set-member? set item)
+  (dict-ref set item))
+
+(define (set-remove! set item)
+  (dict-set! set item #f))
+
+(define (set-add! set item)
+  (dict-set! set item #t))
+
 (define (dict . items)
   (define d (make-hash-table 31))
   (for-each (lambda (kv) (dict-set! d (car kv) (cdr kv)))

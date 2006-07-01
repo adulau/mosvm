@@ -1,3 +1,6 @@
++ Bug in spawn-command
+  Errors should be reported as fails, somehow.
+
 + A Generational Garbage Collector
   * Move every x->y=z statement to mqo_set_(typeof x)_y( x, z );
 

@@ -35,9 +35,9 @@ void mqo_handle_sigint( int sig ){
 }
 #endif
 
-void mqo_run( mqo_value func ){
+void mqo_run( mqo_value func, mqo_list rest ){
     // TODO: Retire when process is back in.
-    mqo_process p = mqo_spawn_func( func );
+    mqo_process p = mqo_spawn_call( mqo_cons( func, mqo_vf_list( rest ) ) );
 #ifdef _WIN32
     // TODO: win32 does not have a default stdio.
     mqo_set_process_output( p, (mqo_object) mqo_make_channel( ) );
@@ -100,12 +100,18 @@ int main( int argc, const char** argv ){
             mqo_string src_path = mqo_string_fv( mqo_car( mqo_argv ) );
             mqo_file src_file = mqo_open_file( mqo_sf_string( src_path ),
                                                "r", 0600 );
-            mqo_run( mqo_thaw_str( mqo_read_file( src_file, 1 << 30 ) ) );
+            mqo_run( mqo_thaw_str( mqo_read_file( src_file, 1 << 30 ) ), NULL );
         }
     }else while( linked ){
-        mqo_run( mqo_car( linked ) );
+        mqo_run( mqo_car( linked ), NULL );
         linked = mqo_list_fv( mqo_cdr( linked ) );
     }
+    
+    mqo_symbol mqo_sym_main = mqo_symbol_fs( "main" );
+
+    if( mqo_has_global( mqo_sym_main ) ){
+        mqo_run( mqo_get_global( mqo_sym_main ), mqo_list_fv( mqo_cdr( mqo_argv ) ) );
+    };
 
     if( mqo_show_globals ){
         mqo_list globals = mqo_get_globals( );
@@ -118,6 +124,5 @@ int main( int argc, const char** argv ){
         }
     };
 
-    mqo_collect_garbage( );
     return 0;
 }

@@ -9,18 +9,25 @@ CORE_MOS = $(shell ls core/*ms | sed -e 's,.ms,.mo,')
 MOSREF_MOS = $(shell ls mosref/*ms | sed -e 's,.ms,.mo,')
 
 all: $(MOSC) $(MOSVM) $(MOSREF) 
-lib_mos: $(LIB_MOS)
-core_mos: $(CORE_MOS)
-mosref_mos: $(MOSREF_MOS)
 
-$(MOSC): $(MOSVM_STUB) $(GLUE) lib/compile.ms bin/mosc.ms lib/mosc.ms site/config.ms
+core_mos:
+	$(MOSC) core/*ms
+
+lib_mos: 
+	$(MOSC) lib/*ms
+
+mosref_mos: $(MOSC)
+	$(MOSC) mosref/*ms
+
+$(MOSC): $(MOSVM_STUB) $(GLUE) lib/compile.ms bin/mosc.ms lib/mosc.ms site/config.ms lib/build.ms
 	IN_BOOTSTRAP=1 sh bin/build-app.sh $(MOSVM_STUB) bin/mosc $(MOSC)
 
 $(MOSVM): $(MOSC) $(GLUE) site/config.ms core_mos lib_mos
 	IN_BOOTSTRAP=1 USE_MOSC=1 sh bin/build-app.sh $(MOSVM_STUB) bin/mosvm $(MOSVM)
 
 $(MOSREF): $(MOSC) site/config.ms lib_mos core_mos mosref_mos
-	USE_MOSVM=1 USE_MOSC=1 sh bin/build-app.sh $(MOSVM_STUB) bin/mosref $(MOSREF)
+	$(MOSC) -exe $(MOSREF) bin/mosref.ms
+	chmod a+rx $(MOSC)
 
 test: $(TESTS)
 test-%: test/%.mo $(MOSVM) lib mosref

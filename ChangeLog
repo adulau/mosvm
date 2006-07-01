@@ -29,6 +29,17 @@
     discovered by mosref/scanner and classifying their response for the
     operator.
 
+- ?/??/????, Build System Overhaul
+  * bin/mosc now accepts zero or more module arguments -- it will build all
+    of the listed modules, in dependency order.
+
+  * compile now imports modules, instead of trying to guess the imported 
+    symbols and macros.  For complicated macros, this greatly improves
+    reliability, and, more importantly, more closely resembles user
+    expectations.
+
+  * mosvm stubs now invoke the (main) function at the end of load
+
 - 6/28/2006, MOSREF Scanner
   * Added (| integer mask ...) -> integer, which performs a bit-wise or.
   * Added (& integer mask ...) -> integer, which performs a bit-wise and.

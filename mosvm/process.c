@@ -171,14 +171,14 @@ void mqo_deactivate_vm( mqo_process process, mqo_vm vm ){
     mqo_save_vm( vm );
 }
 
-void mqo_activate_prim( mqo_process process, mqo_primitive prim ){
+void mqo_activate_prim( mqo_process process, mqo_list call ){
     MQO_AP = NULL;
     MQO_CP = NULL;
     MQO_EP = NULL;
     MQO_GP = NULL;
     MQO_IP = NULL;
 
-    mqo_chain( mqo_cons( mqo_vf_primitive( prim ), mqo_vf_null() ) );
+    mqo_chain( call );
     if( MQO_IP ){
         //TEST: This permits a primitive to chain into a procedure that
         //      can pause.
@@ -195,20 +195,22 @@ void mqo_deactivate_prim( mqo_process process, mqo_primitive prim ){
     return;
 }
 
-mqo_process mqo_spawn_func( mqo_value func ){
-    mqo_process process;
-    func = mqo_reduce_function( func, NULL );
-    
+mqo_process mqo_spawn_call( mqo_pair call ){
+    mqo_list rest = mqo_list_fv( mqo_cdr( call ) );
+    mqo_value func = mqo_reduce_function( mqo_car( call ), rest );
+    call = mqo_cons( func, mqo_vf_list( rest ) );
+    mqo_process p;
+
     if( mqo_is_primitive( func ) ){
-        process = mqo_make_process( (mqo_proc_fn)mqo_activate_prim, 
-                                    (mqo_proc_fn)mqo_deactivate_prim,
-                                    func );
+        p = mqo_make_process( (mqo_proc_fn)mqo_activate_prim, 
+                              (mqo_proc_fn)mqo_deactivate_prim,
+                              func );
     }else{
         mqo_vm vm = mqo_make_vm( );
-
         vm->cp = mqo_make_callframe();
-        vm->cp->head = vm->cp->tail = mqo_cons( func, mqo_vf_null( ) );
-        vm->cp->count = 1;
+        vm->cp->head = call;
+        vm->cp->tail = mqo_last_pair( call );
+        vm->cp->count = mqo_list_length( call );
 
         if( mqo_is_closure( func ) ){
             mqo_closure c = mqo_closure_fv( func );
@@ -220,15 +222,19 @@ mqo_process mqo_spawn_func( mqo_value func ){
             assert(0);
             mqo_errf( mqo_es_vm, "sx", "only functions can be spawned", func );
         }
+        
+        p = mqo_make_process( (mqo_proc_fn)mqo_activate_vm, 
+                              (mqo_proc_fn)mqo_deactivate_vm, 
+                              mqo_vf_vm( vm ) );
+    };
+   
+    mqo_enable_process( p );
 
-        process = mqo_make_process( (mqo_proc_fn)mqo_activate_vm, 
-                                    (mqo_proc_fn)mqo_deactivate_vm, 
-                                    mqo_vf_vm( vm ) );
-    }
+    return p;
+}
 
-    mqo_enable_process( process );
-
-    return process; 
+mqo_process mqo_spawn_thunk( mqo_value thunk ){
+    mqo_spawn_call( mqo_cons( thunk, mqo_vf_null( ) ) );
 }
 
 void mqo_trace_process( mqo_process process ){
@@ -259,8 +265,8 @@ MQO_C_TYPE( vm );
 MQO_BEGIN_PRIM( "spawn", spawn )
     REQ_FUNCTION_ARG( func )
     NO_REST_ARGS( );
-    
-    mqo_process p = mqo_spawn_func( func );
+     
+    mqo_process p = mqo_spawn_thunk( func );
 
     mqo_set_process_output( p, mqo_process_output( mqo_active_process ) );
     mqo_set_process_input( p, mqo_process_input( mqo_active_process ) );

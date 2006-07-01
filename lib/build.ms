@@ -71,6 +71,39 @@
   (until (tc-empty? dependencies)
     (build-module (tc-next! dependencies))))
 
+(define (build-modules . modules)
+  ;; Given a list of modules, build-modules will attempt to recompile them in
+  ;; their dependent order.  Any module that is a dependency, but not listed
+  ;; in these modules is ignored.
+  
+  (set! modules (map (lambda (item)
+                        (if (or (string-ends-with? item ".ms")
+                                (string-ends-with? item ".mo"))
+                          (substring item 0 (- (string-length item) 3))
+                          item))
+                      modules))
+  (let ((scope (apply set modules))
+        (order (make-tc))
+        (undone (apply make-tc modules))
+        (item #f))
+
+    (until (tc-empty? undone)
+           (set! item (tc-next! undone))
+           (when (set-member? scope item)
+             (set-remove! scope item)
+             (for-each (lambda (dep)
+                         (when (set-member? scope dep)
+                           (tc-append! order dep)
+                           (set-remove! scope dep)))
+                       (code-imports item))
+             (tc-append! order item)))
+
+    (set! order (tc->list order))
+    (for-each build-module order)
+    order)) 
+
+(export build-modules)
+
 (define (glue string data)
   (string-append! string data)
   (string-append-word! string (string-length data))
@@ -87,9 +120,6 @@
 
   (if (pair? main)
     (glue string (freeze (assemble (optimize (compile main))))))
-
-  ; code-dependencies tells us that this is already a dependency.
-  ;  (glue string (build-module main)))
 
   string)
 
