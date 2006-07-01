@@ -110,7 +110,7 @@ int main( int argc, const char** argv ){
     mqo_symbol mqo_sym_main = mqo_symbol_fs( "main" );
 
     if( mqo_has_global( mqo_sym_main ) ){
-        mqo_run( mqo_get_global( mqo_sym_main ), mqo_list_fv( mqo_cdr( mqo_argv ) ) );
+        mqo_run( mqo_get_global( mqo_sym_main ), mqo_argv );
     };
 
     if( mqo_show_globals ){
@@ -121,7 +121,7 @@ int main( int argc, const char** argv ){
             mqo_show( mqo_value_type( mqo_cdr( mqo_pair_fv( mqo_car( globals ) ) ) )->name );
             mqo_newline( );
             globals = mqo_list_fv( mqo_cdr( globals ) );
-        }
+        };
     };
 
     return 0;

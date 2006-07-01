@@ -23,7 +23,8 @@ $(MOSC): $(MOSVM_STUB) $(GLUE) lib/compile.ms bin/mosc.ms lib/mosc.ms site/confi
 	IN_BOOTSTRAP=1 sh bin/build-app.sh $(MOSVM_STUB) bin/mosc $(MOSC)
 
 $(MOSVM): $(MOSC) $(GLUE) site/config.ms core_mos lib_mos
-	IN_BOOTSTRAP=1 USE_MOSC=1 sh bin/build-app.sh $(MOSVM_STUB) bin/mosvm $(MOSVM)
+	$(MOSC) -exe $(MOSVM) bin/mosvm.ms
+	chmod a+rx $(MOSVM)
 
 $(MOSREF): $(MOSC) site/config.ms lib_mos core_mos mosref_mos
 	$(MOSC) -exe $(MOSREF) bin/mosref.ms

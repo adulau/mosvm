@@ -32,6 +32,9 @@
 - ?/??/????, Build System Overhaul
   * bin/mosc now accepts zero or more module arguments -- it will build all
     of the listed modules, in dependency order.
+  
+  * bin/mosc also accepts a -exe <program> flag, instructing mosc to produce
+    an executable program, much like build-exe.
 
   * compile now imports modules, instead of trying to guess the imported 
     symbols and macros.  For complicated macros, this greatly improves
