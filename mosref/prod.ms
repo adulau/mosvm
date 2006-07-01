@@ -17,20 +17,22 @@
 (import "lib/record")
 (import "lib/args-fu")
 
-; "mosref/prod" does AMAP-like functionality for MOSREF, with many notable exceptions -- 
-; mosref/prod employs rudimentary expert system techniques to greatly reduce CPU demands,
-; and eliminate false positives.  ( For example, an IIS rule isn't checked if the server
-; has already been identified as an Apache server. )
+; "mosref/prod" does AMAP-like functionality for MOSREF, with many notable 
+; exceptions -- mosref/prod employs rudimentary expert system techniques to 
+; greatly reduce CPU demands, and eliminate false positives.  ( For example, 
+; an IIS rule isn't checked if the server has already been identified as an 
+; Apache server. )
 
-; The tcp-stimulus macro registers a stimulus, which, when given a TCP stream, may elicit
-; a response that may be analyzed by MOSREF to classify a service discovered by 
-; mosref/scanner.
+; The tcp-stimulus macro registers a stimulus, which, when given a TCP stream, 
+; may elicit a response that may be analyzed by MOSREF to classify a service 
+; discovered by mosref/scanner.
 ;
 ; (tcp-stimulus id-symbol
 ;               [ports: port0 portN ...]
 ;               "stimulus-string")
 ; 
-; The ports field specifies a list of ports that are good candidates for this stimulus.
+; The ports field specifies a list of ports that are good candidates for this 
+; stimulus.
 
 ;(tcp-stimulus http-get-root 
 ;              ports: 80 81 82 8000 8081 8888
@@ -59,7 +61,7 @@
     (define row (dict-ref port-table port))
     (unless row
       (set! row (make-tc))
-      (dict-set! table port-table row))
+      (dict-set! id-table port-table row))
     (tc-append! row rule))
   (for-each register-stimulus/port ports))
 
@@ -123,7 +125,7 @@
     (unless (string? frag)
       (error 'prod "expected string" frag))
    
-    `(register-response (dict-ref *tcp-stimuli-by-port* ,to)
+    `(register-response (dict-ref *tcp-stimuli-by-port* ',to)
                         'tcp
                         ',id
                         `(function (,(make-symbol 'resp- id) response tags)
