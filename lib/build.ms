@@ -95,7 +95,7 @@
                          (when (set-member? scope dep)
                            (tc-append! order dep)
                            (set-remove! scope dep)))
-                       (code-imports item))
+                       (code-dependencies item))
              (tc-append! order item)))
 
     (set! order (tc->list order))
