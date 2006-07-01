@@ -82,6 +82,26 @@
 
   (apply parse-tcp-stimulus (parse-fu 1 '(ports:) 1 args)))
 
+(define (tcp-prod addr portno lapse)
+  (define (stimulate-tcp/1 stimulus)
+    (define buffer (make-string 256))
+    (define conn (tcp-connect addr portno))
+    (define timer (timeout lapse (output conn) 'timeout))
+    (define event (wait conn))
+    (unless (eq? event 'connect)
+      (error 'prod "could not connect" addr portno event))
+    ((stimulus-func stimulus) conn)
+    (forever
+      (define event (wait conn))
+      (if (or (eq? event 'timeout)
+              (eq? event 'close))
+        (return buffer)
+        (string-append! buffer event))))
+  (define (evaluate-stimulus stimulus tags)
+    (define response (stimulate-tcp/1 stimulus))
+    (analyze-response tags stimulus response))
+  (fold evaluate-stimulus '() (find-tcp-stimuli portno)))  
+
 ; A response is a criteria that is checked against a service's response to a particular
 ; stimulus.  
 ;
@@ -160,13 +180,12 @@
  
     (apply parse-tcp-response (parse-fu 1 '(to: is: isnt:) 2 args)))
 
-(define (analyze-response stimulus response)
-  (define tags '())
+(define (analyze-response tags stimulus response)
   (define (run-response-rule rule) 
     (set! tags (rule response tags)))
 
   (for-each run-response-rule (tc->list (stimulus-responses stimulus)))
   tags)
 
-(export tcp-response register-response analyze-response)
+(export tcp-response register-response analyze-response tcp-prod)
 

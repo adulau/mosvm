@@ -28,7 +28,7 @@
 (s: (set! stimulus (car (find-tcp-stimuli 80))))
 (t: (stimulus? _))
 
-(s: (analyze-response stimulus apache-response))
+(s: (analyze-response '() stimulus apache-response))
 (t: (memq 'http-v1 _))
 (t: (memq 'http-apache _))
 (t: (memq 'http-apache-v1 _))

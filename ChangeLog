@@ -8,7 +8,7 @@
   + Integration with Massive to provide a portable, simple graphic interface
   to MOSVM applications.
 
-- ?/??/????, MOSREF Prod
+- 7/01/2006, MOSREF Prod
   * Added (list-refp list index) -> pair, similar to list-ref, except it
     returns the index'th pair in the list.
 
@@ -25,11 +25,12 @@
   * Added the lib/args-fu module, which provides functionality useful for
     constructing complicated keyword argument parsers common with Common Lisp
     environments.  See mosref/prod.ms for examples of usage.
-  + Added mosref/prod, an expert system for interrogating network services
+
+  * Added mosref/prod, an expert system for interrogating network services
     discovered by mosref/scanner and classifying their response for the
     operator.
 
-- ?/??/????, Build System Overhaul
+- 7/01/2006, Build System Overhaul
   * bin/mosc now accepts zero or more module arguments -- it will build all
     of the listed modules, in dependency order.
   
