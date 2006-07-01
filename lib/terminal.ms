@@ -32,12 +32,12 @@
 (define *has-screen* (has-util "screen"))
 (define *has-netcat* (has-util "nc"))
 (define *has-rlwrap* (has-util "rlwrap"))
+(define *has-osascript* (if *in-macosx* (has-util "osascript")))
 
 (define (bg-command cmd)
-  (run-command
-    (if *in-win32*
-      (string-append "cmd /c start " cmd)
-      (string-append cmd " &"))))
+  (if *in-win32*
+    (string-append "cmd /c start " cmd)
+    (string-append cmd " &")))
 
 (define (run-terminal title portno)
   (define inner-cmd
@@ -51,15 +51,27 @@
 
   (define cmd (cond
                 ((and *in-screen* *has-screen*)
-                 (string-append "screen -t " title " " inner-cmd))
+                 (bg-command 
+                   (string-append "screen -t '" title "' " inner-cmd)))
                 ((and *in-x11* *has-xterm*)
-                 (string-append "xterm -T " title " -e " inner-cmd))
+                 (bg-command 
+                   (string-append "xterm -T '" title "' -e " inner-cmd)))
                 (*in-win32*
-                 (string-append "cmd /c \"title " title " && " inner-cmd "\""))
+                 (bg-command 
+                   (string-append "cmd /c \"title '" title 
+                                  "' && " inner-cmd "\"")))
+                (*has-osascript*
+                  ;; And you thought win32 was bad..
+                  (string-append 
+                    "open -a terminal; "
+                    "echo 'tell application \"Terminal\"\n"
+                               "activate\n"
+                               "do script \"" inner-cmd "\"\n"
+                          "end tell' | osascript"))
                 (else
                   (error 'term "Cannot determine how to get a new window."))))
 
-  (unless (= (bg-command cmd) 0)
+  (unless (= (run-command cmd) 0)
     (error 'term "Failed attempt to spawn terminal" cmd)))
 
 ;;TODO: This should be site configured.

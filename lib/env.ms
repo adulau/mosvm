@@ -29,6 +29,9 @@
 
 (define *in-winnt*   (string-begins-with? *platform* "winnt"))
 (define *in-win32*   *in-winnt*)
+(define *in-darwin*  (string-begins-with? *platform* "darwin"))
+; We need to test if this is GNU/Darwin, or OS X ?
+(define *in-macosx*  *in-darwin*)
 (define *in-posix*   (not *in-win32*))
 (define *in-x11*     (has-env "DISPLAY"))
 
