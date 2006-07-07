@@ -37,4 +37,11 @@ mqo_value mqo_reduce_function( mqo_value func, mqo_list args );
 
 void mqo_init_multimethod_subsystem( );
 
+static inline mqo_boolean mqo_is_function( mqo_value v ){
+    return mqo_is_closure( v ) 
+        || mqo_is_primitive( v ) 
+        || mqo_is_procedure( v )
+        || mqo_is_multimethod( v );
+}
+
 #endif

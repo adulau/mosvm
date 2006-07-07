@@ -44,8 +44,7 @@ mqo_boolean mqo_isa( mqo_value x, mqo_value t ){
     }
 }
 
-mqo_value mqo_reduce_function( mqo_value fn, mqo_list args ){
-    if(! mqo_is_multimethod( fn ) )return fn;
+mqo_value mqo_reduce_multimethod( mqo_value fn, mqo_list args ){
     mqo_multimethod mm = mqo_multimethod_fv( fn );
     mqo_value arg, sig, sigs = mm->signature;
     for(;;){
@@ -62,6 +61,13 @@ mqo_value mqo_reduce_function( mqo_value fn, mqo_list args ){
         }
     }
 }
+
+mqo_value mqo_reduce_function( mqo_value fn, mqo_list args ){
+    while( mqo_is_multimethod( fn ) ){
+        fn = mqo_reduce_multimethod( fn, args );
+    }
+    return fn;
+};
 
 void mqo_format_multimethod( mqo_string buf, mqo_multimethod multimethod ){
     mqo_format_begin( buf, multimethod );

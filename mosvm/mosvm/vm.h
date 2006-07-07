@@ -55,13 +55,6 @@ extern mqo_symbol mqo_es_vm;
 jmp_buf* mqo_interp_xp;
 jmp_buf* mqo_proc_xp;
 
-static inline mqo_boolean mqo_is_function( mqo_value v ){
-    return mqo_is_closure( v ) 
-        || mqo_is_primitive( v ) 
-        || mqo_is_procedure( v );
-        // || mqo_is_multimethod( v );
-}
-
 void mqo_chain( mqo_pair data );
 void mqo_chainf( mqo_value fn, mqo_word ct, ... );
 void mqo_interp_loop( );
