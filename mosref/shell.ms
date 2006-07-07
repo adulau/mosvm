@@ -59,6 +59,14 @@
       (send-err "Could not find node " (format id) for "."))
     (list node path))
 
+  (define (opt-port terms for)
+    (when (tc-empty? terms)
+      (return (random-integer 10000 30000)))
+    (define str (tc-next! terms))
+    (guard (lambda (e)
+             (send-err "Could not parse port number " (format str) "."))
+           (string->integer str)))
+        
   (define finished #f)
 
   (define commands 
@@ -94,7 +102,37 @@
                   "USAGE: nodes\n"
                   "Lists the nodes currently known to the console, and their"
                   " addresses.\n\n"))
-          
+         
+          (list "drone" (function (drone-cmd terms)
+                          (define file (req-path terms " drone file"))
+                          (define id (req-term terms " drone identifier"))
+                          (define platform (req-term terms " drone platform"))
+                          (define portno (opt-port terms " listener port"))
+                          
+                          (define ecdh (make-console-ecdh))
+                          (define data 
+                            (guard (lambda (e)
+                                     (traceback e)
+                                     (send-err "Could not compile drone."))
+                              (make-drone-exe (node-addr current-node)
+                                                    portno
+                                                    ecdh
+                                                    platform)))
+                          (guard (lambda (e)
+                                   (traceback e)
+                                   (send-err "Could not write file "
+                                             (format (cadr file) ".")))
+                            (put-node-file @file data))
+
+                          ;TODO: Spawn console listener.
+                          )
+                (string-append
+                  "USAGE: drone <file> <id> <platform> [<portno>]\n"
+                  "Creates a new drone executable for the specified platform"
+                  " and places it at file, then spawns a listener on the"
+                  " current node.  When the drone connects to the listener, a"
+                  " the drone will be bound to the specified identifier.\n\n"))
+
           (list "cp" (function (cp-cmd terms)
                        (define src (req-path terms " for source file"))
                        (define dst (req-path terms " for destination file"))
