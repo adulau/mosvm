@@ -42,7 +42,12 @@
   * Nodes are listed with: nodes
   * Commands are listed with: help
   * Help on a particular command is listed with: help command
+  * Files are referenced, from the current node, with the file's path, or
+    by a pair of node-id and path, separated by a colon.
+  * Files are copied with: cp src dst
+  * Files may be accessed and modified on console nodes.
   + MOSREF Drones are created with: drone file id platform [portno]
+  + Added cp
   + Added site configuration settings for "terminal"
   + Replaced the dated Console REPL with a console shell
   + Local shell commands are performed with: sh <command>

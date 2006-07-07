@@ -42,10 +42,22 @@
     (tc-next! terms))
 
   (define (req-node terms for)
-    (define id (req-term terms "node identifier " for "."))
+    (define id (req-term terms "node identifier" for "."))
     (define node (find-mosref-node id))
     (unless node
       (send-err "Could not find " (format id) for ".")))
+
+  (define (req-path terms for)
+    (define path (req-term terms "file path" for "."))
+    (unless (string-find path ":")
+      (return (list current-node path)))
+    (set! path (string-split path ":"))
+    (define id (car path))
+    (set! path (cadr path))
+    (define node (find-mosref-node id))
+    (unless node
+      (send-err "Could not find node " (format id) for "."))
+    (list node path))
 
   (define finished #f)
 
@@ -83,6 +95,30 @@
                   "Lists the nodes currently known to the console, and their"
                   " addresses.\n\n"))
           
+          (list "cp" (function (cp-cmd terms)
+                       (define src (req-path terms " for source file"))
+                       (define dst (req-path terms " for destination file"))
+
+                       (send-line
+                         "Copy from: " (format src) " to " (format dst))
+                       
+                       (define data (guard (lambda (e) 
+                                             (traceback e)
+                                             (send-err
+                                               "Could not access file " 
+                                               (format (cadr src)) "."))
+                                      (get-node-file @src)))
+                       
+                       (guard (lambda (e) 
+                                (traceback e)
+                                (send-err
+                                  "Could not alter file "
+                                  (format (cadr dst) ".")))
+                         (put-node-file @dst data)))
+                (string-append
+                  "USAGE: cp src-file dst-file\n"
+                  "Copies source file to dest file.\n\n"))
+
           (list "help" (function (help-cmd terms)
                          (when (tc-empty? terms)
                            (send-line 
@@ -100,6 +136,7 @@
                   "USAGE: help <command>\n"
                   "Requests information about the syntax and usage of a "
                   " command\n\n"))
+
           (list "exit" (function (exit-cmd terms)
                          (set! finished #t))
                 (string-append

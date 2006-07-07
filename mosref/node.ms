@@ -54,3 +54,9 @@
   (dict-set! *nodes-by-id* id node)
   node)
 
+(define (get-node-file (<console-node> node) path)
+  (read-data-file path))
+
+(define (put-node-file (<console-node> node) path data)
+  (write-data-file path data))
+
