@@ -50,7 +50,7 @@
   (define finished #f)
 
   (define commands 
-    (dict (cons "on" (function (on-cmd terms)
+    (dict (list "on" (function (on-cmd terms)
                        (define old-node current-node)
                        (define node (req-node terms ""))
                        (set-current-node node)
@@ -63,23 +63,62 @@
                                    (revert-node)
                                    (re-error err))
                             (parse-cmd terms)
-                            (revert-node)))))
-          (cons "exit" (function (on-exit terms)
-                         (set! finished #t)))))
+                            (revert-node))))
+                (string-append
+                  "USAGE: on <node-id>\n"
+                  "Instructs the console to perform subsequent commands on the"
+                  " specified node.\n"
+                  "USAGE: on <node-id> <command> <arg> ...\n\n"
+                  "Performs the supplied command, with arguments, on the"
+                  " specified host\n\n"))
+
+          (list "nodes" (function (nodes-cmd terms)
+                          (for-each (function (display-node node)
+                                      (send-line (format (node-id node))
+                                                 " -- "
+                                                 (format (node-addr node))))
+                                    (list-mosref-nodes)))
+                (string-append
+                  "USAGE: nodes\n"
+                  "Lists the nodes currently known to the console, and their"
+                  " addresses.\n\n"))
+          
+          (list "help" (function (help-cmd terms)
+                         (when (tc-empty? terms)
+                           (send-line 
+                             "Commands: "
+                             (apply string-join " " (dict-keys commands)))
+                           (return))
+                         (define cmd (tc-next! terms))
+                         (define data (dict-ref commands cmd))
+                         (unless data
+                           (send-err "Command " cmd " not found."))
+                         (send (string-append "\n" (cadr data))))
+                (string-append
+                  "USAGE: help\n"
+                  "Requests a list of all commands known by the console\n\n"
+                  "USAGE: help <command>\n"
+                  "Requests information about the syntax and usage of a "
+                  " command\n\n"))
+          (list "exit" (function (exit-cmd terms)
+                         (set! finished #t))
+                (string-append
+                  "Terminates the console."))))
   
   (define (parse-cmd terms)
     (when (string? terms)
-      (return (parse-cmd (apply make-tc (match-regex* *cmd-term* terms)))))
+      (return (parse-cmd (apply make-tc (or (match-regex* *cmd-term* terms)
+                                            '())))))
 
     (when (tc-empty? terms) 
       (return))
 
     (define verb (tc-next! terms))
-    (define func (dict-ref commands verb))
-    (unless func
+    (define data (dict-ref commands verb))
+    (unless data
       (send-err "I do not understand " (format verb) "."))
     
-    (func terms))
+    ((car data) terms))
 
   (set-current-node console)
 
@@ -94,4 +133,3 @@
                   (re-error err)))
         (parse-cmd cmd))
       (unless finished (send-prompt)))))
-

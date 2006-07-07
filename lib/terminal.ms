@@ -26,7 +26,7 @@
       (member name '("nc")))
 
     (function (has-util/posix name)
-      (= (run-command (string-append "which " name " >/dev/null")) 0))))
+      (= (run-command (string-append "which " name " 2>&1 >/dev/null")) 0))))
 
 (define *has-xterm*  (has-util "xterm"))
 (define *has-screen* (has-util "screen"))

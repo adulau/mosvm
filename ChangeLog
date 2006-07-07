@@ -39,6 +39,9 @@
     input and output to provide a console shell.
   * Switching between nodes performed with: on <node> [command]
   * Exiting MOSREF performed with: exit
+  * Nodes are listed with: nodes
+  * Commands are listed with: help
+  * Help on a particular command is listed with: help command
   + MOSREF Drones are created with: drone file id platform [portno]
   + Added site configuration settings for "terminal"
   + Replaced the dated Console REPL with a console shell

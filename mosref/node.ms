@@ -14,20 +14,43 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
 (module "mosref/node")
+(import "lib/object")
 
-; TODO: Shim
-(define *console-node* 'console)
+(define *nodes-by-id* (dict))
 
-; TODO: Shim
-(define (find-mosref-node node)
-  (string->symbol node))
+(define-class node <object>
+              (make-node-record id addr)
+              node?
+              (id node-id)
+              (addr node-addr))
 
-; TODO: Shim
-(define (node-id node)
-  (symbol->string node))
+(define-class console-node <node>
+              (make-console-node-record id addr)
+              console-node?
+              (id node-id)
+              (addr node-addr))
 
-; TODO: Shim
+(define-class drone-node <node>
+              (make-drone-node-record id addr xmit recv)
+              drone-node?
+              (id node-id)
+              (addr node-addr)
+              (xmit drone-node-xmit)
+              (recv drone-node-recv))
 
-(define (make-console-node address portno)
-  'console)
+(define (list-mosref-nodes)
+  (dict-values *nodes-by-id*))
+
+(define (find-mosref-node id)
+  (dict-ref *nodes-by-id* id))
+
+(define (make-console-node addr)
+  (define node (make-console-node-record "console" addr))
+  (dict-set! *nodes-by-id* "console" node)
+  node) 
+
+(define (make-drone-node id addr xmit recv)
+  (define node (make-drone-node-record id addr xmit recv))
+  (dict-set! *nodes-by-id* id node)
+  node)
 

@@ -35,16 +35,12 @@
 
   (define (show-usage)
     (send-lines 
-      "USAGE: mosref console-addr:console-port"
+      "USAGE: mosref console-addr"
       "       console-addr -- The hostname or address of the console; this"
       "                       address should be reachable by any first tier"
       "                       drones."
       ""
-      "       console-port -- The tcp port that the console will listen to;"
-      "                       if \"*\" is specified, a random port shall be"
-      "                       selected."
-      ""
-      "EXAMPLE: mosref decoy.ephemeralsecurity.com:19191"
+      "EXAMPLE: mosref decoy.ephemeralsecurity.com"
       ""))
 
   (define (parse-error message)
@@ -57,17 +53,7 @@
       (parse-error (string-append "Missing " type " for " purpose "."))))
 
   (missing-error "address" "console listener")
-  (define console (string-split (next-arg) ":"))
+  (define console (next-arg))
 
-  (unless (= 2 (length console))
-    (parse-error (string-append "Format for console host must be address:port")))
-
-  (define console-addr (car console))
-  (define console-port (if (string=? (cadr console) "*")
-                         (random-integer 10000 30000)
-                         (guard (lambda (e) 
-                                  (parse-error (car (error-info e))))
-                                (string->integer (cadr console)))))
-
-  (mosref-shell (make-console-node console-addr console-port)))
+  (mosref-shell (make-console-node console)))
 
