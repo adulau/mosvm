@@ -8,6 +8,38 @@
   + Integration with Massive to provide a portable, simple graphic interface
   to MOSVM applications.
 
+- ?/??/????, MOSREF Serve Console TCP
+  
+- ?/??/????, MOSREF Drone Bridges
+  + All drones now must have unique identifiers
+  + The console is identified as console
+  + Added (build-remote-drone endpoint portno ident platform), which returns
+    a buffer containing a drone, that will connect to portno on the specified
+    portno, then integrate itself into the MOSREF network.
+
+- ?/??/????, MOSREF Serve Drone TCP
+  + Added mosref/forward, which contains functionality for forwarding TCP
+    connections across MOSREF transports.
+
+  + Added (spawn-remote-tcp-server endpoint portno) -> bridge to
+    mosref/forward, which causes a drone to create a TCP listener, and forward
+    each incoming connection as a lane.  Closing the bridge causes the drone
+    to stop listening.
+
+  + Added (close-bridge bridge) to lib/bridge
+
+- ?/??/????, MOSREF Console Shell
+  + Added site configuration settings for "terminal"
+  + Replaced the dated Console REPL with a console shell
+  + The concept of "current node" added to permit the REPL to control multiple
+    drones.
+  + MOSREF now started with:  mosref address:portno 
+  + MOSREF Drones are created with: drone name platform [portno]
+  + Switching between nodes performed with: on <node> [command]
+  + Local shell commands are performed with: sh <command>
+  + Local lisp commands are performed with: do <expr>
+  + New MOSREF shell windows created with window
+
 - 7/01/2006, MOSREF Prod
   * Added (list-refp list index) -> pair, similar to list-ref, except it
     returns the index'th pair in the list.
