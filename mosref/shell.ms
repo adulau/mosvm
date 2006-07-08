@@ -15,27 +15,19 @@
 
 (module "mosref/shell")
 (import "mosref/console")
+(import "mosref/node")
 
 (define *cmd-term* (make-regex "[^ \r\n\t]+"))
 
-; TODO: Shim
-(define *console-node* 'console)
-
-; TODO: Shim
-(define (find-mosref-node node)
-  (string->symbol node))
-
-; TODO: Shim
-(define (node-id node)
-  (symbol->string node))
-
 ; Assumes that each input is precisely one line.
-(define (mosref-shell)
-  (define current-node *console-node*)
-  (define current-node-id "console")
- 
+(define (mosref-shell console)
+  (define current-node #f)
+
+  (define (set-current-node node)
+    (set! current-node node))
+
   (define (send-prompt)
-    (send (string-append current-node-id "> ")))
+    (send (string-append (node-id current-node) "> ")))
 
   (define (send-line . items)
     (send (string-append @items *line-sep*)))
@@ -55,26 +47,25 @@
     (unless node
       (send-err "Could not find " (format id) for ".")))
 
+  (define finished #f)
+
   (define commands 
     (dict (cons "on" (function (on-cmd terms)
-                       (define node (req-node terms ""))
-
-                       (define old-id current-node-id)
                        (define old-node current-node)
-
-                       (set! current-node-id (node-id node))
-                       (set! current-node node)
+                       (define node (req-node terms ""))
+                       (set-current-node node)
                        
                        (define (revert-node)
-                         (set! current-node old-node)
-                         (set! current-node-id old-id))
+                         (set-current-node old-node))
 
                        (unless (tc-empty? terms)
                          (guard (function (revert-node-before-err err)
                                    (revert-node)
                                    (re-error err))
                             (parse-cmd terms)
-                            (revert-node)))))))
+                            (revert-node)))))
+          (cons "exit" (function (on-exit terms)
+                         (set! finished #t)))))
   
   (define (parse-cmd terms)
     (when (string? terms)
@@ -90,9 +81,11 @@
     
     (func terms))
 
+  (set-current-node console)
+
   (send-prompt)
 
-  (forever
+  (until finished
     (define cmd (wait))
     (when (eq? cmd 'close) (return))
     (when (string? cmd)
@@ -100,5 +93,5 @@
                 (unless (eq? (error-key err) 'syn)
                   (re-error err)))
         (parse-cmd cmd))
-      (send-prompt))))
+      (unless finished (send-prompt)))))
 

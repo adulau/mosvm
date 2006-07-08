@@ -29,13 +29,19 @@
   + Added (close-bridge bridge) to lib/bridge
 
 - ?/??/????, MOSREF Console Shell
+  * MOSREF now started with:  mosref address:portno 
+  * Added mosref/node, which encapsulates an node that can be addressed by
+    the console and assigned work.
+  * The concept of "current node" added to permit the REPL to designate
+    which node should perform a command.
+  * Added the mosref/shell module.
+  * Added (mosref-shell) to the mosref/shell module; interacts with process
+    input and output to provide a console shell.
+  * Switching between nodes performed with: on <node> [command]
+  * Exiting MOSREF performed with: exit
+  + MOSREF Drones are created with: drone file id platform [portno]
   + Added site configuration settings for "terminal"
   + Replaced the dated Console REPL with a console shell
-  + The concept of "current node" added to permit the REPL to control multiple
-    drones.
-  + MOSREF now started with:  mosref address:portno 
-  + MOSREF Drones are created with: drone name platform [portno]
-  + Switching between nodes performed with: on <node> [command]
   + Local shell commands are performed with: sh <command>
   + Local lisp commands are performed with: do <expr>
   + New MOSREF shell windows created with window

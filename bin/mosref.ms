@@ -15,7 +15,7 @@
 
 (module "bin/mosref")
 (import "mosref/console")
-(import "lib/tcp-server")
+(import "mosref/shell")
 
 (define (main . args)
   (define unparsed-args (apply make-tc args))
@@ -35,14 +35,16 @@
 
   (define (show-usage)
     (send-lines 
-      "USAGE: mosref console-addr:console-port drone-platform drone-path"
-      "       console-addr -- The hostname or address of the console."
-      "       console-port -- The tcp port that the console will listen to."
-      "       drone-platform -- One of: winnt-x86, openbsd-x86, linux-x86,"
-      "                         darwin-ppc."
-      "       drone-path -- The file to write the drone executable to."
+      "USAGE: mosref console-addr:console-port"
+      "       console-addr -- The hostname or address of the console; this"
+      "                       address should be reachable by any first tier"
+      "                       drones."
       ""
-      "EXAMPLE: mosref decoy.ephemeralsecurity.com:19191 openbsd-x86 a-drone"
+      "       console-port -- The tcp port that the console will listen to;"
+      "                       if \"*\" is specified, a random port shall be"
+      "                       selected."
+      ""
+      "EXAMPLE: mosref decoy.ephemeralsecurity.com:19191"
       ""))
 
   (define (parse-error message)
@@ -67,48 +69,5 @@
                                   (parse-error (car (error-info e))))
                                 (string->integer (cadr console)))))
 
-  (missing-error "platform" "drone compilation")
-  (define drone-platform (next-arg))
-  (unless (member drone-platform '("winnt-x86" "openbsd-x86" "linux-x86"
-                                   "darwin-ppc"))
-    (parse-error "This version of mosref has limited platform support"))
+  (mosref-shell (make-console-node console-addr console-port)))
 
-  (missing-error "path" "drone output")
-  (define drone-path (next-arg))
-
-  (define console-ecdh (make-console-ecdh))
-
-  (send-line "Writing drone to " drone-path "...")
-
-  (write-data-file drone-path (make-drone-exe console-addr
-                                              console-port
-                                              console-ecdh
-                                              drone-platform ))
-
-  (send-line "Starting listener on port " 
-             (number->string console-port)
-             "..." )
-
-  (define console-listener (tcp-listen console-port))
-  (define drone-port #f)
-
-  (until drone-port
-         ;TODO: We need a timeout.
-         (define client (wait console-listener))
-         (send-line "Client connected to port; awaiting affiliation...")
-         (guard (lambda (e) 
-                  (unless (eq? (error-key e) 'aff) (re-error e))
-                  (send-line "Client failed to affiliate; rejected."))
-                (set! drone-port 
-                  (console-affiliation console-ecdh 
-                                       (input client)
-                                       (output client)))))
-
-  (send-line "Client confirmed as drone by affiliation; closing listener...")
-
-  ; TODO: Doesn't work (send 'close console-listener)
-
-  (send-line "Welcome to MOSREF; all instructions shall be evaluated on the"
-             " drone, with results reported to the console.")
-
-  (apply console-repl drone-port))

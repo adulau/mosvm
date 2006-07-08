@@ -40,6 +40,16 @@
 (define-foc service address port)
 (define-field service address)
 (define-field service port)
+(define-field service tags)
+
+; See [1.5] of "The MOSREF Data Model"
+
+(define-table response)
+(define-new response service stimulus)
+(define-field response service)
+(define-field response stimulus)
+(define-field response content)
+(define-field response port)
 
 ; Invoked when a new port has been discovered by the scanner:
 
