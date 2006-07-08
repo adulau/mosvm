@@ -119,7 +119,8 @@
                 (data #f))
             (guard (lambda (e)
                      (send (list 'fail (car (error-info e)))))
-              (set! data (read-data-file path)))))))))
+              (send (list 'succ (read-data-file path)))))
+          (send 'close))))))
 
 (define (get-node-file (<drone-node> node) path)
   (with-node-program node *drone-get-file-prog*
@@ -139,7 +140,7 @@
                      (send (list 'fail (car (error-info e)))))
               (write-data-file path data))
               (send '(succ)))
-              (send 'close))))))
+          (send 'close))))))
 
 (define (put-node-file (<drone-node> node) path data)
   (with-node-program node *drone-put-file-prog*
