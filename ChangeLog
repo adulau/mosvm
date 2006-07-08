@@ -46,7 +46,7 @@
     by a pair of node-id and path, separated by a colon.
   * Files are copied with: cp src dst
   * Files may be accessed and modified on console nodes.
-  + MOSREF Drones are created with: drone file id platform [portno]
+  * MOSREF Drones are created with: drone file id platform [portno]
   + Added site configuration settings for "terminal"
   + Replaced the dated Console REPL with a console shell
   + Local shell commands are performed with: sh <command>

@@ -15,6 +15,9 @@
 
 (module "mosref/node")
 (import "lib/object")
+(import "lib/bridge")
+(import "lib/filter")
+(import "lib/package-filter")
 
 (define *nodes-by-id* (dict))
 
@@ -31,12 +34,11 @@
               (addr node-addr))
 
 (define-class drone-node <node>
-              (make-drone-node-record id addr xmit recv)
+              (make-drone-node-record id addr bridge)
               drone-node?
               (id node-id)
               (addr node-addr)
-              (xmit drone-node-xmit)
-              (recv drone-node-recv))
+              (bridge drone-node-bridge))
 
 (define (list-mosref-nodes)
   (dict-values *nodes-by-id*))
@@ -49,14 +51,99 @@
   (dict-set! *nodes-by-id* "console" node)
   node) 
 
-(define (make-drone-node id addr xmit recv)
-  (define node (make-drone-node-record id addr xmit recv))
+(define (make-drone-node id addr bridge)
+  (define node (make-drone-node-record id addr bridge))
   (dict-set! *nodes-by-id* id node)
   node)
+
+(define (spawn-node-program (<console-node> node) program)
+  (define xmit (make-channel))
+  (define recv (make-channel))
+  (with-input xmit (with-output recv (spawn program)))
+  (list xmit recv))
+
+(define (spawn-node-program (<drone-node> node) program)
+  (define lane (make-lane (drone-node-bridge node)))
+  (define xmit (output-chain (lane-xmit lane)
+                             (freeze-filter)))
+  (define recv (input-chain (lane-recv lane)
+                            (thaw-filter)))
+  (send program xmit)
+  (list xmit recv))
+
+(define (expect-data recv)
+  ;TODO: timeout
+  (define evt (wait recv))
+  (when (eq? evt 'close)
+    (error 'expect "channel closed while expecting data"))
+  (guard (lambda (e)
+           (apply error 'expect (error-info e)))
+    evt))
+
+(define (expect-signal recv)
+  (define evt (expect-data recv))
+  (unless (pair? evt)
+    (error 'expect "got invalid data while expecting signal" evt))
+  evt)
+
+(define (expect-succ recv)
+  (define evt (expect-signal recv))
+  (when (eq? (car evt) 'fail)
+    (error 'expect (string-append "expected success, got " (cadr evt))))
+  (unless (eq? (car evt) 'succ)
+    (error 'expect (string-append "expected success, got " (format evt))))
+  (if (null? (cdr evt))
+    #t 
+    (cadr evt)))
+    
+(define-macro (with-node-program node program . stmts)
+  `(begin
+     (define conn (spawn-node-program ,node ,program))
+     (define xmit (car conn))
+     (define recv (cadr conn))
+     (define result (guard (lambda (e)
+                             (send 'close xmit)
+                            (re-error e))
+                      ,@stmts))
+    (send 'close xmit)
+    result))
 
 (define (get-node-file (<console-node> node) path)
   (read-data-file path))
 
+(define *drone-get-file-prog*
+  (assemble
+    (optimize
+      (compile
+        `((let ((path (wait))
+                (data #f))
+            (guard (lambda (e)
+                     (send (list 'fail (car (error-info e)))))
+              (set! data (read-data-file path)))))))))
+
+(define (get-node-file (<drone-node> node) path)
+  (with-node-program node *drone-get-file-prog*
+     (send path xmit)
+     (expect-succ recv)))
+
 (define (put-node-file (<console-node> node) path data)
   (write-data-file path data))
+
+(define *drone-put-file-prog*
+  (assemble 
+    (optimize 
+      (compile 
+        `((let ((path (wait))
+                (data (wait)))
+            (guard (lambda (e)
+                     (send (list 'fail (car (error-info e)))))
+              (write-data-file path data))
+              (send '(succ)))
+              (send 'close))))))
+
+(define (put-node-file (<drone-node> node) path data)
+  (with-node-program node *drone-put-file-prog*
+    (send path xmit)
+    (send data xmit)
+    (expect-succ recv)))
 

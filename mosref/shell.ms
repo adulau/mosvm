@@ -119,7 +119,7 @@
                                                     platform)))
                           (guard (lambda (e)
                                    (send-err "Could not write file "
-                                             (format (cadr file) ".")))
+                                             (format (cadr file)) "."))
                             (put-node-file @file data))
                         
                           (send-line "Drone executable created.")
@@ -145,8 +145,9 @@
                         
                           (send-line "Drone affiliated.")
 
-                          ;TODO: Where do we get addr?
-                          (make-drone-node id #f @transport))
+                          ;TODO: Where will we get addr?
+                          (make-drone-node 
+                            id #f (spawn-endpoint console-endpoint @transport)))
 
                 (string-append
                   "USAGE: drone <file> <id> <platform> [<portno>]\n"
@@ -169,10 +170,12 @@
                                       (get-node-file @src)))
                        
                        (guard (lambda (e) 
+                                (traceback e)
                                 (send-err
                                   "Could not alter file "
-                                  (format (cadr dst) ".")))
+                                  (format (cadr dst)) "."))
                          (put-node-file @dst data)))
+
                 (string-append
                   "USAGE: cp src-file dst-file\n"
                   "Copies source file to dest file.\n\n"))

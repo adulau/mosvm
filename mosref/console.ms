@@ -28,7 +28,8 @@
 (import "lib/s-filter")
 (import "lib/package-filter")
 
-(export await-drone-affiliation console-affiliation console-repl 
+(export await-drone-affiliation console-affiliation 
+        console-endpoint
         make-drone-exe make-console-ecdh)
 
 (import "lib/iterate")
@@ -107,15 +108,6 @@
 
 ;; transmits the supplied program to be executed on the remote endpoint of
 ;; the supplied transport.
-
-(define (spawn-drone-program program endpoint)
-  (define lane (make-lane endpoint))
-  (define xmit (output-chain (lane-xmit lane)
-                             (freeze-filter)))
-  (define recv (input-chain (lane-recv lane)
-                            (thaw-filter)))
-  (send program xmit)
-  (list xmit recv))
 
 (define *repl-program*
   (assemble 
