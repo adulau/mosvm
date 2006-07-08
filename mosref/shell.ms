@@ -112,20 +112,42 @@
                           (define ecdh (make-console-ecdh))
                           (define data 
                             (guard (lambda (e)
-                                     (traceback e)
                                      (send-err "Could not compile drone."))
                               (make-drone-exe (node-addr current-node)
                                                     portno
                                                     ecdh
                                                     platform)))
                           (guard (lambda (e)
-                                   (traceback e)
                                    (send-err "Could not write file "
                                              (format (cadr file) ".")))
                             (put-node-file @file data))
+                        
+                          (send-line "Drone executable created.")
 
-                          ;TODO: Spawn console listener.
-                          )
+                          (define listener 
+                            (guard (lambda (e)
+                                   (send-err "Could not listen to " 
+                                             (format portno) "."))
+                            (tcp-listen portno)))
+                          
+                          (send-line "Listening for drone on " (format portno)
+                                     "...")
+
+                          ;TODO: Spawn this off.
+                          (define transport
+                            (guard (lambda (e)
+                                   (close-listener listener)
+                                   (send-err "Affilation failed, "
+                                             (car (error-info e))
+                                             "."))
+                               ;TODO: Make lapse configurable.
+                               (await-drone-affiliation listener ecdh 60000)))
+                        
+                          (send-line "Drone affiliated.")
+
+                          ;TODO: Where do we get addr?
+                          (make-drone-node id #f @transport))
+
                 (string-append
                   "USAGE: drone <file> <id> <platform> [<portno>]\n"
                   "Creates a new drone executable for the specified platform"
@@ -141,14 +163,12 @@
                          "Copy from: " (format src) " to " (format dst))
                        
                        (define data (guard (lambda (e) 
-                                             (traceback e)
                                              (send-err
                                                "Could not access file " 
                                                (format (cadr src)) "."))
                                       (get-node-file @src)))
                        
                        (guard (lambda (e) 
-                                (traceback e)
                                 (send-err
                                   "Could not alter file "
                                   (format (cadr dst) ".")))

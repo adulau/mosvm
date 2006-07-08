@@ -28,7 +28,8 @@
 (import "lib/s-filter")
 (import "lib/package-filter")
 
-(export console-affiliation console-repl make-drone-exe make-console-ecdh)
+(export await-drone-affiliation console-affiliation console-repl 
+        make-drone-exe make-console-ecdh)
 
 (import "lib/iterate")
 
@@ -76,6 +77,14 @@
   ;;; TODO: We should probably create a pseudo-stream type..
   (step "Affiliation complete.")
   (list command report))
+
+(define (await-drone-affiliation conns ecdh lapse)
+  (define timer (if lapse (timeout lapse (output conns) 'timeout) #f))
+  (define conn (wait conns))
+  (when (eq? conn 'timeout)
+    (error 'aff "the drone did not connect"))
+  (when timer (cancel-timeout timer))
+  (console-affiliation ecdh conn conn))
 
 (define (make-drone-exe console-addr console-portno console-ecdh platform)
   (build-exe platform
