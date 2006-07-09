@@ -216,7 +216,7 @@
           (send 'close))))))
                 
 (define (eval-node-expr (<console-node> node) expr)
-  (send-line ":: " (format (exec expr))))
+  (guard traceback (send-line ":: " (format (exec expr)))))
 
 (define (eval-node-expr (<drone-node> node) expr)
   (with-node-program node *drone-eval-prog*
