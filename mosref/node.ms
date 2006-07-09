@@ -277,9 +277,6 @@
                    "MOSREF cannot spawn shell commands on Microsoft Windows"))
 
             (let ((cmd (wait)))
-              (print "COMMAND: ")
-              (print (format cmd))
-              (print *line-sep*)
               (guard (lambda (err)
                        (error 'shell
                               (string-append "cannot find command " (car cmd))))
@@ -299,8 +296,7 @@
                 (define evt (wait stream))
                 (cond
                   ((eq? evt 'close) (set! done #t))
-                  (else (send evt) 
-                        (print "Forwarded.\n"))))
+                  (else (send evt))))
 
               (send 'close)))))))
 
