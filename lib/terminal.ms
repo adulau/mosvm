@@ -17,6 +17,7 @@
 
 (module "lib/terminal")
 (import "lib/env")
+(import "lib/foe")
 
 (define *in-screen*  (env-is  "TERMINAL" "screen"))
 
@@ -26,7 +27,7 @@
       (member name '("nc")))
 
     (function (has-util/posix name)
-      (= (run-command (string-append "which " name " 2>&1 >/dev/null")) 0))))
+      (false-on-error (locate-cmd name)))) )
 
 (define *has-xterm*  (has-util "xterm"))
 (define *has-screen* (has-util "screen"))

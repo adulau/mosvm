@@ -35,3 +35,7 @@
 (define *in-posix*   (not *in-win32*))
 (define *in-x11*     (has-env "DISPLAY"))
 
+(define (locate-cmd name)
+  (apply locate-path name
+         (string-split* (cadr (assoc "PATH" *env*))
+                        (if *in-win32* ";" ":"))))
