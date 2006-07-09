@@ -1,7 +1,10 @@
 + freeze-filter should forward close.
+
 + sudden termination of a drone does not update the console's node table.
+
++ a console shell will wait forever for a drone
+
 + cp command's output is ugly
-+ locate-path should return false when it doesn't find a path, not null.
 
 + Instead of which, use:
   (apply locate-path "screen" 

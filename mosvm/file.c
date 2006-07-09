@@ -352,7 +352,13 @@ MQO_BEGIN_PRIM( "locate-path", locate_path )
     REQ_STRING_ARG( filename );
     REST_ARGS( paths );
     
-    STRING_RESULT( mqo_locate_file( filename, paths ) );
+    mqo_string s = mqo_locate_file( filename, paths );
+
+    if( s ){
+        STRING_RESULT( s );
+    }else{
+        FALSE_RESULT( );
+    };
 MQO_END_PRIM( locate_path )
 
 MQO_BEGIN_PRIM( "path-exists?", path_existsq )

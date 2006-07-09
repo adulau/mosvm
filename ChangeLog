@@ -60,6 +60,7 @@
     which can cause MOSREF to assume the stream will never yield.  Currently,
     MOSREF will wait roughly 500ms, then terminate.  A future version of
     MOSREF will employ waitpid, here.
+  * locate-path will now return false when a file cannot be found.
 
 - 7/01/2006, MOSREF Prod
   * Added (list-refp list index) -> pair, similar to list-ref, except it
