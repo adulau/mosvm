@@ -46,7 +46,6 @@ mqo_value mqo_thaw_mem( const void* mem, mqo_quad memlen ){
     
     void err( const char* m ){ mqo_errf( mqo_es_pkg, "s", m ); };
                                
-
     const void* next_block( mqo_word len ){
         const char* p = mem + memix;
         memix += len;

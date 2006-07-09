@@ -21,6 +21,9 @@
 
 (define *nodes-by-id* (dict))
 
+(define (send-line . items)
+  (send (string-append @items *line-sep*)))
+
 (define-class node <object>
               (make-node-record id addr)
               node?
@@ -129,7 +132,7 @@
   (with-node-program node *drone-get-file-prog*
      (send path xmit)
      (define data (make-string))
-     (forever
+     (forever ;TODO: Bad, we can't use forever/return in w-n-p
        (define evt (expect-data recv))
        (cond
          ((eq? evt 'done) (return data))
@@ -164,4 +167,70 @@
       (send (string-read! data 16384) xmit))
     (send 'done xmit)
     (expect-succ recv)))
+
+;; Not currently used -- intended for on drone repl
+
+(define *drone-repl-prog*
+  (assemble
+    (optimize
+      (compile
+        `((export nothing) ;; All private..
+          (define err-output (output-chain (output)
+                                           (cons-filter 'err)))
+          (define res-output (output-chain (output)
+                                           (cons-filter 'res)
+                                           (format-filter)))
+          (define out-output (output-chain (output)
+                                           (cons-filter 'out)
+                                           (format-filter)))
+          (define (fwd-traceback err)
+            (define s (make-string))
+            (traceback err s)
+            (send s err-output))
+
+          (with-output out-output
+             (spawn (function (drone-repl-process)
+                      (forever
+                        (guard fwd-traceback (send ((wait))
+                                                   res-output)))))))))))
+
+(define *drone-eval-prog*
+  (assemble
+    (optimize
+      (compile
+        `((export nothing) ;; All private..
+          (define okay #t)
+          (define result #f)
+
+          (define out-output )
+          (define result
+            (with-output (output-chain (output)
+                                           (cons-filter 'out)
+                                           (format-filter))
+              (guard (function (fwd-traceback err)
+                       (define s (make-string))
+                       (traceback err s)
+                       (set! okay #f)
+                       s)))
+              ((wait)))
+          (send (list (if okay 'succ 'fail) result))
+          (send 'close))))))
+                
+(define (eval-node-expr (<console-node> node) expr)
+  (send-line ":: " (format (exec expr))))
+
+(define (eval-node-expr (<drone-node> node) expr)
+  (with-node-program node *drone-eval-prog*
+    (send (assemble (optimize (compile expr))) xmit)                 
+    (define done #f)
+    (until done
+      (define evt (expect-signal recv))
+      (define key (car evt))
+      (case (car evt)
+        ((out) (when (string? evt) (send-line (cdr evt))))
+        ((fail) (when (string? evt) (send-line (cdr evt)))
+                (set! done #t))
+        ((succ) (when (string? evt) (send-line ":: " (cdr evt)))
+                (set! done #t))))
+    (send 'close xmit)))
 

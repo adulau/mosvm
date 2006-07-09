@@ -17,6 +17,9 @@
 (import "mosref/console")
 (import "mosref/node")
 
+(define (send-line . items)
+  (send (string-append @items *line-sep*)))
+
 (define *cmd-term* (make-regex "[^ \r\n\t]+"))
 
 ; Assumes that each input is precisely one line.
@@ -28,9 +31,6 @@
 
   (define (send-prompt)
     (send (string-append (node-id current-node) "> ")))
-
-  (define (send-line . items)
-    (send (string-append @items *line-sep*)))
 
   (define (send-err . items)
     (apply send-line "ERROR: " items)
@@ -199,6 +199,14 @@
                   "Requests information about the syntax and usage of a "
                   " command\n\n"))
 
+          (list "do" (function (eval-cmd terms)
+                          (define expr (apply string-join " " (tc->list terms)))
+                          (eval-node-expr current-node (string->exprs expr)))
+                (string-append
+                  "USAGE: do expr\n"
+                  "Evaluates the supplied lisp expression on the current node,"
+                  " and outputs the result.\n\n"))
+                            
           (list "exit" (function (exit-cmd terms)
                          (set! finished #t))
                 (string-append
