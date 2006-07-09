@@ -55,5 +55,7 @@
   (missing-error "address" "console listener")
   (define console (next-arg))
 
-  (mosref-shell (make-console-node console)))
+  (define node (make-console-node console))
+  
+  (mosref-shell node node))
 

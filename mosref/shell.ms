@@ -16,6 +16,7 @@
 (module "mosref/shell")
 (import "mosref/console")
 (import "mosref/node")
+(import "lib/terminal")
 
 (define (send-line . items)
   (send (string-append @items *line-sep*)))
@@ -23,9 +24,7 @@
 (define *cmd-term* (make-regex "[^ \r\n\t]+"))
 
 ; Assumes that each input is precisely one line.
-(define (mosref-shell console)
-  (define current-node #f)
-
+(define (mosref-shell console current-node)
   (define (set-current-node node)
     (set! current-node node))
 
@@ -210,7 +209,19 @@
           (list "exit" (function (exit-cmd terms)
                          (set! finished #t))
                 (string-append
-                  "Terminates the console."))))
+                  "Terminates the console."))
+          (list "fork" (function (fork-cmd terms)
+                          (with-io (spawn-terminal 
+                                     (if (tc-empty? terms)
+                                       "MOSREF"
+                                       (tc-next! terms)))
+                             (define node current-node)
+                             (spawn (lambda ()
+                                      (mosref-shell console node)))))
+                (string-append
+                  "USAGE: fork [<window-name>]\n"
+                  "Creates a new MOSREF console shell session that may be used"
+                  " in parallel with the current one.\n\n"))))
   
   (define (parse-cmd terms)
     (when (string? terms)
@@ -227,8 +238,6 @@
     
     ((car data) terms))
 
-  (set-current-node console)
-
   (send-prompt)
 
   (until finished
@@ -239,4 +248,6 @@
                 (unless (eq? (error-key err) 'syn)
                   (re-error err)))
         (parse-cmd cmd))
-      (unless finished (send-prompt)))))
+      (unless finished (send-prompt))))
+  
+  (send 'close))
