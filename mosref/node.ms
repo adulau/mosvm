@@ -201,19 +201,18 @@
         `((export nothing) ;; All private..
           (define okay #t)
           (define result #f)
-
-          (define out-output )
+            
           (define result
-            (with-output (output-chain (output)
-                                           (cons-filter 'out)
-                                           (format-filter))
+            (with-output (output-chain (output) ;TODO: Does not work.
+                                       (cons-filter 'out)
+                                       (format-filter))
               (guard (function (fwd-traceback err)
                        (define s (make-string))
                        (traceback err s)
                        (set! okay #f)
-                       s)))
-              ((wait)))
-          (send (list (if okay 'succ 'fail) result))
+                       s)
+                 (format ((wait))))))
+          (send (cons (if okay 'succ 'fail) result))
           (send 'close))))))
                 
 (define (eval-node-expr (<console-node> node) expr)
@@ -226,11 +225,13 @@
     (until done
       (define evt (expect-signal recv))
       (define key (car evt))
-      (case (car evt)
-        ((out) (when (string? evt) (send-line (cdr evt))))
-        ((fail) (when (string? evt) (send-line (cdr evt)))
+      (define val (cdr evt))
+      (print "GOT: ") (print (format evt)) (print *line-sep*)
+      (case key
+        ((out) (when (string? val) (send-line val)))
+        ((fail) (when (string? val) (send-line val))
                 (set! done #t))
-        ((succ) (when (string? evt) (send-line ":: " (cdr evt)))
+        ((succ) (when (string? val) (send-line ":: " val))
                 (set! done #t))))
     (send 'close xmit)))
 

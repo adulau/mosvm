@@ -47,11 +47,11 @@
   * Files are copied with: cp src dst
   * Files may be accessed and modified on console nodes.
   * MOSREF Drones are created with: drone file id platform [portno]
+  * Local lisp commands are performed with: do <expr>
+  + Local shell commands are performed with: sh <command>
   + Added site configuration settings for "terminal"
   + Replaced the dated Console REPL with a console shell
-  + Local shell commands are performed with: sh <command>
-  + Local lisp commands are performed with: do <expr>
-  + New MOSREF shell windows created with window
+  + New MOSREF shell windows created with win
 
 - 7/01/2006, MOSREF Prod
   * Added (list-refp list index) -> pair, similar to list-ref, except it
