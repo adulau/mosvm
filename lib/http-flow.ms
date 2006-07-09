@@ -17,6 +17,7 @@
 (import "lib/xml")
 (import "lib/iterate")
 (import "lib/http-server")
+(import "lib/foe")
 
 ;;; Wraps func with the necessary logic to start new flows, as a closure that
 ;;; may be used with lib/http-server and spawn-http-server
@@ -212,10 +213,6 @@
        ,@flow-body
      (print "Exiting flow.")  
        ))))
-
-(define-macro (false-on-error . body)
-  `(guard (lambda x #f)
-          ,@body))
 
 (export define-flow spawn-flow make-flow-sid
         flow-arg-auth/0
