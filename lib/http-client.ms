@@ -126,7 +126,6 @@
 (define-class http-response <object>
               (make-http-response code message headers body input output)
               http-response?
-              (method http-response-method)
               (code http-response-code)
               (message http-response-message)
               (headers http-response-headers)
@@ -134,9 +133,8 @@
               (input http-response-input)
               (output http-response-output))
               
-(export make-http-response http-response?  http-response-method 
-        http-response-code http-response-message http-response-body
-        http-response-input http-response-output)
+(export make-http-response http-response?  http-response-code http-response-message 
+        http-response-body http-response-input http-response-output)
 
 (define (with-http-url func url . rest)
   (define s-url #f)
