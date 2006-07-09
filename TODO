@@ -1,8 +1,4 @@
-+ freeze-filter should forward close.
-
 + sudden termination of a drone does not update the console's node table.
-
-+ cp command's output is ugly
 
 + Bug in spawn-command
   Errors should be reported as fails, somehow.

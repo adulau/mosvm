@@ -28,6 +28,9 @@
   (define (set-current-node node)
     (set! current-node node))
 
+  (define (format-path path)
+    (string-append (node-id (car path)) ":" (cadr path)))
+
   (define (send-prompt)
     (send (string-append (node-id current-node) "> ")))
 
@@ -136,6 +139,8 @@
                           (spawn (lambda ()
                           (define transport
                             (guard (lambda (e)
+                                     ;TODO: Make number of attempts permitted
+                                     ;      configurable
                                    (close-listener listener)
                                    (send-err "Affilation failed, "
                                              (car (error-info e))
@@ -164,7 +169,7 @@
                        (define dst (req-path terms " for destination file"))
 
                        (send-line
-                         "Copy from: " (format src) " to " (format dst))
+                         "Copy from " (format-path src) " to " (format-path dst))
                        
                        (define data (guard (lambda (e) 
                                              (send-err
