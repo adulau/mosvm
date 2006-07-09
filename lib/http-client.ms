@@ -121,7 +121,7 @@
   (when (equal? content-type "application/x-www-form-urlencoded")
     (set! url (string-append url "?" body)))
 
-  (make-http-response code message headers body #f input))
+  (make-http-response code message headers body #f channel))
 
 (define-class http-response <object>
               (make-http-response code message headers body input output)
