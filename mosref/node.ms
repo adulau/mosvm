@@ -226,7 +226,7 @@
       (define evt (expect-signal recv))
       (define key (car evt))
       (define val (cdr evt))
-      (print "GOT: ") (print (format evt)) (print *line-sep*)
+      ;(print "GOT: ") (print (format evt)) (print *line-sep*)
       (case key
         ((out) (when (string? val) (send-line val)))
         ((fail) (when (string? val) (send-line val))
