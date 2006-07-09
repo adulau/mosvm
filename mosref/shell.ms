@@ -104,7 +104,7 @@
                   " addresses.\n\n"))
          
           (list "drone" (function (drone-cmd terms)
-                          (define file (req-path terms " drone file"))
+                          (define file (req-path terms " for drone executable"))
                           (define id (req-term terms " drone identifier"))
                           (define platform (req-term terms " drone platform"))
                           (define portno (opt-port terms " listener port"))
@@ -121,7 +121,8 @@
                                    (send-err "Could not write file "
                                              (format (cadr file)) "."))
                             (put-node-file @file data))
-                        
+                          
+                          (print "Node file transmitted.\n")
                           (send-line "Drone executable created.")
 
                           (define listener 

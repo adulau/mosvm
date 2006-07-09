@@ -28,7 +28,7 @@ $(MOSVM): $(MOSC) $(GLUE) site/config.ms core_mos lib_mos
 
 $(MOSREF): $(MOSC) site/config.ms lib_mos core_mos mosref_mos
 	$(MOSC) -exe $(MOSREF) bin/mosref.ms
-	chmod a+rx $(MOSC)
+	chmod a+rx $(MOSREF)
 
 test: $(TESTS)
 test-%: test/%.mo $(MOSVM) lib mosref

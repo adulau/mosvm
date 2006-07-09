@@ -119,32 +119,49 @@
                 (data #f))
             (guard (lambda (e)
                      (send (list 'fail (car (error-info e)))))
-              (send (list 'succ (read-data-file path)))))
+              (set! data (read-data-file path))
+              (until (empty-string? data)
+                (send (string-read! data 16384)))
+              (send 'done)))
           (send 'close))))))
 
 (define (get-node-file (<drone-node> node) path)
   (with-node-program node *drone-get-file-prog*
      (send path xmit)
-     (expect-succ recv)))
-
-(define (put-node-file (<console-node> node) path data)
-  (write-data-file path data))
+     (define data (make-string))
+     (forever
+       (define evt (expect-data recv))
+       (cond
+         ((eq? evt 'done) (return data))
+         ((string? evt) (string-append! data evt))
+         (else (error 'expect "expected string or done" evt))))))
 
 (define *drone-put-file-prog*
   (assemble 
     (optimize 
       (compile 
         `((let ((path (wait))
-                (data (wait)))
+                (data (make-string))
+                (done #f))
             (guard (lambda (e)
                      (send (list 'fail (car (error-info e)))))
+              (until done
+                (define evt (wait))
+                (cond ((eq? evt 'done) (set! done #t))
+                      ((string? evt) (string-append! data evt))
+                      (else (error 'fail "expected string or done" evt))))
               (write-data-file path data))
               (send '(succ)))
           (send 'close))))))
 
+(define (put-node-file (<console-node> node) path data)
+  (write-data-file path data))
+
 (define (put-node-file (<drone-node> node) path data)
   (with-node-program node *drone-put-file-prog*
     (send path xmit)
-    (send data xmit)
+    (until (empty-string? data)
+      (send (string-read! data 16384) xmit))
+    (send 'done xmit)
     (expect-succ recv)))
 
