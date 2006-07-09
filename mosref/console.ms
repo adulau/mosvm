@@ -91,108 +91,39 @@
   (build-exe platform
              `((import "mosref/drone")
                (import "mosref/endpoint")
-               (import "lib/cons-filter") ;TODO: Should be forwarded..
-               (import "lib/format-filter") ;TODO: Should be forwarded..
                (define conn (tcp-connect ,console-addr ,console-portno))
-               (apply spawn-endpoint 
-                      drone-endpoint
-                      (drone-affiliation 
-                        (import-ecdh
-                          (base64-decode ,(base64-encode (export-public-ecdh 
-                                                           console-ecdh))))
-                        (input conn)
-                        (output conn))))))
+               (define endpoint 
+                 (apply spawn-endpoint 
+                        drone-endpoint
+                        (drone-affiliation 
+                          (import-ecdh
+                            (base64-decode ,(base64-encode (export-public-ecdh 
+                                                             console-ecdh))))
+                          (input conn)
+                          (output conn))))
+               (define (import key)
+                  (unless (imported? key)
+                    (define lane (make-lane endpoint))
+                    (define xmit (lane-xmit lane))
+                    (define recv (lane-recv lane))
+                    (send (string-append key ".mo") xmit)
+                    (define data (wait recv))
+                    (send 'close xmit)
+                    (unless (string? data)
+                      (error 'import "could not retrieve module from console"
+                             key))
+                    ((thaw data))))
+               (export import)))) ; Be afraid, be very afraid..
 
-;;TODO: import handler.
-(define (console-endpoint) (send 'close))
+(define (console-endpoint) 
+  (define path (wait))
+  (unless (string? path)
+    (send 'close)
+    (return))
+  (set! path (find-module-file path))
+  (send (if path (read-data-file path)
+                 #f)))
 
 ;; transmits the supplied program to be executed on the remote endpoint of
 ;; the supplied transport.
-
-(define *repl-program*
-  (assemble 
-    (optimize 
-      (compile
-        `((export nothing) ;; All private..
-          (define err-output (output-chain (output)
-                                           (cons-filter 'err)))
-          (define res-output (output-chain (output)
-                                           (cons-filter 'res)
-                                           (format-filter)))
-          (define out-output (output-chain (output)
-                                           (cons-filter 'out)
-                                           (format-filter)))
-          (define (fwd-traceback err)
-            (define s (make-string))
-            (traceback err s)
-            (send s err-output))
-          
-          (with-output out-output
-          (spawn (function (drone-repl-process)
-                    (forever 
-                      (guard fwd-traceback (send ((wait)) 
-                                           res-output)))))))))))
-
-(define (spawn-drone-repl endpoint)
-  (spawn-drone-program *repl-program* endpoint))
-
-(define (console-repl xmit recv)
-  (define endpoint (spawn-endpoint console-endpoint xmit recv))
-  (define repl (spawn-drone-repl endpoint))
-  (define repl-xmit (car repl))
-  (define repl-recv (cadr repl))
- 
-  (define (display-syntax-error err)
-    (send (string-append "SYNTAX: " (cadr err) *line-sep*)))
-
-  (define (display-compile-error err)
-    (traceback err (output))
-    #f)
-
-  (define (display-remote-error errmsg)
-    (send errmsg)
-    #f)
-
-  (define (display-result item)
-    (send (string-append ":: " item *line-sep*)))
-
-  (define (display-output item)
-    (send (string-append "-- " item *line-sep*)))
-
-  (spawn (lambda ()
-           (forever
-             (define evt (wait repl-recv))
-             (cond 
-               ((eq? evt 'close) (return))
-               ((not (pair? evt))) ;TODO: Bad, bad news..
-               ((eq? (car evt) 'err) (display-remote-error (cdr evt)))
-               ((eq? (car evt) 'res) (display-result (cdr evt)))
-               ((eq? (car evt) 'out) (display-output (cdr evt)))))))
-               ;TODO: else, also bad, bad news.
-
-  (define (quit-repl cmd)
-    (send 'close xmit))
-
-  (define (eval-expr expr)
-    (define prog (guard display-compile-error
-                   (assemble (optimize (compile expr)))))
-    (unless prog (return))
-    (send prog repl-xmit))
-
-  (define cmds 
-    (dict (cons 'quit
-                quit-repl)))
-
-  (define default-cmd eval-expr)
-
-  (with-input (input-chain (input) 
-                           (line-filter)
-                           (s-filter :promptN "   "
-                                     :errfn display-syntax-error))
-    (forever
-      (send ">> ")
-      (define cmd (wait))
-      (if (eq? cmd 'close)
-        (return (send 'close))
-        ((dict-ref cmds cmd default-cmd) cmd)))))
 

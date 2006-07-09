@@ -18,6 +18,7 @@
 (import "lib/bridge")
 (import "lib/filter")
 (import "lib/package-filter")
+(import "lib/with-io")
 
 (define *nodes-by-id* (dict))
 
@@ -175,6 +176,8 @@
     (optimize
       (compile
         `((export nothing) ;; All private..
+          (import "lib/cons-filter")
+          (import "lib/format-filter")
           (define err-output (output-chain (output)
                                            (cons-filter 'err)))
           (define res-output (output-chain (output)
@@ -199,6 +202,8 @@
     (optimize
       (compile
         `((export nothing) ;; All private..
+          (import "lib/cons-filter")
+          (import "lib/format-filter")
           (define okay #t)
           (define result #f)
             
@@ -234,4 +239,78 @@
         ((succ) (when (string? val) (send-line ":: " val))
                 (set! done #t))))
     (send 'close xmit)))
+
+(define (spawn-node-cmd (<console-node> node) cmd)
+  (when (string-begins-with? *platform* "win")
+    (send-line "ERROR: This version of MOSREF cannot spawn shell commands on "
+               "Microsoft Windows.")
+    (return))
+
+  (set-car! cmd (locate-cmd (car cmd)))
+  (define stream (spawn-command (car cmd) (cdr cmd)))
+  (define done #f)
+
+  (spawn (lambda ()
+           (until done
+                  (define evt (wait stream))
+                  (when (eq? evt 'close) 
+                    (unless done 
+                      (set! done #t)
+                      (send 'close (input)))
+                    (return)))))
+
+  (until done
+    (define evt (wait (input)))
+    (send evt stream)
+    (when (eq? evt 'close)
+      (set! done #t)))
+
+  (pause))
+
+(define *node-shell-prog*
+  (assemble
+    (optimize
+      (compile
+        `((import "lib/env")
+          (when (string-begins-with? *platform* "win")
+            (error 'shell 
+                   "MOSREF cannot spawn shell commands on Microsoft Windows"))
+
+            (let ((cmd (wait)))
+              (print "COMMAND: ")
+              (print (format cmd))
+              (print *line-sep*)
+              (guard (lambda (err)
+                       (error 'shell
+                              (string-append "cannot find command " (car cmd))))
+                (set-car! cmd (locate-cmd (car cmd))))
+
+              (define stream (spawn-command (car cmd) (cdr cmd)))
+              (define done #f)
+
+  ;TODO: Many commands won't close stdin -- we must send a close to the
+  ;      stream to cooerce it into doing the right thing.
+  ;
+  ;      A better strategy would be to watch the pid, and close it -- but this
+  ;      requires a thread.
+              (timeout 1000 (input stream) 'close)
+
+              (until done
+                (define evt (wait stream))
+                (cond
+                  ((eq? evt 'close) (set! done #t))
+                  (else (send evt) 
+                        (print "Forwarded.\n"))))
+
+              (send 'close)))))))
+
+(define (spawn-node-shell node cmd)
+  (with-node-program node *node-shell-prog*
+    (send cmd xmit)
+    (define done #f)
+    (until done 
+      (define evt (wait recv))
+      (cond 
+        ((eq? evt 'close) (set! done #t))
+        ((string? evt) (send evt))))))
 

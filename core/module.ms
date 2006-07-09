@@ -50,7 +50,7 @@
   (dict-set? *imports* key))
 
 (define (import key)
-  (unless (dict-set? *imports* key)
+  (unless (imported? key)
     (define mo-path (find-module-file (string-append key ".mo")))
     (unless mo-path (error 'import "Module not imported, and cannot be found"))
     (load-mo mo-path)))
@@ -58,4 +58,4 @@
 (define (module key)
   (dict-set! *imports* key #t))
 
-(export import module)
+(export imported? import module)

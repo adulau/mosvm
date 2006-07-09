@@ -199,17 +199,40 @@
                   " command\n\n"))
 
           (list "do" (function (eval-cmd terms)
+                          ;TODO: Handle parser errors better.
                           (define expr (apply string-join " " (tc->list terms)))
                           (eval-node-expr current-node (string->exprs expr)))
                 (string-append
-                  "USAGE: do expr\n"
+                  "USAGE: do <lisp-expr>\n"
                   "Evaluates the supplied lisp expression on the current node,"
                   " and outputs the result.\n\n"))
                             
+          (list "sh" (function (sh-cmd terms)
+                          ;TODO: Handle parser errors better.
+                          (spawn-node-shell current-node
+                                            (tc->list terms)))
+                (string-append
+                  "USAGE: sh <cmd>\n"
+                  "Evaluates the supplied host command on the current node --"
+                  " this will only work on non-Windows nodes, due to"
+                  " limitations in the Win32 command shell.\n\n"))
+                            
+          (list "load" (function (eval-cmd terms)
+                          (define expr (read-lisp-file
+                                         (req-term terms "for evaluation")))
+                          ;TODO: Handle parser errors better.
+                          (eval-node-expr current-node expr))
+                (string-append
+                  "USAGE: load <path>\n"
+                  "Loads the specified file on the current node, and evaluates"
+                  " it; note that path, here, is always local to the console."
+                  "\n\n"))
+          
           (list "exit" (function (exit-cmd terms)
                          (set! finished #t))
                 (string-append
                   "Terminates the console."))
+
           (list "fork" (function (fork-cmd terms)
                           (with-io (spawn-terminal 
                                      (if (tc-empty? terms)

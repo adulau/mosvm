@@ -83,6 +83,8 @@ mqo_stream mqo_spawn_cmd( mqo_string path, mqo_list arg, mqo_list var ){
         dup2( fds[1], STDOUT_FILENO );
         
         execve( mqo_sf_string( path ), argv, varv );
+        
+        fprintf( stderr, "Done with %s\n", mqo_sf_string( path ) );
 
         close( fds[1] );
         exit(0);
