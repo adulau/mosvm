@@ -132,8 +132,8 @@
                           
                           (send-line "Listening for drone on " (format portno)
                                      "...")
-
-                          ;TODO: Spawn this off.
+                        
+                          (spawn (lambda ()
                           (define transport
                             (guard (lambda (e)
                                    (close-listener listener)
@@ -141,13 +141,16 @@
                                              (car (error-info e))
                                              "."))
                                ;TODO: Make lapse configurable.
-                               (await-drone-affiliation listener ecdh 60000)))
+                               (await-drone-affiliation listener ecdh 
+                                                        1800000)))
                         
-                          (send-line "Drone affiliated.")
+                          (send-line "Drone " id " affiliated.")
 
+                          ;TODO: Tag with platform.
                           ;TODO: Where will we get addr?
                           (make-drone-node 
-                            id #f (spawn-endpoint console-endpoint @transport)))
+                            id #f 
+                            (spawn-endpoint console-endpoint @transport)))))
 
                 (string-append
                   "USAGE: drone <file> <id> <platform> [<portno>]\n"
