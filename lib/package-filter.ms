@@ -19,10 +19,13 @@
 (export freeze-filter thaw-filter)
 
 ; Freezes each block as it arrives, and forwards.
-; TODO: This has some unexpected responses to fail and close..
+; TODO: This has some unexpected responses to fail.. 
 (define-filter (freeze-filter)
   (forever
-    (send (freeze (wait in)) out)))
+    (define evt (wait in))
+    (if (eq? evt 'close)
+      (send evt out)
+      (send (freeze evt) out))))
 
 ; Thaws each block as it arrives, and forwards.
 (define-filter (thaw-filter)
