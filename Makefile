@@ -39,7 +39,7 @@ package: $(PACKAGE)
 $(PACKAGE): $(MOSC) $(MOSVM) $(MOSREF) core lib mosref
 	rm -rf $(PACKAGEDIR) $(PACKAGE)
 	mkdir $(PACKAGEDIR)
-	cp -rf bin lib mosref stubs core site test examples $(PACKAGEDIR)
+	cp -rf bin lib mosref stubs core site test $(PACKAGEDIR)
 	$(PACKAGECMD)
 
 site: $(MOSC) bin/build-dir.sh core/*ms site/config.ms
@@ -59,7 +59,7 @@ import-all-lib.ms:
 
 clean:
 	cd $(ROOT)/mosvm && $(MAKE) clean
-	rm -f *.tar.gz *.zip *.core tags build/bin/* examples/*mo test/*mo 
+	rm -f *.tar.gz *.zip *.core tags build/bin/* test/*mo 
 	rm -f $(MOSVM) $(MOSREF) $(MOSC)
 
 # These files are required by casual developers who do not want to use another
