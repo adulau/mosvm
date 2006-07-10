@@ -22,7 +22,7 @@
 (export build-module build-dependencies build-exe read-platform-stub)
 
 (define (read-platform-stub platform)
-  (define path (path-join (or "./stubs" (site-config 'stub-path)) 
+  (define path (path-join (or (site-config 'stub-path) "./stubs") 
                           (string-append "mosvm-stub-" platform)))
   (when (string-begins-with? platform "winnt")
     (set! path (string-append path ".exe")))
