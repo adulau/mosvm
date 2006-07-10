@@ -1987,7 +1987,9 @@ void mqo_bind_core_prims( ){
 MQO_BIND_PRIM( xml_escape );
 MQO_BIND_PRIM( percent_encode );
 MQO_BIND_PRIM( percent_decode );
-
+    
+    mqo_set_global( mqo_symbol_fs( "*version*" ), 
+                    mqo_vf_string( mqo_string_fs( MQO_VERSION ) ) );
     mqo_es_parse = mqo_symbol_fs( "parse" );
     mqo_root_obj( (mqo_object) mqo_es_parse );
     mqo_es_inc = mqo_symbol_fs( "inc" );

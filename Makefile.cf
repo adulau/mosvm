@@ -104,6 +104,17 @@ CFLAGS+=-g
 endif
 endif
 
+ifndef TAG
+TAG=$(shell date +%Y-%m-%d)
+endif
+
+PACKAGENAME=mosref-2.0-$(TAG)-$(PLATFORM)
+VERSION=2.0-$(TAG)
+PACKAGEDIR=$(PACKAGENAME)
+PACKAGE=$(PACKAGEDIR)$(PKG) 
+
+CFLAGS += -DMQO_VERSION='"$(VERSION)"'
+
 LIBTC=$(ROOT)/crypt/libtomcrypt.a
 MOSVM=$(BIN)/mosvm$(EXE)
 MOSREF=$(BIN)/mosref$(EXE)
@@ -111,9 +122,6 @@ MOSVM_STUB=$(STUBS)/mosvm-stub-$(PLATFORM)$(EXE)
 MOSC=$(BIN)/mosc$(EXE)
 MOSASM=$(BIN)/mosasm$(EXE)
 MOSLD=$(BIN)/mosld$(EXE)
-PACKAGENAME=mosref-2.0-$(TAG)-$(PLATFORM)
-PACKAGEDIR=$(PACKAGENAME)
-PACKAGE=$(PACKAGEDIR)$(PKG) 
 
 ifeq ($(PKG),.zip)
 PACKAGECMD=cp `which nc` $(PACKAGEDIR)/bin && zip -r $(PACKAGE) $(PACKAGEDIR)
