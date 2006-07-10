@@ -14,10 +14,20 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
 (module "bin/mosref")
+(import "lib/env")
+(import "lib/with-io")
+(import "lib/terminal")
+(import "lib/iterate")
 (import "mosref/console")
 (import "mosref/shell")
 
 (define (main . args)
+  (if *in-win32* 
+    (with-io (spawn-terminal "MOSREF")
+             (do-mosref args))
+    (do-mosref args)))
+
+(define (do-mosref args)
   (define unparsed-args (apply make-tc args))
 
   (define (next-arg) (tc-next! unparsed-args))
