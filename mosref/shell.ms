@@ -137,25 +137,26 @@
                                      "...")
                         
                           (spawn (lambda ()
-                          (define transport
                             (guard (lambda (e)
                                      ;TODO: Make number of attempts permitted
                                      ;      configurable
                                    (close-listener listener)
-                                   (send-err "Affilation failed, "
+                                   (send-line "ERROR: Affilation of " 
+                                              id
+                                              " failed, "
                                              (car (error-info e))
                                              "."))
                                ;TODO: Make lapse configurable.
-                               (await-drone-affiliation listener ecdh 
-                                                        1800000)))
-                        
-                          (send-line "Drone " id " affiliated.")
+                               (define transport
+                                 (await-drone-affiliation listener ecdh 1800000))
 
-                          ;TODO: Tag with platform.
-                          ;TODO: Where will we get addr?
-                          (make-drone-node 
-                            id #f 
-                            (spawn-endpoint console-endpoint @transport)))))
+                               (send-line "Drone " id " affiliated.")
+                               ;TODO: Tag with platform.
+                               ;TODO: Where will we get addr?
+
+                               (make-drone-node 
+                                 id #f 
+                                 (spawn-endpoint console-endpoint @transport))))))
 
                 (string-append
                   "USAGE: drone <file> <id> <platform> [<portno>]\n"
