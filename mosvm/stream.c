@@ -632,9 +632,16 @@ MQO_BEGIN_PRIM( "tcp-connect", tcp_connect )
     mqo_net_error( ioctl( fd, FIONBIO, &unblocking ) );
 #endif
 */
-    //TODO: Is this safe on win32?
+
     mqo_unblock( fd );
+#if defined( _WIN32 )||defined( __CYGWIN__ )
+    // While mqo_unblock does work, here, on win32, it causes win32 to signal
+    // -1, and puts WSAGetLastError in a nondetermined state.  Thank you, 
+    // Microsoft..
+    connect( fd, (struct sockaddr*)&addr, sizeof( addr ) );
+#else
     mqo_net_error( connect( fd, (struct sockaddr*)&addr, sizeof( addr ) ) );
+#endif
     
     mqo_stream s = mqo_make_stream( fd );
     s->state = MQO_CONNECTING;
