@@ -24,7 +24,13 @@
 (define (main . args)
   (if *in-win32* 
     (with-io (spawn-terminal "MOSREF")
-             (do-mosref args))
+             (when (null? args)
+               (send "What is the address of this console?\n")
+               (send "> ")
+               (define host (wait))
+               (set! args (list host)))
+
+             (do-mosref (list host)))
     (do-mosref args)))
 
 (define (do-mosref args)
