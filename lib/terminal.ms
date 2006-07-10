@@ -19,7 +19,8 @@
 (import "lib/env")
 (import "lib/foe")
 
-(define *in-screen*  (env-is  "TERMINAL" "screen"))
+(define *in-screen*  (or (env-is  "TERMINAL" "screen") ;; From the manpage
+                         (env-is  "TERM" "screen")))   ;; From the source.. Way to go..
 
 (define has-util
   (if *in-win32*
@@ -52,8 +53,7 @@
 
   (define cmd (cond
                 ((and *in-screen* *has-screen*)
-                 (bg-command 
-                   (string-append "screen -t '" title "' " inner-cmd)))
+                 (string-append "screen -t '" title "' " inner-cmd))
                 ((and *in-x11* *has-xterm*)
                  (bg-command 
                    (string-append "xterm -T '" title "' -e " inner-cmd)))
