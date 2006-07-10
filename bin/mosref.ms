@@ -27,7 +27,7 @@
              (when (null? args)
                (send "What is the address of this console?\n")
                (send "> ")
-               (define host (wait))
+               (define host (strip (wait)))
                (set! args (list host)))
 
              (do-mosref (list host)))
