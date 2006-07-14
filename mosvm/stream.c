@@ -106,7 +106,7 @@ mqo_boolean mqo_is_stream_writing( mqo_stream s ){
 }
 
 mqo_boolean mqo_is_stream_reading( mqo_stream s ){
-    return (mqo_boolean) s->evt->monitor;
+    return (mqo_boolean) s->evt->first_mon;
 }
 
 int mqo_parse_dotted_quad( mqo_string quad, mqo_integer* addr ){

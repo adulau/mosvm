@@ -28,10 +28,9 @@
 // A message may be added to a channel at any time.
 
 MQO_BEGIN_TYPE( channel )
-    mqo_process monitor;
+    mqo_process first_mon, last_mon;
     mqo_pair    head, tail;
     mqo_integer length;
-    mqo_channel prev, next;
     mqo_boolean closed;
     mqo_value   source;
 MQO_END_TYPE( channel )

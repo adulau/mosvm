@@ -3,11 +3,10 @@
 (import "mosref/console")
 (import "lib/fuzz-filter")
 
-(define (wait/doom . rest)
-  (define doom (make-channel))
+(define (wait/doom doom)
   (define time (timeout 5000 doom 
                   '(fail "Failed to complete tests in the allotted time")))
-  (define data (error-on-fail (wait @rest doom)))
+  (define data (error-on-fail (wait doom)))
   (cancel-timeout time)
   data)
 

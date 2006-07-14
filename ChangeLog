@@ -32,10 +32,29 @@
 
   + Replaced the dated Console REPL with a console shell
 
-- ?/?/????, Multiple Monitors
-  + Multiple monitors may now wait on a single channel -- this is needed by
-    the mosref scanner, since a single channel is expected to generate work
-    for multiple workers.
+- 7/14/2006, Multiple Monitors
+  Multiple monitors may now wait on a single channel -- this is needed by
+  the mosref scanner, since a single channel is expected to generate work
+  for multiple workers.
+
+  Now, when more than one process is waiting on an empty channel, the first
+  process to wait on the channel will get the next event, and so on, in a
+  round robin fashion.
+
+  For simplicity, it is no longer possible a process to wait on multiple
+  channels.  This was only used in unit tests in MOSVM and MOSREF, and was 
+  of limited utility.
+
+  * removed prev and next members from channel
+  * replaced channel monitor member with first_mon, last_mon 
+  * modified mqo_is_stream_reading to use first_mon, not monitor member.
+  * modified mqo_add_monitor to support multiple monitors
+  * modified mqo_remove_monitor to support multiple monitors
+  * renamed mqo_clear_monitors to mqo_clear_monitor
+  * modified mqo_clear_monitors to employ mqo_remove_monitor instead of taking
+    direct action on the channel fields.
+  * modified mqo_trace_channel to trace multiple monitors
+  * modified uses in unit tests of multiple-wait.  ( The wait/doom functions )
 
 - 7/14/2006, Coroutines Added
   MOSREF's permutations generator can be very expensive in terms of memory,

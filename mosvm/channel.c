@@ -20,11 +20,11 @@ mqo_channel mqo_make_channel( ){
     return c;
 }
 void mqo_trace_channel( mqo_channel channel ){
-    mqo_grey_obj( (mqo_object) channel->monitor );
+    // The first_mon will mark all peers.
+    mqo_grey_obj( (mqo_object) channel->first_mon );
+
     mqo_grey_obj( (mqo_object) channel->head );
     mqo_grey_obj( (mqo_object) channel->tail );
-    mqo_grey_obj( (mqo_object) channel->prev );
-    mqo_grey_obj( (mqo_object) channel->next );
     mqo_grey_val( channel->source );
 }
 
@@ -35,58 +35,61 @@ void mqo_trip_source( mqo_channel channel ){
 }
 
 void mqo_add_monitor( mqo_process process, mqo_channel channel ){
-    if( channel->monitor ){
-        mqo_errf( mqo_es_vm, "sxx", "channel already monitored", process, channel );
-    }
+    if( process->monitoring ){
+        mqo_errf( mqo_es_vm, "sxxx", 
+                "a process may only monitor one channel at a time",
+                process, 
+                process->monitoring,
+                channel );
+    };
 
     mqo_disable_process( process );
-    mqo_channel other = (mqo_channel) process->monitoring;
-    if( other ) other->prev = channel;
-
-    channel->prev = NULL;
-    channel->next = other;
     process->monitoring = (mqo_object) channel;
-    channel->monitor = process;
+   
+    mqo_process prev = channel->last_mon;
+    process->prev = prev;
+
+    if( prev ){
+        prev->next = process;
+    }else{
+        channel->first_mon = process;
+    };
+    
+    channel->last_mon = process;
 
     mqo_trip_source( channel );
 }
 
 void mqo_remove_monitor( mqo_process process, mqo_channel channel ){
-    mqo_channel first, prev, next;
+    mqo_process first, prev, next;
 
-    assert( channel->monitor == process );
+    assert( channel == (mqo_channel)process->monitoring );
 
-    first = (mqo_channel) process->monitoring;
-    prev = channel->prev;
-    next = channel->next;
+    first = channel->first_mon;
+    next = process->next;
+    prev = process->prev;
 
     assert( first );
 
-    if( first == channel ) process->monitoring = (mqo_object) channel->next;
+    if( prev ){ prev->next = next; process->prev = NULL; }else{
+        channel->first_mon = next;
+    };
+    if( next ){ next->prev = prev; process->next = NULL; }else{
+        channel->last_mon = prev;
+    };
 
-    if( prev ){ prev->next = next; channel->prev = NULL; }
-    if( next ){ next->prev = prev; channel->next = NULL; }
+    process->monitoring = NULL;
 }
 
-void mqo_clear_monitors( mqo_process process ){
-    mqo_channel this, next;
-
-    this = (mqo_channel) process->monitoring;
-    process->monitoring = NULL;
-
-    while( this ){
-        next = this->next;
-        this->prev = this->next = NULL;
-        this->monitor = NULL;
-        this = next;
-    }
+void mqo_clear_monitor( mqo_process process ){
+    mqo_remove_monitor( process, (mqo_channel) process->monitoring );
 }
 
 mqo_boolean mqo_wake_monitor( mqo_channel channel, mqo_value message ){
-    mqo_process process = channel->monitor;
+    mqo_process process = channel->first_mon;
 
     if( process ){ 
-        mqo_clear_monitors( process );
+        mqo_clear_monitor( process );
         mqo_enable_process( process );
         if( mqo_is_vm( process->context ) ){
             // A courtesy to vm processes..
@@ -97,6 +100,7 @@ mqo_boolean mqo_wake_monitor( mqo_channel channel, mqo_value message ){
 
     return 0;
 }
+
 void mqo_channel_append( mqo_channel channel, mqo_value message ){
     if( mqo_wake_monitor( channel, message ) )return;
 
@@ -253,40 +257,20 @@ MQO_BEGIN_PRIM( "channel-empty?", channel_emptyq )
 MQO_END_PRIM( channel_emptyq )
 
 MQO_BEGIN_PRIM( "wait", wait )
-    REST_ARGS( channels );
+    OPT_OUTPUT_ARG( channel );
+    NO_REST_ARGS( );
 
-    if( ! channels ){
-        channels = mqo_cons( mqo_vf_obj( mqo_active_process->input ),
-                             mqo_vf_null() );
-    };
+    if( ! has_channel ){ channel = (mqo_channel) mqo_active_process->input; };
+    assert( channel );
 
-    mqo_pair m = channels;
+    if( mqo_channel_empty( channel ) ){
+        mqo_add_monitor( mqo_active_process, channel );
 
-    mqo_channel r = NULL;
-
-    while( m ){
-        mqo_channel c = mqo_req_output( mqo_car( m ) );
-        if( ! mqo_channel_empty( c ) ){
-            r = c;
-        }
-        m = mqo_req_list( mqo_cdr( m ) );
-    };
-
-    if( r ){
-        RESULT( mqo_read_channel( r ) );
-    }else{
-        mqo_pair m = channels;
-
-        while( m ){
-            mqo_add_monitor( mqo_active_process,
-                             mqo_get_output( mqo_car( m ) ) );
-            m = mqo_list_fv( mqo_cdr( m ) );
-        };
-        
         MQO_CP = MQO_CP->cp;
-        mqo_proc_loop();
-
+        mqo_proc_loop( );
         NO_RESULT( );
+    }else{
+        RESULT( mqo_read_channel( channel ) );
     }
 MQO_END_PRIM( wait )
 
@@ -302,7 +286,7 @@ MQO_BEGIN_PRIM( "waiting?", waitingq )
     NO_REST_ARGS( );
     
     if( has_channel ){
-        BOOLEAN_RESULT( channel->monitor == process );
+        BOOLEAN_RESULT( ((mqo_channel) process->monitoring ) == channel );
     }else{
         BOOLEAN_RESULT( process->monitoring != NULL ); 
     }
