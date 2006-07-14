@@ -15,33 +15,21 @@
 
 (module "mosref/scanner")
 (import "lib/with-io")
-(import "lib/shuffle")
+(import "lib/coro")
 (import "mosref/model")
 
-(define (pairs a b y)
-  (set! a (shuffle a))
-  (define b0 b)
-  (until (null? a)
-    (define b (shuffle b0))
-    (define b b0)
-    (define aa (car a))
-    (set! a (cdr a))
-    (until (null? b)
-      (send (list aa (car b)) y)
-      (set! b (cdr b)))
-    ;(pause)
-    ))
+; Yields each intersection of host and port in the scanner space.
 
-(define (terminator ct msg out)
-  (lambda ()
-    ;(print "Count is: ")
-    ;(print (format ct))
-    ;(print *line-sep*)
-    (cond
-      ((<= ct 1) ;(print "Sending terminator message\n")
-                 (send msg out)
-                 (return))
-      (else (set! ct (- ct 1))))))
+(define-coro (scan-tasks scan-hosts scan-ports)
+  (for-each (function (scan-task/host host)
+              (for-each (function (scan-task/host-port port)
+                           (yield (list host port)))
+                        scan-ports))
+              scan-hosts)
+  ; scan-tasks can be consumed by many workers, concurrently -- it must produce
+  ; 'done until they relent and forget about the coroutine.
+
+  (forever (yield 'done)))
 
 (define-macro (repeat count . body)
   `(let ((%ctr ,count))
@@ -49,7 +37,7 @@
        (set! %ctr (- %ctr 1))
        ,@body)))
 
-(define (scan/host-port host port lapse yield)
+(define (scan-port host port lapse yield)
   ;(print (string-append "Scanning " (format host) ":" (format port) "...\n"))
   (define conn (guard (lambda x #f) 
                  (tcp-connect host port)))
@@ -69,30 +57,21 @@
 ; a done.
 
 (define (spawn-scanners hosts ports conns lapse)
-  (define work (make-channel))
-  (define yield (make-channel))
-  (define terminate (terminator conns 'done yield))
-   
-  (pairs hosts ports work)
-  (repeat conns (send 'halt work)
-                (send 'halt work))
+  (define results (make-channel))
+  (define next-task (scan-tasks hosts ports)) 
 
   (repeat conns
-    ;(print "Pre-launch..\n")
     (spawn (function (scanner-process)
-              ;(print "Launching scanner..\n")
               (forever
-                ;(print "Waiting for work.")
-                (define evt (wait work))
-                (when (eq? evt 'halt) 
-                  ;(print "Out of work.\n")
-                  (terminate)
+                (define task (next-task))
+                ; We are out of work.
+                (when (eq? evt 'done) 
                   (return))
-                (scan/host-port (car evt) (cadr evt) lapse yield)
-                ))))
+                (scan/host-port (car evt) (cadr evt) lapse results)))))
 
-  yield)
+  results)
 
+; From here, on, lies code that needs to be scavenged for mosref/report
 (define (collate-scan-results src)
   (forever
     (define evt (wait src))

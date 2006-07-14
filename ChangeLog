@@ -32,7 +32,12 @@
 
   + Replaced the dated Console REPL with a console shell
 
-- ?/?/????, Coroutines Added
+- ?/?/????, Multiple Monitors
+  + Multiple monitors may now wait on a single channel -- this is needed by
+    the mosref scanner, since a single channel is expected to generate work
+    for multiple workers.
+
+- 7/14/2006, Coroutines Added
   MOSREF's permutations generator can be very expensive in terms of memory,
   which means MOSVM's crude mark-and-sweep GC will consume increasing amounts
   of CPU time.  ( O(n) )
@@ -43,7 +48,7 @@
   * Added the lib/coro module, which supplies a macro for defining coroutine
     generator functions.
   * Added the (define-coro formals . body) macro to lib/coro
-  + Added the scan-tasks coroutine to mosref/scanner
+  * Modified mosref/scanner to use coroutines to generate scan tasks.
 
 - 7/9/2006, MOSREF Console Shell
   * MOSREF now started with:  mosref address:portno 

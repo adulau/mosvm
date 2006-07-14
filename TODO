@@ -1,3 +1,5 @@
++ (/ 1 0) is not being handled gracefully
+
 + sudden termination of a drone does not update the console's node table.
 
 + Bug in spawn-command
