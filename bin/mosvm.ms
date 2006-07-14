@@ -32,7 +32,7 @@
         (let ((r (load (car args))))
           ; If main was reset, we should invoke it.
           (if main
-            (main (cdr args))
+            (apply main (cdr args))
             r)))))
 
   (if *in-win32*
