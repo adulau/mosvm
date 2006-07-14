@@ -45,9 +45,15 @@
   (define t (timeout lapse (output conn) 'timeout))
   (define evt (wait conn))
   (send 'close conn)
-  (when (eq? evt 'timeout) (return))
+  (when (eq? evt 'timeout) 
+    ;(print (string-append "... Timeout " 
+    ;(format host) ":" (format port) ".\n"))
+    (return))
+
   (cancel-timeout t)
+
   (when (eq? evt 'connect)
+    (print (string-append "... Connect " (format host) ":" (format port) ".\n"))
     (send (list 'connect host port) yield)))
 
 ; Given a list of hosts, a list of ports, a number of worker threads to spawn
@@ -59,17 +65,27 @@
 (define (spawn-scanners hosts ports conns lapse)
   (define results (make-channel))
   (define next-task (scan-tasks hosts ports)) 
-
+  (define (terminate)
+    (set! conns (- conns 1))
+    (when (= conns 0)
+      (send 'done results)))
   (repeat conns
     (spawn (function (scanner-process)
               (forever
-                (define task (next-task))
+                (define evt (next-task))
                 ; We are out of work.
                 (when (eq? evt 'done) 
+                  (terminate)
                   (return))
-                (scan/host-port (car evt) (cadr evt) lapse results)))))
-
+                (scan-port (car evt) (cadr evt) lapse results)))))
   results)
+
+(define (scan hosts ports conns lapse)
+  (define in (spawn-scanners hosts ports conns lapse))
+  (forever 
+    (define evt (wait in))
+    (when (eq? evt 'done) (return))
+    (print (string-append (format evt) "\n"))))
 
 ; From here, on, lies code that needs to be scavenged for mosref/report
 (define (collate-scan-results src)
@@ -79,7 +95,7 @@
     (when (eq? (car evt) 'connect)
       (apply collate-addr-port (cdr evt)))))
 
-(define (scan hosts ports conns lapse)
+(define (old-scan hosts ports conns lapse)
   (collate-scan-results (spawn-scanners hosts ports conns lapse)))
 
 (define (services-report)
