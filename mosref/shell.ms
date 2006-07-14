@@ -240,7 +240,7 @@
           (list "exit" (function (exit-cmd terms)
                          (set! finished #t))
                 (string-append
-                  "Terminates the console."))
+                  "Terminates the console.\n\n"))
 
           (list "fork" (function (fork-cmd terms)
                           (with-io (spawn-terminal 
