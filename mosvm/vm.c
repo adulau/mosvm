@@ -162,12 +162,14 @@ void mqo_instr_call( ){
     // (if (is-closure? fn)
     //   (begin (set-call-cp! ap cp)
     //          (set-call-ep! ap ep)
+    //          (set-call-gp! ap gp)
     //          (set-call-ip! ap (next-instr ip))
     //          (set! cp ap)
     //          (set! ep (closure-env fn))
     //          (set! ip (proc-instr (closure-proc fn))))
     //   (apply (prim-impl fn) args))
-
+    
+    MQO_AP->gp = MQO_GP;
     MQO_AP->cp = MQO_CP;
     MQO_AP->ep = MQO_EP;
     MQO_AP->ip = MQO_IP+1;
@@ -303,6 +305,9 @@ void mqo_instr_retn( ){
         MQO_EP = MQO_CP->ep;
         MQO_IP = MQO_CP->ip;
         MQO_AP = MQO_CP->ap;
+        // FIX: Fix for non-local returns failing to restore the calling
+        //      context's guard.
+        MQO_GP = MQO_CP->gp;
         MQO_CP = MQO_CP->cp;
     }else{
         MQO_IP = NULL;
@@ -406,6 +411,7 @@ void mqo_trace_callframe( mqo_callframe cf ){
     mqo_grey_obj( (mqo_object) cf->ap );
     mqo_grey_obj( (mqo_object) cf->cp );
     mqo_grey_obj( (mqo_object) cf->ep );
+    mqo_grey_obj( (mqo_object) cf->gp );
     if( cf->ip ) mqo_grey_obj( (mqo_object) cf->ip->proc );
     mqo_grey_obj( (mqo_object) cf->head );
     mqo_grey_obj( (mqo_object) cf->tail );

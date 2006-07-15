@@ -23,7 +23,7 @@
 
 MQO_BEGIN_TYPE( callframe )
     mqo_callframe   ap, cp;
-    mqo_pair        ep;
+    mqo_pair        gp, ep;
     mqo_instruction ip;
     mqo_word        count;
     mqo_pair        head, tail;
