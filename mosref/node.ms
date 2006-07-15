@@ -19,6 +19,7 @@
 (import "lib/filter")
 (import "lib/package-filter")
 (import "lib/with-io")
+(import "mosref/report")
 
 (define *nodes-by-id* (dict))
 
@@ -309,4 +310,56 @@
       (cond 
         ((eq? evt 'close) (set! done #t))
         ((string? evt) (send evt))))))
+
+(define *node-scan-prog*
+  (assemble
+    (optimize
+      (compile
+        `((export nothing)
+          (import "mosref/scanner")
+          (scan (parse-host-spec (wait))
+                (parse-port-spec (wait))
+                (parse-timeout (wait))
+                (parse-conns (wait))
+                (output)))))))
+
+(define (spawn-node-scan node hosts ports timeout conns)
+  (with-node-program node *node-scan-prog*
+    (send hosts xmit)
+    (send ports xmit)
+    (send timeout xmit)
+    (send conns xmit)
+    (define evt (wait recv))
+    ;TODO: Check for parser failure.
+
+    (define done #f)
+    (until done
+      (define evt (wait recv))
+      (cond
+        ((eq evt 'done)
+         (send-line "Scan complete.")
+         (send 'close xmit)
+         (return))
+
+        ((eq evt 'close)
+         (send-line "Scan interrupted.")
+         (send 'close xmit)
+         ; TODO: Scan was terminated abruptly.
+         (return))
+
+        ((not (list? evt))
+         (send-line "Illegal scan event: " (format evt))
+         (send 'close xmit)
+         (send-line "Aborted scan.")
+         (return))
+
+        ((eq? (car evt) 'connect)
+         ; TODO: Scan found a port..
+         (send-line "Found port: " (format-ipv4 addr) ":" (format-port addr)))
+
+        (else
+         (send-line "Illegal scan event: " (format evt))
+         (send 'close xmit)
+         (send-line "Aborted scan.")
+         (return))))))
 

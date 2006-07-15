@@ -242,6 +242,20 @@
                 (string-append
                   "Terminates the console.\n\n"))
 
+          (list "scan" (function (scan-cmd terms)
+                          (define hosts (req-term terms hosts))
+                          (define ports (req-term terms ports))
+                          (define timeout (opt-integer terms "timeout"))
+                          (define conns (opt-integer terms "conns"))
+                          (spawn-node-scan current-node 
+                                           hosts ports timeout conns))
+                (string-append
+                  "USAGE: scan hosts ports [timeout [conns]]\n"
+                  "Performs a TCP port scan of the specified host, reporting"
+                  " all ports  that respond with a connection within timeout"
+                  " milliseconds.  The scanner will restrict itself to"
+                  " conns ports at a time, with a default of 1000.\n\n"))
+                  
           (list "fork" (function (fork-cmd terms)
                           (with-io (spawn-terminal 
                                      (if (tc-empty? terms)

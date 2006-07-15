@@ -52,7 +52,7 @@
 (define-field response port)
 
 ; Invoked when a new port has been discovered by the scanner:
-
+; TODO: Needs to also collate the origin host.
 (define (collate-addr-port ip port)
   (define addr (find-address-by-ip ip))
 

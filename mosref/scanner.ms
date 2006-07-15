@@ -80,39 +80,6 @@
                 (scan-port (car evt) (cadr evt) lapse results)))))
   results)
 
-(define (scan hosts ports conns lapse)
-  (define in (spawn-scanners hosts ports conns lapse))
-  (forever 
-    (define evt (wait in))
-    (when (eq? evt 'done) (return))
-    (print (string-append (format evt) "\n"))))
-
-; From here, on, lies code that needs to be scavenged for mosref/report
-(define (collate-scan-results src)
-  (forever
-    (define evt (wait src))
-    (when (eq? evt 'done) (return))
-    (when (eq? (car evt) 'connect)
-      (apply collate-addr-port (cdr evt)))))
-
-(define (old-scan hosts ports conns lapse)
-  (collate-scan-results (spawn-scanners hosts ports conns lapse)))
-
-(define (services-report)
-  (define (services-report/service service)
-    `(svc (* (port ,(format (service-port service))))))
-
-  (define (services-report/address address)
-    (define ip (address-ip address))
-
-    (when (integer? ip)
-      (set! ip (format-ipv4 ip)))
-    
-    `(addr (* (ip ,ip))
-           ,@(map services-report/service (find-service-by-address address))))
- 
-  `(scan ,@(map services-report/address (find-clue table:address))))
-
 (define (integer-range first last)
   (when (> first last)
     (define temp last)
@@ -133,30 +100,5 @@
 (define (addr-range first last)
   (integer-range first last))
 
-(define (cidr base mask)
-  (addr-range base (| base (- (<< 1 (- 32 mask)) 1))))
+(export scan services-report port-range addr-range ipv4 format-ipv4)
 
-(define (ipv4 q1 q2 q3 q4)
-  (+ (<< q1 24)
-     (<< q2 16)
-     (<< q3  8)
-     q4))
-
-(define (format-ipv4 i)
-  (define (ub i)
-    (if (< i 0) (+ i 256) i))
-
-  (define buf (make-string 16))
-  (string-append! buf (format (ub (>> i 24))))
-  (string-append! buf ".")
-  (set! i (& i $FFFFFF))
-  (string-append! buf (format (>> i 16)))
-  (string-append! buf ".")
-  (set! i (& i $FFFF))
-  (string-append! buf (format (>> i 8)))
-  (string-append! buf ".")
-  (set! i (& i $FF))
-  (string-append! buf (format i))
-  buf)
-
-(export scan services-report port-range addr-range cidr ipv4 format-ipv4)
