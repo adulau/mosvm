@@ -109,7 +109,7 @@ Places the value in RX as the next item in the call frame being constructed in A
 \index{CALL}
 \index{Call Instruction}
 
-The Call Instruction causes the contents of the virtual machine registers, excluding RX, GP and AP, to be stored in the call frame referenced by AP.  The CALL Instruction supports the application of Closures, Primitives and Multimethods.
+The Call Instruction causes the contents of the virtual machine registers, excluding RX, and AP, to be stored in the call frame referenced by AP.  The CALL Instruction supports the application of Closures, Primitives and Multimethods.
 
 \scm{
 (define fn   (call-fn ap))
@@ -124,6 +124,7 @@ The Call Instruction causes the contents of the virtual machine registers, exclu
 (if (is-closure? fn)
   (begin (set-call-cp! ap cp)
          (set-call-ep! ap ep)
+         (set-call-gp! ap gp)
          (set-call-ip! ap (next-instr ip))
          (set! cp ap)
          (set! ep (closure-env fn))
