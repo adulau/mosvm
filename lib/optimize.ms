@@ -43,6 +43,14 @@
 
   (define (more?)
     (not (tc-empty? pending)))
+ 
+  (define (optimize-rag)
+    (cond 
+      ((not (more?)) (pass))
+      ((symbol? (next)) (rewind) (pass))
+      ((eq? (car instr) 'retn)
+       (yield '(retn))) ; Our optimization for rag;retn is retn. 
+      (else (rewind) (pass))))
 
   (define (optimize-call)
     (cond 
@@ -83,6 +91,7 @@
              ((jf jt) (optimize-dead-branch))
              ((jmp) (optimize-one-jump))
              ((call) (optimize-call))
+             ((rag) (optimize-rag))
              (else (pass)))))
 
   (tc->list result))
