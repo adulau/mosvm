@@ -14,9 +14,13 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
 (module "mosref/shell")
+
+(import "lib/terminal")
+(import "lib/catch")
+
 (import "mosref/console")
 (import "mosref/node")
-(import "lib/terminal")
+(import "mosref/parse")
 
 (define (send-line . items)
   (send (string-append @items *line-sep*)))
@@ -61,14 +65,13 @@
       (send-err "Could not find node " (format id) for "."))
     (list node path))
 
-  (define (opt-port terms for)
-    (when (tc-empty? terms)
-      (return (random-integer 10000 30000)))
+  (define (opt-integer terms for)
+    (when (tc-empty? terms) (return #f))
     (define str (tc-next! terms))
     (guard (lambda (e)
-             (send-err "Could not parse port number " (format str) "."))
-           (string->integer str)))
-        
+             (send-err "Could not parse " for "."))
+      (string->integer str)))
+
   (define finished #f)
 
   (define commands 
@@ -109,8 +112,9 @@
                           (define file (req-path terms " for drone executable"))
                           (define id (req-term terms " drone identifier"))
                           (define platform (req-term terms " drone platform"))
-                          (define portno (opt-port terms " listener port"))
-                          
+                          (define portno (or (opt-integer terms 
+                                                          " listener port")
+                                             (random-integer 20000 30000)))
                           (define ecdh (make-console-ecdh))
                           (define data 
                             (guard (lambda (e)
@@ -243,10 +247,14 @@
                   "Terminates the console.\n\n"))
 
           (list "scan" (function (scan-cmd terms)
-                          (define hosts (req-term terms hosts))
-                          (define ports (req-term terms ports))
-                          (define timeout (opt-integer terms "timeout"))
-                          (define conns (opt-integer terms "conns"))
+                          (define hosts (parse-host-spec
+                                          (req-term terms "hosts.")))
+                          (define ports (parse-port-spec 
+                                          (req-term terms "ports.")))
+                          (define timeout (or (opt-integer terms "timeout")
+                                              5000))
+                          (define conns (or (opt-integer terms "conns")
+                                            1000))
                           (spawn-node-scan current-node 
                                            hosts ports timeout conns))
                 (string-append
@@ -290,9 +298,10 @@
     (define cmd (wait))
     (when (eq? cmd 'close) (return))
     (when (string? cmd)
-      (guard (function (catch-syn err)
-                (unless (eq? (error-key err) 'syn)
-                  (re-error err)))
+      (catch-case (((syn))
+                   ((parse) (define info (error-info err))
+                            (send-line "PARSE: For " (format (cadr info)) 
+                                      ", " (car info))))
         (parse-cmd cmd))
       (unless finished (send-prompt))))
   

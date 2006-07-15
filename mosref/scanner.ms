@@ -15,21 +15,67 @@
 
 (module "mosref/scanner")
 (import "lib/with-io")
-(import "lib/coro")
+(import "lib/catch")
 (import "mosref/model")
 
-; Yields each intersection of host and port in the scanner space.
+(define (resolve-host-spec host-spec)
+  (cond ((list? host-spec)
+         (map (function (resolve-host item)
+                 (if (string? item) (resolve-addr item) item))
+              host-spec))
 
-(define-coro (scan-tasks scan-hosts scan-ports)
-  (for-each (function (scan-task/host host)
-              (for-each (function (scan-task/host-port port)
-                           (yield (list host port)))
-                        scan-ports))
-              scan-hosts)
-  ; scan-tasks can be consumed by many workers, concurrently -- it must produce
-  ; 'done until they relent and forget about the coroutine.
+        ((string? host-spec)
+         (resolve-addr host-spec))
 
-  (forever (yield 'done)))
+        (else host-spec)))
+
+(define (single-iter x)
+  (define k #f)
+  (lambda ()
+    (when k (error 'done))
+    (set! k #t)
+    x))
+
+(define (gen-scan-port port-spec)
+  (if (list? port-spec)
+    (integer-range (car port-spec) (+ (cadr port-spec) 1))
+    (single-iter port-spec)))
+
+(define (gen-scan-ports port-specs)
+  (apply join-iters (map gen-scan-port port-specs)))
+
+(define (gen-scan-addr addr-spec)
+  (if (list? addr-spec)
+    (integer-range (car addr-spec) (+ (cadr addr-spec) 1))
+    (single-iter addr-spec)))
+
+(define (gen-scan-addrs addr-specs)
+  (apply join-iters (map gen-scan-addr addr-specs)))
+
+;; Consumes a list of host specs, a list of port specs, and generates
+;; combinations of hosts and ports to scan.
+
+(define (gen-scan-tasks scan-hosts scan-ports)
+  (define scan-addrs (map resolve-host-spec scan-hosts))
+
+  (define port-iter (gen-scan-ports scan-ports))
+  (define port #f)
+
+  (define addr-iter #f)
+
+  (define (next-port) 
+    (set! port (port-iter))
+    (set! addr-iter (gen-scan-addrs scan-addrs)))
+
+  (next-port)
+
+  (define (next-task)
+    (guard (lambda (err)
+             (unless (eq? (error-key err) 'done)
+               (re-error err))
+             (next-port)
+             (next-task))
+      (list (addr-iter) port))))
 
 (define-macro (repeat count . body)
   `(let ((%ctr ,count))
@@ -64,41 +110,35 @@
 
 (define (spawn-scanners hosts ports conns lapse)
   (define results (make-channel))
-  (define next-task (scan-tasks hosts ports)) 
+  (define next-task (gen-scan-tasks hosts ports)) 
+  (define done-sent #f)
+
   (define (terminate)
     (set! conns (- conns 1))
     (when (= conns 0)
-      (send 'done results)))
+      (send 'done results)
+      (set! terminate (lambda () (halt))))
+    (halt))
+
   (repeat conns
     (spawn (function (scanner-process)
               (forever
-                (define evt (next-task))
-                ; We are out of work.
-                (when (eq? evt 'done) 
-                  (terminate)
-                  (return))
-                (scan-port (car evt) (cadr evt) lapse results)))))
+                (define evt (guard (lambda (err)
+                                     (unless (eq? (error-key err) 'done)
+                                       (re-error err))
+                                     (terminate))
+                              (next-task)))
+                
+                (cond ((pair? evt)
+                       (scan-port (car evt) (cadr evt) lapse results))
+
+                      ((eq? evt 'done)
+                       (return))
+
+                      ((eq? evt 'signal-done) 
+                       (send 'done results)
+                       (return)))))))
   results)
 
-(define (integer-range first last)
-  (when (> first last)
-    (define temp last)
-    (define last first)
-    (define first temp))
-
-  (define tc (make-tc))
-
-  (until (>= first last)
-    (tc-append! tc first)
-    (set! first (+ first 1)))
-
-  (tc->list tc))
-
-(define (port-range first last)
-  (integer-range first last))
-
-(define (addr-range first last)
-  (integer-range first last))
-
-(export scan services-report port-range addr-range ipv4 format-ipv4)
+(export spawn-scanners services-report port-range addr-range ipv4 format-ipv4)
 

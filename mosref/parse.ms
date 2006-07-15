@@ -56,7 +56,7 @@
                           (cidr-max h d))))
          
           (error 'parse 
-            "expected either a host address, CIDR network or address range." 
+            "expected a host address, CIDR network or address range." 
             r))
 
        (string-split* s ",")))
@@ -64,7 +64,7 @@
 (define (parse-port s)
   (define n (string->integer s))
   (when (or (< n 0) (> n 65535))
-    (error 'parse "expected a port in the range [0, 65535]" n))
+    (error 'parse "expected a port in the range 0 to 65535." n))
   n)
 
 (define *rx-port* (make-regex "^[0-9]+$"))

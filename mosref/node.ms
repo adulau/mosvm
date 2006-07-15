@@ -317,49 +317,50 @@
       (compile
         `((export nothing)
           (import "mosref/scanner")
-          (scan (parse-host-spec (wait))
-                (parse-port-spec (wait))
-                (parse-timeout (wait))
-                (parse-conns (wait))
-                (output)))))))
+          (define results (apply spawn-scanners (wait)))
+          (forever
+            (define evt (wait results))
+            (send evt)
+            (when (eq? evt 'done)
+              (return))))))))
 
 (define (spawn-node-scan node hosts ports timeout conns)
   (with-node-program node *node-scan-prog*
-    (send hosts xmit)
-    (send ports xmit)
-    (send timeout xmit)
-    (send conns xmit)
-    (define evt (wait recv))
-    ;TODO: Check for parser failure.
-
+    (send (list hosts ports timeout conns)
+          xmit)
+    
     (define done #f)
+
     (until done
       (define evt (wait recv))
       (cond
-        ((eq evt 'done)
+        ((eq? evt 'done)
          (send-line "Scan complete.")
          (send 'close xmit)
-         (return))
+         (set! done #t))
 
-        ((eq evt 'close)
+        ((eq? evt 'close)
          (send-line "Scan interrupted.")
          (send 'close xmit)
          ; TODO: Scan was terminated abruptly.
-         (return))
+         (set! done #t))
 
         ((not (list? evt))
          (send-line "Illegal scan event: " (format evt))
          (send 'close xmit)
          (send-line "Aborted scan.")
-         (return))
+         (set! done #t))
 
         ((eq? (car evt) 'connect)
+         (define args (cdr evt))
+         (define addr (car args))
+         (define port (cadr args))
          ; TODO: Scan found a port..
-         (send-line "Found port: " (format-ipv4 addr) ":" (format-port addr)))
+         (send-line "Found port: " (format-ipv4 addr) ":" (format port)))
 
         (else
          (send-line "Illegal scan event: " (format evt))
          (send 'close xmit)
          (send-line "Aborted scan.")
-         (return))))))
+         (set! done #t))))))
 

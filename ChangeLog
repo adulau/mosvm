@@ -32,6 +32,13 @@
 
   + Replaced the dated Console REPL with a console shell
 
+- 7/15/2006, MOSREF Drone Port Scanning
+  * Added the scan command to the mosref shell to perform TCP port scans from
+    the current node.
+
+  * Overhauled the scan task generator in mosref/scanner to generate scan
+    tasks in constant memory.
+
 - 7/15/2006, Generic Iteration
   With the introduction of coroutines, it has become obvious that lib/iterate
   is too rooted in the old Lisp notion of map and for-each.  All of the
@@ -39,6 +46,12 @@
   accept dictionaries, sets, and functions instead of just lists.  Functions 
   are called each time the iterator wants an item, and may throw 'done to 
   indicate that they are out of items.
+
+  * Added lib/catch, which contains macros to simplify writing guards.
+  * Added (catch-cond conds stmt ..) to lib/catch
+  * Added (catch-case cases stmt ..) to lib/catch
+  * Added (join-iters iter0 iterN ..) -> iter to lib/iterate
+  * Added (integer-range min max) -> iter to lib/iterate
 
 - 7/14/2006, Multiple Monitors
   Multiple monitors may now wait on a single channel -- this is needed by

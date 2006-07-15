@@ -144,3 +144,38 @@
         all any
         find-tail find
         filter filter!)
+
+; Iterates over the values yielded by each supplied iterator, in turn.
+(define (join-iters iter0 . iterN)
+  (define (next)
+    (guard (lambda (err)
+             (unless (and (eq? (error-key err) 'done)
+                          (pair? iterN))
+              (re-error err))
+             (set! iter0 (car iterN))
+             (set! iterN (cdr iterN))
+             (return (next)))
+      (iter0))))
+
+; Returns all integer in the range [min, max)
+
+(define (integer-range min max)
+  (define t #f)
+
+  (function (next-integer)
+    (unless (< min max)
+      (error 'done "out of integers"))
+    (set! t min)
+    (set! min (+ min 1))
+    t))
+
+(define (iter->list iter)
+  (define tc (make-tc))
+    (guard (lambda (err)
+             (unless (eq? (error-key err) 'done)
+              (re-error err))
+             (return (tc->list tc)))
+    (forever
+      (tc-append! tc (iter)))))
+
+(export integer-range join-iters iter->list)
