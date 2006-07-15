@@ -13,7 +13,7 @@
 ; along with this library; if not, write to the Free Software Foundation, 
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
-(module "lib/coro")
+(module "lib/iterate")
 
 ; Generators, in Mosquito Lisp are functions that, when called, return a
 ; function that will yield a value each time they are called, or raise an
@@ -61,6 +61,17 @@
        (forever 
          ,@body))))
 
+(define-macro (with-iter-tc . body)
+  `(begin
+     (define args (iter* (cons arg0 argN)))
+
+     (guard (function (catch-done err)
+              (if (eq? (error-key err) 'done)
+                (tc->list result)
+                (re-error err)))
+       (forever 
+         ,@body))))
+
 (define (for-each fn arg0 . argN)
   (define result #f)
   (with-iter 
@@ -68,16 +79,16 @@
 
 (define (map fn arg0 . argN)
   (define result (make-tc))
-  (with-iter 
+  (with-iter-tc 
     (tc-append! result (apply fn (next args)))))
 
 (define (fold-left fn result arg0 . argN)
   (with-iter
-    (set! result (fn result @(next args)))))
+    (set! result (apply fn result (next args)))))
 
 (define (fold-right fn result arg0 . argN)
   (with-iter
-    (set! result (fn @(next args) result))))
+    (set! result (fn (scatter (next args)) result))))
 
 (define fold fold-right)
 
@@ -91,10 +102,7 @@
 
 (define (list-index fn lst)
   (define ix (index fn lst))
-      (print "Index is: ")
-      (print (format ix))
-      (print "\n")
-      ix)
+  ix)
 
 (define (all fn arg0 . argN)
   (define result #t)
@@ -118,9 +126,21 @@
   (set! list (find-tail fn list))
   (if list (car list) #f))
 
+(define (filter fn list)
+  (define tc (make-tc))
+  (until (null? list)
+    (define item (car list))
+    (when (fn item)
+      (tc-append! tc item))
+    (set! list (cdr list)))
+  (tc->list tc))
+
+(define filter! filter)
+
 (export iter
         for-each map 
         fold-right fold-left fold 
         list-index 
         all any
-        find-tail find)
+        find-tail find
+        filter filter!)

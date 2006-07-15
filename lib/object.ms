@@ -34,13 +34,6 @@
   (define arg-offsets  
     (map (function (set-arg-offset arg-name) 
            (or (list-index (lambda (x) 
-                             (print "Comparing ")
-                             (print (format x))
-                             (print " to " )
-                             (print (format arg-name))
-                             (print " -- " )
-                             (print (format (eq? x arg-name)))
-                             (print "\n")
                              (eq? x arg-name)) fields)
                (error 'class "constructor field is not a member of the class"
                       arg-name class-name)))

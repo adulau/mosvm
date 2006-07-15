@@ -32,7 +32,7 @@
 
   + Replaced the dated Console REPL with a console shell
 
-- ?/??/????, Generic Iteration
+- 7/15/2006, Generic Iteration
   With the introduction of coroutines, it has become obvious that lib/iterate
   is too rooted in the old Lisp notion of map and for-each.  All of the
   functions in lib/iterate -- except for find, list-index, and find-tail -- now 
