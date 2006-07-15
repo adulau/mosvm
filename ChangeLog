@@ -32,6 +32,14 @@
 
   + Replaced the dated Console REPL with a console shell
 
+- ?/??/????, Generic Iteration
+  With the introduction of coroutines, it has become obvious that lib/iterate
+  is too rooted in the old Lisp notion of map and for-each.  All of the
+  functions in lib/iterate -- except for find, list-index, and find-tail -- now 
+  accept dictionaries, sets, and functions instead of just lists.  Functions 
+  are called each time the iterator wants an item, and may throw 'done to 
+  indicate that they are out of items.
+
 - 7/14/2006, Multiple Monitors
   Multiple monitors may now wait on a single channel -- this is needed by
   the mosref scanner, since a single channel is expected to generate work

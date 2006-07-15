@@ -14,10 +14,16 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
 (module "lib/coro")
+; Definition -- A generator is a function that, when called, creates a new
+; function that may be called to generate a single value.  The function yielded
+; by a generator may be supplied to the iterators in lib/iterate.
+;
+; A generator should (error 'done) when the generator can not generate any more
+; values.
 
-; Constructs an Actor-style coroutine generator -- calling the resulting 
-; generator will spawn a coroutine and return a function that, when called,
-; will signal the coroutine to advance one iteration, and produce the result.
+; Constructs a generator in the style of Actor's coroutines.  Each time the
+; generator is advanced, it unblocks the function until it yields a result, 
+; then pauses for the next step.
 
 ; This is extremely useful for things like permutation generators, which are
 ; either expensive or complicated when implemented in a procedural fashion.
@@ -32,16 +38,26 @@
   (define next-sym (make-symbol 'next- coro-sym))
   
   `(define ,formals 
+     (define %done (list 'done)) ; constructs a unique done flag.
      (define %step (make-channel))
      (define %data (make-channel))
+
      (define (yield value)
        (wait %step)
        (send value %data))
+
      (spawn (function (,proc-sym)
-               ,@body))
+              (guard (lambda (err)
+                       (if (eq? (error-key err) 'done)
+                         (send %done %data)
+                         (re-error err)))
+                     ,@body)))
     
-    (function (,next-sym)
-      (send 'next %step)
-      (wait %data))))
+     (function (,next-sym)
+       (send 'next %step)
+       (define evt (wait %data))
+       (when (eq? evt %done)
+         (error 'done))
+       evt)))
 
 (export define-coro)
