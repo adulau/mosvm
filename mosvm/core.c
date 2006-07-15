@@ -282,6 +282,7 @@ MQO_BEGIN_PRIM( "/", m_div )
     for(;;){
         OPT_INTEGER_ARG( vN );
         if( ! has_vN )break;
+        if( ! vN )mqo_errf( mqo_es_vm, "s", "attempted divide by zero" );
         v0 /= vN;
     };
     RESULT( mqo_vf_integer( v0 ) );
