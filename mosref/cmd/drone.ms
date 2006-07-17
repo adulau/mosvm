@@ -25,7 +25,8 @@
               " current node.  When the drone connects to the listener, a"
               " the drone will be bound to the specified identifier.")
 
-  (define file (req-path terms " for drone executable"))
+  (define file (req-path (mosref-shell-node shell)
+                         terms " for drone executable"))
   (define id (req-term terms " drone identifier"))
   (define platform (req-term terms " drone platform"))
   (define portno (or (opt-integer terms " listener port")

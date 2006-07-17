@@ -25,6 +25,8 @@
               " current node.")
 
   (define node (req-node terms ""))
+  (define old-node (mosref-shell-node shell))
+
   (set-mosref-shell-node! shell node)
                        
   (define (revert-node) (set-mosref-shell-node! shell old-node))

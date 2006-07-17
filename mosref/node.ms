@@ -75,7 +75,7 @@
   (send program xmit)
   (list xmit recv))
 
-(export list-mosref-nodes 
+(export list-mosref-nodes find-mosref-node
         spawn-node-program make-drone-node make-console-node node-id 
         node-addr drone-node-bridge <node> <drone-node> <console-node> 
         node? drone-node? console-node?)
