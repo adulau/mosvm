@@ -24,7 +24,7 @@
               " this will only work on non-Windows nodes, due to"
               " limitations in the Win32 command shell.")
 
-  (spawn-node-shell current-node (tc->list terms)))
+  (spawn-node-shell (mosref-shell-node shell) (tc->list terms)))
 
 (define (spawn-node-cmd (<console-node> node) cmd)
   (when (string-begins-with? *platform* "win")
