@@ -32,18 +32,11 @@
 
   + Replaced the dated Console REPL with a console shell
 
-- ?/??/????, Beta Three
-
-- ?/??/????, MOSREF Node Prod Command
-  + Added mosref/cmd/prod
-
-- ?/??/????, MOSREF Shell Refactor
-  + Added the new <shell> class to mosref/shell
-  + Added (shell-node    <shell>) -> <node> accessor to mosref/shell
-  + Added (shell-running <shell>) -> <boolean> accessor to mosref/shell
-  + Added (exit-shell <shell>) function to mosref/shell
-  + Added (shell-cmd cmd uses help body) macro to mosref/shell
-  + Moved all commands from mosref/shell to mosref/cmd/<cmd>
+- 7/16/2006, MOSREF Shell Refactor
+  All commands for the MOSREF shell can now be found in mosref/cmd/<verb>.ms; 
+  the drone programs required to implement these commands are included in the
+  command modules, instead of cluttering the mosref/node module.  The overall
+  intent is to greatly simplify the effort required to add new commands.
 
 - 7/15/2006, MOSREF Drone Port Scanning
   * Added the scan command to the mosref shell to perform TCP port scans from
