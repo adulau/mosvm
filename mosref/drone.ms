@@ -73,16 +73,21 @@
 (define (format-fallback item)
   (list fmt (car item) (format (cdr item))))
 
-(define (drone-endpoint) 
-  (define bridge (wait input))
+(define *drone-bridge* #f)
+
+(define (drone-endpoint bridge) 
+  ;TODO: This should probably be an error.
+  (unless *drone-bridge*
+    (set! *drone-bridge* bridge))
 
   (with-input (input-chain (input)
                            (thaw-filter))
+                           ;(trace-filter "RECV")
     (define command (wait))
     (with-output (output-chain (output)
                                (freeze-filter))
-      (send bridge (input))
+                               ;(trace-filter "SEND")
       (command))))
 
-(export drone-affiliation drone-endpoint)
+(export *drone-bridge* drone-affiliation drone-endpoint)
 

@@ -33,14 +33,15 @@
   (define bridge (make-bridge xmit recv))
   (define lanes (bridge-lanes bridge))
 
+  (define (spawn-endpoint/lane lane)
+    (spawn (lambda ()
+             (with-input (lane-recv lane)
+               (with-output (lane-xmit lane)
+                 (endpoint lane))))))
+
   (spawn (lambda ()
            (forever
-             (define lane (wait lanes))
-             (define recv (lane-recv lane))
-             (send bridge recv)
-             (with-input recv
-               (with-output (lane-xmit lane)
-                 (spawn endpoint))))))
+             (spawn-endpoint/lane (wait lanes)))))
   
   bridge)
 

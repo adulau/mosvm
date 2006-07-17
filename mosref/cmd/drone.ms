@@ -42,40 +42,36 @@
 
   (send-line "Drone executable created.")
 
-  (define listener 
-    (guard (lambda (e)
-             (send-err "Could not listen to " 
-                       (format portno) "."))
-           (tcp-listen portno)))
+  (send-line "Listening for drone on " (format portno) "...")
 
-  (send-line "Listening for drone on " (format portno)
-             "...")
+  (define listener (node-tcp-listen (mosref-shell-node shell) portno))
+  (define finish (car listener))
+  (define conns (cadr listener))
 
   (spawn (lambda ()
            (guard (lambda (e)
                     ;TODO: Make number of attempts permitted
                     ;      configurable
-                    (close-listener listener)
-                    (send-line "ERROR: Affilation of " 
-                               id
-                               " failed, "
-                               (car (error-info e))
-                               "."))
+                    (traceback e)
+                    (send-line "ERROR: Affilation of " id " failed, "
+                               (car (error-info e)) ".")
+                    (finish)
+                    (halt))
                   ;TODO: Make lapse configurable.
-                  (define transport
-                    (await-drone-affiliation listener ecdh 1800000))
 
-                  (send-line "Drone " id " affiliated.")
-                  ;TODO: Tag with platform.
-                  ;TODO: Where will we get addr?
+              (define transport
+                (await-drone-affiliation conns ecdh 1800000))
 
-                  (make-drone-node 
-                    id #f 
-                    (spawn-endpoint console-endpoint @transport))))))
+              (send-line "Drone " id " affiliated.")
+              ;TODO: Tag with platform.
+              ;TODO: Where will we get addr?
+              (finish)
+              (make-drone-node id #f 
+                               (spawn-endpoint console-endpoint @transport))))))
 
 (define *node-tcp-listen-prog* 
   (inline (export nothing)
-          (define bridge (wait))
+          (define bridge *drone-bridge*)
           (define portno (wait))
           ;TODO: Signal failure of the listener.
           (define listener (guard (function (report-failed-listen err)
@@ -109,7 +105,7 @@
   (define xmit (car conn))
   (define recv (cadr conn))
   (define lanes (make-channel))
-  (define bridge (node-bridge node))
+  (define bridge (drone-node-bridge node))
 
   (spawn (lambda ()
            (define done #f)

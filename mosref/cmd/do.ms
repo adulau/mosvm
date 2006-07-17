@@ -30,9 +30,11 @@
   (inline (export nothing) ;; All private..
           (import "lib/cons-filter")
           (import "lib/format-filter")
-          (define bridge (wait))
+          
           (define okay #t)
           (define result #f)
+          
+          (define progn (wait))
             
           (define result
             (with-output (output-chain (output) ;TODO: Does not work.
@@ -43,7 +45,8 @@
                        (traceback err s)
                        (set! okay #f)
                        s)
-                 (format ((wait))))))
+                 (format (progn)))))
+
           (send (cons (if okay 'succ 'fail) result))
           (send 'close)))
                 

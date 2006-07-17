@@ -44,8 +44,7 @@
          (put-node-file @dst data)))
 
 (define *drone-get-file-prog*
-  (inline (let ((bridge (wait))
-                (path (wait))
+  (inline (let ((path (wait))
                 (data #f))
             (guard (lambda (e)
                      (send (list 'fail (car (error-info e)))))
@@ -70,8 +69,7 @@
          (else (error 'expect "expected string or done" evt))))))
 
 (define *drone-put-file-prog*
-  (inline (let ((bridge (wait))
-                (path (wait))
+  (inline (let ((path (wait))
                 (data (make-string))
                 (done #f))
             (guard (lambda (e)

@@ -28,6 +28,8 @@
 (import "lib/s-filter")
 (import "lib/package-filter")
 
+(import "lib/bridge")
+
 (export await-drone-affiliation console-affiliation 
         console-endpoint
         make-drone-exe make-console-ecdh)
@@ -85,7 +87,10 @@
   (when (eq? conn 'timeout)
     (error 'aff "the drone did not connect"))
   (when timer (cancel-timeout timer))
-  (console-affiliation ecdh conn conn))
+  (apply console-affiliation ecdh
+         (cond ((lane? conn)  (list (lane-xmit conn) (lane-recv conn)))
+               ((stream? conn) (list (input conn) (output conn)))
+               (else (error 'aff "expected stream or lane" conn)))))
 
 (define (make-drone-exe console-addr console-portno console-ecdh platform)
   (build-exe platform
@@ -115,10 +120,9 @@
                     ((thaw data))))
                (export import)))) ; Be afraid, be very afraid..
 
-(define (console-endpoint) 
-  ; We disregard this..
-  (define bridge (wait))
+(define (console-endpoint bridge) 
   (define path (wait))
+
   (unless (string? path)
     (send 'close)
     (return))
