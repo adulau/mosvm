@@ -10,6 +10,11 @@
 
 - ?/??/????, MOSREF Serve Console TCP
   
+- ?/??/????, MOSREF Node Prod Command
+  + Added mosref/cmd/prod
+
+- ?/??/????, Beta Three
+
 - ?/??/????, MOSREF Drone Bridges
   + All drones now must have unique identifiers
   + The console is identified as console
@@ -18,8 +23,14 @@
     portno, then integrate itself into the MOSREF network.
 
 - ?/??/????, MOSREF Serve Drone TCP
-  + Added mosref/forward, which contains functionality for forwarding TCP
-    connections across MOSREF transports.
+  * Added (make-reserved-lane bridge) -> lane to lib/bridge; unlike make-lane,
+    lanes created on one end of a bridge do not appear in the bridge-lanes 
+    channel on the remote end -- they must be picked up with find-reserved-lane
+  * Added (find-reserved-lane bridge tag) -> lane to lib/bridge
+  * Exposed (lane-tag lane) -> str from lib/bridge
+  * Added test cases for find-reserved-lane, lane-tag and make-reserved-lane to
+    test/bridge
+  + Added node-tcp-listen to mosref/cmd/drone
 
   + Added (spawn-remote-tcp-server endpoint portno) -> bridge to
     mosref/forward, which causes a drone to create a TCP listener, and forward

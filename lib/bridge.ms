@@ -62,7 +62,7 @@
     (define lane (wait binds))
     (dict-set! recv-tags id lane))
 
-  (define (cmd-make id)
+  (define (recv-lane id)
     (define lane-xmit (make-channel))
     (define lane-recv (make-channel))
     (define recv-tag id)
@@ -71,8 +71,14 @@
     (dict-set! recv-tags recv-tag lane)
     (dict-set! xmit-tags xmit-tag lane)
     (send (string-append 58 xmit-tag) b-xmit) 
-    (send lane lanes)
-    (lane-monitor bridge lane))
+    (lane-monitor bridge lane)
+    lane)
+
+  (define (cmd-make id)
+    (send (recv-lane id) lanes))
+
+  (define (cmd-make-res id)
+    (recv-lane id))
 
   (define (cmd-data data)
     (define recv-tag (string-read! data *bridge-tag-size*))
@@ -95,9 +101,13 @@
           ((case (string-read-byte! evt)
              ((58) cmd-link) ; :
              ((62) cmd-make) ; >
+             ((93) cmd-make-res) ; ]
              ((33) cmd-data) ; !
              (else bridge-wtf)) evt))))))
-  
+
+(define (find-reserved-lane bridge tag)
+  (dict-ref (bridge-recv-tags bridge) tag))
+
 (define (lane-monitor bridge lane)
   (define b-xmit (bridge-xmit bridge))
   (define l-xmit (lane-xmit lane))
@@ -110,19 +120,26 @@
 
 ; Directs the supplied bridge to create a new lane.
 
-(define (make-lane bridge)
+(define (make-a-lane bridge pfx)
   (define lane-xmit (make-channel))
   (define lane-recv (make-channel))
   (define xmit-tags (bridge-xmit-tags bridge))
   (define xmit-tag (make-bridge-tag xmit-tags))
   (define lane (make-lane-state xmit-tag lane-xmit lane-recv))
   (dict-set! xmit-tags xmit-tag lane)
-  (send (string-append ">" xmit-tag) (bridge-xmit bridge))
+  (send (string-append pfx xmit-tag) (bridge-xmit bridge))
   (send lane (bridge-binds bridge))
   (lane-monitor bridge lane)
   lane)
 
-(export make-lane lane-xmit lane-recv)
+(define (make-lane bridge)
+  (make-a-lane bridge ">"))
 
-(export make-bridge bridge-lanes)
+(define (make-reserved-lane bridge)
+  (make-a-lane bridge "]"))
+
+(export make-lane make-reserved-lane find-reserved-lane 
+        lane-xmit lane-recv lane-tag lane? <lane>)
+
+(export make-bridge bridge-lanes bridge? <bridge>)
 
