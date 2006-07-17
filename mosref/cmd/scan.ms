@@ -38,6 +38,7 @@
 
 (define *node-scan-prog*
   (inline (export nothing)
+          (define bridge (wait))
           (import "mosref/scanner")
           (define results (apply spawn-scanners (wait)))
           (forever

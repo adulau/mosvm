@@ -116,6 +116,8 @@
                (export import)))) ; Be afraid, be very afraid..
 
 (define (console-endpoint) 
+  ; We disregard this..
+  (define bridge (wait))
   (define path (wait))
   (unless (string? path)
     (send 'close)

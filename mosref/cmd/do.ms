@@ -30,6 +30,7 @@
   (inline (export nothing) ;; All private..
           (import "lib/cons-filter")
           (import "lib/format-filter")
+          (define bridge (wait))
           (define okay #t)
           (define result #f)
             

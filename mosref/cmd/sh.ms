@@ -55,6 +55,7 @@
 
 (define *node-shell-prog*
   (inline (import "lib/env")
+          (define bridge (wait))
           (when (string-begins-with? *platform* "win")
             (error 'shell 
                    "MOSREF cannot spawn shell commands on Microsoft Windows"))

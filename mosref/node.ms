@@ -63,6 +63,7 @@
 (define (spawn-node-program (<console-node> node) program)
   (define xmit (make-channel))
   (define recv (make-channel))
+  (send #f xmit) ; There is no bridge for the console node.
   (with-input xmit (with-output recv (spawn program)))
   (list xmit recv))
 

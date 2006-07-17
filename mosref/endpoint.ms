@@ -36,9 +36,12 @@
   (spawn (lambda ()
            (forever
              (define lane (wait lanes))
-             (with-input (lane-recv lane)
+             (define recv (lane-recv lane))
+             (send bridge recv)
+             (with-input recv
                (with-output (lane-xmit lane)
                  (spawn endpoint))))))
+  
   bridge)
 
 (export spawn-endpoint)

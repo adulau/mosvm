@@ -74,11 +74,14 @@
   (list fmt (car item) (format (cdr item))))
 
 (define (drone-endpoint) 
+  (define bridge (wait input))
+
   (with-input (input-chain (input)
                            (thaw-filter))
     (define command (wait))
     (with-output (output-chain (output)
                                (freeze-filter))
+      (send bridge (input))
       (command))))
 
 (export drone-affiliation drone-endpoint)
