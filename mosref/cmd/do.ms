@@ -24,7 +24,7 @@
               " and outputs the result.")
 
   (define expr (apply string-join " " (tc->list terms)))
-  (eval-node-expr current-node (string->exprs expr)))
+  (eval-node-expr (mosref-shell-node shell) (string->exprs expr)))
 
 (define *drone-eval-prog*
   (inline (export nothing) ;; All private..
