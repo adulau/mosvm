@@ -31,9 +31,10 @@
     (return))
  
   (define verb (tc-next! terms))
-  (define cmd (find-cmd verb))
+  (define cmd (find-mosref-cmd verb))
     
   (unless cmd (send-err "Command " (format verb) " not found."))
 
-  (send (string-append "\n" (mosref-cmd-info data) "\n\n")))
+  (send (string-append "\n" (mosref-cmd-usage cmd) "\n\n" 
+                       (mosref-cmd-info cmd) "\n\n")))
 
