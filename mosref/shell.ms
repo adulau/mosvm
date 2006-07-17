@@ -27,6 +27,29 @@
 
 (define *cmd-term* (make-regex "[^ \r\n\t]+"))
 
+(define-record-type mosref-shell
+                    (make-mosref-shell node console running)
+                    mosref-shell?
+                    (node mosref-shell-node set-mosref-shell-node!)
+                    (console mosref-shell-console set-mosref-shell-console!)
+                    (running mosref-shell-running set-mosref-shell-running!))
+
+(export <mosref-shell> mosref-shell?
+        mosref-shell-node set-mosref-shell-node!
+        mosref-shell-console set-mosref-shell-console!
+        mosref-shell-running set-mosref-shell-running!)
+
+(define-record-type mosref-cmd
+                    (make-mosref-cmd verb usage info impl)
+                    mosref-cmd?
+                    (verb mosref-cmd-verb)
+                    (usage mosref-cmd-usage)
+                    (info mosref-cmd-info)
+                    (impl mosref-cmd-impl))
+
+(export <mosref-cmd> mosref-cmd?
+        mosref-cmd-verb mosref-cmd-usage mosref-cmd-info mosref-cmd-impl)
+
 ; Assumes that each input is precisely one line.
 (define (mosref-shell console current-node)
   (define (set-current-node node)
