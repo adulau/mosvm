@@ -33,7 +33,7 @@
                       5000))
   (define conns (or (opt-integer terms "conns")
                     1000))
-  (spawn-node-scan current-node 
+  (spawn-node-scan (mosref-shell-node shell)
                    hosts ports timeout conns))
 
 (define *node-scan-prog*
