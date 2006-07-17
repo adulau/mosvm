@@ -32,4 +32,17 @@
   (string-append! buf (format i))
   buf)
 
-(export format-ipv4)
+(define (format-path path)
+  (string-append (node-id (car path)) ":" (cadr path)))
+
+(export format-ipv4 format-path)
+
+(define (send-line . items)
+  (send (string-append @items *line-sep*)))
+
+(define (send-err . items)
+  (apply send-line "ERROR: " items)
+  (error 'syn))
+
+(export send-line send-err )
+

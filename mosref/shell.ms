@@ -15,15 +15,12 @@
 
 (module "mosref/shell")
 
-(import "lib/terminal")
 (import "lib/catch")
 
 (import "mosref/console")
 (import "mosref/node")
 (import "mosref/parse")
-
-(define (send-line . items)
-  (send (string-append @items *line-sep*)))
+(import "mosref/format")
 
 (define *cmd-term* (make-regex "[^ \r\n\t]+"))
 
@@ -50,274 +47,40 @@
 (export <mosref-cmd> mosref-cmd?
         mosref-cmd-verb mosref-cmd-usage mosref-cmd-info mosref-cmd-impl)
 
-; Assumes that each input is precisely one line.
-(define (mosref-shell console current-node)
-  (define (set-current-node node)
-    (set! current-node node))
+(define *cmds-by-verb* (dict))
 
-  (define (format-path path)
-    (string-append (node-id (car path)) ":" (cadr path)))
+(define (bind-mosref-cmd verb usage info impl)
+  (dict-set! *cmds-by-verb* verb (make-mosref-cmd verb usage info impl)))
+
+(define-macro (define-cmd verb usage info . body)
+  `(bind-mosref-cmd ,verb ,usage ,info (function (,(make-symbol 'cmd- verb))
+                                          ,@body)))
+
+(export define-cmd bind-mosref-cmd)
+
+(define (do-mosref-cmd shell terms)
+  (when (string? terms)
+    (return (do-mosref-cmd (apply make-tc (or (match-regex* *cmd-term* terms)
+                                              '())))))
+  (when (tc-empty? terms) (return))
+
+  (define verb (tc-next! terms))
+  (define data (dict-ref commands verb))
+  (unless data
+    (send-err "I do not understand " (format verb) "."))
+    
+  ((mosref-cmd-impl shell data) terms))
+
+; Assumes that each input is precisely one line.
+(define (run-mosref-shell console node)
+  (define shell (make-mosref-shell node console #t))
 
   (define (send-prompt)
-    (send (string-append (node-id current-node) "> ")))
-
-  (define (send-err . items)
-    (apply send-line "ERROR: " items)
-    (error 'syn))
-
-  (define (req-term terms . what)
-    (when (tc-empty? terms)
-      (apply send-err "Expected " what))
-    (tc-next! terms))
-
-  (define (req-node terms for)
-    (define id (req-term terms "node identifier" for "."))
-    (define node (find-mosref-node id))
-    (unless node
-      (send-err "Could not find " (format id) for ".")))
-
-  (define (req-path terms for)
-    (define path (req-term terms "file path" for "."))
-    (unless (string-find path ":")
-      (return (list current-node path)))
-    (set! path (string-split path ":"))
-    (define id (car path))
-    (set! path (cadr path))
-    (define node (find-mosref-node id))
-    (unless node
-      (send-err "Could not find node " (format id) for "."))
-    (list node path))
-
-  (define (opt-integer terms for)
-    (when (tc-empty? terms) (return #f))
-    (define str (tc-next! terms))
-    (guard (lambda (e)
-             (send-err "Could not parse " for "."))
-      (string->integer str)))
-
-  (define finished #f)
-
-  (define commands 
-    (dict (list "on" (function (on-cmd terms)
-                       (define old-node current-node)
-                       (define node (req-node terms ""))
-                       (set-current-node node)
-                       
-                       (define (revert-node)
-                         (set-current-node old-node))
-
-                       (unless (tc-empty? terms)
-                         (guard (function (revert-node-before-err err)
-                                   (revert-node)
-                                   (re-error err))
-                            (parse-cmd terms)
-                            (revert-node))))
-                (string-append
-                  "USAGE: on <node-id>\n"
-                  "Instructs the console to perform subsequent commands on the"
-                  " specified node.\n"
-                  "USAGE: on <node-id> <command> <arg> ...\n\n"
-                  "Performs the supplied command, with arguments, on the"
-                  " specified host\n\n"))
-
-          (list "nodes" (function (nodes-cmd terms)
-                          (for-each (function (display-node node)
-                                      (send-line (format (node-id node))
-                                                 " -- "
-                                                 (format (node-addr node))))
-                                    (list-mosref-nodes)))
-                (string-append
-                  "USAGE: nodes\n"
-                  "Lists the nodes currently known to the console, and their"
-                  " addresses.\n\n"))
-         
-          (list "drone" (function (drone-cmd terms)
-                          (define file (req-path terms " for drone executable"))
-                          (define id (req-term terms " drone identifier"))
-                          (define platform (req-term terms " drone platform"))
-                          (define portno (or (opt-integer terms 
-                                                          " listener port")
-                                             (random-integer 20000 30000)))
-                          (define ecdh (make-console-ecdh))
-                          (define data 
-                            (guard (lambda (e)
-                                     (send-err "Could not compile drone."))
-                              (make-drone-exe (node-addr current-node)
-                                                    portno
-                                                    ecdh
-                                                    platform)))
-                          (guard (lambda (e)
-                                   (send-err "Could not write file "
-                                             (format (cadr file)) "."))
-                            (put-node-file @file data))
-                          
-                          (print "Node file transmitted.\n")
-                          (send-line "Drone executable created.")
-
-                          (define listener 
-                            (guard (lambda (e)
-                                   (send-err "Could not listen to " 
-                                             (format portno) "."))
-                            (tcp-listen portno)))
-                          
-                          (send-line "Listening for drone on " (format portno)
-                                     "...")
-                        
-                          (spawn (lambda ()
-                            (guard (lambda (e)
-                                     ;TODO: Make number of attempts permitted
-                                     ;      configurable
-                                   (close-listener listener)
-                                   (send-line "ERROR: Affilation of " 
-                                              id
-                                              " failed, "
-                                             (car (error-info e))
-                                             "."))
-                               ;TODO: Make lapse configurable.
-                               (define transport
-                                 (await-drone-affiliation listener ecdh 1800000))
-
-                               (send-line "Drone " id " affiliated.")
-                               ;TODO: Tag with platform.
-                               ;TODO: Where will we get addr?
-
-                               (make-drone-node 
-                                 id #f 
-                                 (spawn-endpoint console-endpoint @transport))))))
-
-                (string-append
-                  "USAGE: drone <file> <id> <platform> [<portno>]\n"
-                  "Creates a new drone executable for the specified platform"
-                  " and places it at file, then spawns a listener on the"
-                  " current node.  When the drone connects to the listener, a"
-                  " the drone will be bound to the specified identifier.\n\n"))
-
-          (list "cp" (function (cp-cmd terms)
-                       (define src (req-path terms " for source file"))
-                       (define dst (req-path terms " for destination file"))
-
-                       (send-line
-                         "Copy from " (format-path src) " to " (format-path dst))
-                       
-                       (define data (guard (lambda (e) 
-                                             (send-err
-                                               "Could not access file " 
-                                               (format (cadr src)) "."))
-                                      (get-node-file @src)))
-                       
-                       (guard (lambda (e) 
-                                (traceback e)
-                                (send-err
-                                  "Could not alter file "
-                                  (format (cadr dst)) "."))
-                         (put-node-file @dst data)))
-
-                (string-append
-                  "USAGE: cp src-file dst-file\n"
-                  "Copies source file to dest file.\n\n"))
-
-          (list "help" (function (help-cmd terms)
-                         (when (tc-empty? terms)
-                           (send-line 
-                             "Commands: "
-                             (apply string-join " " (dict-keys commands)))
-                           (return))
-                         (define cmd (tc-next! terms))
-                         (define data (dict-ref commands cmd))
-                         (unless data
-                           (send-err "Command " cmd " not found."))
-                         (send (string-append "\n" (cadr data))))
-                (string-append
-                  "USAGE: help\n"
-                  "Requests a list of all commands known by the console\n\n"
-                  "USAGE: help <command>\n"
-                  "Requests information about the syntax and usage of a "
-                  " command\n\n"))
-
-          (list "do" (function (eval-cmd terms)
-                          ;TODO: Handle parser errors better.
-                          (define expr (apply string-join " " (tc->list terms)))
-                          (eval-node-expr current-node (string->exprs expr)))
-                (string-append
-                  "USAGE: do <lisp-expr>\n"
-                  "Evaluates the supplied lisp expression on the current node,"
-                  " and outputs the result.\n\n"))
-                            
-          (list "sh" (function (sh-cmd terms)
-                          ;TODO: Handle parser errors better.
-                          (spawn-node-shell current-node
-                                            (tc->list terms)))
-                (string-append
-                  "USAGE: sh <cmd>\n"
-                  "Evaluates the supplied host command on the current node --"
-                  " this will only work on non-Windows nodes, due to"
-                  " limitations in the Win32 command shell.\n\n"))
-                            
-          (list "load" (function (eval-cmd terms)
-                          (define expr (read-lisp-file
-                                         (req-term terms "for evaluation")))
-                          ;TODO: Handle parser errors better.
-                          (eval-node-expr current-node expr))
-                (string-append
-                  "USAGE: load <path>\n"
-                  "Loads the specified file on the current node, and evaluates"
-                  " it; note that path, here, is always local to the console."
-                  "\n\n"))
-          
-          (list "exit" (function (exit-cmd terms)
-                         (set! finished #t))
-                (string-append
-                  "Terminates the console.\n\n"))
-
-          (list "scan" (function (scan-cmd terms)
-                          (define hosts (parse-host-spec
-                                          (req-term terms "hosts.")))
-                          (define ports (parse-port-spec 
-                                          (req-term terms "ports.")))
-                          (define timeout (or (opt-integer terms "timeout")
-                                              5000))
-                          (define conns (or (opt-integer terms "conns")
-                                            1000))
-                          (spawn-node-scan current-node 
-                                           hosts ports timeout conns))
-                (string-append
-                  "USAGE: scan hosts ports [timeout [conns]]\n"
-                  "Performs a TCP port scan of the specified host, reporting"
-                  " all ports  that respond with a connection within timeout"
-                  " milliseconds.  The scanner will restrict itself to"
-                  " conns ports at a time, with a default of 1000.\n\n"))
-                  
-          (list "fork" (function (fork-cmd terms)
-                          (with-io (spawn-terminal 
-                                     (if (tc-empty? terms)
-                                       "MOSREF"
-                                       (tc-next! terms)))
-                             (define node current-node)
-                             (spawn (lambda ()
-                                      (mosref-shell console node)))))
-                (string-append
-                  "USAGE: fork [<window-name>]\n"
-                  "Creates a new MOSREF console shell session that may be used"
-                  " in parallel with the current one.\n\n"))))
-  
-  (define (parse-cmd terms)
-    (when (string? terms)
-      (return (parse-cmd (apply make-tc (or (match-regex* *cmd-term* terms)
-                                            '())))))
-
-    (when (tc-empty? terms) 
-      (return))
-
-    (define verb (tc-next! terms))
-    (define data (dict-ref commands verb))
-    (unless data
-      (send-err "I do not understand " (format verb) "."))
-    
-    ((car data) terms))
+    (send (string-append (node-id (mosref-shell-node shell)) "> ")))
 
   (send-prompt)
 
-  (until finished
+  (while (mosref-shell-running shell)
     (define cmd (wait))
     (when (eq? cmd 'close) (return))
     (when (string? cmd)
@@ -325,7 +88,11 @@
                    ((parse) (define info (error-info err))
                             (send-line "PARSE: For " (format (cadr info)) 
                                       ", " (car info))))
-        (parse-cmd cmd))
-      (unless finished (send-prompt))))
+        (do-mosref-cmd shell cmd))
+      (when (mosref-shell-running shell) 
+        (send-prompt))))
   
   (send 'close))
+
+(export run-mosref-shell do-mosref-cmd)
+

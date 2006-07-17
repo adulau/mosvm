@@ -14,6 +14,7 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
 (module "mosref/parse")
+(import "mosref/format")
 
 (define *rx-dns* (make-regex "^[A-Za-z][A-Za-z._-]+"))
 (define *rx-addr* (make-regex "^[0-9.]+$"))
@@ -85,4 +86,36 @@
        (string-split* s ",")))
 
 (export parse-port-spec parse-host-spec)
+
+(define (opt-integer terms for)
+  (when (tc-empty? terms) (return #f))
+  (define str (tc-next! terms))
+  (guard (lambda (e)
+           (send-err "Could not parse " for "."))
+         (string->integer str)))
+
+(define (req-term terms . what)
+  (when (tc-empty? terms)
+    (apply send-err "Expected " what))
+  (tc-next! terms))
+
+(define (req-node terms for)
+  (define id (req-term terms "node identifier" for "."))
+  (define node (find-mosref-node id))
+  (unless node
+    (send-err "Could not find " (format id) for ".")))
+
+(define (req-path terms for)
+  (define path (req-term terms "file path" for "."))
+  (unless (string-find path ":")
+    (return (list current-node path)))
+  (set! path (string-split path ":"))
+  (define id (car path))
+  (set! path (cadr path))
+  (define node (find-mosref-node id))
+  (unless node
+    (send-err "Could not find node " (format id) for "."))
+  (list node path))
+
+(export req-term req-node req-path opt-integer)
 
