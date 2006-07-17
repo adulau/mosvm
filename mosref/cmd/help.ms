@@ -26,8 +26,8 @@
   
   (when (tc-empty? terms)
     (send-line "Commands: "
-               (apply string-join "\n        "
-                      (map shell-cmd-usage (list-cmds))))
+               (apply string-join "\n          "
+                      (map mosref-cmd-usage (mosref-cmds))))
     (return))
  
   (define verb (tc-next! terms))
@@ -35,5 +35,5 @@
     
   (unless cmd (send-err "Command " (format verb) " not found."))
 
-  (send (string-append "\n" (shell-cmd-help data) "\n\n")))
+  (send (string-append "\n" (mosref-cmd-info data) "\n\n")))
 

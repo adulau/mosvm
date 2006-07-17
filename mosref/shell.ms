@@ -49,27 +49,34 @@
 
 (define *cmds-by-verb* (dict))
 
+(define (mosref-cmds) (dict-values *cmds-by-verb*))
+
 (define (bind-mosref-cmd verb usage info impl)
   (dict-set! *cmds-by-verb* verb (make-mosref-cmd verb usage info impl)))
 
+(define (find-mosref-cmd verb)
+  (dict-ref *cmds-by-verb* verb))
+
 (define-macro (define-cmd verb usage info . body)
-  `(bind-mosref-cmd ,verb ,usage ,info (function (,(make-symbol 'cmd- verb))
+  `(bind-mosref-cmd ,verb ,usage ,info 
+                    (function (,(make-symbol 'cmd- verb) shell terms)
                                           ,@body)))
 
-(export define-cmd bind-mosref-cmd)
+(export define-cmd bind-mosref-cmd mosref-cmds find-mosref-cmd)
 
 (define (do-mosref-cmd shell terms)
   (when (string? terms)
-    (return (do-mosref-cmd (apply make-tc (or (match-regex* *cmd-term* terms)
+    (return (do-mosref-cmd shell 
+                           (apply make-tc (or (match-regex* *cmd-term* terms)
                                               '())))))
   (when (tc-empty? terms) (return))
 
   (define verb (tc-next! terms))
-  (define data (dict-ref commands verb))
+  (define data (dict-ref *cmds-by-verb* verb))
   (unless data
     (send-err "I do not understand " (format verb) "."))
     
-  ((mosref-cmd-impl shell data) terms))
+  ((mosref-cmd-impl data) shell terms))
 
 ; Assumes that each input is precisely one line.
 (define (run-mosref-shell console node)

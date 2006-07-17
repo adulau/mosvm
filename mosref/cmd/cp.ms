@@ -18,8 +18,13 @@
 (import "mosref/node")
 
 (define-cmd "cp" 
-            "cp src-file dst-file" 
-            "Copies source file to dest file."
+            "cp <src-file> <dst-file>" 
+            (string-append
+              "Copies source file to the destination file.  Either the source"
+              " or the destination file path may be on a drone or console; to"
+              " specify a path on a node other than the current node, prefix"
+              " the path with the node name, and a colon.")
+
   (define src (req-path terms " for source file"))
   (define dst (req-path terms " for destination file"))
 

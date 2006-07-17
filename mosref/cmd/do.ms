@@ -18,7 +18,7 @@
 (import "mosref/node")
 
 (define-cmd "do"
-            "USAGE: do <lisp-expr>"
+            "do <lisp-expr>"
             (string-append
               "Evaluates the supplied lisp expression on the current node,"
               " and outputs the result.")

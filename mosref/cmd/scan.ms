@@ -18,7 +18,7 @@
 (import "mosref/node")
           
 (define-cmd "scan" 
-            "scan hosts ports [timeout [conns]]"
+            "scan <hosts> <ports> [<timeout> [<conns>]]"
             (string-append
                   "Performs a TCP port scan of the specified host, reporting"
                   " all ports  that respond with a connection within timeout"
