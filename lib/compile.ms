@@ -172,6 +172,7 @@
   (cond ((or (boolean? expr) 
              (integer? expr)
              (string? expr)
+             (procedure? expr)
              (null? expr))
          (list (list 'ldc expr)))
         ((symbol? expr)

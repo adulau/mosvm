@@ -20,6 +20,7 @@
 (import "lib/iterate")
 (import "mosref/console")
 (import "mosref/shell")
+(import "mosref/cmds")
 
 (define (main . args)
   (if *in-win32* 
@@ -73,5 +74,5 @@
 
   (define node (make-console-node console))
   
-  (mosref-shell node node))
+  (run-mosref-shell node node))
 
