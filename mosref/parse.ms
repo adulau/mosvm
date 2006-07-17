@@ -105,7 +105,7 @@
   (unless node
     (send-err "Could not find " (format id) for ".")))
 
-(define (req-path terms for)
+(define (req-path current-node terms for)
   (define path (req-term terms "file path" for "."))
   (unless (string-find path ":")
     (return (list current-node path)))

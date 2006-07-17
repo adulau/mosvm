@@ -28,7 +28,7 @@
              (if (tc-empty? terms)
                "MOSREF"
                (tc-next! terms)))
-           (define console (shell-console shell))
+           (define console (mosref-shell-console shell))
            (define node (mosref-shell-node shell))
            (spawn (lambda () (run-mosref-shell console node)))))
 

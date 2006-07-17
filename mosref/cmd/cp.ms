@@ -25,8 +25,9 @@
               " specify a path on a node other than the current node, prefix"
               " the path with the node name, and a colon.")
 
-  (define src (req-path terms " for source file"))
-  (define dst (req-path terms " for destination file"))
+  (define node (mosref-shell-node shell))
+  (define src (req-path node terms " for source file"))
+  (define dst (req-path node terms " for destination file"))
 
   (send-line "Copy from " (format-path src) " to " (format-path dst))
                        
