@@ -26,24 +26,21 @@
 (define *nodes-by-id* (dict))
 
 (define-class node <object>
-              (make-node-record id addr props)
+              (make-node-record id props)
               node?
               (id node-id)
-              (addr node-addr)
               (props node-props))
 
 (define-class console-node <node>
-              (make-console-node-record id addr props)
+              (make-console-node-record id props)
               console-node?
               (id node-id)
-              (addr node-addr)
               (props node-props))
 
 (define-class drone-node <node>
-              (make-drone-node-record id addr bridge props)
+              (make-drone-node-record id props bridge)
               drone-node?
               (id node-id)
-              (addr node-addr)
               (bridge drone-node-bridge)
               (props node-props))
 
@@ -54,12 +51,14 @@
   (dict-ref *nodes-by-id* id))
 
 (define (make-console-node addr)
-  (define node (make-console-node-record "console" addr (dict)))
+  (define node (make-console-node-record "console" (dict)))
+  (set-node-prop! node 'addr addr)
   (dict-set! *nodes-by-id* "console" node)
   node) 
 
 (define (make-drone-node id addr bridge)
-  (define node (make-drone-node-record id addr bridge (dict)))
+  (define node (make-drone-node-record id (dict) bridge))
+  (set-node-prop! node 'addr addr)
   (dict-set! *nodes-by-id* id node)
   node)
 
@@ -81,7 +80,7 @@
 
 (export list-mosref-nodes find-mosref-node
         spawn-node-program make-drone-node make-console-node node-id 
-        node-addr drone-node-bridge <node> <drone-node> <console-node> 
+        drone-node-bridge <node> <drone-node> <console-node> 
         node? drone-node? console-node?)
 
 (define (expect-data recv)
@@ -131,3 +130,7 @@
 (define (set-node-prop! node key val) (dict-set! (node-props node) key val))
 
 (export find-node-prop list-node-props set-node-prop!)
+
+(define (node-addr node) (find-node-prop node 'addr))
+
+(export node-addr)

@@ -12,39 +12,28 @@
   
 - ?/??/????, MOSREF Node Prod Command
   + Added mosref/cmd/prod
+  + Added site configuration settings for "terminal"
 
 - ?/??/????, Beta Three
 
-- ?/??/????, MOSREF Drone Bridges
-  + All drones now must have unique identifiers
-  + The console is identified as console
-  + Added (build-remote-drone endpoint portno ident platform), which returns
-    a buffer containing a drone, that will connect to portno on the specified
-    portno, then integrate itself into the MOSREF network.
-
 - ?/??/????, MOSREF Serve Drone TCP
+
+- 7/17/2006, MOSREF Drone Bridges
   * Added (make-reserved-lane bridge) -> lane to lib/bridge; unlike make-lane,
     lanes created on one end of a bridge do not appear in the bridge-lanes 
     channel on the remote end -- they must be picked up with find-reserved-lane
-
+  
   * Added (find-reserved-lane bridge tag) -> lane to lib/bridge
-
   * Exposed (lane-tag lane) -> str from lib/bridge
-
   * Added test cases for find-reserved-lane, lane-tag and make-reserved-lane to
-    test/bridge
-
   * Added properties to nodes, and the set command to manage properties.
-
   * Added (node-tcp-listen node portno) to mosref/cmd/drone; yields a list
     of close-func and lanes containing information received by a remote tcp
     listener.
 
-  + Added (close-bridge bridge) to lib/bridge
-
-  + Added site configuration settings for "terminal"
-
-  + Replaced the dated Console REPL with a console shell
+  * Drones may now act as bridges for other drones by tunnelling the control
+    protocol for the remote drone inside the control protocol for the 
+    bridging drone.
 
 - 7/16/2006, MOSREF Shell Refactor
   All commands for the MOSREF shell can now be found in mosref/cmd/<verb>.ms; 
