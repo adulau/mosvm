@@ -68,7 +68,7 @@
   (list xmit recv))
 
 (define (node-tcp-connect (<drone-node> node) addr portno lapse)
-  (define conn (spawn-node-program node *node-tcp-listen-prog*))
+  (define conn (spawn-node-program node *node-tcp-forward-prog*))
   (define xmit (car conn))
   (define recv (cadr conn))
   (send addr xmit)
@@ -82,7 +82,8 @@
   ;TODO: Notify the console of each connection.
   (define log-channel (output))
   (define (log-line . bits)
-    (send (apply string-append bits) log-channel))
+    (define msg (string-append @bits *line-sep*))
+    (send msg log-channel))
   (define (node-proxy-session)
     (define req (guard (lambda (err)
                          (unless (eq? (error-key err) 'socks)
