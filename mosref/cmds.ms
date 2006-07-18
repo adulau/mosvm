@@ -23,6 +23,7 @@
 (import "mosref/cmd/load")
 (import "mosref/cmd/nodes")
 (import "mosref/cmd/on")
+(import "mosref/cmd/proxy")
 (import "mosref/cmd/scan")
 (import "mosref/cmd/set")
 (import "mosref/cmd/sh")

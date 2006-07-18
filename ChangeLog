@@ -7,16 +7,30 @@
 - ?/??/????, Integration of the Massive Interface
   + Integration with Massive to provide a portable, simple graphic interface
   to MOSVM applications.
-
-- ?/??/????, MOSREF Serve Console TCP
-  
-- ?/??/????, MOSREF Node Prod Command
-  + Added mosref/cmd/prod
-  + Added site configuration settings for "terminal"
+  + Add site configuration settings for "terminal"
 
 - ?/??/????, Beta Three
+  + Extend the proxy command to require a shared authentication secret.
 
-- ?/??/????, MOSREF Serve Drone TCP
+- ?/??/????, MOSREF Transcripts and Persistent Drone Sessions
+  + All commands generate information into a console transcript.
+  + The console transcript may be read to reconstruct a console's state in a
+    new session.
+  + A console will accept restarted drones if the drone is not currently 
+    affiliated.
+  + Add a drop command to forcefully disconnect drones.
+
+- ?/??/????, MOSREF Node Prod Command
+  + Added mosref/cmd/prod
+
+- ?/??/????, MOSREF Drone Proxying
+  * Added lib/socks-server, a partial implementation of logic required for
+    implementing a SOCKS4 proxy server.
+  * Added (format-socks4-response granted portno addr) to lib/socks-server
+  * Added (parse-socks4-request str) -> (auth proto addr portno) to 
+    lib/socks-server
+  * Added the proxy command, which creates a proxy on the console that forwards
+    incoming TCP connections to the current node.
 
 - 7/17/2006, MOSREF Drone Bridges
   * Added (make-reserved-lane bridge) -> lane to lib/bridge; unlike make-lane,

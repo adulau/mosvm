@@ -26,11 +26,10 @@
 ; MTUs.  The fuzz filter is guaranteed to cost resources, cause ulcers, and
 ; torment filter users.
 
-(define (wait/timeout duration . channels)
+(define (wait/timeout duration channel)
   (define flag  (cons 0 0))
-  (define to-channel (make-channel))
-  (define timer (timeout duration to-channel flag))
-  (define event (apply wait to-channel channels))
+  (define timer (timeout duration channel flag))
+  (define event (wait channel))
   (cond
     ((eq? event flag)
      (apply error 'timeout "wait/timeout lost its patience" duration channels))
