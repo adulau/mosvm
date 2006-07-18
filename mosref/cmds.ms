@@ -24,4 +24,5 @@
 (import "mosref/cmd/nodes")
 (import "mosref/cmd/on")
 (import "mosref/cmd/scan")
+(import "mosref/cmd/set")
 (import "mosref/cmd/sh")

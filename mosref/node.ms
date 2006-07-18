@@ -26,23 +26,26 @@
 (define *nodes-by-id* (dict))
 
 (define-class node <object>
-              (make-node-record id addr)
+              (make-node-record id addr props)
               node?
               (id node-id)
-              (addr node-addr))
+              (addr node-addr)
+              (props node-props))
 
 (define-class console-node <node>
-              (make-console-node-record id addr)
+              (make-console-node-record id addr props)
               console-node?
               (id node-id)
-              (addr node-addr))
+              (addr node-addr)
+              (props node-props))
 
 (define-class drone-node <node>
-              (make-drone-node-record id addr bridge)
+              (make-drone-node-record id addr bridge props)
               drone-node?
               (id node-id)
               (addr node-addr)
-              (bridge drone-node-bridge))
+              (bridge drone-node-bridge)
+              (props node-props))
 
 (define (list-mosref-nodes)
   (dict-values *nodes-by-id*))
@@ -51,12 +54,12 @@
   (dict-ref *nodes-by-id* id))
 
 (define (make-console-node addr)
-  (define node (make-console-node-record "console" addr))
+  (define node (make-console-node-record "console" addr (dict)))
   (dict-set! *nodes-by-id* "console" node)
   node) 
 
 (define (make-drone-node id addr bridge)
-  (define node (make-drone-node-record id addr bridge))
+  (define node (make-drone-node-record id addr bridge (dict)))
   (dict-set! *nodes-by-id* id node)
   node)
 
@@ -122,3 +125,9 @@
   (assemble (optimize (compile body))))
 
 (export inline with-node-program expect-data expect-signal expect-succ)
+
+(define (find-node-prop node key) (dict-ref (node-props node) key))
+(define (list-node-props node) (dict->list (node-props node)))
+(define (set-node-prop! node key val) (dict-set! (node-props node) key val))
+
+(export find-node-prop list-node-props set-node-prop!)

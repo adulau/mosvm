@@ -1,4 +1,4 @@
-+ (/ 1 0) is not being handled gracefully
++ Move mosref/cmd.ms to mosref/cmd/all.ms, so it will not depend on unbuilt cmds
 
 + sudden termination of a drone does not update the console's node table.
 

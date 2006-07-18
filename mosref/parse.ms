@@ -87,6 +87,10 @@
 
 (export parse-port-spec parse-host-spec)
 
+(define (opt-term terms)
+  (when (tc-empty? terms) (return #f))
+  (define str (tc-next! terms)))
+
 (define (opt-integer terms for)
   (when (tc-empty? terms) (return #f))
   (define str (tc-next! terms))
@@ -117,5 +121,5 @@
     (send-err "Could not find node " (format id) for "."))
   (list node path))
 
-(export req-term req-node req-path opt-integer)
+(export opt-term req-term req-node req-path opt-integer)
 

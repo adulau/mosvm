@@ -26,16 +26,19 @@
   * Added (make-reserved-lane bridge) -> lane to lib/bridge; unlike make-lane,
     lanes created on one end of a bridge do not appear in the bridge-lanes 
     channel on the remote end -- they must be picked up with find-reserved-lane
+
   * Added (find-reserved-lane bridge tag) -> lane to lib/bridge
+
   * Exposed (lane-tag lane) -> str from lib/bridge
+
   * Added test cases for find-reserved-lane, lane-tag and make-reserved-lane to
     test/bridge
-  + Added node-tcp-listen to mosref/cmd/drone
 
-  + Added (spawn-remote-tcp-server endpoint portno) -> bridge to
-    mosref/forward, which causes a drone to create a TCP listener, and forward
-    each incoming connection as a lane.  Closing the bridge causes the drone
-    to stop listening.
+  * Added properties to nodes, and the set command to manage properties.
+
+  * Added (node-tcp-listen node portno) to mosref/cmd/drone; yields a list
+    of close-func and lanes containing information received by a remote tcp
+    listener.
 
   + Added (close-bridge bridge) to lib/bridge
 
