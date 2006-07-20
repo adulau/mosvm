@@ -32,7 +32,7 @@
   (define event (wait channel))
   (cond
     ((eq? event flag)
-     (apply error 'timeout "wait/timeout lost its patience" duration channels))
+     (error 'timeout "wait/timeout lost its patience" duration channel))
     (else
       (cancel-timeout timer)
       event)))
