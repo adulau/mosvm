@@ -33,7 +33,11 @@
     incoming TCP connections to the current node.
   * Added lib/socks-client, an implementation of a socks4 client library.
   * Added spawn-socks4-proxy to lib/socks-server, an extensible socks4 proxy.
-  
+  * Added close support to lanes in lib/bridge; sending close to a lane will
+    cause the remote lane to receive a close message and the respective xmit
+    recv tags to be reclaimed.  Note that this is a "half-close", both sides
+    must send 'close to completely remove themselves from the bridge.
+
 - 7/17/2006, MOSREF Drone Bridges
   * Added (make-reserved-lane bridge) -> lane to lib/bridge; unlike make-lane,
     lanes created on one end of a bridge do not appear in the bridge-lanes 

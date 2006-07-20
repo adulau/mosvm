@@ -56,6 +56,12 @@
 (s: (send m3 ws-xmit))
 (t: (expect es-recv m3))
 
+(s: (send 'close ws-xmit))
+(t: (expect es-recv 'close))
+
+(s: (send 'close es-xmit))
+(t: (expect ws-recv 'close))
+
 (define east-side (make-lane east-bridge))
 (define es-xmit   (lane-xmit east-side))
 (define es-recv   (lane-recv east-side))
@@ -82,6 +88,12 @@
 
 (s: (send m3 ws-xmit))
 (t: (expect es-recv m3))
+
+(s: (send 'close es-xmit))
+(t: (expect ws-recv 'close))
+
+(s: (send 'close ws-xmit))
+(t: (expect es-recv 'close))
 
 (define west-side (make-lane west-bridge))
 (define ws-xmit   (lane-xmit west-side))
@@ -152,8 +164,6 @@
 (pause)
 
 (define east-side (find-reserved-lane east-bridge (lane-tag west-side)))
-
-(print (format east-side))
 
 (define es-xmit   (lane-xmit east-side))
 (define es-recv   (lane-recv east-side))

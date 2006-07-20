@@ -87,6 +87,14 @@
     (define recv (lane-recv lane))
     (send data recv))
 
+  (define (cmd-close data)
+    (define recv-tag (string-read! data *bridge-tag-size*))
+    (define lane (dict-ref recv-tags recv-tag))
+    (unless lane (bridge-wtf data))
+    (dict-remove! recv-tags recv-tag)
+    (define recv (lane-recv lane))
+    (send 'close recv))
+
   (define (bridge-wtf evt)
     (error 'bridge "unhandled message" evt))
 
@@ -103,6 +111,7 @@
              ((62) cmd-make) ; >
              ((93) cmd-make-res) ; ]
              ((33) cmd-data) ; !
+             ((46) cmd-close) ; .
              (else bridge-wtf)) evt))))))
 
 (define (find-reserved-lane bridge tag)
@@ -112,11 +121,17 @@
   (define b-xmit (bridge-xmit bridge))
   (define l-xmit (lane-xmit lane))
   (define xmit-tag (lane-tag lane))
+  (define xmit-tags (bridge-xmit-tags bridge))
   (later
     (forever
       (define evt (wait l-xmit))
-      (when (string? evt)
-        (send (string-append "!" xmit-tag evt) b-xmit)))))
+      ;TODO: Signal bogus messages 
+      (cond
+        ((string? evt)
+         (send (string-append "!" xmit-tag evt) b-xmit))
+        ((eq? evt 'close)
+         (send (string-append "." xmit-tag) b-xmit)
+         (dict-remove! xmit-tags xmit-tag))))))
 
 ; Directs the supplied bridge to create a new lane.
 
