@@ -3,6 +3,7 @@ include $(ROOT)/Makefile.cf
 
 # A list of unit test targets. All unit tests are to be compiled by MOSVM.
 TESTS=test-core test-quasi test-parse test-freeze test-buffer test-regex test-url test-http test-compile test-crypto test-clue test-timeout test-prod
+NET_TESTS=test-bridge test-socks test-affiliation
 
 LIB_MOS = $(shell ls lib/*ms | sed -e 's,.ms,.mo,')
 CORE_MOS = $(shell ls core/*ms | sed -e 's,.ms,.mo,')
@@ -31,6 +32,7 @@ $(MOSREF): $(MOSC) site/config.ms lib_mos core_mos mosref_mos
 	$(MOSC) -exe $(MOSREF) bin/mosref.ms
 	chmod a+rx $(MOSREF)
 
+net-test: $(NET_TESTS) test
 test: $(TESTS)
 test-%: test/%.mo $(MOSVM) lib mosref
 	$(MOSVM) $<
