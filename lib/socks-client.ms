@@ -113,6 +113,11 @@
   ; Note, this is full synchronous.  We should make it asynchronous.
   (cancel-timeout t)
   (send 'connect (output c))
+
+  ; Any data past the end, here, is data..
+  (unless (empty-string? e)
+    (send e (output c)))
+
   c)
 
 (export tcp-socks4-connect)
