@@ -88,6 +88,9 @@
         e))
 
     (define f #f)
+    (define addr #f)
+    (define portno #f)
+
     (guard (lambda (err)
              (send (format-socks4-response #f 0 0) conn)
              (send 'close conn)
@@ -109,10 +112,18 @@
         (error 'socks "authentication failed"))
 
       (set! r (cdr (cdr r)))
-      (set! f (apply conn-fn r)))
-      
+      (set! addr (car r))
+      (set! portno (cadr r))
+
+      (when (string? addr)
+        (guard (lambda (x)
+                 (error 'socks (string-append "cannot resolve address " addr)))
+          (set! addr (resolve-addr addr))))
+
+      (set! f (conn-fn addr portno)))
+  
     (cancel-timeout t)
-    (send (format-socks4-response #t @r) conn)
+    (send (format-socks4-response #t addr portno) conn)
     (define c-xmit (input conn))
     (define c-recv (output conn))
 
