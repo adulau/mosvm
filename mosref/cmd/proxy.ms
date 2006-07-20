@@ -46,12 +46,15 @@
                                 (send 'close))
 
             ((eq? evt 'connect) (send 'connect)
+                                (cancel-timeout timer)
                                 (spawn (function (lane-to-conn)
                                                  (forever
-                                                   (send (wait) conn))))
+                                                   (define evt (wait))
+                                                   (send evt conn))))
                                 (spawn (function (conn-to-lane)
                                                  (forever
-                                                   (send (wait conn))))))
+                                                   (define evt (wait conn))
+                                                   (send evt)))))
 
             ((and (pair? evt) (eq? (car evt) 'fail)) (send evt)
                                                      (send 'close))
@@ -83,7 +86,9 @@
   (define log-channel (output))
   (define (log-line . bits)
     (define msg (string-append @bits *line-sep*))
-    (send msg log-channel))
+    (send msg log-channel)
+    ;(print msg)
+    )
   (define (node-proxy-session)
     (define req (guard (lambda (err)
                          (unless (eq? (error-key err) 'socks)
@@ -116,8 +121,12 @@
                                       (format-addr addr) ":" (format portno) 
                                       " -- Connected.")
                               (send (format-socks4-response #t portno addr))
-                              (spawn (lambda () (forever (send (wait) xmit))))
-                              (forever (send (wait recv))))
+                              (spawn (lambda () (forever 
+                                                  (define evt (wait))
+                                                  (send evt xmit))))
+                              (forever 
+                                (define evt (wait recv))
+                                (send evt)))
           ((and (pair? evt) (eq? (car evt) 'fail))
                               (log-line "FAIL: " (cadr fail))))
     (send (format-socks4-response #f portno addr))

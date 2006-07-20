@@ -26,32 +26,56 @@
 (define server-portno (random-integer 10000 30000))
 (define server-listener 
   (spawn-tcp-server server-portno (lambda ()
-                                    (print "GOT CONNECTION\n")
+                                    (print "SERVER: CONNECTED.\n")
                                     (send "HELO")
-                                    (print "SENT HELLO\n")
+                                    (print "SERVER: SENT HELLO\n")
                                     (define evt (wait))
-                                    (print "GOT: ")
+                                    (print "SERVER: GOT: ")
                                     (print (format evt))
                                     (print "\n")
                                     (send evt)
-                                    (print "SENT RESPONSE\n")
+                                    (print "SERVER: SENT RESPONSE\n")
                                     (send 'close)
-                                    (print "SENT CLOSE\n"))))
+                                    (print "SERVER: SENT CLOSE\n"))))
 
 
 (define (test-conn conn)
   (define timer (timeout 10000 (output conn) 'timeout))
-  (s: (wait conn))
+  (define e (wait conn))
+  (print "CLIENT: GOT ")
+  (print (format e))
+  (print "\n")
+
+  (s: e)
   (r: 'connect)
 
-  (s: (wait conn))
+  (define e (wait conn))
+  (print "CLIENT: GOT ")
+  (print (format e))
+  (print "\n")
+
+  (s: e)
   (r: "HELO")
 
-  (s: (send "Foo" conn))
-  (s: (wait conn))
+  (send "Foo" conn)
+  (print "CLIENT: SENT Foo.")
+
+  (define e (wait conn))
+
+  (print "CLIENT: GOT ")
+  (print (format e))
+  (print "\n")
+
+  (s: e)
   (r: "Foo")
 
-  (s: (wait conn))
+  (define e (wait conn))
+
+  (print "CLIENT: GOT ")
+  (print (format e))
+  (print "\n")
+
+  (s: e)
   (r: 'close)
   (cancel-timeout timer))
 
