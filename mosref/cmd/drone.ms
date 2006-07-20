@@ -121,10 +121,9 @@
                 ((and (pair? event) (eq? (car event) 'fail))
                  (send event lanes))
                 (else
-                 (send (list 'fail "unrecognized event" event) lanes)))))
-           (send 'close xmit))
+                 (send (list 'fail "unrecognized event" event) lanes))))
+           (send 'close xmit)))
 
-  ;TODO: return a means for sending close.
   (list (function (halt-drone-listener)
           (send 'close xmit)
           (send 'close recv))

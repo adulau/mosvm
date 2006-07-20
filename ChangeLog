@@ -31,7 +31,8 @@
     lib/socks-server
   * Added the proxy command, which creates a proxy on the console that forwards
     incoming TCP connections to the current node.
-
+  + t Added lib/socks-client, an implementation of a socks4 client library.
+  
 - 7/17/2006, MOSREF Drone Bridges
   * Added (make-reserved-lane bridge) -> lane to lib/bridge; unlike make-lane,
     lanes created on one end of a bridge do not appear in the bridge-lanes 

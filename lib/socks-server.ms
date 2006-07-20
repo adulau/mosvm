@@ -73,3 +73,66 @@
   str)
 
 (export format-socks4-response parse-socks4-request)
+
+(define (spawn-socks4-proxy portno auth-fn conn-fn)
+  (define listener (if (integer? portno) (tcp-listen portno)
+                                         portno))
+
+  (define (socks4-proxy-session conn)
+    (define t (timeout 10000 (output conn) 'timeout))
+    (define e #f)
+    (define (next what)
+      (set! e (wait conn))
+      (if (eq? e 'timeout)
+        (error 'socks (string-append "timeout while waiting for " what))
+        e))
+
+    (define f #f)
+    (guard (lambda (err)
+             (send (format-socks4-response #f 0 0) conn)
+             (send 'close conn)
+             (cancel-timeout t)
+             (if (eq? (error-key err) 'socks)
+               (send (string-append "SOCKS: " (car (error-info err) ) "\n"))
+               (re-error err)))
+
+      (unless (string? (next "socks request"))
+        (error 'socks "expected request" e))
+
+      (define r (parse-socks4-request e))
+
+      (unless (eq? 'tcp (cadr proto))
+        (error 'socks "only tcp requests can be proxied"))
+
+      (unless (auth-fn (car r))
+        (error 'socks "authentication failed"))
+
+      (set! r (cdr (cdr r)))
+      (set! f (apply conn-fn r)))
+      
+    (cancel-timeout t)
+    (send (format-socks4-response #t @r) conn)
+    (define c-xmit (input conn))
+    (define c-recv (output conn))
+
+    (define f-xmit #f)
+    (define f-recv #f)
+
+    (cond ((pair? f) (set! f-xmit (car f))
+                     (set! f-recv (cadr f)))
+          ((stream? f) (set! f-xmit (input f))
+                       (set! f-recv (output f)))
+          (else (error 'socks "bogus forward connection")))
+    
+    (spawn (lambda ()
+             (forever
+               (define e (wait f-recv))
+               (unless (eq? e 'connect)
+                 (send e c-xmit)))))
+    (forever
+      (send (wait c-recv) f-xmit)))
+
+  (forever
+    (define c (wait listener))
+    (spawn (lambda () (socks4-proxy-session c)))))
+
