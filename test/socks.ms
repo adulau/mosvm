@@ -29,14 +29,18 @@
                                     (print "GOT CONNECTION\n")
                                     (send "HELO")
                                     (print "SENT HELLO\n")
-                                    (send (wait))
+                                    (define evt (wait))
+                                    (print "GOT: ")
+                                    (print (format evt))
+                                    (print "\n")
+                                    (send evt)
                                     (print "SENT RESPONSE\n")
                                     (send 'close)
                                     (print "SENT CLOSE\n"))))
 
 
 (define (test-conn conn)
-  (define timer (timeout 5000 (output conn) 'timeout))
+  (define timer (timeout 10000 (output conn) 'timeout))
   (s: (wait conn))
   (r: 'connect)
 
