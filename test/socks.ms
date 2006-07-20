@@ -34,66 +34,41 @@
                                     (send 'close)
                                     (print "SENT CLOSE\n"))))
 
-(define conn (tcp-connect "127.0.0.1" server-portno))
-(define timer (timeout 5000 (output conn) 'timeout))
 
-(s: (wait conn))
-(r: 'connect)
+(define (test-conn conn)
+  (define timer (timeout 5000 (output conn) 'timeout))
+  (s: (wait conn))
+  (r: 'connect)
 
-(s: (wait conn))
-(r: "HELO")
+  (s: (wait conn))
+  (r: "HELO")
 
-(s: (send "Foo" conn))
-(s: (wait conn))
-(r: "Foo")
+  (s: (send "Foo" conn))
+  (s: (wait conn))
+  (r: "Foo")
 
-(s: (wait conn))
-(r: 'close)
-(cancel-timeout timer)
+  (s: (wait conn))
+  (r: 'close)
+  (cancel-timeout timer))
 
-(define proxy-portno (random-integer 10000 30000))
-(define proxy-listener (spawn-socks4-proxy proxy-portno
+(define (test-proxy proxy-addr proxy-portno server-addr)
+  (define conn (tcp-socks4-connect "foo"
+                                   proxy-addr proxy-portno 
+                                   server-addr server-portno))
+  (test-conn conn))
+  
+(define (main . args)
+  (test-conn (tcp-connect "127.0.0.1" server-portno))
+
+  (define proxy-portno (random-integer 10000 30000))
+  (define proxy-listener (spawn-socks4-proxy proxy-portno
                                            (lambda (x) #t)
                                            tcp-connect))
 
-(define conn (tcp-socks4-connect "foo"
-                                 localhost proxy-portno 
-                                 localhost server-portno))
-(define timer (timeout 5000 (output conn) 'timeout))
-  
-(s: (wait conn))
-(r: 'connect)
+  (test-proxy localhost proxy-portno localhost)
+  (test-proxy localhost proxy-portno "localhost")
 
-(s: (wait conn))
-(r: "HELO")
+  (close-listener server-listener)
+  (close-listener proxy-listener))
 
-(s: (send "Foo" conn))
-(s: (wait conn))
-(r: "Foo")
-
-(s: (wait conn))
-(r: 'close)
-(cancel-timeout timer)
-
-(define conn (tcp-socks4-connect "foo"
-                                 localhost proxy-portno 
-                                 "localhost" server-portno))
-(define timer (timeout 5000 (output conn) 'timeout))
-  
-(s: (wait conn))
-(r: 'connect)
-
-(s: (wait conn))
-(r: "HELO")
-
-(s: (send "Foo" conn))
-(s: (wait conn))
-(r: "Foo")
-
-(s: (wait conn))
-(r: 'close)
-(cancel-timeout timer)
-
-(close-listener server-listener)
-(close-listener proxy-listener)
 
