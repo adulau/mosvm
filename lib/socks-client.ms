@@ -35,6 +35,7 @@
 
 (define (format-socks4-request auth proto addr portno)
   (define str (make-string))
+  (string-append-byte! str $04)
   (string-append-byte! str (case proto 
                              ((tcp) $01)
                              ((udp) $02)
@@ -70,26 +71,24 @@
 
   (define status (string-read-byte! str))
   (define portno (string-read-word! str))
-  (define addr (string-read-addr! str))
+  (define addr (string-read-quad! str))
 
-  (when (= (& addr $FFFFFF00) 0)
-    (error 'socks "proxy could not resolve address" str))
-
-  (case status
-    (($5A)) ; Do nothing. Granted.
-    (($5B) (error 'socks "request rejected or failed" str))
-    (($5C) (error 'socks "request rejected, client unverifiable" str))
-    (($5D) (error 'socks "request rejected, user unverified" str))
-    (else (error 'socks "unrecognized status code" status)))
+  (unless (= status $5A)
+    (when (= (& addr $FFFFFF00) 0)
+      (error 'socks "proxy could not resolve address" str))
+    (case status
+      (($5B) (error 'socks "request rejected or failed" str))
+      (($5C) (error 'socks "request rejected, client unverifiable" str))
+      (($5D) (error 'socks "request rejected, user unverified" str))
+      (else (error 'socks "unrecognized status code" status))))
 
   (list status portno addr))
 
 (export parse-socks4-response format-socks4-request)
 
-(define (tcp-socks4-connect socks-addr socks-portno dest-addr dest-portno 
-                            lapse)
+(define (tcp-socks4-connect auth socks-addr socks-portno dest-addr dest-portno)
   (define c (tcp-connect socks-addr socks-portno))
-  (define t (timeout lapse (output c) 'timeout))
+  (define t (timeout 10000 (output c) 'timeout))
   (define e #f)
 
   (define (next what)
@@ -104,14 +103,16 @@
     (unless (eq? (next "connect") 'connect)
       (error 'socks "could not connect to proxy" e))
 
-    (send (format-socks4-request 'tcp dest-addr dest-portno) c)
+    (send (format-socks4-request auth 'tcp dest-addr dest-portno) c)
 
     (unless (string? (next "socks response"))
       (error 'socks "lost connection to proxy" e))
 
     (define r (parse-socks4-response e)))
 
+  ; Note, this is full synchronous.  We should make it asynchronous.
   (cancel-timeout t)
+  (send 'connect (output c))
   c)
 
 (export tcp-socks4-connect)

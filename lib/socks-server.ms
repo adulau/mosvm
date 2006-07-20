@@ -92,16 +92,17 @@
              (send (format-socks4-response #f 0 0) conn)
              (send 'close conn)
              (cancel-timeout t)
-             (if (eq? (error-key err) 'socks)
-               (send (string-append "SOCKS: " (car (error-info err) ) "\n"))
-               (re-error err)))
+             (unless (eq? (error-key err) 'socks)
+               (re-error err))
+             (send (string-append "SOCKS: " (car (error-info err) ) "\n"))
+             (halt))
 
       (unless (string? (next "socks request"))
         (error 'socks "expected request" e))
 
       (define r (parse-socks4-request e))
 
-      (unless (eq? 'tcp (cadr proto))
+      (unless (eq? 'tcp (cadr r))
         (error 'socks "only tcp requests can be proxied"))
 
       (unless (auth-fn (car r))
@@ -132,7 +133,11 @@
     (forever
       (send (wait c-recv) f-xmit)))
 
-  (forever
-    (define c (wait listener))
-    (spawn (lambda () (socks4-proxy-session c)))))
+  (spawn (lambda ()
+           (forever
+             (define c (wait listener))
+             (spawn (lambda () (socks4-proxy-session c))))))
 
+  listener)
+
+(export spawn-socks4-proxy)

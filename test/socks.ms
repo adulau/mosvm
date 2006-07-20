@@ -22,47 +22,59 @@
 (import "lib/socks-client")
 
 
-(define server-portno (random-integer 10000 30000))
-(spawn-tcp-server server-portno (lambda ()
-                                  (print "GOT CONNECTION\n")
-                                  (send "HELO")
-                                  (print "SENT HELLO\n")
-                                  (send (wait))
-                                  (print "SENT RESPONSE\n")
-                                  (send 'close)
-                                  (print "SENT CLOSE\n")))
-
 (define localhost (resolve-addr "127.0.0.1"))
+(define server-portno (random-integer 10000 30000))
+(define server-listener 
+  (spawn-tcp-server server-portno (lambda ()
+                                    (print "GOT CONNECTION\n")
+                                    (send "HELO")
+                                    (print "SENT HELLO\n")
+                                    (send (wait))
+                                    (print "SENT RESPONSE\n")
+                                    (send 'close)
+                                    (print "SENT CLOSE\n"))))
 
 (define conn (tcp-connect "127.0.0.1" server-portno))
-
 (define timer (timeout 5000 (output conn) 'timeout))
-
-(enable-trace)
-
-(print "STEP 1\n")
 
 (s: (wait conn))
 (r: 'connect)
 
-(print "STEP 2\n")
-
 (s: (wait conn))
 (r: "HELO")
-
-(print "STEP 3\n")
 
 (s: (send "Foo" conn))
 (s: (wait conn))
 (r: "Foo")
 
-(print "STEP 4\n")
+(s: (wait conn))
+(r: 'close)
+(cancel-timeout timer)
+
+(define proxy-portno (random-integer 10000 30000))
+(define proxy-listener (spawn-socks4-proxy proxy-portno
+                                           (lambda (x) #t)
+                                           tcp-connect))
+
+(define conn (tcp-socks4-connect "foo"
+                                 localhost proxy-portno 
+                                 localhost server-portno))
+(define timer (timeout 5000 (output conn) 'timeout))
+  
+(s: (wait conn))
+(r: 'connect)
+
+(s: (wait conn))
+(r: "HELO")
+
+(s: (send "Foo" conn))
+(s: (wait conn))
+(r: "Foo")
 
 (s: (wait conn))
 (r: 'close)
-
-(print "STEP 5\n")
-
 (cancel-timeout timer)
 
-(print "STEP 6\n")
+(close-listener server-listener)
+(close-listener proxy-listener)
+
