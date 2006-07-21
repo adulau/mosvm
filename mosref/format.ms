@@ -46,3 +46,7 @@
 
 (export send-line send-err )
 
+(define (format-addr addr)
+  (if (integer? addr) (format-ipv4 addr) addr))
+
+(export format-addr)

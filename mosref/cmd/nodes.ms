@@ -20,12 +20,16 @@
 (define-cmd "nodes" 
             "nodes"
             "Lists the nodes currently known to the console."
-            
-  (for-each (function (display-node node)
-              (send-line (format (node-id node))
-                         " address: "
-                         (format (node-addr node))
-                         " online: "
-                         (format (node-online node))))
-            (list-mosref-nodes)))
+  
+  (send-line "NODES: " 
+             (apply string-join "\n       " 
+                    (map (function (format-node node)
+                           (define addr (node-addr node))
+                           (string-append 
+                             (node-id node)
+                             (if (node-online node) " online" " offline")
+                             (if addr (string-append 
+                                        " address: " (format-addr addr)) 
+                                      "")))
+                         (list-mosref-nodes)))))
          

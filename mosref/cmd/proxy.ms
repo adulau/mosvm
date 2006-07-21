@@ -134,8 +134,5 @@
 
   (spawn-tcp-server portno node-proxy-session))
 
-(define (format-addr addr)
-  (if (integer? addr) (format-ipv4 addr) addr))
-
 (export spawn-node-proxy)
 
