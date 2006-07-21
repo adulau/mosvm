@@ -102,7 +102,7 @@
     (define ignore (set))
 
     (define (shutdown-lane lane)
-      (unless (set-member ignore lane)
+      (unless (set-member? ignore lane)
         (set-add! ignore lane)
         (send 'close (lane-recv lane))))
 

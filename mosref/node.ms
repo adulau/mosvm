@@ -74,6 +74,8 @@
   (list xmit recv))
 
 (define (spawn-node-program (<drone-node> node) program)
+  (unless (node-online node)
+    (error 'off (string-append "Drone " (node-id node) " is offline."))) 
   (define lane (make-lane (drone-node-bridge node)))
   (define xmit (output-chain (lane-xmit lane)
                              (freeze-filter)))

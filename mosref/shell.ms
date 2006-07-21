@@ -111,6 +111,7 @@
       (when (eq? cmd 'close) (return))
       (when (string? cmd)
         (catch-case (((syn))
+                     ((off) (send-line "OFFLINE: " (car (error-info err))))
                      ((parse) (define info (error-info err))
                               (send-line "PARSE: For " (format (cadr info)) 
                                       ", " (car info))))
