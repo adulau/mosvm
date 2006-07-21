@@ -32,9 +32,12 @@
   (define portno (or (opt-integer terms " listener port")
                      (random-integer 20000 30000)))
   (define ecdh (make-console-ecdh))
+  (define addr (node-addr (mosref-shell-node shell)))
+  (unless addr
+    (send-err " node address unknown, use set addr to assign one"))
   (define data (guard (lambda (e)
                         (send-err "Could not compile drone."))
-                 (make-drone-exe (node-addr (mosref-shell-node shell))
+                 (make-drone-exe addr 
                                  portno ecdh platform)))
   (guard (lambda (e)
            (send-err "Could not write file " (format (cadr file)) "."))
@@ -73,9 +76,12 @@
   (inline (export nothing)
           (define bridge *drone-bridge*)
           (define portno (wait))
-          ;TODO: Signal failure of the listener.
           (define listener (guard (function (report-failed-listen err)
-                                    TODO)
+                                    (print "Could not listen to ")
+                                    (print (format portno))
+                                    (print "\n")
+                                    ;TODO: Signal failure of the listener.
+                                    )
                              (tcp-listen portno)))
           (define (relay-conn conn lane)
             (define conn-input (input conn))
@@ -87,7 +93,7 @@
                        (send (wait conn-output) lane-input))))
             (spawn (lambda ()
                      (forever
-                       (send (wait lane-input) conn-input)))))
+                       (send (wait lane-output) conn-input)))))
           (spawn (lambda ()
                    (forever
                      (when (eq? (wait) 'close)
@@ -106,6 +112,7 @@
   (define recv (cadr conn))
   (define lanes (make-channel))
   (define bridge (drone-node-bridge node))
+  (send portno xmit)
 
   (spawn (lambda ()
            (define done #f)

@@ -90,10 +90,10 @@
   (define (cmd-close data)
     (define recv-tag (string-read! data *bridge-tag-size*))
     (define lane (dict-ref recv-tags recv-tag))
-    (unless lane (bridge-wtf data))
-    (dict-remove! recv-tags recv-tag)
-    (define recv (lane-recv lane))
-    (send 'close recv))
+    (unless lane 
+      (dict-remove! recv-tags recv-tag)
+      (define recv (lane-recv lane))
+      (send 'close recv)))
 
   (define (bridge-wtf evt)
     (error 'bridge "unhandled message" evt))

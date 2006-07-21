@@ -37,7 +37,7 @@
     (spawn (lambda ()
              (with-input (lane-recv lane)
                (with-output (lane-xmit lane)
-                 (endpoint lane))))))
+                 (endpoint bridge))))))
 
   (spawn (lambda ()
            (forever
