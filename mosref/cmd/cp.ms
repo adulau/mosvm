@@ -22,12 +22,13 @@
             (string-append
               "Copies source file to the destination file.  Either the source"
               " or the destination file path may be on a drone or console; to"
-              " specify a path on a node other than the current node, prefix"
+              " specify a path on a node other than the console, preface"
               " the path with the node name, and a colon.")
 
+  (define console (mosref-shell-console shell))
   (define node (mosref-shell-node shell))
-  (define src (req-path node terms " for source file"))
-  (define dst (req-path node terms " for destination file"))
+  (define src (req-path console terms " for source file"))
+  (define dst (req-path console terms " for destination file"))
 
   (send-line "Copy from " (format-path src) " to " (format-path dst))
                        

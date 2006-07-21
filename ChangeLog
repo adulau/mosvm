@@ -33,6 +33,10 @@
   * The mosref command now considers the initial address and port arguments
     optional.  The user may subsequently use set addr and set port.
   * The old prompt for windows users has been removed.
+  * The cp command now defaults to the console, instead of the current node,
+    for file location.
+  * The drone command now defaults to the console, instead of the current node,
+    for file location.
   + Nodes may be assigned a port, which specifies where incoming drones may
     affiliate.
   + The console now only uses a single listener port for all drones.

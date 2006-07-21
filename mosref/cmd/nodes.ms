@@ -25,11 +25,15 @@
              (apply string-join "\n       " 
                     (map (function (format-node node)
                            (define addr (node-addr node))
+                           (define portno (node-portno node))
                            (string-append 
                              (node-id node)
                              (if (node-online node) " online" " offline")
                              (if addr (string-append 
                                         " address: " (format-addr addr)) 
+                                      "")
+                             (if portno (string-append 
+                                        " port: " (format portno)) 
                                       "")))
                          (list-mosref-nodes)))))
          
