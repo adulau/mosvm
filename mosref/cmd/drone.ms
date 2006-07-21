@@ -70,7 +70,8 @@
               ;TODO: Where will we get addr?
               (finish)
               (make-drone-node id #f 
-                               (spawn-endpoint console-endpoint @transport))))))
+                               (spawn-endpoint console-endpoint 
+                                               console-broken @transport))))))
 
 (define *node-tcp-listen-prog* 
   (inline (export nothing)

@@ -27,13 +27,17 @@
 ;; The console endpoint, defined elsewhere, currently does nothing, but will
 ;; eventually serve modules from a specified directory at the drone's request.
 
-(define (spawn-endpoint endpoint xmit recv)
+(define (spawn-endpoint endpoint break xmit recv)
   ;(set! xmit (output-chain xmit (trace-filter "XMIT")))
   ;(set! recv (input-chain  recv (trace-filter "RECV")))
   (define bridge (make-bridge xmit recv))
   (define lanes (bridge-lanes bridge))
 
   (define (spawn-endpoint/lane lane)
+    (when (eq? lane 'close)
+      (break bridge)
+      (halt))
+
     (spawn (lambda ()
              (with-input (lane-recv lane)
                (with-output (lane-xmit lane)

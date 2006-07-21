@@ -24,6 +24,21 @@
 
 (define *cmd-term* (make-regex "[^ \r\n\t]+"))
 
+(define *displays* (set))
+
+(define (add-shell-display! out)
+  (set-add! *displays* out))
+
+(define (remove-shell-display! out)
+  (set-remove! *displays* out))
+
+(define (alert . rest)
+  (define msg (string-append "ALERT: " @rest *line-sep*))
+
+  (for-each (lambda (display) (guard (lambda x x)
+                                (send msg display)))
+            (set->list *displays*)))
+
 (define-record-type mosref-shell
                     (make-mosref-shell node console running)
                     mosref-shell?
@@ -80,26 +95,31 @@
 
 ; Assumes that each input is precisely one line.
 (define (run-mosref-shell console node)
-  (define shell (make-mosref-shell node console #t))
+  (add-shell-display! (output))
+  (guard (lambda (err)
+           (remove-shell-display! (output))
+           (re-error err))
+    (define shell (make-mosref-shell node console #t))
 
-  (define (send-prompt)
-    (send (string-append (node-id (mosref-shell-node shell)) "> ")))
+    (define (send-prompt)
+      (send (string-append (node-id (mosref-shell-node shell)) "> ")))
 
-  (send-prompt)
+    (send-prompt)
 
-  (while (mosref-shell-running shell)
-    (define cmd (wait))
-    (when (eq? cmd 'close) (return))
-    (when (string? cmd)
-      (catch-case (((syn))
-                   ((parse) (define info (error-info err))
-                            (send-line "PARSE: For " (format (cadr info)) 
+    (while (mosref-shell-running shell)
+      (define cmd (wait))
+      (when (eq? cmd 'close) (return))
+      (when (string? cmd)
+        (catch-case (((syn))
+                     ((parse) (define info (error-info err))
+                              (send-line "PARSE: For " (format (cadr info)) 
                                       ", " (car info))))
-        (do-mosref-cmd shell cmd))
-      (when (mosref-shell-running shell) 
-        (send-prompt))))
+          (do-mosref-cmd shell cmd))
+        (when (mosref-shell-running shell) 
+          (send-prompt))))
   
-  (send 'close))
+    (send 'close))
+  (remove-shell-display! (output)))
 
-(export run-mosref-shell do-mosref-cmd)
+(export run-mosref-shell do-mosref-cmd alert)
 

@@ -31,7 +31,7 @@
 (import "lib/bridge")
 
 (export await-drone-affiliation console-affiliation 
-        console-endpoint
+        console-endpoint console-broken
         make-drone-exe make-console-ecdh)
 
 (import "lib/iterate")
@@ -100,6 +100,7 @@
                (define endpoint 
                  (apply spawn-endpoint 
                         drone-endpoint
+                        drone-broken
                         (drone-affiliation 
                           (import-ecdh
                             (base64-decode ,(base64-encode (export-public-ecdh 
@@ -129,6 +130,13 @@
   (set! path (find-module-file path))
   (send (if path (read-data-file path)
                  #f)))
+
+(define (console-broken bridge)
+  ;TODO: (for-each break-alert terminals)
+  (define drone (find-drone-by-bridge bridge))
+  (define id (node-id drone))
+  (alert "Drone " (format id) " has lost connection.")
+  (set-node-online! (find-drone-by-bridge bridge) #f))
 
 ;; transmits the supplied program to be executed on the remote endpoint of
 ;; the supplied transport.

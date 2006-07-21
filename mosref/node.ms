@@ -24,6 +24,7 @@
 (import "mosref/format")
 
 (define *nodes-by-id* (dict))
+(define *drones-by-bridge* (dict))
 
 (define-class node <object>
               (make-node-record id props)
@@ -53,13 +54,16 @@
 (define (make-console-node addr)
   (define node (make-console-node-record "console" (dict)))
   (set-node-prop! node 'addr addr)
+  (set-node-prop! node 'online #t)
   (dict-set! *nodes-by-id* "console" node)
   node) 
 
 (define (make-drone-node id addr bridge)
   (define node (make-drone-node-record id (dict) bridge))
   (set-node-prop! node 'addr addr)
+  (set-node-prop! node 'online #t)
   (dict-set! *nodes-by-id* id node)
+  (dict-set! *drones-by-bridge* bridge node)
   node)
 
 (define (spawn-node-program (<console-node> node) program)
@@ -132,5 +136,12 @@
 (export find-node-prop list-node-props set-node-prop!)
 
 (define (node-addr node) (find-node-prop node 'addr))
+(define (node-online node) (find-node-prop node 'online))
+(define (set-node-online! node flag) (set-node-prop! node 'online flag))
+;TODO: Validators for properties.
 
-(export node-addr)
+
+(define (find-drone-by-bridge bridge)
+  (dict-ref *drones-by-bridge* bridge))
+
+(export node-addr node-online set-node-online! find-drone-by-bridge)

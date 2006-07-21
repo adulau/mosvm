@@ -89,5 +89,8 @@
                                ;(trace-filter "SEND")
       (command))))
 
-(export *drone-bridge* drone-affiliation drone-endpoint)
+(define (drone-broken bridge)
+  (exit 0))
+
+(export *drone-bridge* drone-affiliation drone-endpoint drone-broken)
 

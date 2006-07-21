@@ -98,11 +98,26 @@
   (define (bridge-wtf evt)
     (error 'bridge "unhandled message" evt))
 
+  (define (shutdown)
+    (define ignore (set))
+
+    (define (shutdown-lane lane)
+      (unless (set-member ignore lane)
+        (set-add! ignore lane)
+        (send 'close (lane-recv lane))))
+
+    (for-each shutdown-lane (dict-values recv-tags))
+    (for-each shutdown-lane (dict-values xmit-tags))
+
+    (send 'close lanes))
+
   (later 
     (forever
       (define evt (wait b-recv))
       (cond 
-        ((eq? evt 'close)) ; TODO: Signal the bridge is closed.
+        ((eq? evt 'close)
+         (shutdown)
+         (halt))
         ((not (string? evt))  (bridge-wtf evt))
         ((empty-string? evt)  (bridge-wtf evt))
         (else

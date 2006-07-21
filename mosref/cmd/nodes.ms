@@ -23,7 +23,9 @@
             
   (for-each (function (display-node node)
               (send-line (format (node-id node))
-                         " -- "
-                         (format (node-addr node))))
+                         " address: "
+                         (format (node-addr node))
+                         " online: "
+                         (format (node-online node))))
             (list-mosref-nodes)))
          
