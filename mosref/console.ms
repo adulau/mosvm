@@ -15,7 +15,7 @@
 
 (module "mosref/console")
 
-(import "mosref/base")
+(import "mosref/transport")
 (import "mosref/endpoint")
 
 (import "lib/cfb")

@@ -37,6 +37,7 @@
     for file location.
   * The drone command now defaults to the console, instead of the current node,
     for file location.
+  * Renamed mosref/base to mosref/transport
   + Nodes may be assigned a port, which specifies where incoming drones may
     affiliate.
   + The console now only uses a single listener port for all drones.

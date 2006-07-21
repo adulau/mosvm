@@ -24,7 +24,7 @@
 (import "lib/package-filter")
 (import "lib/with-io")
 
-(import "mosref/base")
+(import "mosref/transport")
 
 ;(define-macro (step . rest) '(begin))
 (define (step label . items)
