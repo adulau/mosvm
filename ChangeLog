@@ -30,6 +30,11 @@
     an alert, and the drone is marked as offline.
   * When a command attempts to transmit a command to an offline node, an
     error is posted and the command rejected.
+  * The mosref command now considers the initial address and port arguments
+    optional.  The user may subsequently use set addr and set port.
+  * The old prompt for windows users has been removed.
+  + Nodes may be assigned a port, which specifies where incoming drones may
+    affiliate.
   + The console now only uses a single listener port for all drones.
   + The recover command informs the console that it should expect the return
     of a disconnected drone.  NOTE: This has some severe security implications,

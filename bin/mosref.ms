@@ -25,54 +25,20 @@
 (define (main . args)
   (if *in-win32* 
     (with-io (spawn-terminal "MOSREF")
-             (when (null? args)
-               (send "What is the address of this console?\n")
-               (send "> ")
-               (define host (strip (wait)))
-               (set! args (list host)))
-
-             (do-mosref (list host)))
+             (do-mosref args))
     (do-mosref args)))
 
 (define (do-mosref args)
   (define unparsed-args (apply make-tc args))
 
-  (define (next-arg) (tc-next! unparsed-args))
-  (define (more-args?) (not (tc-empty? unparsed-args)))
+  (define (next-arg) (if (tc-empty? unparsed-args) 
+                       #f
+                       (tc-next! unparsed-args)))
 
-  (define (send-lines . lines)
-    (send (apply string-join *line-sep* 
-                 (map (lambda (i) (if (pair? i)
-                                    (string-join " " i)
-                                    i))
-                      lines))))
+  (define addr (next-arg))
+  (define portno (next-arg))
 
-  (define (send-line . items)
-    (send (string-append (apply string-append items) *line-sep*)))
-
-  (define (show-usage)
-    (send-lines 
-      "USAGE: mosref console-addr"
-      "       console-addr -- The hostname or address of the console; this"
-      "                       address should be reachable by any first tier"
-      "                       drones."
-      ""
-      "EXAMPLE: mosref decoy.ephemeralsecurity.com"
-      ""))
-
-  (define (parse-error message)
-      (show-usage)
-      (send-line "ERROR: " message)
-      (halt)) 
-
-  (define (missing-error type purpose)
-    (unless (more-args?)
-      (parse-error (string-append "Missing " type " for " purpose "."))))
-
-  (missing-error "address" "console listener")
-  (define console (next-arg))
-
-  (define node (make-console-node console))
+  (define node (make-console-node addr portno))
   
   (run-mosref-shell node node))
 

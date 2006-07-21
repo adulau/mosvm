@@ -18,21 +18,22 @@
 (import "mosref/node")
 
 (define-cmd "drone"
-            "drone <file> <id> <platform> [<portno>]"
+            "drone <file> <id> <platform>"
             (string-append
               "Creates a new drone executable for the specified platform"
               " and places it at file, then spawns a listener on the"
               " current node.  When the drone connects to the listener, a"
               " the drone will be bound to the specified identifier.")
 
-  (define file (req-path (mosref-shell-node shell)
+  (define file (req-path (mosref-shell-console shell)
                          terms " for drone executable"))
   (define id (req-term terms " drone identifier"))
   (define platform (req-term terms " drone platform"))
-  (define portno (or (opt-integer terms " listener port")
+  (define node (mosref-shell-node shell))
+  (define portno (or (node-portno node)
                      (random-integer 20000 30000)))
   (define ecdh (make-console-ecdh))
-  (define addr (node-addr (mosref-shell-node shell)))
+  (define addr (node-addr node))
   (unless addr
     (send-err " node address unknown, use set addr to assign one"))
   (define data (guard (lambda (e)
@@ -47,7 +48,7 @@
 
   (send-line "Listening for drone on " (format portno) "...")
 
-  (define listener (node-tcp-listen (mosref-shell-node shell) portno))
+  (define listener (node-tcp-listen node portno))
   (define finish (car listener))
   (define conns (cadr listener))
 
@@ -69,7 +70,7 @@
               ;TODO: Tag with platform.
               ;TODO: Where will we get addr?
               (finish)
-              (make-drone-node id #f 
+              (make-drone-node id #f #f
                                (spawn-endpoint console-endpoint 
                                                console-broken @transport))))))
 

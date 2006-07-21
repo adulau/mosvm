@@ -51,16 +51,18 @@
 (define (find-mosref-node id)
   (dict-ref *nodes-by-id* id))
 
-(define (make-console-node addr)
+(define (make-console-node addr portno)
   (define node (make-console-node-record "console" (dict)))
   (set-node-prop! node 'addr addr)
+  (set-node-prop! node 'port portno)
   (set-node-prop! node 'online #t)
   (dict-set! *nodes-by-id* "console" node)
   node) 
 
-(define (make-drone-node id addr bridge)
+(define (make-drone-node id addr portno bridge)
   (define node (make-drone-node-record id (dict) bridge))
   (set-node-prop! node 'addr addr)
+  (set-node-prop! node 'port portno)
   (set-node-prop! node 'online #t)
   (dict-set! *nodes-by-id* id node)
   (dict-set! *drones-by-bridge* bridge node)
@@ -133,8 +135,13 @@
 (define (find-node-prop node key) (dict-ref (node-props node) key))
 (define (list-node-props node) (dict->list (node-props node)))
 (define (set-node-prop! node key val) (dict-set! (node-props node) key val))
+(define (clear-node-prop! node key) (dict-remove! (node-props node) key))
 
-(export find-node-prop list-node-props set-node-prop!)
+(export find-node-prop list-node-props set-node-prop! clear-node-prop!)
+
+(define (node-portno node) 
+  (define x (find-node-prop node 'port))
+  (if x (string->integer x) x))
 
 (define (node-addr node) (find-node-prop node 'addr))
 (define (node-online node) (find-node-prop node 'online))
@@ -145,4 +152,5 @@
 (define (find-drone-by-bridge bridge)
   (dict-ref *drones-by-bridge* bridge))
 
-(export node-addr node-online set-node-online! find-drone-by-bridge)
+(export node-addr node-portno node-online set-node-online! 
+        find-drone-by-bridge)
