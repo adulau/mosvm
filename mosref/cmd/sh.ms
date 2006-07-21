@@ -36,7 +36,7 @@
   (define stream (spawn-command (car cmd) (cdr cmd)))
   (define done #f)
 
-  (spawn (lambda ()
+  (spawn (function (monitor-sh-response)
            (until done
                   (define evt (wait stream))
                   (when (eq? evt 'close) 
@@ -60,7 +60,7 @@
                    "MOSREF cannot spawn shell commands on Microsoft Windows"))
 
             (let ((cmd (wait)))
-              (guard (lambda (err)
+              (guard (function (report-cmd-not-found err)
                        (error 'shell
                               (string-append "cannot find command " (car cmd))))
                 (set-car! cmd (locate-cmd (car cmd))))
