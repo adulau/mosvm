@@ -16,7 +16,6 @@
 (module "mosref/console")
 
 (import "mosref/transport")
-(import "mosref/endpoint")
 
 (import "lib/cfb")
 (import "lib/crypto-filter")
@@ -95,7 +94,7 @@
 (define (make-drone-exe console-addr console-portno console-ecdh platform)
   (build-exe platform
              `((import "mosref/drone")
-               (import "mosref/endpoint")
+               (import "mosref/transport")
                (define conn (tcp-connect ,console-addr ,console-portno))
                (define endpoint 
                  (apply spawn-endpoint 

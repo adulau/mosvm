@@ -14,11 +14,15 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
 (module "mosref/transport")
+
 (import "lib/cfb")
 (import "lib/block-filter")
 (import "lib/checksum-filter")
 (import "lib/copy-filter")
 ;(import "lib/trace")
+
+(import "lib/bridge")
+(import "lib/with-io")
 
 (export *sprng* *ecdh-keysize* *sig-length* make-iv)
 
@@ -64,3 +68,31 @@
 
 (export make-mosref-recv make-mosref-xmit)
 
+;; A MOSREF endpoint is a bridge, with a endpointing function that is invoked
+;; whenever a new lane comes in.  The drone endpoint, defined elsewhere,
+;; responds to incoming lanes by spawning the first function with the lane as
+;; the input and output.  
+
+(define (spawn-endpoint endpoint break xmit recv)
+  ;(set! xmit (output-chain xmit (trace-filter "XMIT")))
+  ;(set! recv (input-chain  recv (trace-filter "RECV")))
+  (define bridge (make-bridge xmit recv))
+  (define lanes (bridge-lanes bridge))
+
+  (define (spawn-endpoint/lane lane)
+    (when (eq? lane 'close)
+      (break bridge)
+      (halt))
+
+    (spawn (lambda ()
+             (with-input (lane-recv lane)
+               (with-output (lane-xmit lane)
+                 (endpoint bridge))))))
+
+  (spawn (lambda ()
+           (forever
+             (spawn-endpoint/lane (wait lanes)))))
+  
+  bridge)
+
+(export spawn-endpoint)
