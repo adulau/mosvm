@@ -59,7 +59,7 @@
   * Added (patch2 left right) to mosref/patch, which patches left to right
     and right to left.
   * Consoles tag themselves with a platform.
-  + Drones tag themselves with a platform after they complete affiliation. 
+  * Drones tag themselves with a platform after they complete affiliation. 
   + Added types to node properties.
   + The portno property assigns itself a random value on first access.
   + The recover command informs the console that it should expect the return
