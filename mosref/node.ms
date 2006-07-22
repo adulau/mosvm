@@ -142,7 +142,8 @@
 
 (define (node-portno node) 
   (define x (find-node-prop node 'port))
-  (if x (string->integer x) x))
+  (if (string? x) (string->integer x) x))
+(define (set-node-portno! node portno) (set-node-prop! node 'port portno))
 
 (define (node-addr node) (find-node-prop node 'addr))
 (define (node-online node) (find-node-prop node 'online))
@@ -153,5 +154,5 @@
 (define (find-drone-by-bridge bridge)
   (dict-ref *drones-by-bridge* bridge))
 
-(export node-addr node-portno node-online set-node-online! 
+(export node-addr node-portno node-online set-node-online! set-node-portno!
         find-drone-by-bridge)

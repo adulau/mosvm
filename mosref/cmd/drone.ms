@@ -31,12 +31,16 @@
   (define id (req-term terms " drone identifier"))
   (define platform (req-term terms " drone platform"))
   (define node (mosref-shell-node shell))
-  (define portno (or (node-portno node)
-                     (random-integer 20000 30000)))
   (define ecdh (make-console-ecdh))
   (define addr (node-addr node))
   (unless addr
     (send-err " node address unknown, use set addr to assign one"))
+  (define portno (node-portno node))
+  (unless portno
+    (set! portno (random-integer 20000 30000))
+    (set-node-portno! node portno)
+    (send-line "NOTE: This node does not have a listener port assigned, using "
+               (format portno) " for this node."))
   (define sin (node-make-sin node portno))
   (define data (guard (lambda (e)
                         (send-err "Could not compile drone."))
