@@ -21,8 +21,8 @@
 
 (define (patch in out)
   (spawn (lambda ()
-           (define recv (if (lane? in) (lane-output in)) (output in))
-           (define xmit (if (lane? out) (lane-input out)) (input out))
+           (define recv (if (lane? in) (lane-recv in) (output in)))
+           (define xmit (if (lane? out) (lane-xmit out) (input out)))
            (forever
              (define evt (wait recv))
              (send evt xmit)

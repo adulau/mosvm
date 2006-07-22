@@ -86,9 +86,6 @@
     (define preamble (random-string *preamble-len*))
     (unless (dict-set? sessions preamble)
       (dict-set! sessions preamble #f)
-      (print "PREAMBLE: ")
-      (print (format preamble))
-      (print "\n")
       (return preamble))))
 
 (define (mosref-sin-listen portno sin)

@@ -53,6 +53,7 @@
 
 (define (make-console-node addr portno)
   (define node (make-console-node-record "console" (dict)))
+  (set-node-prop! node 'platform *platform*)
   (set-node-prop! node 'addr addr)
   (set-node-prop! node 'port portno)
   (set-node-prop! node 'online #t)

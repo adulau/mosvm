@@ -60,8 +60,6 @@
                   ;TODO: Make lapse configurable.
 
               (define transport
-                (print (format (list node portno sin)))
-                (print "\n")
                 (apply console-affiliation ecdh (node-sin-listen node 
                                                                  portno 
                                                                  sin)))
