@@ -16,6 +16,7 @@
 (module "mosref/cmd/drone")
 (import "mosref/shell")
 (import "mosref/node")
+(import "mosref/listener")
 
 (define-cmd "drone"
             "drone <file> <id> <platform>"
@@ -36,10 +37,10 @@
   (define addr (node-addr node))
   (unless addr
     (send-err " node address unknown, use set addr to assign one"))
+  (define sin (node-make-sin node portno))
   (define data (guard (lambda (e)
                         (send-err "Could not compile drone."))
-                 (make-drone-exe addr 
-                                 portno ecdh platform)))
+                 (make-drone-exe addr sin portno ecdh platform)))
   (guard (lambda (e)
            (send-err "Could not write file " (format (cadr file)) "."))
     (put-node-file @file data))
@@ -48,10 +49,6 @@
 
   (send-line "Listening for drone on " (format portno) "...")
 
-  (define listener (node-tcp-listen node portno))
-  (define finish (car listener))
-  (define conns (cadr listener))
-
   (spawn (lambda ()
            (guard (lambda (e)
                     ;TODO: Make number of attempts permitted
@@ -59,90 +56,86 @@
                     (traceback e)
                     (send-line "ERROR: Affilation of " id " failed, "
                                (car (error-info e)) ".")
-                    (finish)
                     (halt))
                   ;TODO: Make lapse configurable.
 
               (define transport
-                (await-drone-affiliation conns ecdh 1800000))
-
+                (print (format (list node portno sin)))
+                (print "\n")
+                (apply console-affiliation ecdh (node-sin-listen node 
+                                                                 portno 
+                                                                 sin)))
+            
               (send-line "Drone " id " affiliated.")
               ;TODO: Tag with platform.
               ;TODO: Where will we get addr?
-              (finish)
-              (make-drone-node id #f #f
+              (define next (make-drone-node id #f #f
                                (spawn-endpoint console-endpoint 
-                                               console-broken @transport))))))
+                                               console-broken 
+                                               @transport)))
+              (set-node-prop! next 'platform platform)))))
 
-(define *node-tcp-listen-prog* 
+(define *node-sin-listen-prog* 
   (inline (export nothing)
+          (import "mosref/listener")
+          (import "mosref/patch")
           (define bridge *drone-bridge*)
-          (define portno (wait))
-          (define listener (guard (function (report-failed-listen err)
-                                    (print "Could not listen to ")
-                                    (print (format portno))
-                                    (print "\n")
-                                    ;TODO: Signal failure of the listener.
-                                    )
-                             (tcp-listen portno)))
-          (define (relay-conn conn lane)
-            (define conn-input (input conn))
-            (define conn-output (output conn))
-            (define lane-input (lane-xmit lane))
-            (define lane-output (lane-recv lane))
-            (spawn (lambda ()
-                     (forever
-                       (send (wait conn-output) lane-input))))
-            (spawn (lambda ()
-                     (forever
-                       (send (wait lane-output) conn-input)))))
-          (spawn (lambda ()
-                   (forever
-                     (when (eq? (wait) 'close)
-                       (close-listener listener))
-                     (send 'close))))
-          (forever
-            (define conn (wait listener))
-            ;TODO: Need to know the node.
-            (define lane (make-reserved-lane bridge))
-            (send (lane-tag lane))
-            (relay-conn conn lane))))
+          (define what (wait))
+          (define conn (mosref-sin-listen @what))
+          (define lane (make-reserved-lane bridge))
+         
+          (patch2 conn lane)
+          (send (lane-tag lane))
+          (send 'close)))
 
-(define (node-tcp-listen (<drone-node> node) portno)
-  (define conn (spawn-node-program node *node-tcp-listen-prog*))
+(define (node-sin-listen (<drone-node> node) portno sin)
+  (define conn (spawn-node-program node *node-sin-listen-prog*))
   (define xmit (car conn))
   (define recv (cadr conn))
   (define lanes (make-channel))
   (define bridge (drone-node-bridge node))
+
+  (send (list portno sin) xmit)
+
+  (define event (wait recv))
+
+  (send 'close xmit)
+
+  (when (string? event)
+    (define lane (find-reserved-lane bridge event))
+    (when lane 
+      (return (list (lane-xmit lane) (lane-recv lane)))))
+
+  (error 'mosref "Bogus message while waiting for session lane" event))
+
+(define (node-sin-listen (<console-node> node) portno sin)
+  (define portno (node-portno node))
+  (define conn (mosref-sin-listen portno sin))
+  (list (input conn) (output conn)))
+
+(define *node-make-sin-prog*
+  (inline (export nothing)
+          (import "mosref/listener")
+          (send (make-mosref-sin (wait)))))
+
+(define (node-make-sin (<drone-node> node) portno)
+  (define conn (spawn-node-program node *node-make-sin-prog*))
+  (define xmit (car conn))
+  (define recv (cadr conn))
+
   (send portno xmit)
+  
+  (define event (wait recv))
+  
+  (send 'close xmit)
 
-  (spawn (lambda ()
-           (define done #f)
-           (until done
-              (define event (wait recv))
-              (cond
-                ((eq? event 'close)
-                 (set! done #t))
-                ((string? event)
-                 (define lane (find-reserved-lane bridge event))
-                 (send (if lane lane (list 'fail "unrecognized tag" event))
-                       lanes))
-                ((and (pair? event) (eq? (car event) 'fail))
-                 (send event lanes))
-                (else
-                 (send (list 'fail "unrecognized event" event) lanes))))
-           (send 'close xmit)))
+  (when (string? event)
+    (return event))
 
-  (list (function (halt-drone-listener)
-          (send 'close xmit)
-          (send 'close recv))
-        lanes))
+  (error 'mosref 
+         "Bogus message while waiting for service identification number" event))
 
-(define (node-tcp-listen (<console-node> node) portno)
-  (define listener (tcp-listen portno))
-  (list (function (halt-console-listener)
-          (close-listener listener))
-        listener))
+(define (node-make-sin (<console-node> node) portno)
+  (make-mosref-sin portno))
 
-(export node-tcp-listen)
-
+(export node-sin-listen node-make-sin)

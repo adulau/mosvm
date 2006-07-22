@@ -41,14 +41,23 @@
   * Merged mosref/endpoint into mosref/transport.
   * close-listener now causes the listener to emit a close message.
   * MOSREF console now exits when the last display closes.
+  * Moved old set behavior to with.
+  * Added a simpler set command that simply updates the property without
+    possibly resetting it.
+  * Modified shell parser to recognize x=y as set x=y
+  * Revised the drone command to use patch and listener, to broker multiple 
+    control connections to a single port.
+  + Added a clear command that clears one or more properties on the current
+    node.
   * Added (channel-prepend! channel value) to core primitives.
   * Added mosref/listener module, which manages multiple session listeners
     grouped by ports and selected by a random 16 byte session key.
-  * Added test/mosref-listener.ms unit test for mosref/listener.
-  * Added test-mosref-listener to net-test target.
-  + Nodes may be assigned a port, which specifies where incoming drones may
-    affiliate.
-  + The console now only uses a single listener port for all drones.
+  + t Added mosref/patch module.
+  + t Added (patch in out) to mosref/patch, which spawns a process that will
+    transmit all data received from an input to an output until the input
+    signals a close.  ( The close will be forwarded, as well. )
+  + t Added (patch2 left right) to mosref/patch, which patches left to right
+    and right to left.
   + The recover command informs the console that it should expect the return
     of a disconnected drone.  NOTE: This has some severe security implications,
     since a man in the middle attack is much easier after the first

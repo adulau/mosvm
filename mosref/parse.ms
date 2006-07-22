@@ -123,3 +123,11 @@
 
 (export opt-term req-term req-node req-path opt-integer)
 
+(define (parse-propval val)
+  (cond ((member val '("Yes" "yes" "YES" "True" "TRUE" "true"))
+         #t)
+        ((member val '("No" "no" "NO" "False" "FALSE" "false"))
+         #f)
+        (else val)))
+
+(export parse-propval)

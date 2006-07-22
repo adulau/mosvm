@@ -78,19 +78,25 @@
   (or (find-mosref-listener portno)
       (register-mosref-listener portno)))
 
-(define (make-preamble sessions channel)
+(define (make-mosref-sin portno)
+  (define listener (spawn-mosref-listener portno))
+  (define sessions (mosref-listener-sessions listener))
+
   (forever
     (define preamble (random-string *preamble-len*))
     (unless (dict-set? sessions preamble)
-      (dict-set! sessions preamble channel)
+      (dict-set! sessions preamble #f)
+      (print "PREAMBLE: ")
+      (print (format preamble))
+      (print "\n")
       (return preamble))))
 
-(define (make-mosref-listener portno)
+(define (mosref-sin-listen portno sin)
   (define channel (make-channel))
   (define listener (spawn-mosref-listener portno))
   (define sessions (mosref-listener-sessions listener))
-  (send (make-preamble sessions channel) channel)
-  channel)
+  (dict-set! sessions sin channel)
+  (wait channel))
 
-(export make-mosref-listener)
+(export make-mosref-sin mosref-sin-listen)
 

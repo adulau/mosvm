@@ -80,22 +80,12 @@
   (step "Affiliation complete.")
   (list command report))
 
-(define (await-drone-affiliation conns ecdh lapse)
-  (define timer (if lapse (timeout lapse (output conns) 'timeout) #f))
-  (define conn (wait conns))
-  (when (eq? conn 'timeout)
-    (error 'aff "the drone did not connect"))
-  (when timer (cancel-timeout timer))
-  (apply console-affiliation ecdh
-         (cond ((lane? conn)  (list (lane-xmit conn) (lane-recv conn)))
-               ((stream? conn) (list (input conn) (output conn)))
-               (else (error 'aff "expected stream or lane" conn)))))
-
-(define (make-drone-exe console-addr console-portno console-ecdh platform)
+(define (make-drone-exe console-addr sin console-portno console-ecdh platform)
   (build-exe platform
              `((import "mosref/drone")
                (import "mosref/transport")
                (define conn (tcp-connect ,console-addr ,console-portno))
+               (send (base64-decode ,(base64-encode sin)) conn)
                (define endpoint 
                  (apply spawn-endpoint 
                         drone-endpoint
@@ -106,6 +96,7 @@
                                                              console-ecdh))))
                           (input conn)
                           (output conn))))
+               ;TODO: Send the next two statements when the drone affiliates..
                (define (import key)
                   (unless (imported? key)
                     (define lane (make-lane endpoint))
