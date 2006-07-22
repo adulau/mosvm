@@ -90,7 +90,7 @@
   (define (cmd-close data)
     (define recv-tag (string-read! data *bridge-tag-size*))
     (define lane (dict-ref recv-tags recv-tag))
-    (unless lane 
+    (when lane 
       (dict-remove! recv-tags recv-tag)
       (define recv (lane-recv lane))
       (send 'close recv)))
