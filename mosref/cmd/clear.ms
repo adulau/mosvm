@@ -13,20 +13,23 @@
 ; along with this library; if not, write to the Free Software Foundation, 
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
-(module "mosref/cmds")
-(import "mosref/cmd/clear")
-(import "mosref/cmd/cp")
-(import "mosref/cmd/do")
-(import "mosref/cmd/drone")
-(import "mosref/cmd/exit")
-(import "mosref/cmd/fork")
-(import "mosref/cmd/help")
-(import "mosref/cmd/load")
-(import "mosref/cmd/nodes")
-(import "mosref/cmd/on")
-(import "mosref/cmd/proxy")
-(import "mosref/cmd/scan")
-(import "mosref/cmd/set")
-(import "mosref/cmd/sh")
-(import "mosref/cmd/with")
+(module "mosref/cmd/clear")
+(import "mosref/shell")
+(import "mosref/node")
+
+(define-cmd "clear"
+            "clear <key> ..."
+            (string-append
+              "Resets zero or more properties on the current node to their"
+              " default value.")
+
+  (define node (mosref-shell-node shell))
+  (define count 0)
+  (until (tc-empty? terms)
+    (clear-node-prop! node (string->symbol (tc-next! terms)))
+    (set! count (+ count 1)))
+  (send-line (case count
+               ((0) "No properties cleared.")
+               ((1) "Property cleared.")
+               (else (string-append (format count) " properties cleared.")))))
 

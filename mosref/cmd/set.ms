@@ -25,9 +25,10 @@
               " supplied value to the key, for the current node.  If only"
               " the key is supplied, the value is assumed to be \"true\"."
               "\n\n"
-              "If a command is furnished, in addition to a key, the property"
-              " will be reset to its original value after the execution of"
-              " the specified command.")
+              "If a command is furnished, in addition to a key, it will be"
+              "performed after the property has been updated."
+              "\n\n"
+              "The word 'set' may be omitted, if the key=value form is used.")
 
   (define node (mosref-shell-node shell))
   (define key-val (opt-term terms))
@@ -42,10 +43,8 @@
                   #t
                   (parse-propval (cadr key-val)))))
 
-  (cond (command (define old-val (find-node-prop node key))
-                 (set-node-prop! node key val)
-                 (do-mosref-cmd shell command)
-                 (set-node-prop! node key old-val))
+  (cond (command (set-node-prop! node key val)
+                 (do-mosref-cmd shell command))
         (key     (set-node-prop! node key val)
                  (send-line "Set."))
         (else    (send-line "Properties: "
@@ -63,11 +62,4 @@
     ((#t) "true")
     ((#f) "false")
     (else (format val))))
-
-(define (parse-propval val)
-  (cond ((member val '("Yes" "yes" "YES" "True" "TRUE" "true"))
-         #t)
-        ((member val '("No" "no" "NO" "False" "FALSE" "false"))
-         #f)
-        (else val)))
 

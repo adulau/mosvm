@@ -91,6 +91,11 @@
   (when (tc-empty? terms) (return))
 
   (define verb (tc-next! terms))
+
+  (when (string-find verb "=")
+    (tc-prepend! terms verb)
+    (set! verb "set"))
+
   (define data (dict-ref *cmds-by-verb* verb))
   (unless data
     (send-err "I do not understand " (format verb) "."))
@@ -101,8 +106,8 @@
 (define (run-mosref-shell console node)
   (add-shell-display! (output))
   (guard (lambda (err)
-           (remove-shell-display! (output))
-           (re-error err))
+           (traceback err)
+           (remove-shell-display! (output)))
     (define shell (make-mosref-shell node console #t))
 
     (define (send-prompt)
