@@ -23,14 +23,18 @@
 (import "mosref/format")
 
 (define *cmd-term* (make-regex "[^ \r\n\t]+"))
-
+(define *display-count* 0)
 (define *displays* (set))
 
 (define (add-shell-display! out)
+  (set! *display-count* (+ *display-count* 1))
   (set-add! *displays* out))
 
 (define (remove-shell-display! out)
-  (set-remove! *displays* out))
+  (set! *display-count* (- *display-count* 1))
+  (set-remove! *displays* out)
+  (when (<= *display-count* 0)
+    (exit 0)))
 
 (define (alert . rest)
   (define msg (string-append "ALERT: " @rest *line-sep*))

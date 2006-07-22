@@ -39,6 +39,13 @@
     for file location.
   * Renamed mosref/base to mosref/transport.
   * Merged mosref/endpoint into mosref/transport.
+  * close-listener now causes the listener to emit a close message.
+  * MOSREF console now exits when the last display closes.
+  * Added (channel-prepend! channel value) to core primitives.
+  * Added mosref/listener module, which manages multiple session listeners
+    grouped by ports and selected by a random 16 byte session key.
+  * Added test/mosref-listener.ms unit test for mosref/listener.
+  * Added test-mosref-listener to net-test target.
   + Nodes may be assigned a port, which specifies where incoming drones may
     affiliate.
   + The console now only uses a single listener port for all drones.

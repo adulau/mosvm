@@ -249,6 +249,16 @@ MQO_BEGIN_PRIM( "send", send )
     NO_RESULT( );
 MQO_END_PRIM( send )
 
+MQO_BEGIN_PRIM( "channel-prepend!", channel_prepend )
+    REQ_INPUT_ARG( input );
+    REQ_ANY_ARG( message );
+    NO_REST_ARGS( ); 
+
+    mqo_channel_prepend( input, message );
+
+    NO_RESULT( );
+MQO_END_PRIM( channel_prepend )
+
 MQO_BEGIN_PRIM( "channel-empty?", channel_emptyq )
     REQ_CHANNEL_ARG( channel );
     NO_REST_ARGS( );
@@ -376,6 +386,7 @@ void mqo_init_channel_subsystem( ){
     MQO_BIND_PRIM( wait );
     MQO_BIND_PRIM( waitingq );
     MQO_BIND_PRIM( send );
+    MQO_BIND_PRIM( channel_prepend );
     MQO_BIND_PRIM( channel_emptyq );
     MQO_BIND_PRIM( make_channel );
     MQO_BIND_PRIM( input );

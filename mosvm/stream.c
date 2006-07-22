@@ -207,7 +207,7 @@ void mqo_close_listener( mqo_listener l ){
 #endif
     l->fd = 0;
 
-    //TODO: Should we send 'close to l->conns ?
+    mqo_channel_append( l->conns, mqo_vf_symbol( mqo_ss_close ) );
     
     mqo_listener prev = l->prev;
     mqo_listener next = l->next;
