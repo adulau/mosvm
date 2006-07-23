@@ -13,23 +13,10 @@
 ; along with this library; if not, write to the Free Software Foundation, 
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
-(module "mosref/cmd/clear")
-(import "mosref/shell")
-(import "mosref/node")
+(module "mosref/props")
 
-(define-cmd "clear"
-            "clear <key> ..."
-            (string-append
-              "Resets zero or more properties on the current node to their"
-              " default value.")
-
-  (define node (mosref-shell-node shell))
-  (define count 0)
-  (until (tc-empty? terms)
-    (clear-node-prop! node (resolve-key (tc-next! terms)))
-    (set! count (+ count 1)))
-  (send-line (case count
-               ((0) "No properties cleared.")
-               ((1) "Property cleared.")
-               (else (string-append (format count) " properties cleared.")))))
+(import "mosref/prop/address")
+(import "mosref/prop/online")
+(import "mosref/prop/platform")
+(import "mosref/prop/port")
 

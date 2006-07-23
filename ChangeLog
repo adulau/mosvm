@@ -60,9 +60,10 @@
     and right to left.
   * Consoles tag themselves with a platform.
   * Drones tag themselves with a platform after they complete affiliation. 
-  + When a node tries to construct a listener for the first time, if a portno
+  * When a node tries to construct a listener for the first time, if a portno
     has not been assigned, it will randomly select one.
-  + Added types to node properties.
+  * Replaced ad-hoc property parsers, validators and formatters with a more
+    formal property specification framework.
   + The recover command informs the console that it should expect the return
     of a disconnected drone.  NOTE: This has some severe security implications,
     since a man in the middle attack is much easier after the first

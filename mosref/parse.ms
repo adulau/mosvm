@@ -63,7 +63,8 @@
        (string-split* s ",")))
 
 (define (parse-port s)
-  (define n (string->integer s))
+  (define n (guard (lambda (x) (error 'parse "expected a port" s))
+                   (string->integer s)))
   (when (or (< n 0) (> n 65535))
     (error 'parse "expected a port in the range 0 to 65535." n))
   n)
@@ -123,11 +124,11 @@
 
 (export opt-term req-term req-node req-path opt-integer)
 
-(define (parse-propval val)
+(define (parse-flag val)
   (cond ((member val '("Yes" "yes" "YES" "True" "TRUE" "true"))
          #t)
         ((member val '("No" "no" "NO" "False" "FALSE" "false"))
          #f)
-        (else val)))
+        (else (error 'parse "expected boolean value" (format val)))))
 
-(export parse-propval)
+(export parse-flag parse-port)

@@ -18,8 +18,7 @@ lib_mos:
 	$(MOSC) lib/*ms
 
 mosref_mos: $(MOSC)
-	$(MOSC) mosref/*ms
-	$(MOSC) mosref/cmd/*ms
+	$(MOSC) mosref/*ms mosref/cmd/*ms mosref/prop/*ms
 
 $(MOSC): $(MOSVM_STUB) $(GLUE) lib/compile.ms bin/mosc.ms lib/mosc.ms site/config.ms lib/build.ms
 	IN_BOOTSTRAP=1 sh bin/build-app.sh $(MOSVM_STUB) bin/mosc $(MOSC)

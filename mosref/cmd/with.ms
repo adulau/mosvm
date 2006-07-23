@@ -16,26 +16,24 @@
 (module "mosref/cmd/set")
 (import "mosref/shell")
 (import "mosref/node")
+(import "mosref/props")
 
 (define-cmd "with"
             "with <key>[=<value>] [<command>]"
             "Performs the supplied command with key temporarily set to value."
 
   (define node (mosref-shell-node shell))
-  (define key-val (req-term terms))
+
+  (define key-val (parse-property (req-term terms)))
+  (define key (car key-val))
+      
   (define command terms)
-  (define key #f)
-  (define val #f)
 
-  (when key-val 
-    (set! key-val (string-split key-val "="))
-    (set! key (string->symbol (car key-val)))
-    (set! val (if (null? (cdr key-val))  
-                  #t
-                  (parse-propval (cadr key-val)))))
+  (define was-set (has-node-prop? node key))
+  (define old-val (if was-set (find-node-prop node key)))
 
-  (define old-val (find-node-prop node key))
-  (set-node-prop! node key val)
+  (set-node-prop! node @key-val)
   (do-mosref-cmd shell command)
-  (set-node-prop! node key old-val))
+  (if was-set (set-node-prop! node key old-val)
+              (clear-node-prop! node key)))
 

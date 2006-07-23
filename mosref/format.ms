@@ -50,3 +50,8 @@
   (if (integer? addr) (format-ipv4 addr) addr))
 
 (export format-addr)
+
+(define (format-flag flag)
+  (if flag "true" "false"))
+
+(export format-flag)

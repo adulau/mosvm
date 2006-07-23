@@ -14,8 +14,10 @@
 ; Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
 (module "mosref/cmd/set")
+
 (import "mosref/shell")
 (import "mosref/node")
+(import "mosref/props")
 
 (define-cmd "set"
             "set [<key>[=<value>] [<command>]]"
@@ -33,33 +35,30 @@
   (define node (mosref-shell-node shell))
   (define key-val (opt-term terms))
   (define command (if (and key-val (not (tc-empty? terms))) terms #f))
-  (define key #f)
-  (define val #f)
 
-  (when key-val 
-    (set! key-val (string-split key-val "="))
-    (set! key (string->symbol (car key-val)))
-    (set! val (if (null? (cdr key-val))  
-                  #t
-                  (parse-propval (cadr key-val)))))
-
-  (cond (command (set-node-prop! node key val)
+  (when key-val
+    (set! key-val (parse-property key-val)))
+  
+  (cond (command (set-node-prop! node @key-val)
                  (do-mosref-cmd shell command))
-        (key     (set-node-prop! node key val)
+        (key-val (set-node-prop! node @key-val)
                  (send-line "Set."))
         (else    (send-line "Properties: "
                             (apply string-join "\n            " 
                                          (map format-property 
                                               (list-node-props node)))))))
 
-(define (format-property key-val) (string-append (format (car key-val))
-                                                 " = " 
-                                                 (format-propval 
-                                                   (cdr key-val))))
+(define (format-property key-val) 
+  (define key (car key-val))
+  (define val (cdr key-val))
+  (string-append (format key) " = " (format-propval key val)))
 
-(define (format-propval val)
-  (case val
-    ((#t) "true")
-    ((#f) "false")
-    (else (format val))))
+(define (parse-property key-val)
+  (set! key-val (string-split key-val "="))
+  (define key (resolve-key (car key-val)))
+  (define val (if (null? (cdr key-val))  #t 
+                                         (cadr key-val)))
+  (set! val (validate-prop key val))
+  (list key val))
 
+(export format-property parse-property)
