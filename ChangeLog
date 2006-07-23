@@ -64,6 +64,9 @@
     has not been assigned, it will randomly select one.
   * Replaced ad-hoc property parsers, validators and formatters with a more
     formal property specification framework.
+  * The service identification number and console ecdh key associated with a
+    drone node is now stored in the drone record.
+  + Bug: nodes causes port to be fixed.
   + The recover command informs the console that it should expect the return
     of a disconnected drone.  NOTE: This has some severe security implications,
     since a man in the middle attack is much easier after the first

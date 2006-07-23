@@ -32,7 +32,7 @@
                                       ".")))
              format: (format-flag value))
 
-(define (node-online node) (find-node-prop! node 'online))
+(define (node-online node) (find-node-prop node 'online))
 
 (define (set-node-online! node value) (set-node-prop! node 'online value))
 

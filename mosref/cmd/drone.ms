@@ -35,12 +35,7 @@
   (define addr (node-addr node))
   (unless addr
     (send-err " node address unknown, use set addr to assign one"))
-  (define portno (node-portno node))
-  (unless portno
-    (set! portno (random-integer 20000 30000))
-    (set-node-portno! node portno)
-    (send-line "NOTE: This node does not have a listener port assigned, using "
-               (format portno) " for this node."))
+  (define portno (node-port node))
   (define sin (node-make-sin node portno))
   (define data (guard (lambda (e)
                         (send-err "Could not compile drone."))
@@ -71,7 +66,7 @@
               (send-line "Drone " id " affiliated.")
               ;TODO: Tag with platform.
               ;TODO: Where will we get addr?
-              (define next (make-drone-node id #f #f
+              (define next (make-drone-node id sin ecdh
                                (spawn-endpoint console-endpoint 
                                                console-broken 
                                                @transport)))
@@ -111,7 +106,7 @@
   (error 'mosref "Bogus message while waiting for session lane" event))
 
 (define (node-sin-listen (<console-node> node) portno sin)
-  (define portno (node-portno node))
+  (define portno (node-port node))
   (define conn (mosref-sin-listen portno sin))
   (list (input conn) (output conn)))
 

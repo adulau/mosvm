@@ -40,9 +40,11 @@
               (props node-props))
 
 (define-class drone-node <node>
-              (make-drone-node-record id props bridge)
+              (make-drone-node-record id props sin ecdh bridge)
               drone-node?
               (id node-id)
+              (sin drone-node-sin)
+              (ecdh drone-node-ecdh)
               (bridge drone-node-bridge)
               (props node-props))
 
@@ -61,10 +63,8 @@
   (dict-set! *nodes-by-id* "console" node)
   node) 
 
-(define (make-drone-node id addr portno bridge)
-  (define node (make-drone-node-record id (dict) bridge))
-  (when addr (set-node-address! node addr))
-  (when portno (set-node-port! node portno))
+(define (make-drone-node id sin ecdh bridge)
+  (define node (make-drone-node-record id (dict) sin ecdh bridge))
   (set-node-online! node #t)
   (dict-set! *nodes-by-id* id node)
   (dict-set! *drones-by-bridge* bridge node)
