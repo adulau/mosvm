@@ -144,10 +144,15 @@
     (forever
       (send (wait c-recv) f-xmit)))
 
+  (define (spawn-socks4-proxy-session conn)
+    (spawn (lambda () (socks4-proxy-session conn))))
+
   (spawn (lambda ()
            (forever
              (define c (wait listener))
-             (spawn (lambda () (socks4-proxy-session c))))))
+             (if (eq? c 'close)
+               (return)
+               (spawn-socks4-proxy-session c)))))
 
   listener)
 

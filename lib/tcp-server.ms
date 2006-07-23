@@ -20,8 +20,11 @@
   (define server (tcp-listen portno))
   (spawn (function (tcp-server)
             (forever
-              (with-io (wait server)
-                (spawn fn)))))
+              (define conn (wait server))
+              (if (eq? conn 'close)
+                (return)
+                (with-io conn
+                  (spawn fn))))))
   server)
 
 (export spawn-tcp-server)
