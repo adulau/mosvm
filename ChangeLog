@@ -23,7 +23,15 @@
 - ?/??/????, MOSREF Node Prod Command
   + Added mosref/cmd/prod
 
-- ?/??/????, MOSREF Drone Recovery
+- ?/??/????, MOSREF Session Recovery
+  + Bug: nodes command causes port to be fixed.
+  + Bug: repeated recover is permissible without the drone actually connecting
+  + When a drone node record is created, it is stored in the transcript.
+  + When a console node record is created, it is stored in the transcript.
+  + When mosref loads, it may be supplied with a transcript, which will be used
+    to recreate console and drone node records.
+
+- 7/23/2006, MOSREF Drone Recovery
   * When a bridge is closed, all lanes and the bridge-lanes channel are 
     sent a close notification.
   * When a drone loses connection, all console displays are notified with
@@ -70,12 +78,6 @@
   * After affiliation, drone records are updated with online status.
   * The recover command causes a node to listen again for the affiliation of
     a known offline drone.
-  + Bug: nodes command causes port to be fixed.
-  + Bug: repeated recover is permissible without the drone actually connecting
-  + When a drone node record is created, it is stored in the transcript.
-  + When a console node record is created, it is stored in the transcript.
-  + When mosref loads, it may be supplied with a transcript, which will be used
-    to recreate console and drone node records.
 
 - 7/20/2006, MOSREF Drone Proxying
   * Added lib/socks-server, a partial implementation of logic required for
