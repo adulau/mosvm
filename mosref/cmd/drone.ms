@@ -58,18 +58,19 @@
                     (halt))
                   ;TODO: Make lapse configurable.
 
+              (define next (make-drone-node id sin ecdh))
+
               (define transport
                 (apply console-affiliation ecdh (node-sin-listen node 
                                                                  portno 
                                                                  sin)))
             
               (send-line "Drone " id " affiliated.")
-              ;TODO: Tag with platform.
               ;TODO: Where will we get addr?
-              (define next (make-drone-node id sin ecdh
-                               (spawn-endpoint console-endpoint 
-                                               console-broken 
-                                               @transport)))
+              (set-node-online! next #t)
+              (set-node-bridge! next (spawn-endpoint console-endpoint 
+                                                     console-broken 
+                                                     @transport))
               (set-node-prop! next 'platform platform)))))
 
 (define *node-sin-listen-prog* 

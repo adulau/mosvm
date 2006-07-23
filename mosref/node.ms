@@ -45,7 +45,7 @@
               (id node-id)
               (sin drone-node-sin)
               (ecdh drone-node-ecdh)
-              (bridge drone-node-bridge)
+              (bridge drone-node-bridge set-drone-node-bridge!)
               (props node-props))
 
 (define (list-mosref-nodes)
@@ -63,12 +63,18 @@
   (dict-set! *nodes-by-id* "console" node)
   node) 
 
-(define (make-drone-node id sin ecdh bridge)
-  (define node (make-drone-node-record id (dict) sin ecdh bridge))
-  (set-node-online! node #t)
+(define (make-drone-node id sin ecdh)
+  (define node (make-drone-node-record id (dict) sin ecdh #f))
   (dict-set! *nodes-by-id* id node)
-  (dict-set! *drones-by-bridge* bridge node)
   node)
+
+(define (set-node-bridge! node bridge)
+  (define old-bridge (drone-node-bridge node))
+  (dict-remove! *drones-by-bridge* old-bridge)
+  (dict-set! *drones-by-bridge* bridge node)
+  (set-drone-node-bridge! node bridge))
+
+(export set-node-bridge!)
 
 (define (spawn-node-program (<console-node> node) program)
   (define xmit (make-channel))

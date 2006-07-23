@@ -66,13 +66,18 @@
     formal property specification framework.
   * The service identification number and console ecdh key associated with a
     drone node is now stored in the drone record.
-  + Bug: nodes causes port to be fixed.
-  + The recover command informs the console that it should expect the return
-    of a disconnected drone.  NOTE: This has some severe security implications,
-    since a man in the middle attack is much easier after the first
-    affiliation; if the drone has been deployed to an untrusted host, or has
-    been deployed via a potentially compromised transport, generate a new
-    drone.
+  * Drone node records are now created before the server waits for the drone.
+  * After affiliation, drone records are updated with online status.
+  + Bug: nodes command causes port to be fixed.
+  + When a drone node record is created, it is stored in the transcript.
+  + When a console node record is created, it is stored in the transcript.
+  + When mosref loads, it may be supplied with a transcript, which will be used
+    to recreate console and drone node records.
+  + The recover command causes a node to listen for a previous offline drone.
+    NOTE: This has some severe security implications, since a man in the middle 
+    attack is much easier after the first affiliation; if the drone has been 
+    deployed to an untrusted host, or has been deployed via a potentially 
+    compromised transport, generate a new drone.
 
 - 7/20/2006, MOSREF Drone Proxying
   * Added lib/socks-server, a partial implementation of logic required for
