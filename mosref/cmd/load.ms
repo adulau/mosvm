@@ -28,7 +28,7 @@
   (guard (lambda (err)
            (send-err "Could not read lisp file " (format file-name) ", "
                      (cadr (error-info err))))
-    (define expr (read-lisp-file )))
+    (define expr (read-lisp-file file-name)))
 
-  (eval-node-expr current-node expr))
+  (eval-node-expr (mosref-shell-node shell) expr))
 
