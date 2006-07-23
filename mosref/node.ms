@@ -40,11 +40,12 @@
               (props node-props))
 
 (define-class drone-node <node>
-              (make-drone-node-record id props sin ecdh bridge)
+              (make-drone-node-record id props link sin ecdh bridge)
               drone-node?
               (id node-id)
               (sin drone-node-sin)
               (ecdh drone-node-ecdh)
+              (link drone-node-link)
               (bridge drone-node-bridge set-drone-node-bridge!)
               (props node-props))
 
@@ -63,8 +64,8 @@
   (dict-set! *nodes-by-id* "console" node)
   node) 
 
-(define (make-drone-node id sin ecdh)
-  (define node (make-drone-node-record id (dict) sin ecdh #f))
+(define (make-drone-node id link sin ecdh)
+  (define node (make-drone-node-record id (dict) link sin ecdh #f))
   (dict-set! *nodes-by-id* id node)
   node)
 
@@ -74,7 +75,7 @@
   (dict-set! *drones-by-bridge* bridge node)
   (set-drone-node-bridge! node bridge))
 
-(export set-node-bridge!)
+(export drone-node-link set-node-bridge! drone-node-sin drone-node-ecdh)
 
 (define (spawn-node-program (<console-node> node) program)
   (define xmit (make-channel))

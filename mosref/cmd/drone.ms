@@ -46,32 +46,41 @@
 
   (send-line "Drone executable created.")
 
+  (define next (make-drone-node id node sin ecdh))
+  (set-node-prop! next 'platform platform)
+  
+  (spawn-drone-listener node next))
+
+(define (spawn-drone-listener node next)
+  (define portno (node-port node))
+
+  (define id (node-id next))
+  (define sin (drone-node-sin next))
+  (define ecdh (drone-node-ecdh next))
+
   (send-line "Listening for drone on " (format portno) "...")
 
   (spawn (lambda ()
-           (guard (lambda (e)
-                    ;TODO: Make number of attempts permitted
-                    ;      configurable
-                    (traceback e)
-                    (send-line "ERROR: Affilation of " id " failed, "
-                               (car (error-info e)) ".")
-                    (halt))
-                  ;TODO: Make lapse configurable.
+           (define transport
+             (guard (lambda (e)
+                      ;TODO: Make number of attempts permitted
+                      ;      configurable
+                      (traceback e)
+                      (send-line "ERROR: Affilation of " id " failed, "
+                                 (car (error-info e)) ".")
+                      (halt))
+               (apply console-affiliation ecdh 
+                      (node-sin-listen node portno sin))))
 
-              (define next (make-drone-node id sin ecdh))
+           ;TODO: Where will we get addr?
 
-              (define transport
-                (apply console-affiliation ecdh (node-sin-listen node 
-                                                                 portno 
-                                                                 sin)))
-            
-              (send-line "Drone " id " affiliated.")
-              ;TODO: Where will we get addr?
-              (set-node-online! next #t)
-              (set-node-bridge! next (spawn-endpoint console-endpoint 
-                                                     console-broken 
-                                                     @transport))
-              (set-node-prop! next 'platform platform)))))
+           (send-line "Drone " id " affiliated.")
+           (set-node-online! next #t)
+           (set-node-bridge! next (spawn-endpoint console-endpoint 
+                                                  console-broken 
+                                                  @transport)))))
+
+(export spawn-drone-listener node next)
 
 (define *node-sin-listen-prog* 
   (inline (export nothing)
