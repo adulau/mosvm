@@ -18,6 +18,8 @@
 #define MQO_STREAM_H 1
 
 #include "memory.h"
+#include <sys/types.h>
+#include <sys/socket.h>
 
 mqo_value mqo_the_eof;
 
@@ -30,6 +32,7 @@ MQO_BEGIN_TYPE( stream )
     mqo_channel cmd, evt;
     mqo_stream prev, next;
     mqo_integer state, enabled;
+    struct sockaddr_storage peer;
     int error;
 MQO_END_TYPE( stream )
 

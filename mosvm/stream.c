@@ -355,9 +355,14 @@ int mqo_stream_send( mqo_stream stream, void* data, mqo_quad datalen ){
 void mqo_stream_write_evt( mqo_stream stream ){
     mqo_string buf;
     mqo_boolean put;
+    int rs;
 
     if( stream->state == MQO_CONNECTING ){
-        if( mqo_stream_send( stream, NULL, 0 ) == -1 ){
+        int sz = sizeof( struct sockaddr_in );
+        rs = getpeername( stream->fd, (struct sockaddr*)&( stream->peer ), &sz ); 
+        
+        if( rs == -1 ){
+            // gpn only fails if the socket didn't connect.
             mqo_close_stream( stream );
         }else{
             mqo_channel_append( stream->evt, mqo_vf_symbol( mqo_ss_connect ) );
@@ -380,7 +385,7 @@ void mqo_stream_write_evt( mqo_stream stream ){
 
         mqo_integer fd = stream->fd;
         
-        int rs = mqo_stream_send( stream, str, len );
+        rs = mqo_stream_send( stream, str, len );
 
         if( rs > 0 ){
             if( len -= rs ){
@@ -561,6 +566,42 @@ void mqo_trace_network( ){
     }
 }
 
+MQO_BEGIN_PRIM( "peer-addr", peer_addr )
+    REQ_STREAM_ARG( stream );
+    NO_REST_ARGS( );
+
+    if(( stream->state != MQO_READY )&&( stream->state != MQO_CLOSED )){
+        mqo_errf( mqo_es_vm, "sx", "stream has not connected", stream );
+    };
+
+    struct sockaddr* sa = (struct sockaddr*)&(stream->peer);
+    if( sa->sa_family != AF_INET ){
+        mqo_errf( mqo_es_vm, "sxi", "unrecognized address family", stream, 
+                              sa->sa_family );
+    };
+    struct sockaddr_in* sin = (struct sockaddr_in*)sa;
+
+    INTEGER_RESULT( ntohl( sin->sin_addr.s_addr ) );
+MQO_END_PRIM( peer_addr )
+
+MQO_BEGIN_PRIM( "peer-port", peer_port )
+    REQ_STREAM_ARG( stream );
+    NO_REST_ARGS( );
+
+    if(( stream->state != MQO_READY )&&( stream->state != MQO_CLOSED )){
+        mqo_errf( mqo_es_vm, "sx", "stream has not connected", stream );
+    };
+
+    struct sockaddr* sa = (struct sockaddr*)&(stream->peer);
+    if( sa->sa_family != AF_INET ){
+        mqo_errf( mqo_es_vm, "sxi", "unrecognized portess family", stream, 
+                              sa->sa_family );
+    };
+    struct sockaddr_in* sin = (struct sockaddr_in*)sa;
+
+    INTEGER_RESULT( ntohs( sin->sin_port ) );
+MQO_END_PRIM( peer_port )
+
 MQO_BEGIN_PRIM( "close-listener", close_listener )
     REQ_LISTENER_ARG( listener );
     NO_REST_ARGS( );
@@ -677,6 +718,9 @@ void mqo_init_stream_subsystem( ){
     MQO_BIND_PRIM( resolve_addr );
     MQO_BIND_PRIM( stream_closedq );
     MQO_BIND_PRIM( close_listener );
+
+    MQO_BIND_PRIM( peer_addr );
+    MQO_BIND_PRIM( peer_port );
 
     mqo_stream_monitor = mqo_make_process( 
         (mqo_proc_fn) mqo_activate_netmon, 
