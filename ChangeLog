@@ -9,9 +9,6 @@
   to MOSVM applications.
   + Add site configuration settings for "terminal"
 
-- ?/??/????, Beta Three
-  + Extend the proxy command to require a shared authentication secret.
-
 - ?/??/????, MOSREF Transcripts and Persistent Drone Sessions
   + All commands generate information into a console transcript.
   + The console transcript may be read to reconstruct a console's state in a
@@ -20,8 +17,8 @@
     affiliated.
   + Add a drop command to forcefully disconnect drones.
 
-- ?/??/????, MOSREF Node Prod Command
-  + Added mosref/cmd/prod
+- ?/??/????, Beta Three
+  + Extend the proxy command to require a shared authentication secret.
 
 - ?/??/????, MOSREF Session Recovery
   + Bug: nodes command causes port to be fixed.
@@ -30,6 +27,9 @@
   + When a console node record is created, it is stored in the transcript.
   + When mosref loads, it may be supplied with a transcript, which will be used
     to recreate console and drone node records.
+
+- ?/??/????, MOSREF Node Prod Command
+  + Added mosref/cmd/prod
 
 - 7/23/2006, MOSREF Drone Recovery
   * When a bridge is closed, all lanes and the bridge-lanes channel are 
