@@ -21,8 +21,7 @@
 (define *rx-cidr* (make-regex "^([0-9.]+)/([0-9]+)"))
 (define *rx-addr-range* (make-regex "^([0-9.]+)-([0-9.]+)$"))
 
-(define (cidr-host-mask bits)
-  (- (<< 1 (- 32 bits))) 1)
+(define (cidr-host-mask bits) (- (<< 1 (- 32 bits)) 1))
 
 (define (parse-mask s)
   (define i (string->integer s))
