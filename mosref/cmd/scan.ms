@@ -18,12 +18,12 @@
 (import "mosref/node")
           
 (define-cmd "scan" 
-            "scan <hosts> <ports> [<timeout> [<conns>]]"
+            "scan <hosts> <ports> [<conns> [<timeout>]]"
             (string-append
                   "Performs a TCP port scan of the specified host, reporting"
                   " all ports  that respond with a connection within timeout"
                   " milliseconds.  The scanner will restrict itself to"
-                  " conns ports at a time, with a default of 1000.")
+                  " conns ports at a time, with a default of 500.")
 
   (define hosts (parse-host-spec
                   (req-term terms "hosts.")))
@@ -32,7 +32,7 @@
   (define timeout (or (opt-integer terms "timeout")
                       5000))
   (define conns (or (opt-integer terms "conns")
-                    1000))
+                    300))
   (spawn-node-scan (mosref-shell-node shell)
                    hosts ports timeout conns))
 

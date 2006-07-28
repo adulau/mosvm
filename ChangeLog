@@ -16,6 +16,7 @@
   + A console will accept restarted drones if the drone is not currently 
     affiliated.
   + Add a drop command to forcefully disconnect drones.
+  + Bug: The scanner does not warn when it has run out of file descriptors.
 
 - ?/??/????, Beta Three
   + Extend the proxy command to require a shared authentication secret.
@@ -31,6 +32,27 @@
 - ?/??/????, MOSREF Node Prod Command
   + Added mosref/cmd/prod
 
+- ?/??/????, MOSREF Scanner Improvements
+  * Added (peer-addr stream), and altered network monitor to use getpeername 
+    to detect a successful connection instead of the less portable technique of
+    sending zero bytes.
+  * MOSVM will automatically expand the number of file descriptors available to
+    MOSVM to the maximum permitted for the current user on POSIX systems.  
+  * Added (close-stream stream), which immediately closes the specified stream.
+    Unlike (send 'close stream), this will not permit the continued transmission
+    of queued data.
+  * Fixed erroneous help documentation for scan.
+  * Fixed recover command; now correctly uses the edge node, not the current
+    node for the listener.
+  * Worker processes in the scanner use a randomized initial delay in an effort
+    to ease impact on weak TCP/IP implementations.  Previously, the workers would
+    start in a synchronized fashion, initiating up to a thousand connections at the
+    same time.
+  * Adjusted the scanner defaults in favor of higher reliability, lower speed
+    scanning.
+  + On successful affiliation, the peer address of the node is reported to the
+    console.
+  
 - 7/23/2006, MOSREF Drone Recovery
   * When a bridge is closed, all lanes and the bridge-lanes channel are 
     sent a close notification.

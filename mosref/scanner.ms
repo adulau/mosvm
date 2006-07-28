@@ -84,24 +84,54 @@
        ,@body)))
 
 (define (scan-port host port lapse yield)
-  ;(print (string-append "Scanning " (format host) ":" (format port) "...\n"))
-  (define conn (guard (lambda x #f) 
+  ;(define f-host (format-ipv4 host))
+  ;(print (string-append "Scanning " f-host ":" (format port) "...\n"))
+  (define conn (guard (lambda (e) ; (print "Connection error while scanning: ")
+                                  ; (print f-host)
+                                  ; (print ":")
+                                  ; (print (format port))
+                                  ; (print " -- \n")
+                                  ; (traceback e) 
+                        #f) 
                  (tcp-connect host port)))
   (unless conn (return))
   (define t (timeout lapse (output conn) 'timeout))
   (define evt (wait conn))
-  (send 'close conn)
+
+  ;(send 'close conn)
+  ;(close-stream conn)
+
   (when (eq? evt 'timeout) 
-    ;(print (string-append "... Timeout " 
-    ;(format host) ":" (format port) ".\n"))
+    ;TODO: Report a lapse.  If a host gives both a lapse and reset, we're probably
+    ;      scanning too hard.
+    ;(print (string-append "... Timeout " f-host ":" (format port) ".\n"))
+    (close-stream conn)
     (return))
 
+  ;(wait conn) ; Discharging the timeout..
   (cancel-timeout t)
 
-  (when (eq? evt 'connect)
-    (print (string-append "... Connect " (format host) ":" (format port) ".\n"))
-    (send (list 'connect host port) yield)))
+  (when (eq? evt 'close)
+    ;TODO: Report a reset.
+    (return))
 
+  (close-stream conn)
+
+  (when (eq? evt 'connect)
+    ;(print (string-append "... Connect " f-host ":" (format port) ".\n"))
+    (send (list 'connect host port) yield)
+    (return))
+ 
+  ;(print (string-append "... Failure " f-host ":" (format port) " -- "
+  ;                      (format evt) "\n"))
+  )
+
+; Waits a random amount of time.
+(define (random-delay min-delay max-delay)
+  (define c (make-channel))
+  (timeout (random-integer min-delay max-delay) c 'go-ahead)
+  (wait c))
+  
 ; Given a list of hosts, a list of ports, a number of worker threads to spawn
 ; and a timeout in milliseconds to wait for any given connection attempt -- 
 ; spawns the required threads and yields a channel that will report each
@@ -109,6 +139,16 @@
 ; a done.
 
 (define (spawn-scanners hosts ports conns lapse)
+  (print "SCAN: ")
+  (print " hosts: ")
+  (print (format hosts))
+  (print " ports: ")
+  (print (format ports))
+  (print " conns: ")
+  (print (format conns))
+  (print " lapse: ")
+  (print (format lapse))
+  (print "\n")
   (define results (make-channel))
   (define next-task (gen-scan-tasks hosts ports)) 
   (define done-sent #f)
@@ -122,6 +162,7 @@
 
   (repeat conns
     (spawn (function (scanner-process)
+              (random-delay 100 500)
               (forever
                 (define evt (guard (lambda (err)
                                      (unless (eq? (error-key err) 'done)

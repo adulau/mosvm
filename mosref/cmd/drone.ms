@@ -61,20 +61,26 @@
   (send-line "Listening for drone on " (format portno) "...")
 
   (spawn (lambda ()
-           (define transport
-             (guard (lambda (e)
-                      ;TODO: Make number of attempts permitted
-                      ;      configurable
-                      (traceback e)
-                      (send-line "ERROR: Affilation of " id " failed, "
-                                 (car (error-info e)) ".")
-                      (halt))
-               (apply console-affiliation ecdh 
-                      (node-sin-listen node portno sin))))
+           (define session (guard (lambda (e)
+                                    (traceback e)
+                                    (send-line "ERROR: Listener for " id "failed, "
+                                               (car (error-info e)) ".")
+                                    (halt))
+                             (node-sin-listen node portno sin)))
+           (define peer (car session))
+           (define transport (guard (lambda (e) 
+                                      ;TODO: Make number of attempts permitted
+                                      ;      configurable
+                                      (traceback e)
+                                      (send-line "ERROR: Affilation of " 
+                                                 id " failed, "
+                                                 (car (error-info e)) ".")
+                                      (halt))
+                                (apply console-affiliation ecdh (cdr session))))
 
-           ;TODO: Where will we get addr?
+           (send-line "Drone " id " affiliated from address " 
+                      (format-ipv4 peer) ".")
 
-           (send-line "Drone " id " affiliated.")
            (set-node-online! next #t)
            (set-node-bridge! next (spawn-endpoint console-endpoint 
                                                   console-broken 
@@ -90,9 +96,8 @@
           (define what (wait))
           (define conn (mosref-sin-listen @what))
           (define lane (make-reserved-lane bridge))
-         
           (patch2 conn lane)
-          (send (lane-tag lane))
+          (send (list 'connect (peer-addr conn) (lane-tag lane)))
           (send 'close)))
 
 (define (node-sin-listen (<drone-node> node) portno sin)
@@ -108,17 +113,21 @@
 
   (send 'close xmit)
 
-  (when (string? event)
-    (define lane (find-reserved-lane bridge event))
+  (when (and (pair? event)
+             (eq? (car event) 'connect))
+    (define data (cdr event))
+    (define addr (car data))
+    (define tag (cadr data))
+    (define lane (find-reserved-lane bridge tag))
     (when lane 
-      (return (list (lane-xmit lane) (lane-recv lane)))))
+      (return (list addr (lane-xmit lane) (lane-recv lane)))))
 
   (error 'mosref "Bogus message while waiting for session lane" event))
 
 (define (node-sin-listen (<console-node> node) portno sin)
   (define portno (node-port node))
   (define conn (mosref-sin-listen portno sin))
-  (list (input conn) (output conn)))
+  (list (peer-addr conn) (input conn) (output conn)))
 
 (define *node-make-sin-prog*
   (inline (export nothing)

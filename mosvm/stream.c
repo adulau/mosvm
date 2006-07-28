@@ -42,6 +42,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/ioctl.h>
+#include <sys/resource.h>
 #define MQO_EWOULDBLOCK EWOULDBLOCK
 #endif
 
@@ -321,7 +322,7 @@ void mqo_listener_read_evt( mqo_listener listener ){
     struct sockaddr_storage sa;
     mqo_quad sl = sizeof( sa );
 
-    int conn = accept( listener->fd, (struct sockaddr*)&sa, &sl );
+    int conn = accept( listener->fd, (struct sockaddr*)&sa, (size_t*)&sl );
     if( conn == -1 ){
         //TODO: We blissfully ignore errors during accept..
         //TODO: We do need to report the catastrophic event of EMFILE or ENFILE
@@ -609,6 +610,13 @@ MQO_BEGIN_PRIM( "close-listener", close_listener )
     NO_RESULT( );
 MQO_END_PRIM( close_listener );
 
+MQO_BEGIN_PRIM( "close-stream", close_stream )
+    REQ_STREAM_ARG( stream );
+    NO_REST_ARGS( );
+    mqo_close_stream( stream );
+    NO_RESULT( );
+MQO_END_PRIM( close_stream );
+
 MQO_BEGIN_PRIM( "tcp-listen", tcp_listen )
     REQ_INTEGER_ARG( portno );
     NO_REST_ARGS( );
@@ -708,7 +716,21 @@ MQO_END_PRIM( resolve_addr )
 void mqo_init_stream_subsystem( ){
     MQO_I_TYPE( stream );
     MQO_I_TYPE( listener );
-   
+
+#ifndef _WIN32
+    // MOSVM is the definition of a bad citizen..
+    struct rlimit fd_limit;
+    // So.. How many file descriptors are we permitted?
+    getrlimit( RLIMIT_NOFILE, &fd_limit );
+    // Oh.. That's too low. Gimme ALL OF THEM!
+    fd_limit.rlim_cur = fd_limit.rlim_max;
+    setrlimit( RLIMIT_NOFILE, &fd_limit );
+    // Thaaaank you. Drive through.
+    getrlimit( RLIMIT_NOFILE, &fd_limit );
+    mqo_set_global( mqo_symbol_fs( "*max-fd*" ), 
+                    mqo_vf_integer( fd_limit.rlim_cur - 1 ) ); 
+#endif    
+
     mqo_ss_close = mqo_symbol_fs( "close" );
     mqo_ss_connect = mqo_symbol_fs( "connect" );
     mqo_ss_fail = mqo_symbol_fs( "fail" );
@@ -718,6 +740,7 @@ void mqo_init_stream_subsystem( ){
     MQO_BIND_PRIM( resolve_addr );
     MQO_BIND_PRIM( stream_closedq );
     MQO_BIND_PRIM( close_listener );
+    MQO_BIND_PRIM( close_stream );
 
     MQO_BIND_PRIM( peer_addr );
     MQO_BIND_PRIM( peer_port );

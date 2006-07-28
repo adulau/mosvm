@@ -32,15 +32,17 @@
 
   (define id (req-term terms " drone identifier"))
   (define next (find-mosref-node id))
+  
   (unless (drone-node? next)
     (send-err "Drone node " (format id) " not found."))
+  
   (when (node-online next)
     (send-err "Drone is still online, and cannot be recovered."))
+  
   (define node (drone-node-link next))
   (unless (node-online node)
     (send-err "Intermediate node " (format (node-id node)) " is not online."))
   
-  (define node (mosref-shell-node shell))
   (define ecdh (make-console-ecdh))
 
   (spawn-drone-listener node next))
