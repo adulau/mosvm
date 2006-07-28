@@ -21,20 +21,25 @@
             "scan <hosts> <ports> [<conns> [<timeout>]]"
             (string-append
                   "Performs a TCP port scan of the specified host, reporting"
-                  " all ports  that respond with a connection within timeout"
-                  " milliseconds.  The scanner will restrict itself to"
-                  " conns ports at a time, with a default of 500.")
+                  " all ports that respond with a connection within timeout"
+                  " milliseconds.  The scanner will limit the number of attempted"
+                  " connections to conns."
+                  "\n\n"
+                  "When omitted, timeout defaults to 15000, and conns defaults to"
+                  " 500.  Scan will only try each connection once -- to"
+                  " exhaustively test unreliable or congested environments,"
+                  " perform the scan multiple times to get an accurate sample.")
 
   (define hosts (parse-host-spec
                   (req-term terms "hosts.")))
   (define ports (parse-port-spec 
                   (req-term terms "ports.")))
-  (define timeout (or (opt-integer terms "timeout")
-                      5000))
   (define conns (or (opt-integer terms "conns")
-                    300))
+                    500))
+  (define timeout (or (opt-integer terms "timeout")
+                      15000))
   (spawn-node-scan (mosref-shell-node shell)
-                   hosts ports timeout conns))
+                   hosts ports conns timeout))
 
 (define *node-scan-prog*
   (inline (export nothing)
@@ -46,9 +51,9 @@
             (when (eq? evt 'done)
               (return)))))
 
-(define (spawn-node-scan node hosts ports timeout conns)
+(define (spawn-node-scan node hosts ports conns timeout)
   (with-node-program node *node-scan-prog*
-    (send (list hosts ports timeout conns)
+    (send (list hosts ports conns timeout)
           xmit)
     
     (define done #f)

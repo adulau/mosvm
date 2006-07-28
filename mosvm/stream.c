@@ -328,8 +328,11 @@ void mqo_listener_read_evt( mqo_listener listener ){
         //TODO: We do need to report the catastrophic event of EMFILE or ENFILE
     }else{
         mqo_unblock( conn );
-        mqo_channel_append( 
-            listener->conns, mqo_vf_stream( mqo_make_stream( conn ) ) );
+        //TODO: We blissfully ignore errors here, too..
+        mqo_stream stream = mqo_make_stream( conn );
+        int sz = sizeof( struct sockaddr_in );
+        getpeername( stream->fd, (struct sockaddr*)&( stream->peer ), &sz ); 
+        mqo_channel_append( listener->conns, mqo_vf_stream( stream ) );
     }
 }
 

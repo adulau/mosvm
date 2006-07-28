@@ -18,12 +18,7 @@
   + Add a drop command to forcefully disconnect drones.
   + Bug: The scanner does not warn when it has run out of file descriptors.
 
-- ?/??/????, Beta Three
-  + Extend the proxy command to require a shared authentication secret.
-
 - ?/??/????, MOSREF Session Recovery
-  + Bug: nodes command causes port to be fixed.
-  + Bug: repeated recover is permissible without the drone actually connecting
   + When a drone node record is created, it is stored in the transcript.
   + When a console node record is created, it is stored in the transcript.
   + When mosref loads, it may be supplied with a transcript, which will be used
@@ -32,7 +27,12 @@
 - ?/??/????, MOSREF Node Prod Command
   + Added mosref/cmd/prod
 
-- ?/??/????, MOSREF Scanner Improvements
+- ?/??/????, Beta Three
+  + Extend the proxy command to require a shared authentication secret.
+  + Bug: nodes command causes port to be fixed.
+  + Bug: repeated recover is permissible without the drone actually connecting
+
+- 7/28/2006, MOSREF Scanner Improvements
   * Added (peer-addr stream), and altered network monitor to use getpeername 
     to detect a successful connection instead of the less portable technique of
     sending zero bytes.
@@ -50,9 +50,9 @@
     same time.
   * Adjusted the scanner defaults in favor of higher reliability, lower speed
     scanning.
-  + On successful affiliation, the peer address of the node is reported to the
+  * On successful affiliation, the peer address of the node is reported to the
     console.
-  
+
 - 7/23/2006, MOSREF Drone Recovery
   * When a bridge is closed, all lanes and the bridge-lanes channel are 
     sent a close notification.
