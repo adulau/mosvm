@@ -374,6 +374,7 @@ void mqo_stream_write_evt( mqo_stream stream ){
         if( rs == -1 ){
             // gpn only fails if the socket didn't connect.
             mqo_close_stream( stream );
+            return;
         }else{
             mqo_channel_append( stream->evt, mqo_vf_symbol( mqo_ss_connect ) );
             stream->state = MQO_READY;
