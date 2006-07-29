@@ -118,7 +118,11 @@
         ((eq? evt 'close)
          (shutdown)
          (halt))
-        ((not (string? evt))  (bridge-wtf evt))
+        ((not (string? evt))  
+         (shutdown)
+         (halt)
+         ;(bridge-wtf evt)
+         )
         ((empty-string? evt)  (bridge-wtf evt))
         (else
           ((case (string-read-byte! evt)

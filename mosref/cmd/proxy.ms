@@ -21,16 +21,21 @@
 
 ;TODO: Add password authentication.
 (define-cmd "proxy"
-            "proxy [<portno>]"
+            "proxy [<portno> [<secret>]]"
             (string-append
               "Spawns a SOCKS 4a proxy on the console that will establish"
               " connections on the current node.  If the port number is"
-              " omitted, it will be selected at random.")
+              " omitted, it will be selected at random."
+              "\n\n"
+              "If a shared secret is supplied, the authentication supplied to the"
+              " socks proxy must be match the supplied secret.")
 
   (define portno (or (opt-integer terms " proxy port")
                      (random-integer 20000 30000)))
 
-  (spawn-node-proxy (mosref-shell-node shell) portno)
+  (define secret (opt-term terms))
+
+  (spawn-node-proxy (mosref-shell-node shell) portno secret)
   (send-line "SOCKS Proxy created, listening on port " (format portno) ".")) 
 
 (define *node-tcp-forward-prog* 
@@ -81,7 +86,7 @@
 
 (export node-tcp-connect)
 
-(define (spawn-node-proxy node portno)
+(define (spawn-node-proxy node portno secret)
   ;TODO: Notify the console of each connection.
   (define log-channel (output))
   (define (log-line . bits)
@@ -104,9 +109,18 @@
     (define portno (tc-next! req))
 
     (unless (eq? proto 'tcp)
-      (send (format-socks4-response #f portno addr)))
+      (send (format-socks4-response #f portno addr))
+      (send 'close)
+      (halt))
 
-    ;TODO: Make lapse configurable.
+    (unless (or (not secret)
+                (string=? secret auth))
+      (log-line "AUTH: Failed authentication, expected " (format secret) ", got "
+                (format auth))
+      (send (format-socks4-response #f portno addr))
+      (send 'close)
+      (halt))
+
     (define conn (node-tcp-connect node addr portno 10000))
     (define xmit (car conn))
     (define recv (cadr conn))

@@ -44,4 +44,6 @@
 
 (define (set-node-port! node value) (set-node-prop! node 'port value))
 
-(export node-port set-node-port!)
+(define (node-has-port? node) (has-node-prop? node 'port))
+
+(export node-port set-node-port! node-has-port?)

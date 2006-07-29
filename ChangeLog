@@ -9,6 +9,10 @@
   to MOSVM applications.
   + Add site configuration settings for "terminal"
 
+- ?/??/????, MOSREF Release 2.0
+  + Bug: The scanner does not warn when it has run out of file descriptors.
+  + Bug: repeated recover is permissible without the drone actually connecting
+  
 - ?/??/????, MOSREF Transcripts and Persistent Drone Sessions
   + All commands generate information into a console transcript.
   + The console transcript may be read to reconstruct a console's state in a
@@ -16,7 +20,6 @@
   + A console will accept restarted drones if the drone is not currently 
     affiliated.
   + Add a drop command to forcefully disconnect drones.
-  + Bug: The scanner does not warn when it has run out of file descriptors.
 
 - ?/??/????, MOSREF Session Recovery
   + When a drone node record is created, it is stored in the transcript.
@@ -25,12 +28,37 @@
     to recreate console and drone node records.
 
 - ?/??/????, MOSREF Node Prod Command
-  + Added mosref/cmd/prod
+  + Added the mosref/service module.
+  + Added (add-mosref-service node proto addr portno) to mosref/service.
+  + Added (services-by-addr addr) to mosref/service
+  + Added (services-by-node node) to mosref/service
+  + Added (services-by-port port) to mosref/service
+  + Added (mosref-can-merge? service ..) to mosref/service, which returns true
+    if all listed services share the same address and port.  (Should this check
+    for prod tags, as well?)
+  + scanner reports hosts that have reset, hosts that have rejected to the console
+    to permit detection of congested networks and slow responding services.
+  + console records services by the node that found them, their address, protocol
+    (TCP) and port number.
+  + Added the prod command which, given the service information from above,
+    transmits various stimuli and analyzes the response to classify 
+    identified services.
+  + Added the merge command which, given a list of nodes, attempts to determine
+    if services accessible by one of those nodes are accessible by the other nodes.
+    Services that do not merge may indicate increased host-specific trust
+    relationships.  Services that do merge may give insight about network
+    toplogy.
 
-- ?/??/????, Beta Three
-  + Extend the proxy command to require a shared authentication secret.
-  + Bug: nodes command causes port to be fixed.
-  + Bug: repeated recover is permissible without the drone actually connecting
+- ?/??/????, MOSREF Beta Three
+  * Fixed a bug in lib/socks-server related to parsing shared authentication 
+    secrets.
+  * The proxy command now accepts an optional shared authentication secret.
+  * Report failed affiliation attempts and reset state.
+  * The nodes command no longer causes a node to assign a listener port number if
+    one has not been previously assigned.
+  * Modified the network monitor to handle EWOULDBLOCK correctly -- this signal
+    occurs frequently on win32 when under load.
+  * Modified the bridge monitor to silently drop fail messages.
 
 - 7/28/2006, MOSREF Scanner Improvements
   * Added (peer-addr stream), and altered network monitor to use getpeername 

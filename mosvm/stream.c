@@ -69,12 +69,19 @@ void mqo_stream_error( mqo_stream stream, int code ){
                        mqo_vf_integer( code ) ) ) );
 }
 
-void mqo_stream_net_error( mqo_stream stream ){
+int mqo_stream_net_error( mqo_stream stream ){
 #ifndef _WIN32 
-    mqo_stream_error( stream, errno );
+    int e = errno;
 #else
-    mqo_stream_error( stream, WSAGetLastError() );
+    int e = WSAGetLastError();
 #endif
+    if( e == MQO_EWOULDBLOCK ){
+        // You could have just said 0, you bastards..
+        return 0;
+    }else{
+        mqo_stream_error( stream, e );
+        return -1;
+    }
 }
 
 void mqo_report_host_error( ){
@@ -309,10 +316,7 @@ void mqo_stream_read_evt( mqo_stream stream ){
         if( errno == EAGAIN )return;
 #endif
         
-        mqo_stream_net_error( stream );
-        
-        // TODO: Assumption: all errors are fatal..
-        mqo_close_stream( stream );
+        if( mqo_stream_net_error( stream ) )mqo_close_stream( stream );
     }else if( rs == 0 ){
         mqo_close_stream( stream );
     }
@@ -342,11 +346,13 @@ int mqo_stream_send( mqo_stream stream, void* data, mqo_quad datalen ){
 #ifdef _WIN32
     //There are no non-socket streams on win32..
     result = send( stream->fd, data, datalen, 0 );
-    if( result == -1 ) mqo_stream_net_error( stream );
+    if( result == -1 ) {
+        return mqo_stream_net_error( stream );
+    };
 #else
     if( stream->fd ){
         result = send( stream->fd, data, datalen, 0 );
-        if( result == -1 ) mqo_stream_net_error( stream );
+        if( result == -1 ) result = mqo_stream_net_error( stream );
     }else{
         result = write( STDOUT_FILENO, data, datalen );
         if( result == -1 ) mqo_stream_error( stream, errno );
@@ -398,6 +404,9 @@ void mqo_stream_write_evt( mqo_stream stream ){
                     mqo_vf_string( mqo_string_fm( str + rs, len ) )
                 );
             };
+        }else{
+            // Nonblocking error result, probably.
+            mqo_channel_prepend( stream->cmd, cmd );
         }
     }else{
         mqo_channel_append( 

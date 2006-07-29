@@ -90,7 +90,11 @@
 
   (define proxy-portno (random-integer 10000 30000))
   (define proxy-listener (spawn-socks4-proxy proxy-portno
-                                           (lambda (x) #t)
+                                           (lambda (x)
+                                             (print "Auth is: ")
+                                             (print (format x))
+                                             (print "\n")
+                                             (string=? x "foo"))
                                            tcp-connect))
 
   (test-proxy localhost proxy-portno localhost)

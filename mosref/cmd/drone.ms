@@ -61,22 +61,32 @@
   (send-line "Listening for drone on " (format portno) "...")
 
   (spawn (lambda ()
-           (define session (guard (lambda (e)
+           (define session #f)
+           (define transport #f)
+
+           (define (attempt-affiliation)
+             (set! session (guard (lambda (e)
                                     (traceback e)
                                     (send-line "ERROR: Listener for " id "failed, "
                                                (car (error-info e)) ".")
-                                    (halt))
+                                    #f)
                              (node-sin-listen node portno sin)))
-           (define peer (car session))
-           (define transport (guard (lambda (e) 
-                                      ;TODO: Make number of attempts permitted
-                                      ;      configurable
+
+             (unless session (return))
+
+             (set! transport (guard (lambda (e)
+                                      ;TODO: Only traceback if error is not
+                                      ;      an affiliation error.
                                       (traceback e)
-                                      (send-line "ERROR: Affilation of " 
-                                                 id " failed, "
-                                                 (car (error-info e)) ".")
-                                      (halt))
-                                (apply console-affiliation ecdh (cdr session))))
+                                      (send-line "ERROR: Affilation of " id 
+                                                 " failed, " (car (error-info e)) 
+                                                 ".")
+                                      #f)
+                                (apply console-affiliation ecdh (cdr session)))))
+
+           (until transport (attempt-affiliation))
+          
+           (define peer (car session))
 
            (send-line "Drone " id " affiliated from address " 
                       (format-ipv4 peer) ".")

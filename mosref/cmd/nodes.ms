@@ -25,7 +25,8 @@
              (apply string-join "\n       " 
                     (map (function (format-node node)
                            (define addr (node-addr node))
-                           (define port (node-port node))
+                           (define port (and (node-has-port? node)
+                                             (node-port node)))
                            (string-append 
                              (node-id node)
                              (if (node-online node) " online" " offline")

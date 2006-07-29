@@ -45,7 +45,6 @@
   
   (define portno (string-read-word! str))
   (define addr (string-read-quad! str))
-  (define authlen (string-read-byte! str))
 
   (define auth (read-to-zero! str "user authentication"))
 

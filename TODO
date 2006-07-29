@@ -1,7 +1,5 @@
 + Move mosref/cmd.ms to mosref/cmd/all.ms, so it will not depend on unbuilt cmds
 
-+ sudden termination of a drone does not update the console's node table.
-
 + Bug in spawn-command
   Errors should be reported as fails, somehow.
 
@@ -185,13 +183,9 @@
 
 + Add udp-listen
 
-+ Make build-app use mosvm in preference to guile
-
 + Add string-translate
   (string-translate src-string dict)
   (string-translate "<xml version='1.0'>" 
                     (dict '('&' . "&amp;") '('<' . "&lt;")))
   (string-translate "&lt;foo&gt;" 
                     (dict (cons '&' (dict (cons 'a' (dict (cons 'm' (cons 'p' ..
-
-+ Use Bridges for MOSREF command and report.
