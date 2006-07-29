@@ -26,11 +26,13 @@
               (recv bridge-recv))
 
 (define-class lane <object>
-              (make-lane-state tag xmit recv)
+              (make-lane-state tag xmit recv lost closed)
               lane?
               (tag lane-tag)
               (xmit lane-xmit)
-              (recv lane-recv))
+              (recv lane-recv)
+              (lost lane-lost? set-lane-lost!)
+              (closed lane-closed? set-lane-closed!))
 
 (define *bridge-tag-size* 8)
 
@@ -62,12 +64,12 @@
     (define lane (wait binds))
     (dict-set! recv-tags id lane))
 
-  (define (recv-lane id)
+  (define (recv-lane id lost)
     (define lane-xmit (make-channel))
     (define lane-recv (make-channel))
     (define recv-tag id)
     (define xmit-tag (make-bridge-tag xmit-tags))
-    (define lane (make-lane-state xmit-tag lane-xmit lane-recv))
+    (define lane (make-lane-state xmit-tag lane-xmit lane-recv lost #f))
     (dict-set! recv-tags recv-tag lane)
     (dict-set! xmit-tags xmit-tag lane)
     (send (string-append 58 xmit-tag) b-xmit) 
@@ -75,10 +77,10 @@
     lane)
 
   (define (cmd-make id)
-    (send (recv-lane id) lanes))
+    (send (recv-lane id #f) lanes))
 
   (define (cmd-make-res id)
-    (recv-lane id))
+    (recv-lane id #t))
 
   (define (cmd-data data)
     (define recv-tag (string-read! data *bridge-tag-size*))
@@ -91,7 +93,8 @@
     (define recv-tag (string-read! data *bridge-tag-size*))
     (define lane (dict-ref recv-tags recv-tag))
     (when lane 
-      (dict-remove! recv-tags recv-tag)
+      (unless (lane-lost? lane)
+        (dict-remove! recv-tags recv-tag))
       (define recv (lane-recv lane))
       (send 'close recv)))
 
@@ -134,7 +137,13 @@
              (else bridge-wtf)) evt))))))
 
 (define (find-reserved-lane bridge tag)
-  (dict-ref (bridge-recv-tags bridge) tag))
+  (define lane (dict-ref (bridge-recv-tags bridge) tag))
+  (when lane 
+    (set-lane-lost! lane #f)
+    (when (lane-closed? lane)
+      (dict-remove! (bridge-recv-tags bridge) tag)))
+  lane)
+
 
 (define (lane-monitor bridge lane)
   (define b-xmit (bridge-xmit bridge))
@@ -159,7 +168,7 @@
   (define lane-recv (make-channel))
   (define xmit-tags (bridge-xmit-tags bridge))
   (define xmit-tag (make-bridge-tag xmit-tags))
-  (define lane (make-lane-state xmit-tag lane-xmit lane-recv))
+  (define lane (make-lane-state xmit-tag lane-xmit lane-recv #f #f))
   (dict-set! xmit-tags xmit-tag lane)
   (send (string-append pfx xmit-tag) (bridge-xmit bridge))
   (send lane (bridge-binds bridge))
