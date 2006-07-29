@@ -156,13 +156,27 @@ mqo_file mqo_open_file( const char* path, const char* flags, mqo_integer mode ){
     // Let's not have any magic line ending conversions screwing up seek, 
     // tyvm.
 #endif
+    int w = 0, r = 0;
+
     while( *flags ){
         switch( *(flags++) ){
         case 'r':
-            flag |= O_RDONLY;
+            r = 1;
+            if( w ){
+                flag ^= O_WRONLY;
+                flag |= O_RDWR;
+            }else{
+                flag |= O_RDONLY;
+            };
             break;
         case 'w':
-            flag |= O_WRONLY;
+            w = 1;
+            if( r ){
+                flag ^= O_RDONLY;
+                flag |= O_RDWR;
+            }else{
+                flag |= O_WRONLY;
+            };
             break;
         case 'c':
             flag |= O_CREAT;
