@@ -76,8 +76,10 @@ mqo_stream mqo_spawn_cmd( mqo_string path, mqo_list arg, mqo_list var ){
         free( argv );
         if( varc )free( varv );
         mqo_os_error( pid );
+        close( fds[1] );
         return mqo_make_stream( fds[0] );
     }else{
+        close( fds[0] );
         // Awww yeah.. Duping and forking like it's 1986..
         dup2( fds[1], STDIN_FILENO );
         dup2( fds[1], STDOUT_FILENO );

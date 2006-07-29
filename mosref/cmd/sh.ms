@@ -68,13 +68,6 @@
               (define stream (spawn-command (car cmd) (cdr cmd)))
               (define done #f)
 
-  ;TODO: Many commands won't close stdin -- we must send a close to the
-  ;      stream to cooerce it into doing the right thing.
-  ;
-  ;      A better strategy would be to watch the pid, and close it -- but this
-  ;      requires a thread.
-              (timeout 1000 (input stream) 'close)
-
               (until done
                 (define evt (wait stream))
                 (cond

@@ -59,6 +59,8 @@
   * Modified the network monitor to handle EWOULDBLOCK correctly -- this signal
     occurs frequently on win32 when under load.
   * Modified the bridge monitor to silently drop fail messages.
+  * Fixed spawn-command to properly close when the child does.
+  * Modified the shell command to no longer require the sword-of-damocles trick.
 
 - 7/28/2006, MOSREF Scanner Improvements
   * Added (peer-addr stream), and altered network monitor to use getpeername 
