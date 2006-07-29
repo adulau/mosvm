@@ -700,7 +700,14 @@ MQO_BEGIN_PRIM( "tcp-connect", tcp_connect )
     // While mqo_unblock does work, here, on win32, it causes win32 to signal
     // -1, and puts WSAGetLastError in a nondetermined state.  Thank you, 
     // Microsoft..
-    connect( fd, (struct sockaddr*)&addr, sizeof( addr ) );
+    int rs = connect( fd, (struct sockaddr*)&addr, sizeof( addr ) );
+    if( rs == -1 ){
+        if( WSAGetLastError( ) == MQO_EWOULDBLOCK ){
+            // Genius, Microsoft.. Thanks.. We sorta figured that..
+        }else{
+            mqo_net_error( rs );
+        }
+    };
 #else
     mqo_net_error( connect( fd, (struct sockaddr*)&addr, sizeof( addr ) ) );
 #endif
