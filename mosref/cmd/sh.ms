@@ -26,63 +26,106 @@
 
   (spawn-node-shell (mosref-shell-node shell) (tc->list terms)))
 
-(define (spawn-node-cmd (<console-node> node) cmd)
-  (when (string-begins-with? *platform* "win")
-    (send-line "ERROR: This version of MOSREF cannot spawn shell commands on "
-               "Microsoft Windows.")
-    (return))
-
-  (set-car! cmd (locate-cmd (car cmd)))
-  (define stream (spawn-command (car cmd) (cdr cmd)))
-  (define done #f)
-
-  (spawn (function (monitor-sh-response)
-           (until done
-                  (define evt (wait stream))
-                  (when (eq? evt 'close) 
-                    (unless done 
-                      (set! done #t)
-                      (send 'close (input)))
-                    (return)))))
-
-  (until done
-    (define evt (wait (input)))
-    (send evt stream)
-    (when (eq? evt 'close)
-      (set! done #t)))
-
-  (pause))
-
 (define *node-shell-prog*
-  (inline (import "lib/env")
+  (inline (export nothing)
+          (import "lib/env")
+          (import "mosref/patch")
           (when (string-begins-with? *platform* "win")
             (error 'shell 
                    "MOSREF cannot spawn shell commands on Microsoft Windows"))
 
-            (let ((cmd (wait)))
-              (guard (function (report-cmd-not-found err)
-                       (error 'shell
-                              (string-append "cannot find command " (car cmd))))
+          (define cmd (wait))
+
+          (guard (function (report-cmd-not-found err)
+                   (error 'shell
+                          (string-append "cannot find command " (car cmd))))
                 (set-car! cmd (locate-cmd (car cmd))))
+        
+          (define stream (spawn-command (car cmd) (cdr cmd)))
+          (define lane (make-reserved-lane *drone-bridge*))
+          (send (list 'connect (lane-tag lane)))
+          (patch2 stream lane)
+          (send 'close)))
 
-              (define stream (spawn-command (car cmd) (cdr cmd)))
-              (define done #f)
+(define (spawn-node-shell (<drone-node> node) cmd)
+  (define conn (spawn-node-program node *node-shell-prog*))
+  (define xmit (car conn))
+  (define recv (cadr conn))
+  (define bridge (drone-node-bridge node))
+  (send cmd xmit)
+  (define event (wait recv))
+  (print "EVENT: ")
+  (print (format event))
+  (print "\n")
+  (send 'close xmit)
+  (when (and (pair? event)
+             (eq? (car event) 'connect))
+    (define tag (cadr event))
+    (define lane (find-reserved-lane bridge tag))
+    (print "BRIDGE: ")
+    (print (format bridge))
+    (print " TAG: ")
+    (print (format tag))
+    (print " LANE: ")
+    (print (format lane))
+    (print "\n")
+    (when lane
+      (define lx (lane-xmit lane))
+      (define lr (lane-recv lane))
+      (define tx (output))
+      (define tr (input))
+      (spawn (lambda ()
+               (forever
+                 (define e (wait lr))
+                 (when (eq? e 'done)
+                   (return))
+                 (when (eq? e 'close)
+                   (send 'done tr)
+                   (return))
+                 (send e tx))))
+      (forever
+        (define e (wait tr))
+        (when (eq? e 'done)
+          (return))
+        (send e lx)
+        (when (eq? e 'close)
+          (send 'done lr)
+          (send e (output tr)))))
+    (send-err "Could not resolve initial lane."))
+    (send-err "Bogus message while waiting for command lane, " (format event)))
 
-              (until done
-                (define evt (wait stream))
-                (cond
-                  ((eq? evt 'close) (set! done #t))
-                  (else (send evt))))
+(define (spawn-node-shell (<console-node> node) cmd)
+  (when (string-begins-with? *platform* "win")
+    (send-err "MOSREF cannot spawn shell commands on Microsoft Windows"))
+  
+  (guard (function (report-cmd-not-found err)
+                   (error 'shell
+                          (string-append "cannot find command " (car cmd))))
+         (set-car! cmd (locate-cmd (car cmd))))
 
-              (send 'close))))
+  (define stream (spawn-command (car cmd) (cdr cmd)))
 
-(define (spawn-node-shell node cmd)
-  (with-node-program node *node-shell-prog*
-    (send cmd xmit)
-    (define done #f)
-    (until done 
-      (define evt (wait recv))
-      (cond 
-        ((eq? evt 'close) (set! done #t))
-        ((string? evt) (send evt))))))
+  (define sx (input stream))
+  (define sr (output stream))
+  (define tx (output))
+  (define tr (input))
 
+  (spawn (lambda ()
+           (forever
+             (define e (wait sr))
+             (when (eq? e 'done)
+               (return))
+             (when (eq? e 'close)
+               (send 'done tr)
+               (return))
+             (send e tx))))
+
+  (forever
+    (define e (wait tr))
+    (send e sx)
+    (when (eq? e 'done)
+      (return))
+    (when (eq? e 'close)
+      (send 'done sr)
+      (send e (output tr))
+      (return))))
