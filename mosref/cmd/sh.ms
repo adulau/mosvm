@@ -31,17 +31,24 @@
           (import "lib/env")
           (import "mosref/patch")
           (when (string-begins-with? *platform* "win")
-            (error 'shell 
-                   "MOSREF cannot spawn shell commands on Microsoft Windows"))
+            (send (list 'error 
+                        "MOSREF cannot spawn shell commands on Microsoft Windows"))
+            (send 'close)
+            (halt))
 
           (define cmd (wait))
+          (define prog (car cmd))
+          (define args (cdr cmd))
 
-          (guard (function (report-cmd-not-found err)
-                   (error 'shell
-                          (string-append "cannot find command " (car cmd))))
-                (set-car! cmd (locate-cmd (car cmd))))
-        
-          (define stream (spawn-command (car cmd) (cdr cmd)))
+          (set! prog (locate-cmd prog))
+          (unless prog
+            (send (list 'error
+                        (string-append "Drone cannot find " (format (car cmd) ) 
+                                       ".")))
+            (send 'close)
+            (return))
+
+          (define stream (spawn-command prog args))
           (define lane (make-reserved-lane *drone-bridge*))
           (send (list 'connect (lane-tag lane)))
           (patch2 stream lane)
@@ -54,21 +61,16 @@
   (define bridge (drone-node-bridge node))
   (send cmd xmit)
   (define event (wait recv))
-  (print "EVENT: ")
-  (print (format event))
-  (print "\n")
   (send 'close xmit)
-  (when (and (pair? event)
-             (eq? (car event) 'connect))
+  (when (eq? event 'close)
+    (send 'close xmit)
+    (send-err "Lost connection with shell process."))
+  (unless (pair? event)
+    (send 'close xmit)
+    (send-err "Unusual message received: " (format event)))
+  (when (eq? (car event) 'connect)
     (define tag (cadr event))
     (define lane (find-reserved-lane bridge tag))
-    (print "BRIDGE: ")
-    (print (format bridge))
-    (print " TAG: ")
-    (print (format tag))
-    (print " LANE: ")
-    (print (format lane))
-    (print "\n")
     (when lane
       (define lx (lane-xmit lane))
       (define lr (lane-recv lane))
@@ -91,19 +93,23 @@
         (when (eq? e 'close)
           (send 'done lr)
           (send e (output tr)))))
-    (send-err "Could not resolve initial lane."))
-    (send-err "Bogus message while waiting for command lane, " (format event)))
+    (send-err "Could not resolve initial lane.")
+    (return))
+  (when (eq? (car event) 'error)
+    (send 'close xmit)
+    (send-err (cadr event))))
 
 (define (spawn-node-shell (<console-node> node) cmd)
   (when (string-begins-with? *platform* "win")
     (send-err "MOSREF cannot spawn shell commands on Microsoft Windows"))
-  
-  (guard (function (report-cmd-not-found err)
-                   (error 'shell
-                          (string-append "cannot find command " (car cmd))))
-         (set-car! cmd (locate-cmd (car cmd))))
+ 
+  (define prog (car cmd))
+  (define args (cdr cmd))
+  (set! prog (locate-cmd prog))
+  (unless prog
+    (send-err  "Cannot find command " (format (car cmd)) "."))
 
-  (define stream (spawn-command (car cmd) (cdr cmd)))
+  (define stream (spawn-command prog args))
 
   (define sx (input stream))
   (define sr (output stream))

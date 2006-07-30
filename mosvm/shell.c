@@ -72,6 +72,7 @@ mqo_stream mqo_spawn_cmd( mqo_string path, mqo_list arg, mqo_list var ){
     char** varv = varc ? mqo_make_argv( var, varc ) : environ;
 
     int pid = fork(); 
+
     if( pid ){
         free( argv );
         if( varc )free( varv );
@@ -85,9 +86,9 @@ mqo_stream mqo_spawn_cmd( mqo_string path, mqo_list arg, mqo_list var ){
         dup2( fds[1], STDOUT_FILENO );
         
         execve( mqo_sf_string( path ), argv, varv );
-        
+        // We shouldn't be here, but here we are..
         close( fds[1] );
-        exit(0);
+        _exit(0);
     }
 }
 
