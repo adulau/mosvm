@@ -49,7 +49,7 @@
     relationships.  Services that do merge may give insight about network
     toplogy.
 
-- ?/??/????, MOSREF Beta Three
+- 7/29/2006, MOSREF Beta Three
   * Fixed a bug in lib/socks-server related to parsing shared authentication 
     secrets.
   * The proxy command now accepts an optional shared authentication secret.

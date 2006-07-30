@@ -189,3 +189,12 @@
                     (dict '('&' . "&amp;") '('<' . "&lt;")))
   (string-translate "&lt;foo&gt;" 
                     (dict (cons '&' (dict (cons 'a' (dict (cons 'm' (cons 'p' ..
+
++ Fix 2.95 compile errors related to declaration of variable types beyond the initial.
+
++ Ensure variadic macros in mosvm/format.h are C99 syntax, not GCC syntax.
+
++ Examine OpenBSD 3.9 for problems linking libtomcrypt.a
+
++ sh command crashes when given a mistyped command.
+
