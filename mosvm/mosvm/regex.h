@@ -17,6 +17,8 @@
 #ifndef MQO_REGEX_H
 #define MQO_REGEX_H 1
 
+// Some old BSD regexes require that sys/types.h be included first.
+#include <sys/types.h>
 #include <regex.h>
 
 MQO_BEGIN_TYPE( regex )

@@ -54,6 +54,14 @@ ifeq ($(OS),CYGWIN_NT-5.1)
 OS=Cygwin
 endif
 
+ifeq ($(OS),MINGW32_NT-5.0)
+OS=MinGW
+endif
+
+ifeq ($(OS),CYGWIN_NT-5.0)
+OS=Cygwin
+endif
+
 ifeq ($(OS),Linux)
 # Tested on Debian.
 CFLAGS += -DLINUX
